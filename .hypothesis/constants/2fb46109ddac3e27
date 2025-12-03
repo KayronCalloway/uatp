@@ -1,0 +1,4 @@
+# file: /Users/kay/uatp-capsule-engine/reasoning/validator.py
+# hypothesis_version: 6.135.26
+
+[0.0, 0.6, 0.7, 0.9, 0.95, 60.0, 100, ', ', 'error', 'is_valid', 'issues', 'message', 'score', 'severity', 'suggestions', 'warning']

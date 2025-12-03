@@ -1,0 +1,1 @@
+{"stop_id": "stop_3416201176f84af4693b1e97c94a6ef6", "agent_id": "prescribing_agent_01", "decision_id": "med_emergency_001", "reason": "Patient developed allergic reaction during assessment", "triggered_by": "human_physician", "timestamp": "2025-10-30T05:24:34.673156+00:00", "metadata": {}}

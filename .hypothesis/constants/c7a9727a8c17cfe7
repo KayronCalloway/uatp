@@ -1,0 +1,4 @@
+# file: /Users/kay/uatp-capsule-engine/src/api/utils.py
+# hypothesis_version: 6.135.26
+
+[400, 500, 'compressed', 'data', 'engine_error', 'error', 'error_type', 'invalid_parameter', 'invalid_request', 'logging_error', 'signing_error', 'status', 'unexpected_error', 'validation_error']

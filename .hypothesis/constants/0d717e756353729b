@@ -1,0 +1,4 @@
+# file: /Users/kay/uatp-capsule-engine/src/engine/cqss.py
+# hypothesis_version: 6.135.26
+
+[0.0, 0.15, 0.2, 0.3, 0.5, 100.0, 100, 'Introspective', 'Joint', 'avg_confidence', 'avg_path_length', 'chain_length', 'complexity_score', 'diversity_score', 'fork_count', 'integrity_score', 'introspective_ratio', 'join_points', 'joint_capsule_ratio', 'leaf_count', 'longest_path', 'root_count', 'trust_score', 'unique_agents', 'valid_signatures', 'verification_ratio']

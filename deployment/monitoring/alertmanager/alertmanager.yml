@@ -1,0 +1,215 @@
+# Alertmanager Configuration for UATP Production
+global:
+  smtp_smarthost: '${SMTP_HOST}:${SMTP_PORT}'
+  smtp_from: 'alerts@uatp.com'
+  smtp_auth_username: '${SMTP_USER}'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Routing rules
+route:
+  group_by: ['alertname', 'component']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'web.hook'
+  
+  routes:
+  # Critical alerts go to multiple channels
+  - match:
+      severity: critical
+    receiver: 'critical-alerts'
+    group_wait: 5s
+    repeat_interval: 5m
+    
+  # Database alerts
+  - match:
+      component: database
+    receiver: 'database-team'
+    
+  # Security alerts
+  - match:
+      component: security
+    receiver: 'security-team'
+    
+  # Attribution system alerts
+  - match:
+      component: attribution
+    receiver: 'attribution-team'
+    
+  # Payment system alerts
+  - match:
+      component: payments
+    receiver: 'payments-team'
+
+# Inhibition rules to reduce noise
+inhibit_rules:
+  # Inhibit any warning if the same alert is already critical
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
+
+  # Inhibit backend down if load balancer is down
+  - source_match:
+      alertname: 'LoadBalancerDown'
+    target_match:
+      component: 'application'
+    equal: ['instance']
+
+# Receivers configuration
+receivers:
+  - name: 'web.hook'
+    webhook_configs:
+    - url: 'http://127.0.0.1:5001/'
+
+  # Critical alerts - multiple notification channels
+  - name: 'critical-alerts'
+    email_configs:
+    - to: 'critical-alerts@uatp.com'
+      subject: '[CRITICAL] UATP Alert: {{ .GroupLabels.alertname }}'
+      body: |
+        {{ range .Alerts }}
+        Alert: {{ .Annotations.summary }}
+        Description: {{ .Annotations.description }}
+        Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+        {{ end }}
+      headers:
+        priority: 'high'
+    
+    slack_configs:
+    - api_url: '${SLACK_WEBHOOK_URL}'
+      channel: '#critical-alerts'
+      title: 'CRITICAL: {{ .GroupLabels.alertname }}'
+      text: |
+        {{ range .Alerts }}
+        *Alert:* {{ .Annotations.summary }}
+        *Description:* {{ .Annotations.description }}
+        *Labels:* {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+        {{ end }}
+      color: 'danger'
+      send_resolved: true
+    
+    pagerduty_configs:
+    - routing_key: '${PAGERDUTY_ROUTING_KEY}'
+      description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+      severity: 'critical'
+
+  # Database team notifications
+  - name: 'database-team'
+    email_configs:
+    - to: 'database-team@uatp.com'
+      subject: '[DATABASE] UATP Alert: {{ .GroupLabels.alertname }}'
+      body: |
+        Database Alert Triggered
+        
+        {{ range .Alerts }}
+        Alert: {{ .Annotations.summary }}
+        Description: {{ .Annotations.description }}
+        Instance: {{ .Labels.instance }}
+        Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+        {{ end }}
+    
+    slack_configs:
+    - api_url: '${SLACK_WEBHOOK_URL}'
+      channel: '#database-alerts'
+      title: 'Database Alert: {{ .GroupLabels.alertname }}'
+      text: |
+        {{ range .Alerts }}
+        {{ .Annotations.summary }}
+        Instance: {{ .Labels.instance }}
+        {{ end }}
+      color: 'warning'
+
+  # Security team notifications
+  - name: 'security-team'
+    email_configs:
+    - to: 'security-team@uatp.com'
+      subject: '[SECURITY] UATP Alert: {{ .GroupLabels.alertname }}'
+      body: |
+        Security Alert - Immediate Attention Required
+        
+        {{ range .Alerts }}
+        Alert: {{ .Annotations.summary }}
+        Description: {{ .Annotations.description }}
+        Source: {{ .Labels.instance }}
+        Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+        
+        Please investigate immediately.
+        {{ end }}
+      headers:
+        priority: 'high'
+        x-priority: '1'
+    
+    slack_configs:
+    - api_url: '${SLACK_WEBHOOK_URL}'
+      channel: '#security-alerts'
+      title: '🚨 Security Alert: {{ .GroupLabels.alertname }}'
+      text: |
+        {{ range .Alerts }}
+        *{{ .Annotations.summary }}*
+        Source: {{ .Labels.instance }}
+        {{ .Annotations.description }}
+        {{ end }}
+      color: 'danger'
+      send_resolved: true
+
+  # Attribution team notifications
+  - name: 'attribution-team'
+    email_configs:
+    - to: 'attribution-team@uatp.com'
+      subject: '[ATTRIBUTION] UATP Alert: {{ .GroupLabels.alertname }}'
+      body: |
+        Attribution System Alert
+        
+        {{ range .Alerts }}
+        Alert: {{ .Annotations.summary }}
+        Description: {{ .Annotations.description }}
+        Component: {{ .Labels.component }}
+        Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+        {{ end }}
+    
+    slack_configs:
+    - api_url: '${SLACK_WEBHOOK_URL}'
+      channel: '#attribution-alerts'
+      title: 'Attribution Alert: {{ .GroupLabels.alertname }}'
+      color: 'warning'
+
+  # Payments team notifications
+  - name: 'payments-team'
+    email_configs:
+    - to: 'payments-team@uatp.com'
+      subject: '[PAYMENTS] UATP Alert: {{ .GroupLabels.alertname }}'
+      body: |
+        Payment System Alert - Requires Investigation
+        
+        {{ range .Alerts }}
+        Alert: {{ .Annotations.summary }}
+        Description: {{ .Annotations.description }}
+        Component: {{ .Labels.component }}
+        Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+        
+        This may affect user payouts. Please investigate promptly.
+        {{ end }}
+      headers:
+        priority: 'high'
+    
+    slack_configs:
+    - api_url: '${SLACK_WEBHOOK_URL}'
+      channel: '#payments-alerts'
+      title: '💰 Payment Alert: {{ .GroupLabels.alertname }}'
+      text: |
+        {{ range .Alerts }}
+        {{ .Annotations.summary }}
+        {{ .Annotations.description }}
+        {{ end }}
+      color: 'warning'
+      send_resolved: true
+
+# Silence configuration
+# Silences can be configured via the web UI or API

@@ -1,0 +1,222 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "UATP Capsule Engine - Security Dashboard",
+    "tags": ["uatp", "security", "monitoring"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Security Events Overview",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(security_events_total)",
+            "legendFormat": "Total Events"
+          },
+          {
+            "expr": "sum(security_events_total{severity=\"critical\"})",
+            "legendFormat": "Critical Events"
+          },
+          {
+            "expr": "sum(security_events_total{severity=\"high\"})",
+            "legendFormat": "High Severity"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 10},
+                {"color": "red", "value": 50}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Security Event Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(security_events_total[5m])",
+            "legendFormat": "{{event_type}} - {{severity}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Events/sec",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Authentication Events",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(security_events_total{event_type=\"failed_login\"}[5m])",
+            "legendFormat": "Failed Logins"
+          },
+          {
+            "expr": "rate(security_events_total{event_type=\"successful_login\"}[5m])",
+            "legendFormat": "Successful Logins"
+          },
+          {
+            "expr": "rate(security_events_total{event_type=\"account_locked\"}[5m])",
+            "legendFormat": "Account Lockouts"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Events/sec",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Blocked Requests",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(security_events_total{event_type=\"blocked_request_sql_injection\"}[5m])",
+            "legendFormat": "SQL Injection Blocked"
+          },
+          {
+            "expr": "rate(security_events_total{event_type=\"blocked_request_xss\"}[5m])",
+            "legendFormat": "XSS Blocked"
+          },
+          {
+            "expr": "rate(security_events_total{event_type=\"blocked_request_user_agent\"}[5m])",
+            "legendFormat": "Bad User Agent"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Blocks/sec",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Rate Limiting Activity",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(security_events_total{event_type=\"rate_limit_exceeded\"}[5m])",
+            "legendFormat": "Rate Limits Hit"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Rate Limits/sec",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "Top Source IPs (Security Events)",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, sum by (source_ip) (security_events_total))",
+            "legendFormat": "{{source_ip}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 7,
+        "title": "Security Event Types Distribution",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (event_type) (security_events_total)",
+            "legendFormat": "{{event_type}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 8,
+        "title": "Geographic Security Events",
+        "type": "worldmap",
+        "targets": [
+          {
+            "expr": "sum by (country) (security_events_total)",
+            "legendFormat": "{{country}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      },
+      {
+        "id": 9,
+        "title": "Recent Critical Security Events",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{job=\"uatp-app\"} |= \"security\" |= \"critical\"",
+            "legendFormat": ""
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32}
+      },
+      {
+        "id": 10,
+        "title": "Security Metrics Summary",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(increase(security_events_total{severity=\"critical\"}[24h]))",
+            "legendFormat": "Critical Events (24h)"
+          },
+          {
+            "expr": "sum(increase(security_events_total{event_type=\"failed_login\"}[1h]))",
+            "legendFormat": "Failed Logins (1h)"
+          },
+          {
+            "expr": "sum(increase(security_events_total{event_type=\"blocked_request\"}[1h]))",
+            "legendFormat": "Blocked Requests (1h)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 10},
+                {"color": "red", "value": 100}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 40}
+      }
+    ],
+    "schemaVersion": 27,
+    "version": 1
+  }
+}

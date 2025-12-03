@@ -1,0 +1,179 @@
+# UATP Capsule Engine - Production Dockerfile
+# Multi-stage build for optimal production image
+
+# ============================================================================
+# Stage 1: Frontend Build
+# ============================================================================
+FROM node:18-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+
+# Copy package files
+COPY frontend/package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy frontend source
+COPY frontend/ ./
+
+# Build frontend
+RUN npm run build
+
+# ============================================================================
+# Stage 2: Backend Dependencies
+# ============================================================================
+FROM python:3.11-slim AS backend-deps
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libpq-dev \
+    libssl-dev \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy requirements
+COPY requirements.txt requirements-production.txt* ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Install production-specific requirements if they exist
+RUN if [ -f requirements-production.txt ]; then \
+        pip install --no-cache-dir -r requirements-production.txt; \
+    fi
+
+# ============================================================================
+# Stage 3: Production Image
+# ============================================================================
+FROM python:3.11-slim AS production
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r uatp && useradd -r -g uatp uatp
+
+# Create directories
+RUN mkdir -p /app /app/logs /app/ssl && \
+    chown -R uatp:uatp /app
+
+WORKDIR /app
+
+# Copy Python dependencies
+COPY --from=backend-deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=backend-deps /usr/local/bin /usr/local/bin
+
+# Copy frontend build
+COPY --from=frontend-builder --chown=uatp:uatp /app/frontend/.next ./frontend/.next
+COPY --from=frontend-builder --chown=uatp:uatp /app/frontend/public ./frontend/public
+COPY --from=frontend-builder --chown=uatp:uatp /app/frontend/package.json ./frontend/
+
+# Copy backend source
+COPY --chown=uatp:uatp src/ ./src/
+COPY --chown=uatp:uatp scripts/ ./scripts/
+COPY --chown=uatp:uatp alembic/ ./alembic/
+COPY --chown=uatp:uatp alembic.ini ./
+
+# Copy configuration files
+COPY --chown=uatp:uatp .env.production.example ./
+COPY --chown=uatp:uatp pyproject.toml setup.py ./
+
+# Create entrypoint script
+COPY --chown=uatp:uatp <<'EOF' /app/entrypoint.sh
+#!/bin/bash
+set -e
+
+# Wait for database
+if [ -n "$DATABASE_URL" ]; then
+    echo "Waiting for database..."
+    python3 -c "
+import time
+import asyncio
+import sys
+from sqlalchemy.ext.asyncio import create_async_engine
+
+async def wait_for_db():
+    max_retries = 30
+    for i in range(max_retries):
+        try:
+            engine = create_async_engine('$DATABASE_URL')
+            async with engine.begin() as conn:
+                await conn.execute('SELECT 1')
+            await engine.dispose()
+            print('Database is ready!')
+            return
+        except Exception as e:
+            print(f'Database not ready, retrying... ({i+1}/{max_retries})')
+            time.sleep(2)
+    print('Database connection failed after all retries')
+    sys.exit(1)
+
+asyncio.run(wait_for_db())
+"
+fi
+
+# Run database migrations
+echo "Running database migrations..."
+python3 -c "
+import asyncio
+import sys
+import os
+sys.path.append('.')
+from src.core.database import db
+
+async def run_migrations():
+    try:
+        class MockApp:
+            def __init__(self):
+                self.logger = None
+        
+        mock_app = MockApp()
+        db.init_app(mock_app)
+        await db.create_all()
+        print('Migrations completed successfully')
+    except Exception as e:
+        print(f'Migration failed: {e}')
+        sys.exit(1)
+
+asyncio.run(run_migrations())
+"
+
+# Start the application
+exec "$@"
+EOF
+
+RUN chmod +x /app/entrypoint.sh
+
+# Switch to non-root user
+USER uatp
+
+# Expose ports
+EXPOSE 8000 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Set entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# Default command - Use Hypercorn for production async ASGI
+CMD ["hypercorn", \
+     "src.api.server:app", \
+     "--bind", "0.0.0.0:8000", \
+     "--workers", "4", \
+     "--worker-class", "asyncio", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "info", \
+     "--graceful-timeout", "30", \
+     "--keep-alive", "5"]

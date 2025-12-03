@@ -1,0 +1,9 @@
+{
+  "backup_interval_hours": 24,
+  "retention_days": 30,
+  "backup_dir": "./backups",
+  "max_backup_attempts": 3,
+  "backup_on_startup": true,
+  "verify_backups": true,
+  "cleanup_on_startup": true
+}

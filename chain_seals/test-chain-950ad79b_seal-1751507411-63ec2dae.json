@@ -1,0 +1,10 @@
+{
+  "seal_id": "seal-1751507411-63ec2dae",
+  "chain_id": "test-chain-950ad79b",
+  "timestamp": "2025-07-03T01:50:11.328250+00:00",
+  "signer_id": "test-signer",
+  "chain_state_hash": "9551aa9ae6cd5d885610b0d39ca840ac1f5e182c7e144569ad5e3dd2d9e837c3",
+  "note": "Test seal for API verification",
+  "signature": "tilpUF3AHNxlKTANhdyU1kFgtBJbOv392b01yuP/kQ27MEUPYYfjkYFTxoGm9khYsih8uaaLCC8Ez3RjGfzeCw==",
+  "verify_key": "103e1f8a256e33fd3ca890a2f4b104b273cb389630e09b243a70ba167744a823"
+}

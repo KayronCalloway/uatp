@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reset UATP Onboarding</title>
+</head>
+<body>
+    <h1>Reset UATP Onboarding</h1>
+    <p>Click the button below to reset your onboarding state and see the banner again.</p>
+    <button onclick="resetOnboarding()">Reset Onboarding State</button>
+    <div id="status"></div>
+    
+    <script>
+        function resetOnboarding() {
+            // Clear all onboarding-related localStorage items
+            localStorage.removeItem('uatp_onboarding_completed');
+            localStorage.removeItem('uatp_onboarding_dismissed');
+            localStorage.removeItem('uatp_app_visited');
+            localStorage.removeItem('uatp_onboarding_progress');
+            localStorage.removeItem('uatp_onboarding_user_id');
+            
+            document.getElementById('status').innerHTML = '<p style="color: green;">✅ Onboarding state reset! Go to <a href="http://localhost:3000">http://localhost:3000</a> to see the banner.</p>';
+        }
+    </script>
+</body>
+</html>

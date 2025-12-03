@@ -1,0 +1,4 @@
+# file: /Users/kay/uatp-capsule-engine/src/integrations/openai_client.py
+# hypothesis_version: 6.135.26
+
+[150, '..', 'OPENAI_API_KEY', 'UATP_SIGNING_KEY', '__main__', 'attribution', 'capsules', 'content', 'gpt-4', 'role', 'system', 'user', 'w']

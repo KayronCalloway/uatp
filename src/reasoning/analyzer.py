@@ -1,0 +1,420 @@
+"""
+Conversation significance analyzer for real-time capsule generation.
+"""
+
+import asyncio
+import json
+import re
+from datetime import datetime
+from typing import Dict, List, Any, Optional
+
+
+async def analyze_conversation_significance(
+    messages: List[Dict], context: Dict
+) -> Dict:
+    """
+    Analyze the significance of a conversation to determine if it should be captured.
+
+    Args:
+        messages: List of conversation messages
+        context: Context information about the conversation
+
+    Returns:
+        Dictionary with significance analysis results
+    """
+
+    # Initialize significance factors
+    factors = []
+    reasoning_steps = []
+    base_score = 0.0
+
+    # Extract text content from messages
+    all_text = []
+    user_messages = []
+    ai_messages = []
+
+    for msg in messages:
+        content = msg.get("content", "")
+        all_text.append(content)
+
+        if msg.get("role") == "user":
+            user_messages.append(content)
+        elif msg.get("role") == "assistant":
+            ai_messages.append(content)
+
+    combined_text = " ".join(all_text)
+
+    # Factor 1: Code generation detection
+    code_patterns = [
+        r"```[\s\S]*?```",  # Code blocks
+        r"`[^`]+`",  # Inline code
+        r"def\s+\w+\s*\(",  # Function definitions
+        r"class\s+\w+",  # Class definitions
+        r"import\s+\w+",  # Imports
+        r"from\s+\w+\s+import",  # From imports
+        r"<[^>]+>",  # HTML/XML tags
+        r"function\s+\w+\s*\(",  # JavaScript functions
+    ]
+
+    code_matches = sum(
+        len(re.findall(pattern, combined_text, re.IGNORECASE))
+        for pattern in code_patterns
+    )
+    if code_matches > 0:
+        factors.append("Code generation detected")
+        reasoning_steps.append(
+            {
+                "step_type": "significance_detection",
+                "content": "Code generation detected",
+                "weight": 0.1,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        base_score += 0.1
+
+    # Factor 2: Learning/explanation content
+    learning_patterns = [
+        r"\bhow\s+to\b",
+        r"\bexplain\b",
+        r"\btutorial\b",
+        r"\bguide\b",
+        r"\bstep\s+by\s+step\b",
+        r"\bfor\s+example\b",
+        r"\bhere\'s\s+how\b",
+        r"\bto\s+implement\b",
+        r"\blet\s+me\s+show\b",
+    ]
+
+    learning_matches = sum(
+        len(re.findall(pattern, combined_text, re.IGNORECASE))
+        for pattern in learning_patterns
+    )
+    if learning_matches > 0:
+        factors.append("Learning/explanation content")
+        reasoning_steps.append(
+            {
+                "step_type": "significance_detection",
+                "content": "Learning/explanation content",
+                "weight": 0.15,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        base_score += 0.15
+
+    # Factor 3: Problem-solving discussion
+    problem_patterns = [
+        r"\bproblem\b",
+        r"\bissue\b",
+        r"\berror\b",
+        r"\bbug\b",
+        r"\bfix\b",
+        r"\bsolve\b",
+        r"\btroubleshoot\b",
+        r"\bdebug\b",
+        r"\bhelp\b",
+        r"\bstuck\b",
+    ]
+
+    problem_matches = sum(
+        len(re.findall(pattern, combined_text, re.IGNORECASE))
+        for pattern in problem_patterns
+    )
+    if problem_matches > 0:
+        factors.append("Problem-solving discussion")
+        reasoning_steps.append(
+            {
+                "step_type": "significance_detection",
+                "content": "Problem-solving discussion",
+                "weight": 0.2,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        base_score += 0.2
+
+    # Factor 4: UATP System-specific patterns (HIGH VALUE)
+    uatp_patterns = [
+        r"\buatp\b",
+        r"\buniversal\s+attribution\b",
+        r"\btrust\s+protocol\b",
+        r"\bcapsule\s+engine\b",
+        r"\battribution\s+system\b",
+        r"\bconversation\s+capture\b",
+        r"\blive\s+capture\b",
+        r"\bsignificance\s+score\b",
+        r"\bcross.platform\b",
+        r"\breal.time\s+monitoring\b",
+    ]
+
+    uatp_matches = sum(
+        len(re.findall(pattern, combined_text, re.IGNORECASE))
+        for pattern in uatp_patterns
+    )
+    if uatp_matches > 0:
+        weight = min(0.6 + (uatp_matches * 0.1), 0.9)  # 0.6-0.9 for UATP content
+        factors.append(f"UATP system discussion ({uatp_matches} references)")
+        reasoning_steps.append(
+            {
+                "step_type": "significance_detection",
+                "content": f"UATP system discussion with {uatp_matches} specific references",
+                "weight": weight,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        base_score += weight
+
+    # Factor 5: Technical depth - Enhanced for UATP system conversations
+    technical_patterns = [
+        r"\bapi\b",
+        r"\balgorithm\b",
+        r"\barchitecture\b",
+        r"\bframework\b",
+        r"\bdatabase\b",
+        r"\boptimization\b",
+        r"\bperformance\b",
+        r"\bsecurity\b",
+        r"\bscalability\b",
+        r"\bintegration\b",
+        r"\bsystem\b",
+        r"\bengine\b",
+        r"\bservice\b",
+        r"\bmodule\b",
+        r"\bcomponent\b",
+        r"\bprocess\b",
+        r"\btesting\b",
+        r"\bmonitoring\b",
+        r"\bdeployment\b",
+        r"\bproduction\b",
+    ]
+
+    technical_matches = sum(
+        len(re.findall(pattern, combined_text, re.IGNORECASE))
+        for pattern in technical_patterns
+    )
+    if technical_matches > 1:  # Lower threshold for technical depth
+        weight = (
+            0.4 if technical_matches > 5 else 0.25
+        )  # Higher weight for very technical content
+        factors.append(
+            f"Technical depth in response ({technical_matches} technical terms)"
+        )
+        reasoning_steps.append(
+            {
+                "step_type": "significance_detection",
+                "content": f"Technical depth in response ({technical_matches} technical terms)",
+                "weight": weight,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        base_score += weight
+
+    # Factor 6: User struggle/help request
+    help_patterns = [
+        r"\bcan\s+you\s+help\b",
+        r"\bi\s+need\s+help\b",
+        r"\bi\'m\s+stuck\b",
+        r"\bi\s+don\'t\s+understand\b",
+        r"\bwhat\s+am\s+i\s+doing\s+wrong\b",
+        r"\bcan\'t\s+figure\s+out\b",
+        r"\bdoesn\'t\s+work\b",
+        r"\bnot\s+working\b",
+    ]
+
+    help_matches = sum(
+        len(re.findall(pattern, combined_text, re.IGNORECASE))
+        for pattern in help_patterns
+    )
+    if help_matches > 0:
+        factors.append("User struggle/help request")
+        reasoning_steps.append(
+            {
+                "step_type": "significance_detection",
+                "content": "User struggle/help request",
+                "weight": 0.15,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        base_score += 0.15
+
+    # Factor 7: Debugging content
+    debug_patterns = [
+        r"\berror\s+message\b",
+        r"\bstack\s+trace\b",
+        r"\bexception\b",
+        r"\bdebugging\b",
+        r"\btrace\b",
+        r"\blog\b",
+        r"\bconsole\b",
+        r"\bbreakpoint\b",
+    ]
+
+    debug_matches = sum(
+        len(re.findall(pattern, combined_text, re.IGNORECASE))
+        for pattern in debug_patterns
+    )
+    if debug_matches > 0:
+        factors.append("Debugging content detected")
+        reasoning_steps.append(
+            {
+                "step_type": "significance_detection",
+                "content": "Debugging content detected",
+                "weight": 0.1,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        base_score += 0.1
+
+    # Factor 8: Workflow improvement
+    workflow_patterns = [
+        r"\bworkflow\b",
+        r"\bautomation\b",
+        r"\boptimize\b",
+        r"\bimprove\b",
+        r"\befficient\b",
+        r"\bbest\s+practice\b",
+        r"\bproductivity\b",
+        r"\bstreamline\b",
+    ]
+
+    workflow_matches = sum(
+        len(re.findall(pattern, combined_text, re.IGNORECASE))
+        for pattern in workflow_patterns
+    )
+    if workflow_matches > 0:
+        factors.append("Workflow improvement discussion")
+        reasoning_steps.append(
+            {
+                "step_type": "significance_detection",
+                "content": "Workflow improvement discussion",
+                "weight": 0.3,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        base_score += 0.3
+
+    # Factor 9: Performance optimization
+    performance_patterns = [
+        r"\bperformance\b",
+        r"\boptimization\b",
+        r"\bspeed\b",
+        r"\bfaster\b",
+        r"\befficiency\b",
+        r"\bmemory\b",
+        r"\bcpu\b",
+        r"\bcaching\b",
+    ]
+
+    performance_matches = sum(
+        len(re.findall(pattern, combined_text, re.IGNORECASE))
+        for pattern in performance_patterns
+    )
+    if performance_matches > 0:
+        factors.append("Performance optimization")
+        reasoning_steps.append(
+            {
+                "step_type": "significance_detection",
+                "content": "Performance optimization",
+                "weight": 0.35,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        base_score += 0.35
+
+    # Factor 10: Platform-specific content
+    platform = context.get("platform", "").lower()
+    if platform == "claude":
+        claude_patterns = [
+            r"\bclaude\b",
+            r"\banthropic\b",
+            r"\bconstitutional\s+ai\b",
+        ]
+        claude_matches = sum(
+            len(re.findall(pattern, combined_text, re.IGNORECASE))
+            for pattern in claude_patterns
+        )
+        if claude_matches > 0:
+            factors.append("Claude-specific content")
+            reasoning_steps.append(
+                {
+                    "step_type": "significance_detection",
+                    "content": "Claude-specific content",
+                    "weight": 0.2,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+            base_score += 0.2
+
+    elif platform == "openai":
+        openai_patterns = [
+            r"\bgpt\b",
+            r"\bopenai\b",
+            r"\bchatgpt\b",
+            r"\bapi\s+key\b",
+        ]
+        openai_matches = sum(
+            len(re.findall(pattern, combined_text, re.IGNORECASE))
+            for pattern in openai_patterns
+        )
+        if openai_matches > 0:
+            factors.append("OpenAI-specific content")
+            reasoning_steps.append(
+                {
+                    "step_type": "significance_detection",
+                    "content": "OpenAI-specific content",
+                    "weight": 0.2,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+            base_score += 0.2
+
+    # Factor 11: Conversation length bonus
+    conversation_length = context.get("conversation_length", 0)
+    if conversation_length > 5:
+        factors.append("Extended conversation")
+        reasoning_steps.append(
+            {
+                "step_type": "significance_detection",
+                "content": "Extended conversation",
+                "weight": 0.1,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        base_score += 0.1
+
+    # Calculate final confidence score
+    confidence = min(0.95, max(0.5, base_score / 2.0))  # Normalize to 0.5-0.95 range
+
+    return {
+        "score": base_score,
+        "confidence": confidence,
+        "factors": factors,
+        "reasoning_steps": reasoning_steps,
+        "platform": platform,
+        "conversation_length": conversation_length,
+        "analysis_timestamp": datetime.now().isoformat(),
+    }
+
+
+def extract_conversation_summary(messages: List[Dict]) -> str:
+    """Extract a summary of the conversation for capsule content."""
+    if not messages:
+        return "Empty conversation"
+
+    # Get the first user message as the main topic
+    user_messages = [msg for msg in messages if msg.get("role") == "user"]
+    if user_messages:
+        first_user_msg = user_messages[0].get("content", "")
+        # Truncate to reasonable length
+        if len(first_user_msg) > 200:
+            return first_user_msg[:200] + "..."
+        return first_user_msg
+
+    return "AI conversation"
+
+
+class ReasoningAnalyzer:
+    """Compatibility class for existing reasoning analysis."""
+
+    @staticmethod
+    async def analyze_significance(messages: List[Dict], context: Dict) -> Dict:
+        """Analyze conversation significance."""
+        return await analyze_conversation_significance(messages, context)

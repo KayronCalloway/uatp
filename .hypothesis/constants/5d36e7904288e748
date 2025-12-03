@@ -1,0 +1,4 @@
+# file: /Users/kay/uatp-capsule-engine/src/capsule_schema.py
+# hypothesis_version: 6.135.26
+
+['+00:00', 'Capsule', 'Z', 'before', 'hash_', 'input', 'metadata_', 'timestamp', 'type']

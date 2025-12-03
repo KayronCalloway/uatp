@@ -1,0 +1,4 @@
+# file: /Users/kay/uatp-capsule-engine/src/api/server.py
+# hypothesis_version: 6.135.26
+
+[9090, '--debug', '--host', '--port', '127.0.0.1', 'CACHE_ENABLED', 'Cache disconnected.', 'Enable debug mode', 'Host to bind to', 'Port to listen on', 'UATP_API_PORT', '__main__', 'store_true']

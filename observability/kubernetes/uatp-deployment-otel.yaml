@@ -1,0 +1,396 @@
+# UATP Deployment with OpenTelemetry Auto-Instrumentation
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uatp-api
+  namespace: uatp-prod
+  labels:
+    app: uatp-api
+    environment: production
+    version: v7.0.0
+    observability: enabled
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: uatp-api
+      environment: production
+  template:
+    metadata:
+      labels:
+        app: uatp-api
+        environment: production
+        version: v7.0.0
+        observability: enabled
+      annotations:
+        # Enable OpenTelemetry auto-instrumentation
+        instrumentation.opentelemetry.io/inject-python: "uatp-prod/uatp-auto-instrumentation"
+        # Prometheus scraping (for backward compatibility during migration)
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+        # OpenTelemetry metrics
+        opentelemetry.io/scrape: "true"
+        opentelemetry.io/port: "8889"
+        opentelemetry.io/path: "/metrics"
+    spec:
+      serviceAccountName: uatp-api-service-account
+      containers:
+      - name: uatp-api
+        image: uatp-capsule-engine:v7.0.0
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 8080
+          name: health
+        - containerPort: 9090
+          name: metrics-legacy
+        - containerPort: 8889
+          name: metrics-otel
+        env:
+        - name: PORT
+          value: "8000"
+        # OpenTelemetry configuration
+        - name: OTEL_SERVICE_NAME
+          value: "uatp-capsule-engine"
+        - name: OTEL_SERVICE_VERSION
+          value: "7.0.0"
+        - name: OTEL_DEPLOYMENT_ENVIRONMENT
+          value: "production"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://uatp-otel-collector:4317"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: OTEL_PROPAGATORS
+          value: "tracecontext,baggage,b3,jaeger"
+        - name: OTEL_TRACES_SAMPLER
+          value: "parentbased_traceidratio"
+        - name: OTEL_TRACES_SAMPLER_ARG
+          value: "0.1"
+        # UATP-specific configuration
+        - name: UATP_OBSERVABILITY_ENABLED
+          value: "true"
+        - name: UATP_TRACING_ENABLED
+          value: "true"
+        - name: UATP_METRICS_ENABLED
+          value: "true"
+        - name: UATP_STRUCTURED_LOGGING_ENABLED
+          value: "true"
+        # Kubernetes context
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: K8S_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: K8S_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: K8S_CLUSTER_NAME
+          value: "uatp-production"
+        envFrom:
+        - configMapRef:
+            name: uatp-config
+        - secretRef:
+            name: uatp-secrets
+        - secretRef:
+            name: observability-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+            ephemeral-storage: "2Gi"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+            ephemeral-storage: "4Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: health
+          initialDelaySeconds: 45  # Increased for OpenTelemetry initialization
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: health
+          initialDelaySeconds: 15  # Increased for OpenTelemetry initialization
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: temp-volume
+          mountPath: /tmp
+        - name: logs-volume
+          mountPath: /var/log/uatp
+        - name: otel-data
+          mountPath: /tmp/otel-data
+      # OpenTelemetry Collector sidecar (optional for advanced scenarios)
+      - name: otel-agent
+        image: otel/opentelemetry-collector-contrib:0.88.0
+        command:
+        - "/otelcol-contrib"
+        - "--config=/etc/otel/config.yaml"
+        env:
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: K8S_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: K8S_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - containerPort: 4317
+          name: otlp-grpc
+        - containerPort: 4318
+          name: otlp-http
+        - containerPort: 8888
+          name: metrics
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        volumeMounts:
+        - name: otel-agent-config
+          mountPath: /etc/otel
+        - name: otel-data
+          mountPath: /tmp/otel-data
+      volumes:
+      - name: temp-volume
+        emptyDir: {}
+      - name: logs-volume
+        emptyDir: {}
+      - name: otel-data
+        emptyDir: {}
+      - name: otel-agent-config
+        configMap:
+          name: otel-agent-config
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - uatp-api
+              topologyKey: kubernetes.io/hostname
+
+---
+# ServiceAccount for UATP API
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: uatp-api-service-account
+  namespace: uatp-prod
+  labels:
+    app: uatp-api
+
+---
+# ClusterRole for UATP API (observability permissions)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: uatp-api-observability
+rules:
+- apiGroups: [""]
+  resources: ["pods", "nodes", "services"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+
+---
+# ClusterRoleBinding for UATP API
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: uatp-api-observability
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: uatp-api-observability
+subjects:
+- kind: ServiceAccount
+  name: uatp-api-service-account
+  namespace: uatp-prod
+
+---
+# OpenTelemetry Agent ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-agent-config
+  namespace: uatp-prod
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    
+    processors:
+      memory_limiter:
+        limit_mib: 100
+      batch:
+        timeout: 1s
+        send_batch_size: 512
+      resource:
+        attributes:
+          - key: k8s.pod.name
+            from_attribute: k8s.pod.name
+            action: upsert
+          - key: k8s.node.name
+            from_attribute: k8s.node.name
+            action: upsert
+    
+    exporters:
+      otlp:
+        endpoint: uatp-otel-collector:4317
+        tls:
+          insecure: true
+      logging:
+        loglevel: info
+    
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, resource, batch]
+          exporters: [otlp, logging]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, resource, batch]
+          exporters: [otlp, logging]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, resource, batch]
+          exporters: [otlp, logging]
+
+---
+# Observability Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: observability-secrets
+  namespace: uatp-prod
+type: Opaque
+stringData:
+  # These would be populated with actual values
+  datadog-api-key: ""
+  newrelic-license-key: ""
+  grafana-cloud-token: ""
+  honeycomb-api-key: ""
+
+---
+# Updated Service with OpenTelemetry metrics port
+apiVersion: v1
+kind: Service
+metadata:
+  name: uatp-api-service
+  namespace: uatp-prod
+  labels:
+    app: uatp-api
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+    opentelemetry.io/scrape: "true"
+    opentelemetry.io/port: "8889"
+    opentelemetry.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: http
+    protocol: TCP
+  - name: health
+    port: 8080
+    targetPort: health
+    protocol: TCP
+  - name: metrics-legacy
+    port: 9090
+    targetPort: metrics-legacy
+    protocol: TCP
+  - name: metrics-otel
+    port: 8889
+    targetPort: metrics-otel
+    protocol: TCP
+  selector:
+    app: uatp-api
+    environment: production
+
+---
+# ServiceMonitor for Prometheus (legacy support during migration)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: uatp-api-legacy-metrics
+  namespace: uatp-prod
+  labels:
+    app: uatp-api
+    monitoring: legacy
+spec:
+  selector:
+    matchLabels:
+      app: uatp-api
+  endpoints:
+  - port: metrics-legacy
+    interval: 30s
+    path: /metrics
+    scheme: http
+    honorLabels: true
+
+---
+# ServiceMonitor for OpenTelemetry metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: uatp-api-otel-metrics
+  namespace: uatp-prod
+  labels:
+    app: uatp-api
+    monitoring: opentelemetry
+spec:
+  selector:
+    matchLabels:
+      app: uatp-api
+  endpoints:
+  - port: metrics-otel
+    interval: 15s
+    path: /metrics
+    scheme: http
+    honorLabels: true

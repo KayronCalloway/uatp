@@ -1,0 +1,388 @@
+Metadata-Version: 2.4
+Name: uatp-capsule-engine
+Version: 0.1.0
+Summary: UATP Capsule Engine: schema-driven, cryptographically sealed capsule chains for agent trust and auditability.
+Author-email: Kay <your@email.com>
+License: MIT
+Project-URL: Homepage, https://github.com/username/uatp-capsule-engine
+Project-URL: Bug Tracker, https://github.com/username/uatp-capsule-engine/issues
+Project-URL: Documentation, https://username.github.io/uatp-capsule-engine
+Keywords: uatp,agent,trust,protocol,capsule,ai,cryptography
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Security :: Cryptography
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: pynacl>=1.5.0
+Requires-Dist: streamlit>=1.20.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: flask>=2.0.0
+Requires-Dist: flask-cors>=3.0.0
+Requires-Dist: flask-limiter>=3.0.0
+Requires-Dist: requests>=2.25.0
+Requires-Dist: gunicorn>=20.0.0
+Requires-Dist: tabulate>=0.8.0
+Requires-Dist: networkx>=2.5.0
+Requires-Dist: graphviz>=0.17.0
+Requires-Dist: openai>=1.0.0
+Provides-Extra: test
+Requires-Dist: pytest>=7.0.0; extra == "test"
+Requires-Dist: hypothesis>=6.0.0; extra == "test"
+Requires-Dist: pytest-cov>=4.0.0; extra == "test"
+Provides-Extra: dev
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: mypy>=0.910; extra == "dev"
+Requires-Dist: isort>=5.10.0; extra == "dev"
+Requires-Dist: flake8>=4.0.0; extra == "dev"
+Provides-Extra: docs
+Requires-Dist: mkdocs>=1.3.0; extra == "docs"
+Requires-Dist: mkdocs-material>=8.3.0; extra == "docs"
+Provides-Extra: all
+Requires-Dist: uatp-capsule-engine[dev,docs,test]; extra == "all"
+
+al m# UATP Capsule Engine
+
+This project implements the Unified Agent Trust Protocol (UATP) Capsule Engine, providing a production-ready system for creating, storing, verifying, and visualizing AI agent interaction capsules. The engine fully supports both UATP 6.0 and UATP 7.0 protocols.
+
+## Features
+
+### Core Functionality
+- **Schema-driven capsule creation and validation** (Pydantic + JSON Schema)
+- **Cryptographically anchored capsule chains** (SHA256 + Ed25519 signatures)
+- **Modular, extensible Python codebase**
+- **Agent wrappers for LLM integration**
+- **Capsule verification and chain integrity checks**
+
+### Enhanced API (v2.0)
+- **REST API with comprehensive endpoint coverage**
+- **Authentication with role-based access control**
+- **Advanced rate limiting** (configurable per endpoint and API key)
+- **Efficient compression** (~90% reduction in payload size for large responses)
+- **Chain sealing** for legal admissibility and verification
+- **Health monitoring** with detailed status reporting
+
+### Visualization & Analysis
+- **Interactive Streamlit visualizer** with fork visualization and tree display
+- **Capsule Quality Scoring System (CQSS)** for integrity assessment
+- **Detailed chain statistics and metrics**
+- **Expandable capsule inspection** for detailed analysis
+
+### Developer Experience
+- **Configuration via environment variables**
+- **Comprehensive automated test suite**
+- **Clean separation of concerns** between modules
+- **Graceful error handling and reporting**
+
+## UATP 7.0 Features
+
+### Enhanced Capsule Types
+- **Governance Capsules**: Policy decisions with stakeholder voting and implementation tracking
+- **Economic Capsules**: Value attribution and dividend calculation for multi-agent contributions
+- **Consent Capsules**: Explicit permission tracking with duration and revocation support
+- **Trust Renewal Capsules**: Periodic trust verification and credential re-validation
+- **Value Inception Capsules**: Ethical justification and value alignment decisions
+- **Temporal Signature Capsules**: Time-bound validity for knowledge claims
+- **Remix Capsules**: Attribution for derivative content creation
+- **Self-Hallucination Capsules**: Records self-identified factual fabrication or uncertainty
+- **Simulated Malice Capsules**: Red-team and adversarial testing documentation
+- **Implicit Consent Capsules**: Tracking of implied consent through user behavior
+- **Capsule Expiration**: Support for time-based and condition-based validity periods
+
+### Improved Visualization
+- **Interactive multi-tab displays** for complex capsule types
+- **Rich governance visualization** with policy details, voting results and implementation tracking
+- **Visual timeline components** for temporal data
+- **Stakeholder vote visualization** with distribution analysis
+- **Dynamic data formatting** for various content types (JSON, structured fields, etc.)
+
+### Advanced Verification
+- **Specialized verification logic** for each UATP 7.0 capsule type
+- **Chain integrity verification** with support for complex relationships
+- **Cryptographic validation** of stakeholder votes and governance decisions
+
+## Directory Structure
+
+```
+uatp-capsule-engine/
+├── api/                # API server and endpoints
+│   ├── server.py        # Flask API implementation
+│   ├── chain_sealer.py  # Chain sealing functionality
+│   ├── test_enhanced_api.py # Comprehensive API test suite
+│   └── README.md        # API documentation
+├── capsules/          # Core capsule components
+│   ├── base_capsule.py  # Capsule data model
+│   ├── capsule_factory.py # Factory for creating capsules
+│   └── schema.json      # JSON schema definition
+├── cqss/              # Capsule Quality Scoring System
+│   └── scorer.py        # CQSS implementation
+├── engine/            # Capsule engine logic
+│   ├── capsule_engine.py # Main engine implementation
+│   ├── cqss.py          # Legacy CQSS implementation
+│   └── storage.py       # Storage interface
+├── crypto_utils.py    # Cryptographic functions
+├── visualizer.py      # Streamlit visualizer with fork support
+├── capsule_chain.jsonl # Main capsule chain storage
+├── .env               # Environment configuration
+└── README.md          # This file
+```
+
+## Capsule Schema
+
+The UATP 6.0 capsule schema is defined in `capsules/schema.json` and implemented in `capsules/base_capsule.py` using Pydantic for strict type safety and validation.
+
+### Capsule Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `schema_version` | string | Yes | Schema version (default: "1.0") |
+| `capsule_id` | string | Yes | UUID for the capsule |
+| `capsule_type` | string | Yes | Type of capsule (e.g., "Introspective", "Refusal", "Joint") |
+| `agent_id` | string | Yes | Identifier for the agent that created the capsule |
+| `timestamp` | string | Yes | ISO 8601 timestamp of capsule creation |
+| `previous_capsule_id` | string | No | ID of the parent capsule (enables chain linking) |
+| `confidence` | float | Yes | Agent confidence score (0.0-1.0) |
+| `reasoning_trace` | array | Yes | List of reasoning steps taken by the agent |
+| `signature` | string | Yes | Ed25519 cryptographic signature |
+| `hash` | string | No | SHA-256 hash of the capsule content |
+| `metadata` | object | Yes | Additional metadata (can include verify keys) |
+| `human_signature` | string | No | Optional human signature for joint capsules |
+| `agreement_terms` | string | No | Terms of agreement for joint capsules |
+| `reason_for_rejection` | string | No | Explanation for refusal capsules |
+| `ethical_policy_id` | string | No | Reference to ethical policy applied |
+| `sensor_capture_data` | any | No | Optional sensor or context data |
+
+### Chain Structure
+
+Capsules form a tree structure where:
+- Each capsule has a unique `capsule_id`
+- Capsules reference their parent via `previous_capsule_id`
+- Multiple capsules can reference the same parent (creating forks)
+- The chain can be verified cryptographically for integrity
+
+## Configuration
+
+Set the following environment variables (see `.env.example`):
+
+### Required Environment Variables
+- `UATP_AGENT_ID`: Unique agent ID for capsule creation and signing
+- `UATP_SIGNING_KEY`: Ed25519 private key in hex format (for cryptographic operations)
+
+### Optional Environment Variables
+- `UATP_CHAIN_PATH`: Path to chain file (defaults to `capsule_chain.jsonl`)
+- `UATP_API_PORT`: Port for the API server (default: 5006)
+- `FLASK_DEBUG`: Enable Flask debug mode (true/false)
+- `UATP_COMPRESSED_STORAGE`: Enable/disable capsule compression (true/false)
+
+### API Keys Configuration
+- `UATP_API_KEYS`: JSON string mapping API keys to roles, format:
+  ```json
+  {"key1": ["read", "write"], "key2": ["read"]}
+  ```
+- `UATP_TEST_API_KEY`: API key used for automated testing
+
+### Setup Instructions
+1. Copy `.env.example` to `.env` and fill in your values for local development
+2. Generate a signing key with PyNaCl:
+   ```python
+   from nacl.signing import SigningKey
+   print(SigningKey.generate().encode().hex())
+   ```
+3. The public verify key is automatically included in capsule metadata for verification
+4. For production, ensure all environment variables are securely set in your deployment environment
+
+## Usage Guide
+
+### Starting the API Server
+
+```sh
+# Start the server on the default port (5006)
+python -m api.server
+
+# Start the server on a custom port
+UATP_API_PORT=8000 python -m api.server
+```
+
+### Running the Visualizer
+
+```sh
+# Launch the Streamlit visualizer
+streamlit run visualizer.py
+```
+
+### CLI Usage
+
+All commands can be run via `python cli.py ...` or, if installed, `uatp-capsule ...`
+
+```sh
+# Create a new capsule
+python cli.py create-capsule --type Introspective --confidence 0.95 --reasoning-trace step1,step2 --metadata '{"foo": "bar"}'
+
+# Verify the entire chain
+python cli.py verify-chain
+
+# Compute CQSS scores
+python cli.py compute-cqss
+
+# Export chain to different formats
+python cli.py export --format json --output chain.json
+python cli.py export --format csv --output chain.csv
+
+# Launch the visualizer
+python cli.py visualize
+```
+
+### API Usage Examples
+
+```bash
+# Health check
+curl http://localhost:5006/health
+
+# Get all capsules (with authentication)
+curl -H "X-API-Key: your_api_key_here" http://localhost:5006/capsules
+
+# Get compressed capsules
+curl -H "X-API-Key: your_api_key_here" http://localhost:5006/capsules?compress=true
+
+# Create a chain seal
+curl -X POST -H "X-API-Key: your_api_key_here" http://localhost:5006/chain/seal
+
+# Get capsule statistics
+curl -H "X-API-Key: your_api_key_here" http://localhost:5006/capsules/stats
+```
+
+## Usage Examples
+
+### Python API
+```python
+from engine.capsule_engine import CapsuleEngine
+engine = CapsuleEngine()
+capsule = engine.create_capsule(
+    capsule_type="Introspective",
+    confidence=0.95,
+    reasoning_trace=["step1", "step2"],
+    metadata={"example": True}
+)
+engine.log_capsule(capsule)
+```
+
+## Key Components
+
+### Capsule Quality Scoring System (CQSS)
+
+The CQSS provides an objective measure of capsule quality based on multiple factors:
+
+- **Confidence Score:** Derived from the agent's self-reported confidence
+- **Reasoning Depth:** Evaluates the comprehensiveness of the reasoning trace
+- **Ethical Policy Adherence:** Checks for presence of ethical guidelines
+- **Total Score:** Weighted combination of individual metrics (0-100)
+
+Scores are visualized in the Streamlit interface and can be used to assess chain integrity and reliability.
+
+### API Server
+
+The enhanced API provides secure access to the UATP Capsule Engine:
+
+- **Authentication:** Role-based API key system
+- **Rate Limiting:** Configurable limits per endpoint and API key
+- **Compression:** Efficient payload compression for large responses
+- **Chain Sealing:** Cryptographic sealing for legal admissibility
+
+See `api/README.md` for complete endpoint documentation.
+
+### Visualizer
+
+The Streamlit-based visualizer provides an interactive interface for exploring capsule chains:
+
+- **Tree Visualization:** Displays the complete chain structure including forks
+- **CQSS Integration:** Shows quality scores for each capsule
+- **Expandable Details:** Interactive inspection of capsule content
+- **Responsive Layout:** Adapts to different screen sizes and chain complexities
+
+## Security Notes
+
+### Cryptographic Security
+- **Signing Keys**: Must be securely stored (never commit to source control)
+- **Ed25519 Signatures**: Industry-standard cryptographic signing algorithm
+- **Verification**: Each capsule includes the public verify key in metadata for auditability
+- **Chain Integrity**: Capsules are hash-linked and signed; verification fails if tampered
+
+### API Security
+- **API Key Authentication**: Role-based access control system
+- **Rate Limiting**: Protection against brute force and DoS attacks
+- **CORS Configuration**: Controlled cross-origin resource sharing
+- **Input Validation**: Strict schema validation on all inputs
+
+### Production Recommendations
+- **Key Rotation**: Implement regular key rotation procedures
+- **TLS/HTTPS**: Always deploy behind HTTPS in production
+- **Monitoring**: Add logging and alerting for security events
+- **Principle of Least Privilege**: Configure minimal necessary permissions
+
+## Testing
+
+The project includes comprehensive automated tests for all components:
+
+### API Testing
+
+```sh
+python -m api.test_enhanced_api --port 5006
+```
+
+This test suite verifies:
+- API authentication
+- Compression functionality
+- Rate limiting behavior
+- Chain sealing and verification
+- Capsule statistics endpoints
+
+### All Tests
+
+```sh
+pip install .[test]
+pytest
+```
+
+## Deployment
+
+This system is designed to be deployable in various environments:
+
+### Local Development
+- Follow the setup instructions above
+- Use `.env` file for configuration
+
+### Production Deployment
+- Use environment variables for configuration
+- Deploy behind a reverse proxy (nginx, etc.)
+- Set up proper TLS/HTTPS
+- Configure appropriate logging
+- Use a production-ready WSGI server (gunicorn, uwsgi)
+
+## Maintenance and Support
+
+### Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Add your changes
+4. Run the test suite
+5. Submit a pull request
+
+### Versioning
+This project follows Semantic Versioning (SemVer).
+
+Property-based tests (with Hypothesis) are included for schema and engine robustness.
+Tests cover capsule creation, signing, chain logging/loading, and signature verification.
+
+## Next Steps
+- Prototype CQSS simulation and richer visualizer features
+- Add packaging (pyproject.toml/setup.py) for pip install
+- Expand property-based and edge-case testing
+- Integrate multi-agent and governance features
+- Add visualization/dashboard (future)

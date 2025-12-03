@@ -1,0 +1,826 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: multi-region-config
+  namespace: uatp-prod
+data:
+  regions.yaml: |
+    regions:
+      us-east-1:
+        name: "US East (N. Virginia)"
+        primary: true
+        zones:
+          - us-east-1a
+          - us-east-1b
+          - us-east-1c
+        database:
+          endpoint: "uatp-db-us-east-1.cluster-xyz.us-east-1.rds.amazonaws.com"
+          read_replicas: 2
+        storage:
+          bucket: "uatp-storage-us-east-1"
+          cdn: "d123456789.cloudfront.net"
+        compliance:
+          - gdpr
+          - ccpa
+          - sox
+
+      us-west-2:
+        name: "US West (Oregon)"
+        primary: false
+        zones:
+          - us-west-2a
+          - us-west-2b
+          - us-west-2c
+        database:
+          endpoint: "uatp-db-us-west-2.cluster-xyz.us-west-2.rds.amazonaws.com"
+          read_replicas: 2
+        storage:
+          bucket: "uatp-storage-us-west-2"
+          cdn: "d987654321.cloudfront.net"
+        compliance:
+          - ccpa
+          - sox
+
+      eu-west-1:
+        name: "EU (Ireland)"
+        primary: false
+        zones:
+          - eu-west-1a
+          - eu-west-1b
+          - eu-west-1c
+        database:
+          endpoint: "uatp-db-eu-west-1.cluster-xyz.eu-west-1.rds.amazonaws.com"
+          read_replicas: 2
+        storage:
+          bucket: "uatp-storage-eu-west-1"
+          cdn: "d111222333.cloudfront.net"
+        compliance:
+          - gdpr
+          - dpa
+
+      ap-southeast-1:
+        name: "Asia Pacific (Singapore)"
+        primary: false
+        zones:
+          - ap-southeast-1a
+          - ap-southeast-1b
+          - ap-southeast-1c
+        database:
+          endpoint: "uatp-db-ap-southeast-1.cluster-xyz.ap-southeast-1.rds.amazonaws.com"
+          read_replicas: 1
+        storage:
+          bucket: "uatp-storage-ap-southeast-1"
+          cdn: "d444555666.cloudfront.net"
+        compliance:
+          - pdpa
+          - gdpr
+
+    routing:
+      geo_routing:
+        - source_region: "us"
+          target_region: "us-east-1"
+          fallback_region: "us-west-2"
+        - source_region: "eu"
+          target_region: "eu-west-1"
+          fallback_region: "us-east-1"
+        - source_region: "asia"
+          target_region: "ap-southeast-1"
+          fallback_region: "us-east-1"
+
+      latency_routing:
+        enabled: true
+        health_check_interval: 30
+        failover_threshold: 3
+
+      cross_region_replication:
+        enabled: true
+        replication_lag_threshold: 5
+        conflict_resolution: "last_write_wins"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: region-coordinator
+  namespace: uatp-prod
+  labels:
+    app: region-coordinator
+spec:
+  selector:
+    app: region-coordinator
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: grpc
+    port: 9090
+    targetPort: 9090
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: region-coordinator
+  namespace: uatp-prod
+  labels:
+    app: region-coordinator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: region-coordinator
+  template:
+    metadata:
+      labels:
+        app: region-coordinator
+    spec:
+      containers:
+      - name: coordinator
+        image: alpine:3.18
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Install required tools
+          apk add --no-cache python3 py3-pip curl
+          pip3 install fastapi uvicorn pydantic asyncio aiohttp
+
+          # Start region coordinator service
+          python3 /app/region_coordinator.py
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: grpc
+        env:
+        - name: CURRENT_REGION
+          value: "us-east-1"
+        - name: REGION_CONFIG_PATH
+          value: "/config/regions.yaml"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: uatp-secrets
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: uatp-secrets
+              key: REDIS_URL
+        volumeMounts:
+        - name: region-config
+          mountPath: /config
+        - name: coordinator-scripts
+          mountPath: /app
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: region-config
+        configMap:
+          name: multi-region-config
+      - name: coordinator-scripts
+        configMap:
+          name: coordinator-scripts
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coordinator-scripts
+  namespace: uatp-prod
+data:
+  region_coordinator.py: |
+    #!/usr/bin/env python3
+    import os
+    import asyncio
+    import json
+    import time
+    import yaml
+    from datetime import datetime
+    from typing import Dict, List, Optional, Any
+    from dataclasses import dataclass
+    from enum import Enum
+
+    from fastapi import FastAPI, HTTPException, Request
+    from fastapi.responses import JSONResponse
+    import uvicorn
+    import aiohttp
+
+    app = FastAPI(title="UATP Region Coordinator")
+
+    class RegionStatus(Enum):
+        ACTIVE = "active"
+        DEGRADED = "degraded"
+        UNAVAILABLE = "unavailable"
+
+    @dataclass
+    class RegionHealth:
+        region: str
+        status: RegionStatus
+        latency: float
+        last_check: datetime
+        error_rate: float
+        capacity_usage: float
+
+    class RegionCoordinator:
+        def __init__(self):
+            self.current_region = os.getenv("CURRENT_REGION", "us-east-1")
+            self.config_path = os.getenv("REGION_CONFIG_PATH", "/config/regions.yaml")
+            self.region_config = {}
+            self.region_health = {}
+            self.request_routing = {}
+
+        async def initialize(self):
+            """Initialize region coordinator"""
+            await self.load_config()
+            await self.start_health_monitoring()
+
+        async def load_config(self):
+            """Load region configuration"""
+            try:
+                with open(self.config_path, 'r') as f:
+                    self.region_config = yaml.safe_load(f)
+                print(f"Loaded config for {len(self.region_config.get('regions', {}))} regions")
+            except Exception as e:
+                print(f"Failed to load config: {e}")
+
+        async def start_health_monitoring(self):
+            """Start health monitoring for all regions"""
+            asyncio.create_task(self.health_monitor_loop())
+
+        async def health_monitor_loop(self):
+            """Continuous health monitoring loop"""
+            while True:
+                await self.check_all_regions_health()
+                await asyncio.sleep(30)  # Check every 30 seconds
+
+        async def check_all_regions_health(self):
+            """Check health of all regions"""
+            regions = self.region_config.get('regions', {})
+
+            for region_name, region_info in regions.items():
+                health = await self.check_region_health(region_name, region_info)
+                self.region_health[region_name] = health
+
+        async def check_region_health(self, region_name: str, region_info: Dict[str, Any]) -> RegionHealth:
+            """Check health of a specific region"""
+            start_time = time.time()
+
+            try:
+                # Mock health check - in reality, this would check actual endpoints
+                await asyncio.sleep(0.01)  # Simulate network call
+
+                latency = (time.time() - start_time) * 1000  # ms
+                status = RegionStatus.ACTIVE
+                error_rate = 0.0
+                capacity_usage = 45.0  # Mock capacity
+
+                # Simulate some regions being degraded
+                if region_name == "ap-southeast-1":
+                    status = RegionStatus.DEGRADED
+                    error_rate = 0.02
+                    capacity_usage = 85.0
+
+                return RegionHealth(
+                    region=region_name,
+                    status=status,
+                    latency=latency,
+                    last_check=datetime.now(),
+                    error_rate=error_rate,
+                    capacity_usage=capacity_usage
+                )
+
+            except Exception as e:
+                return RegionHealth(
+                    region=region_name,
+                    status=RegionStatus.UNAVAILABLE,
+                    latency=float('inf'),
+                    last_check=datetime.now(),
+                    error_rate=1.0,
+                    capacity_usage=100.0
+                )
+
+        async def route_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
+            """Route request to appropriate region"""
+
+            # Extract routing hints
+            user_location = request_data.get('user_location', 'us')
+            data_locality = request_data.get('data_locality', [])
+            compliance_requirements = request_data.get('compliance_requirements', [])
+
+            # Find best region
+            best_region = await self.find_best_region(
+                user_location, data_locality, compliance_requirements
+            )
+
+            # Route the request
+            if best_region != self.current_region:
+                # Forward to another region
+                return await self.forward_request(best_region, request_data)
+            else:
+                # Process locally
+                return await self.process_request_locally(request_data)
+
+        async def find_best_region(self,
+                                  user_location: str,
+                                  data_locality: List[str],
+                                  compliance_requirements: List[str]) -> str:
+            """Find the best region for processing the request"""
+
+            # Get geo routing rules
+            geo_routing = self.region_config.get('routing', {}).get('geo_routing', [])
+
+            # Find primary region for user location
+            primary_region = None
+            fallback_region = None
+
+            for rule in geo_routing:
+                if rule['source_region'] == user_location:
+                    primary_region = rule['target_region']
+                    fallback_region = rule['fallback_region']
+                    break
+
+            if not primary_region:
+                primary_region = "us-east-1"  # Default
+
+            # Check if primary region is healthy
+            primary_health = self.region_health.get(primary_region)
+            if primary_health and primary_health.status == RegionStatus.ACTIVE:
+                return primary_region
+
+            # Check fallback region
+            if fallback_region:
+                fallback_health = self.region_health.get(fallback_region)
+                if fallback_health and fallback_health.status == RegionStatus.ACTIVE:
+                    return fallback_region
+
+            # Find any healthy region
+            for region_name, health in self.region_health.items():
+                if health.status == RegionStatus.ACTIVE:
+                    return region_name
+
+            return self.current_region  # Last resort
+
+        async def forward_request(self, target_region: str, request_data: Dict[str, Any]) -> Dict[str, Any]:
+            """Forward request to another region"""
+
+            # Mock request forwarding
+            return {
+                "status": "forwarded",
+                "target_region": target_region,
+                "original_region": self.current_region,
+                "request_id": f"fwd_{int(time.time())}",
+                "response": "Request processed in target region"
+            }
+
+        async def process_request_locally(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
+            """Process request in current region"""
+
+            return {
+                "status": "processed",
+                "region": self.current_region,
+                "request_id": f"local_{int(time.time())}",
+                "response": "Request processed locally"
+            }
+
+        async def get_region_status(self) -> Dict[str, Any]:
+            """Get status of all regions"""
+
+            status = {
+                "current_region": self.current_region,
+                "total_regions": len(self.region_config.get('regions', {})),
+                "healthy_regions": 0,
+                "degraded_regions": 0,
+                "unavailable_regions": 0,
+                "regions": {}
+            }
+
+            for region_name, health in self.region_health.items():
+                status["regions"][region_name] = {
+                    "status": health.status.value,
+                    "latency": health.latency,
+                    "error_rate": health.error_rate,
+                    "capacity_usage": health.capacity_usage,
+                    "last_check": health.last_check.isoformat()
+                }
+
+                if health.status == RegionStatus.ACTIVE:
+                    status["healthy_regions"] += 1
+                elif health.status == RegionStatus.DEGRADED:
+                    status["degraded_regions"] += 1
+                else:
+                    status["unavailable_regions"] += 1
+
+            return status
+
+    # Global coordinator instance
+    coordinator = RegionCoordinator()
+
+    @app.on_event("startup")
+    async def startup_event():
+        await coordinator.initialize()
+
+    @app.get("/health")
+    async def health():
+        return {"status": "healthy", "region": coordinator.current_region}
+
+    @app.get("/ready")
+    async def ready():
+        return {"status": "ready", "region": coordinator.current_region}
+
+    @app.get("/regions/status")
+    async def get_regions_status():
+        return await coordinator.get_region_status()
+
+    @app.post("/route-request")
+    async def route_request(request: Request):
+        request_data = await request.json()
+        return await coordinator.route_request(request_data)
+
+    @app.get("/config")
+    async def get_config():
+        return coordinator.region_config
+
+    if __name__ == "__main__":
+        uvicorn.run(app, host="0.0.0.0", port=8080)
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: region-aware-ingress
+  namespace: uatp-prod
+  annotations:
+    nginx.ingress.kubernetes.io/server-snippet: |
+      # GeoIP-based routing
+      set $target_region "us-east-1";
+
+      # Route based on CloudFront headers or GeoIP
+      if ($http_cloudfront_viewer_country ~ "^(GB|DE|FR|IT|ES|NL|BE|AT|CH|IE|PT|LU|DK|SE|NO|FI|IS|PL|CZ|HU|SK|SI|HR|BG|RO|GR|CY|MT|EE|LV|LT)$") {
+        set $target_region "eu-west-1";
+      }
+
+      if ($http_cloudfront_viewer_country ~ "^(SG|MY|TH|ID|PH|VN|JP|KR|CN|HK|TW|IN|AU|NZ)$") {
+        set $target_region "ap-southeast-1";
+      }
+
+      if ($http_cloudfront_viewer_country ~ "^(US|CA|MX)$") {
+        set $target_region "us-east-1";
+      }
+
+      # Add region header
+      add_header X-UATP-Region $target_region always;
+
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      # Rate limiting by region
+      limit_req zone=api_limit burst=50 nodelay;
+
+      # Add latency headers
+      add_header X-Response-Time $request_time;
+      add_header X-Upstream-Time $upstream_response_time;
+
+spec:
+  tls:
+  - hosts:
+    - global.uatp.ai
+    - us.uatp.ai
+    - eu.uatp.ai
+    - asia.uatp.ai
+    secretName: uatp-global-tls
+  rules:
+  - host: global.uatp.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: region-coordinator
+            port:
+              number: 8080
+  - host: us.uatp.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: uatp-api-service
+            port:
+              number: 80
+  - host: eu.uatp.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: uatp-api-service
+            port:
+              number: 80
+  - host: asia.uatp.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: uatp-api-service
+            port:
+              number: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: global-health-checker
+  namespace: uatp-prod
+  labels:
+    app: global-health-checker
+spec:
+  selector:
+    app: global-health-checker
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: global-health-checker
+  namespace: uatp-prod
+  labels:
+    app: global-health-checker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: global-health-checker
+  template:
+    metadata:
+      labels:
+        app: global-health-checker
+    spec:
+      containers:
+      - name: health-checker
+        image: alpine:3.18
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Install required tools
+          apk add --no-cache python3 py3-pip curl
+          pip3 install fastapi uvicorn aiohttp asyncio
+
+          # Start global health checker
+          python3 /app/global_health_checker.py
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: REGION_ENDPOINTS
+          value: "us-east-1:https://us.uatp.ai,eu-west-1:https://eu.uatp.ai,ap-southeast-1:https://asia.uatp.ai"
+        - name: CHECK_INTERVAL
+          value: "30"
+        volumeMounts:
+        - name: health-checker-scripts
+          mountPath: /app
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: health-checker-scripts
+        configMap:
+          name: health-checker-scripts
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: health-checker-scripts
+  namespace: uatp-prod
+data:
+  global_health_checker.py: |
+    #!/usr/bin/env python3
+    import os
+    import asyncio
+    import json
+    import time
+    from datetime import datetime
+    from typing import Dict, List, Optional, Any
+    from dataclasses import dataclass
+    from enum import Enum
+
+    from fastapi import FastAPI, HTTPException
+    from fastapi.responses import JSONResponse
+    import uvicorn
+    import aiohttp
+
+    app = FastAPI(title="UATP Global Health Checker")
+
+    class EndpointHealth:
+        def __init__(self, region: str, endpoint: str):
+            self.region = region
+            self.endpoint = endpoint
+            self.status = "unknown"
+            self.latency = 0.0
+            self.last_check = None
+            self.error_count = 0
+            self.success_count = 0
+
+    class GlobalHealthChecker:
+        def __init__(self):
+            self.endpoints = {}
+            self.check_interval = int(os.getenv("CHECK_INTERVAL", "30"))
+            self.global_status = "unknown"
+            self.parse_endpoints()
+
+        def parse_endpoints(self):
+            """Parse region endpoints from environment"""
+            endpoint_str = os.getenv("REGION_ENDPOINTS", "")
+
+            for endpoint_pair in endpoint_str.split(","):
+                if ":" in endpoint_pair:
+                    region, url = endpoint_pair.split(":", 1)
+                    self.endpoints[region] = EndpointHealth(region, url)
+
+        async def start_monitoring(self):
+            """Start health monitoring loop"""
+            asyncio.create_task(self.health_check_loop())
+
+        async def health_check_loop(self):
+            """Continuous health checking loop"""
+            while True:
+                await self.check_all_endpoints()
+                await asyncio.sleep(self.check_interval)
+
+        async def check_all_endpoints(self):
+            """Check health of all regional endpoints"""
+            tasks = []
+
+            for endpoint_health in self.endpoints.values():
+                task = self.check_endpoint_health(endpoint_health)
+                tasks.append(task)
+
+            await asyncio.gather(*tasks, return_exceptions=True)
+            self.calculate_global_status()
+
+        async def check_endpoint_health(self, endpoint_health: EndpointHealth):
+            """Check health of a specific endpoint"""
+            start_time = time.time()
+
+            try:
+                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+                    async with session.get(f"{endpoint_health.endpoint}/health") as response:
+                        latency = (time.time() - start_time) * 1000  # ms
+
+                        if response.status == 200:
+                            endpoint_health.status = "healthy"
+                            endpoint_health.success_count += 1
+                        else:
+                            endpoint_health.status = "unhealthy"
+                            endpoint_health.error_count += 1
+
+                        endpoint_health.latency = latency
+                        endpoint_health.last_check = datetime.now()
+
+            except Exception as e:
+                endpoint_health.status = "unavailable"
+                endpoint_health.error_count += 1
+                endpoint_health.latency = float('inf')
+                endpoint_health.last_check = datetime.now()
+
+        def calculate_global_status(self):
+            """Calculate global health status"""
+            healthy_count = sum(1 for ep in self.endpoints.values() if ep.status == "healthy")
+            total_count = len(self.endpoints)
+
+            if healthy_count == total_count:
+                self.global_status = "healthy"
+            elif healthy_count > 0:
+                self.global_status = "degraded"
+            else:
+                self.global_status = "unhealthy"
+
+        async def get_global_status(self) -> Dict[str, Any]:
+            """Get global health status"""
+
+            endpoint_statuses = {}
+            for region, endpoint_health in self.endpoints.items():
+                endpoint_statuses[region] = {
+                    "status": endpoint_health.status,
+                    "latency": endpoint_health.latency,
+                    "last_check": endpoint_health.last_check.isoformat() if endpoint_health.last_check else None,
+                    "success_count": endpoint_health.success_count,
+                    "error_count": endpoint_health.error_count,
+                    "endpoint": endpoint_health.endpoint
+                }
+
+            return {
+                "global_status": self.global_status,
+                "check_interval": self.check_interval,
+                "total_regions": len(self.endpoints),
+                "healthy_regions": sum(1 for ep in self.endpoints.values() if ep.status == "healthy"),
+                "regions": endpoint_statuses,
+                "timestamp": datetime.now().isoformat()
+            }
+
+    # Global health checker instance
+    health_checker = GlobalHealthChecker()
+
+    @app.on_event("startup")
+    async def startup_event():
+        await health_checker.start_monitoring()
+
+    @app.get("/health")
+    async def health():
+        return {"status": "healthy", "service": "global-health-checker"}
+
+    @app.get("/ready")
+    async def ready():
+        return {"status": "ready", "service": "global-health-checker"}
+
+    @app.get("/global-status")
+    async def get_global_status():
+        return await health_checker.get_global_status()
+
+    @app.get("/regions/{region}/status")
+    async def get_region_status(region: str):
+        if region not in health_checker.endpoints:
+            raise HTTPException(status_code=404, detail=f"Region {region} not found")
+
+        endpoint_health = health_checker.endpoints[region]
+        return {
+            "region": region,
+            "status": endpoint_health.status,
+            "latency": endpoint_health.latency,
+            "last_check": endpoint_health.last_check.isoformat() if endpoint_health.last_check else None,
+            "success_count": endpoint_health.success_count,
+            "error_count": endpoint_health.error_count,
+            "endpoint": endpoint_health.endpoint
+        }
+
+    if __name__ == "__main__":
+        uvicorn.run(app, host="0.0.0.0", port=8080)
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: region-coordinator-pdb
+  namespace: uatp-prod
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: region-coordinator
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: global-health-checker-pdb
+  namespace: uatp-prod
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: global-health-checker

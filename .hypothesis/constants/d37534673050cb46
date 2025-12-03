@@ -1,0 +1,4 @@
+# file: /Users/kay/uatp-capsule-engine/src/models/capsule.py
+# hypothesis_version: 6.135.26
+
+['all, delete-orphan', 'capsules', 'capsules.capsule_id', 'children', 'extend_existing', 'metadata', 'parent']

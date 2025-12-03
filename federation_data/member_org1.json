@@ -1,0 +1,11 @@
+{
+  "id": "org1",
+  "name": "Organization One",
+  "role": "COORDINATOR",
+  "verify_key": "06c6b69c199f097a0934fd8b3fef3fe67e824df308f1d3fe6461a7bcdc026754",
+  "endpoint": null,
+  "last_active": "2025-07-14T14:23:19.725180+00:00",
+  "metadata": {
+    "created_at": "2025-07-14T14:23:19.724980+00:00"
+  }
+}

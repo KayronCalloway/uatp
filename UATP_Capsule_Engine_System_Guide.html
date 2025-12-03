@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UATP Capsule Engine System Guide</title>
+    <style>
+        /* Print-optimized CSS */
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        @media print {
+            body {
+                font-size: 10pt;
+                line-height: 1.4;
+            }
+            
+            h1 {
+                page-break-before: always;
+                font-size: 18pt;
+            }
+            
+            h1:first-child {
+                page-break-before: avoid;
+            }
+            
+            h2 {
+                font-size: 14pt;
+                page-break-after: avoid;
+            }
+            
+            h3 {
+                font-size: 12pt;
+                page-break-after: avoid;
+            }
+            
+            pre, code {
+                font-size: 8pt;
+            }
+            
+            table {
+                font-size: 8pt;
+            }
+            
+            .no-print {
+                display: none;
+            }
+        }
+        
+        /* Base styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+        }
+        
+        /* Typography */
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-bottom: 4px solid #3498db;
+            padding-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        h1:first-child {
+            text-align: center;
+            font-size: 3em;
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 10px;
+            border-bottom: none;
+        }
+        
+        h2 {
+            color: #34495e;
+            font-size: 1.8em;
+            margin-top: 35px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        h3 {
+            color: #34495e;
+            font-size: 1.4em;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        h4 {
+            color: #34495e;
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        h5 {
+            color: #34495e;
+            font-size: 1.1em;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        h6 {
+            color: #34495e;
+            font-size: 1em;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        /* Paragraphs and text */
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin-bottom: 15px;
+            padding-left: 25px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        /* Code */
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            color: #e74c3c;
+            border: 1px solid #e9ecef;
+        }
+        
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            border: none;
+            color: #333;
+        }
+        
+        /* Tables */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid #3498db;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        /* Links */
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Special boxes */
+        .info-box {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        
+        .warning-box {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        
+        .success-box {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        
+        /* Print button */
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .print-button:hover {
+            background-color: #2980b9;
+        }
+        
+        /* Table of contents */
+        .toc {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        
+        .toc h2 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: none;
+            font-size: 1.5em;
+        }
+        
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .toc > ul > li {
+            margin-bottom: 8px;
+        }
+        
+        .toc ul ul {
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+        
+        .toc a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            h2 {
+                font-size: 1.5em;
+            }
+            
+            pre {
+                padding: 15px;
+                font-size: 0.8em;
+            }
+            
+            table {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button no-print" onclick="window.print()">Print / Save as PDF</button>
+    
+    <h1>UATP Capsule Engine System Guide</h1>
+    
+    <div class="toc">
+        <h2>Table of Contents</h2>
+        <ul>
+            <li><a href="#executive-summary">1. Executive Summary</a></li>
+            <li><a href="#system-architecture">2. System Architecture</a></li>
+            <li><a href="#core-components">3. Core Components</a></li>
+            <li><a href="#api-reference">4. API Reference</a></li>
+            <li><a href="#federation-system">5. Federation System</a></li>
+            <li><a href="#payment-integration">6. Payment Integration</a></li>
+            <li><a href="#rights-management">7. Rights Management</a></li>
+            <li><a href="#compliance-framework">8. Compliance Framework</a></li>
+            <li><a href="#development-guide">9. Development Guide</a></li>
+            <li><a href="#deployment-guide">10. Deployment Guide</a></li>
+            <li><a href="#operations--monitoring">11. Operations & Monitoring</a></li>
+            <li><a href="#security">12. Security</a></li>
+            <li><a href="#troubleshooting">13. Troubleshooting</a></li>
+        </ul>
+    </div>
+
+    <h2 id="executive-summary">Executive Summary</h2>
+
+    <p>The <strong>UATP Capsule Engine</strong> is a comprehensive AI reasoning trace management system designed for enterprise-scale deployment. It provides federated model registry capabilities, advanced payment processing, regulatory compliance, and intellectual property rights management for AI systems.</p>
+
+    <h3>Key Features</h3>
+    <ul>
+        <li><strong>Federated AI Model Registry</strong>: Multi-organizational AI model collaboration with trust-based validation</li>
+        <li><strong>Reasoning Trace Capture</strong>: Comprehensive AI reasoning process documentation and verification</li>
+        <li><strong>Payment Integration</strong>: Multi-provider payment processing with intelligent routing</li>
+        <li><strong>Rights Management</strong>: Intellectual property tracking and licensing automation</li>
+        <li><strong>Compliance Framework</strong>: Multi-regulatory compliance (GDPR, AI Act, NIST AI RMF)</li>
+        <li><strong>RESTful API</strong>: Complete HTTP API for system integration</li>
+        <li><strong>Real-time Monitoring</strong>: Comprehensive observability and health monitoring</li>
+    </ul>
+
+    <h3>Target Use Cases</h3>
+    <ul>
+        <li>Enterprise AI model management and governance</li>
+        <li>Multi-organizational AI collaboration platforms</li>
+        <li>AI reasoning audit and compliance systems</li>
+        <li>Intellectual property licensing for AI models</li>
+        <li>Federated AI research networks</li>
+    </ul>
+
+    <h2 id="system-architecture">System Architecture</h2>
+
+    <h3>High-Level Architecture</h3>
+    <pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                        Client Applications                       │
+├─────────────────────────────────────────────────────────────────┤
+│                          API Gateway                            │
+│                        (Quart Framework)                        │
+├─────────────────────────────────────────────────────────────────┤
+│  Core Engine  │  Federation  │  Payments  │  Rights  │ Compliance │
+│   Services    │   Registry   │  System    │  Mgmt    │ Framework  │
+├─────────────────────────────────────────────────────────────────┤
+│                     Data Persistence Layer                      │
+│              (SQLite/PostgreSQL, File Storage)                  │
+├─────────────────────────────────────────────────────────────────┤
+│               External Integrations & Services                   │
+│    (Stripe, PayPal, Crypto, Federation Members)                │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
+
+    <h3>Core Architectural Principles</h3>
+    <ul>
+        <li><strong>Modular Design</strong>: Loosely coupled components with clear interfaces</li>
+        <li><strong>Federated Architecture</strong>: Distributed trust and validation across organizations</li>
+        <li><strong>Event-Driven</strong>: Asynchronous processing with event-based communication</li>
+        <li><strong>Scalable</strong>: Horizontal scaling support for high-volume deployments</li>
+        <li><strong>Secure</strong>: End-to-end encryption and comprehensive audit trails</li>
+    </ul>
+
+    <h2 id="core-components">Core Components</h2>
+
+    <h3>1. Capsule Engine (<code>src/engine/capsule_engine.py</code>)</h3>
+
+    <p>The heart of the system, managing AI reasoning trace capsules.</p>
+
+    <div class="info-box">
+        <strong>Key Features:</strong>
+        <ul>
+            <li>Capsule creation, sealing, and verification</li>
+            <li>Metadata management and indexing</li>
+            <li>Status tracking and lifecycle management</li>
+            <li>Integration with external validation services</li>
+        </ul>
+    </div>
+
+    <h4>Core Methods:</h4>
+    <pre><code># Create and seal a reasoning trace capsule
+capsule = await engine.create_capsule(
+    capsule_type="reasoning_trace",
+    content=reasoning_data,
+    metadata={"model": "gpt-4", "task": "analysis"}
+)
+
+# Retrieve capsule with verification
+capsule = await engine.get_capsule(capsule_id)
+
+# Update capsule status
+await engine.update_capsule_status(capsule_id, CapsuleStatus.VERIFIED)</code></pre>
+
+    <h3>2. Federated Registry (<code>src/integrations/federated_registry.py</code>)</h3>
+
+    <p>Manages multi-organizational AI model collaboration and validation.</p>
+
+    <div class="info-box">
+        <strong>Key Features:</strong>
+        <ul>
+            <li>Federation member management with role-based access</li>
+            <li>Trust-based validation across organizations</li>
+            <li>Distributed capsule verification</li>
+            <li>Cross-organizational trace aggregation</li>
+        </ul>
+    </div>
+
+    <h4>Federation Roles:</h4>
+    <ul>
+        <li><strong>COORDINATOR</strong>: Manages registry synchronization</li>
+        <li><strong>VALIDATOR</strong>: Validates capsules and traces</li>
+        <li><strong>MEMBER</strong>: Regular federation participant</li>
+        <li><strong>OBSERVER</strong>: Read-only access to federation data</li>
+    </ul>
+
+    <h4>Core Operations:</h4>
+    <pre><code># Register model with federation
+capsule_id = await registry.register_model_with_federation(
+    model_id="gpt-4-advanced",
+    provider="openai",
+    access_level="restricted"
+)
+
+# Verify capsule across federation
+verification = await registry.verify_federated_capsule(
+    capsule, required_validators=3
+)
+
+# Aggregate traces from federation members
+traces = await registry.aggregate_federated_traces({
+    "provider": "openai",
+    "after": "2024-01-01T00:00:00Z"
+})</code></pre>
+
+    <h3>3. Payment Integration (<code>src/payments/</code>, <code>src/services/</code>)</h3>
+
+    <p>Comprehensive payment processing with multiple provider support.</p>
+
+    <h4>Supported Providers:</h4>
+    <ul>
+        <li><strong>Stripe</strong>: Credit/debit cards, ACH transfers</li>
+        <li><strong>PayPal</strong>: PayPal balance, linked accounts</li>
+        <li><strong>Cryptocurrency</strong>: Bitcoin, Ethereum, stablecoins</li>
+        <li><strong>Bank Transfers</strong>: Direct bank account transfers</li>
+    </ul>
+
+    <h4>Payment Workflows:</h4>
+    <ul>
+        <li><strong>Payouts</strong>: User earnings distribution</li>
+        <li><strong>Refunds</strong>: Transaction reversals</li>
+        <li><strong>License Fees</strong>: IP licensing payments</li>
+        <li><strong>Dividend Payments</strong>: Revenue sharing</li>
+    </ul>
+
+    <h4>Intelligent Routing:</h4>
+    <ul>
+        <li>Lowest fee optimization</li>
+        <li>Fastest processing</li>
+        <li>Highest reliability</li>
+        <li>Load balancing across providers</li>
+    </ul>
+
+    <h3>4. Rights Management (<code>src/rights/</code>)</h3>
+
+    <p>Intellectual property tracking and licensing automation.</p>
+
+    <h4>Rights Evolution System:</h4>
+    <ul>
+        <li><strong>Creation</strong>: Initial IP registration</li>
+        <li><strong>Assignment</strong>: Rights transfer between parties</li>
+        <li><strong>Licensing</strong>: Usage rights distribution</li>
+        <li><strong>Enforcement</strong>: Automated compliance monitoring</li>
+    </ul>
+
+    <h4>Bond Citizenship System:</h4>
+    <ul>
+        <li><strong>Citizenship Bonds</strong>: Stakeholder participation tokens</li>
+        <li><strong>Governance Rights</strong>: Voting and decision-making privileges</li>
+        <li><strong>Revenue Sharing</strong>: Automated dividend distribution</li>
+    </ul>
+
+    <h3>5. Compliance Framework (<code>src/compliance/</code>)</h3>
+
+    <p>Multi-regulatory compliance management and monitoring.</p>
+
+    <h4>Supported Frameworks:</h4>
+    <ul>
+        <li><strong>GDPR</strong>: European data protection compliance</li>
+        <li><strong>AI Act</strong>: European AI regulation compliance</li>
+        <li><strong>NIST AI RMF</strong>: US AI risk management framework</li>
+    </ul>
+
+    <h4>Compliance Operations:</h4>
+    <ul>
+        <li>Automated compliance assessments</li>
+        <li>Risk scoring and mitigation planning</li>
+        <li>Audit trail generation</li>
+        <li>Regulatory reporting</li>
+    </ul>
+
+    <h2 id="api-reference">API Reference</h2>
+
+    <p>The system provides a comprehensive RESTful API with the following endpoints:</p>
+
+    <h3>Authentication</h3>
+    <p>All API endpoints require API key authentication:</p>
+    <pre><code>Authorization: Bearer your-api-key-here</code></pre>
+
+    <h3>Core Engine API (<code>/api/v1/engine/</code>)</h3>
+
+    <h4>Create Capsule</h4>
+    <pre><code>POST /api/v1/engine/capsules
+Content-Type: application/json
+
+{
+  "capsule_type": "reasoning_trace",
+  "content": "base64-encoded-reasoning-data",
+  "metadata": {
+    "model": "gpt-4",
+    "task": "analysis",
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}</code></pre>
+
+    <h4>Get Capsule</h4>
+    <pre><code>GET /api/v1/engine/capsules/{capsule_id}</code></pre>
+
+    <h4>Update Capsule Status</h4>
+    <pre><code>PUT /api/v1/engine/capsules/{capsule_id}/status
+Content-Type: application/json
+
+{
+  "status": "verified",
+  "verification_details": {
+    "validator": "system",
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}</code></pre>
+
+    <h3>Federation API (<code>/api/v1/federation/</code>)</h3>
+
+    <h4>Register Model</h4>
+    <pre><code>POST /api/v1/federation/models
+Content-Type: application/json
+
+{
+  "model_id": "gpt-4-advanced",
+  "provider": "openai",
+  "access_level": "restricted",
+  "metadata": {
+    "capabilities": ["text", "code"],
+    "version": "1.0"
+  }
+}</code></pre>
+
+    <h4>Verify Capsule</h4>
+    <pre><code>POST /api/v1/federation/capsules/{capsule_id}/verify
+Content-Type: application/json
+
+{
+  "required_validators": 3
+}</code></pre>
+
+    <h4>Query Federated Traces</h4>
+    <pre><code>GET /api/v1/federation/traces?provider=openai&after=2024-01-01T00:00:00Z</code></pre>
+
+    <h3>Payment API (<code>/api/v1/payments/</code>)</h3>
+
+    <h4>Initiate Payout</h4>
+    <pre><code>POST /api/v1/payments/payouts
+Content-Type: application/json
+
+{
+  "user_id": "user_123",
+  "amount": 50.00,
+  "currency": "USD",
+  "description": "Monthly earnings payout"
+}</code></pre>
+
+    <h4>Configure Payout Method</h4>
+    <pre><code>POST /api/v1/payments/payout-methods
+Content-Type: application/json
+
+{
+  "user_id": "user_123",
+  "payout_method": "paypal",
+  "payout_details": {
+    "email": "user@example.com"
+  }
+}</code></pre>
+
+    <h4>Process Bulk Payouts</h4>
+    <pre><code>POST /api/v1/payments/payouts/bulk
+Content-Type: application/json
+
+{
+  "payouts": [
+    {"user_id": "user_1", "amount": 25.00},
+    {"user_id": "user_2", "amount": 75.00}
+  ],
+  "batch_description": "Weekly contributor payouts"
+}</code></pre>
+
+    <h3>Rights Management API (<code>/api/v1/rights/</code>)</h3>
+
+    <h4>Create Rights Evolution</h4>
+    <pre><code>POST /api/v1/rights/evolution
+Content-Type: application/json
+
+{
+  "asset_id": "model_xyz",
+  "evolution_type": "license_grant",
+  "party_from": "creator_id",
+  "party_to": "licensee_id",
+  "terms": {
+    "license_type": "commercial",
+    "duration": "1_year",
+    "territory": "global"
+  }
+}</code></pre>
+
+    <h4>Issue Citizenship Bond</h4>
+    <pre><code>POST /api/v1/rights/bonds
+Content-Type: application/json
+
+{
+  "citizen_id": "citizen_123",
+  "bond_type": "governance",
+  "value": 1000.00,
+  "privileges": ["voting", "revenue_sharing"]
+}</code></pre>
+
+    <h3>Compliance API (<code>/api/v1/compliance/</code>)</h3>
+
+    <h4>Conduct Assessment</h4>
+    <pre><code>POST /api/v1/compliance/assessments
+Content-Type: application/json
+
+{
+  "framework": "gdpr",
+  "system_id": "production_system",
+  "assessor_id": "compliance_officer",
+  "evidence": {
+    "data_processing_activities": ["user_data", "model_training"],
+    "privacy_measures": ["encryption", "anonymization"]
+  }
+}</code></pre>
+
+    <h4>Generate Compliance Report</h4>
+    <pre><code>POST /api/v1/compliance/reports
+Content-Type: application/json
+
+{
+  "reporting_period_days": 90,
+  "frameworks": ["gdpr", "ai_act"],
+  "include_trends": true
+}</code></pre>
+
+    <h2 id="federation-system">Federation System</h2>
+
+    <h3>Federation Architecture</h3>
+
+    <p>The federation system enables multiple organizations to collaborate on AI model management while maintaining sovereignty over their data and models.</p>
+
+    <h4>Federation Members</h4>
+
+    <p>Each member has:</p>
+    <ul>
+        <li><strong>Unique ID</strong>: Cryptographic identity</li>
+        <li><strong>Role</strong>: COORDINATOR, VALIDATOR, MEMBER, or OBSERVER</li>
+        <li><strong>Trust Score</strong>: 0.0-1.0 reliability rating</li>
+        <li><strong>Endpoint</strong>: API endpoint for federation communication</li>
+        <li><strong>Verification Key</strong>: Public key for cryptographic verification</li>
+    </ul>
+
+    <h4>Trust-Based Validation</h4>
+
+    <p>The system uses a distributed trust model:</p>
+    <ol>
+        <li><strong>Trust Threshold</strong>: Minimum score (default 0.7) for member participation</li>
+        <li><strong>Required Validators</strong>: Minimum number of validators for verification</li>
+        <li><strong>Weighted Voting</strong>: Trust scores influence validation decisions</li>
+        <li><strong>Circuit Breaker</strong>: Automatic member isolation on repeated failures</li>
+    </ol>
+
+    <h4>Federation Workflows</h4>
+
+    <div class="info-box">
+        <strong>Model Registration:</strong>
+        <ol>
+            <li>Member registers model locally</li>
+            <li>Creates federation capsule with model metadata</li>
+            <li>Distributes capsule to federation members</li>
+            <li>Members validate and store capsule</li>
+            <li>Model becomes available across federation</li>
+        </ol>
+    </div>
+
+    <div class="info-box">
+        <strong>Trace Aggregation:</strong>
+        <ol>
+            <li>Query sent to all trusted federation members</li>
+            <li>Members respond with matching traces</li>
+            <li>Results aggregated and deduplicated</li>
+            <li>Trust scores applied to weight results</li>
+            <li>Consolidated response returned</li>
+        </ol>
+    </div>
+
+    <div class="info-box">
+        <strong>Governance Decisions:</strong>
+        <ol>
+            <li>Member proposes policy change</li>
+            <li>Proposal distributed to federation</li>
+            <li>Members vote based on trust weights</li>
+            <li>Decision applied if consensus reached</li>
+            <li>All members notified of changes</li>
+        </ol>
+    </div>
+
+    <h3>Federation Security</h3>
+    <ul>
+        <li><strong>Cryptographic Signatures</strong>: All federation communications signed</li>
+        <li><strong>Mutual Authentication</strong>: TLS with client certificates</li>
+        <li><strong>Audit Trails</strong>: Complete log of federation activities</li>
+        <li><strong>Rate Limiting</strong>: Protection against abuse and DoS attacks</li>
+    </ul>
+
+    <h2 id="payment-integration">Payment Integration</h2>
+
+    <h3>Payment System Architecture</h3>
+
+    <p>The payment system provides enterprise-grade payment processing with multiple provider support, intelligent routing, and comprehensive fraud protection.</p>
+
+    <h4>Payment Processor Manager</h4>
+
+    <div class="success-box">
+        <strong>Features:</strong>
+        <ul>
+            <li>Multi-provider support (Stripe, PayPal, Crypto)</li>
+            <li>Intelligent routing based on:
+                <ul>
+                    <li>Lowest fees</li>
+                    <li>Fastest processing</li>
+                    <li>Highest reliability</li>
+                    <li>Load balancing</li>
+                </ul>
+            </li>
+            <li>Circuit breaker pattern for fault tolerance</li>
+            <li>Real-time health monitoring</li>
+        </ul>
+    </div>
+
+    <h4>Routing Strategies:</h4>
+    <pre><code># Lowest fee routing
+result = await processor.process_payment(
+    amount=Decimal("100.00"),
+    currency="USD",
+    recipient_details=recipient,
+    routing_strategy=RoutingStrategy.LOWEST_FEE
+)
+
+# Fastest processing
+result = await processor.process_payment(
+    amount=Decimal("100.00"),
+    currency="USD",
+    recipient_details=recipient,
+    routing_strategy=RoutingStrategy.FASTEST
+)</code></pre>
+
+    <h4>Payment Workflows</h4>
+
+    <div class="info-box">
+        <strong>Payout Workflow:</strong>
+        <ol>
+            <li><strong>User Validation</strong>: Verify user identity and balance</li>
+            <li><strong>Payout Method Check</strong>: Ensure valid payment method configured</li>
+            <li><strong>Fee Calculation</strong>: Calculate processing fees across providers</li>
+            <li><strong>Payment Routing</strong>: Select optimal payment processor</li>
+            <li><strong>Payment Processing</strong>: Execute payment through selected provider</li>
+            <li><strong>Confirmation</strong>: Verify payment completion</li>
+            <li><strong>Balance Update</strong>: Update user account balances</li>
+            <li><strong>Notifications</strong>: Send completion notifications</li>
+        </ol>
+    </div>
+
+    <div class="info-box">
+        <strong>Refund Workflow:</strong>
+        <ol>
+            <li><strong>Refund Validation</strong>: Verify refund eligibility and amount</li>
+            <li><strong>Original Transaction Lookup</strong>: Find original payment details</li>
+            <li><strong>Refund Calculation</strong>: Calculate refund amount including fees</li>
+            <li><strong>Refund Processing</strong>: Execute refund through original processor</li>
+            <li><strong>Record Update</strong>: Update transaction records</li>
+            <li><strong>Confirmation</strong>: Send refund confirmation</li>
+        </ol>
+    </div>
+
+    <h4>Payment Methods</h4>
+
+    <div class="success-box">
+        <strong>PayPal Integration:</strong>
+        <ul>
+            <li>PayPal balance transfers</li>
+            <li>Linked bank account payments</li>
+            <li>International currency support</li>
+            <li>Webhook event processing</li>
+        </ul>
+    </div>
+
+    <div class="success-box">
+        <strong>Stripe Integration:</strong>
+        <ul>
+            <li>Credit/debit card payments</li>
+            <li>ACH bank transfers</li>
+            <li>International wire transfers</li>
+            <li>Real-time payment status updates</li>
+        </ul>
+    </div>
+
+    <div class="success-box">
+        <strong>Cryptocurrency Integration:</strong>
+        <ul>
+            <li>Bitcoin payments</li>
+            <li>Ethereum payments</li>
+            <li>Stablecoin support (USDC, USDT)</li>
+            <li>Blockchain confirmation tracking</li>
+        </ul>
+    </div>
+
+    <h3>Payment Security</h3>
+    <ul>
+        <li><strong>PCI DSS Compliance</strong>: Credit card data protection</li>
+        <li><strong>Encryption</strong>: End-to-end payment data encryption</li>
+        <li><strong>Fraud Detection</strong>: Real-time fraud monitoring</li>
+        <li><strong>Audit Logging</strong>: Comprehensive payment audit trails</li>
+        <li><strong>Webhook Verification</strong>: Cryptographic webhook signature validation</li>
+    </ul>
+
+    <h2 id="rights-management">Rights Management</h2>
+
+    <h3>Rights Evolution System</h3>
+
+    <p>The rights evolution system tracks intellectual property rights throughout their lifecycle, from creation to licensing to enforcement.</p>
+
+    <h4>Rights Evolution Types</h4>
+
+    <div class="success-box">
+        <strong>Creation Rights:</strong>
+        <ul>
+            <li>Initial IP registration</li>
+            <li>Ownership establishment</li>
+            <li>Rights documentation</li>
+            <li>Metadata attribution</li>
+        </ul>
+    </div>
+
+    <div class="success-box">
+        <strong>Assignment Rights:</strong>
+        <ul>
+            <li>Ownership transfer</li>
+            <li>Rights conveyance</li>
+            <li>Legal documentation</li>
+            <li>Consideration tracking</li>
+        </ul>
+    </div>
+
+    <div class="success-box">
+        <strong>Licensing Rights:</strong>
+        <ul>
+            <li>Usage rights grants</li>
+            <li>License term management</li>
+            <li>Royalty calculations</li>
+            <li>Compliance monitoring</li>
+        </ul>
+    </div>
+
+    <div class="success-box">
+        <strong>Enforcement Rights:</strong>
+        <ul>
+            <li>Violation detection</li>
+            <li>Automated enforcement</li>
+            <li>Legal action initiation</li>
+            <li>Damage calculations</li>
+        </ul>
+    </div>
+
+    <h4>Rights Evolution Workflow</h4>
+
+    <pre><code># Create initial rights
+evolution = await rights_engine.create_evolution(
+    asset_id="ai_model_123",
+    evolution_type=RightsEvolutionType.CREATION,
+    party_from=None,
+    party_to="creator_id",
+    terms={
+        "creation_date": "2024-01-01",
+        "rights_type": "intellectual_property",
+        "scope": "global"
+    }
+)
+
+# License rights to third party
+license_evolution = await rights_engine.create_evolution(
+    asset_id="ai_model_123",
+    evolution_type=RightsEvolutionType.LICENSE_GRANT,
+    party_from="creator_id",
+    party_to="licensee_id",
+    terms={
+        "license_type": "commercial",
+        "duration": "1_year",
+        "territory": "north_america",
+        "royalty_rate": 0.05
+    }
+)</code></pre>
+
+    <h3>Bond Citizenship System</h3>
+
+    <p>The bond citizenship system enables stakeholder participation in the ecosystem through citizenship bonds that provide governance rights and revenue sharing.</p>
+
+    <h4>Bond Types</h4>
+
+    <div class="info-box">
+        <strong>Governance Bonds:</strong>
+        <ul>
+            <li>Voting rights in system decisions</li>
+            <li>Policy change participation</li>
+            <li>Fee structure decisions</li>
+            <li>Strategic direction input</li>
+        </ul>
+    </div>
+
+    <div class="info-box">
+        <strong>Revenue Bonds:</strong>
+        <ul>
+            <li>Dividend distribution rights</li>
+            <li>Fee sharing participation</li>
+            <li>Performance-based rewards</li>
+            <li>Long-term value capture</li>
+        </ul>
+    </div>
+
+    <div class="info-box">
+        <strong>Utility Bonds:</strong>
+        <ul>
+            <li>Service access rights</li>
+            <li>Priority processing</li>
+            <li>Enhanced features</li>
+            <li>Technical support</li>
+        </ul>
+    </div>
+
+    <h4>Bond Management</h4>
+
+    <pre><code># Issue governance bond
+bond = await citizenship_engine.issue_bond(
+    citizen_id="stakeholder_123",
+    bond_type=BondType.GOVERNANCE,
+    value=Decimal("1000.00"),
+    privileges=["voting", "policy_input"],
+    terms={
+        "voting_weight": 0.1,
+        "term_length": "perpetual",
+        "transfer_restrictions": "none"
+    }
+)
+
+# Distribute dividends
+dividend_result = await citizenship_engine.distribute_dividends(
+    total_amount=Decimal("10000.00"),
+    distribution_criteria="proportional_holdings"
+)</code></pre>
+
+    <h3>Rights Enforcement</h3>
+
+    <div class="warning-box">
+        <strong>Automated Monitoring:</strong>
+        <ul>
+            <li>Usage pattern analysis</li>
+            <li>License term compliance</li>
+            <li>Violation detection</li>
+            <li>Anomaly identification</li>
+        </ul>
+    </div>
+
+    <div class="warning-box">
+        <strong>Enforcement Actions:</strong>
+        <ul>
+            <li>Automated warnings</li>
+            <li>License suspension</li>
+            <li>Legal notice generation</li>
+            <li>Damage calculation</li>
+        </ul>
+    </div>
+
+    <div class="warning-box">
+        <strong>Dispute Resolution:</strong>
+        <ul>
+            <li>Mediation system</li>
+            <li>Arbitration support</li>
+            <li>Evidence collection</li>
+            <li>Resolution tracking</li>
+        </ul>
+    </div>
+
+    <h2 id="compliance-framework">Compliance Framework</h2>
+
+    <h3>Regulatory Compliance Architecture</h3>
+
+    <p>The compliance framework provides comprehensive regulatory compliance management across multiple jurisdictions and standards.</p>
+
+    <h4>Supported Frameworks</h4>
+
+    <div class="success-box">
+        <strong>GDPR (General Data Protection Regulation):</strong>
+        <ul>
+            <li>Data processing lawfulness</li>
+            <li>Privacy rights implementation</li>
+            <li>Data breach notification</li>
+            <li>Privacy impact assessments</li>
+        </ul>
+    </div>
+
+    <div class="success-box">
+        <strong>AI Act (European AI Regulation):</strong>
+        <ul>
+            <li>AI system classification</li>
+            <li>Risk assessment procedures</li>
+            <li>Conformity assessment</li>
+            <li>CE marking requirements</li>
+        </ul>
+    </div>
+
+    <div class="success-box">
+        <strong>NIST AI RMF (Risk Management Framework):</strong>
+        <ul>
+            <li>AI risk identification</li>
+            <li>Risk mitigation strategies</li>
+            <li>Continuous monitoring</li>
+            <li>Incident response procedures</li>
+        </ul>
+    </div>
+
+    <h4>Compliance Assessment Process</h4>
+
+    <pre><code># Conduct GDPR assessment
+assessment = await compliance_framework.conduct_compliance_assessment(
+    framework=RegulatoryFramework.GDPR,
+    system_id="production_system",
+    assessor_id="compliance_officer",
+    evidence={
+        "data_processing_activities": ["user_profiles", "model_training"],
+        "privacy_measures": ["encryption", "anonymization", "access_controls"],
+        "data_retention_policies": ["automated_deletion", "user_requests"],
+        "breach_procedures": ["incident_response", "notification_system"]
+    }
+)
+
+# Generate compliance report
+report = await compliance_framework.generate_compliance_report(
+    reporting_period_days=90,
+    include_frameworks=[RegulatoryFramework.GDPR, RegulatoryFramework.AI_ACT]
+)</code></pre>
+
+    <h3>Compliance Monitoring</h3>
+
+    <div class="info-box">
+        <strong>Continuous Assessment:</strong>
+        <ul>
+            <li>Real-time compliance monitoring</li>
+            <li>Automated risk detection</li>
+            <li>Policy violation alerts</li>
+            <li>Trend analysis</li>
+        </ul>
+    </div>
+
+    <div class="info-box">
+        <strong>Reporting:</strong>
+        <ul>
+            <li>Regulatory report generation</li>
+            <li>Audit trail maintenance</li>
+            <li>Compliance dashboard</li>
+            <li>Executive summaries</li>
+        </ul>
+    </div>
+
+    <div class="info-box">
+        <strong>Risk Management:</strong>
+        <ul>
+            <li>Risk scoring algorithms</li>
+            <li>Mitigation plan generation</li>
+            <li>Remediation tracking</li>
+            <li>Escalation procedures</li>
+        </ul>
+    </div>
+
+    <h2 id="development-guide">Development Guide</h2>
+
+    <h3>Prerequisites</h3>
+    <ul>
+        <li>Python 3.9+</li>
+        <li>pip package manager</li>
+        <li>Git version control</li>
+        <li>SQLite (development) or PostgreSQL (production)</li>
+    </ul>
+
+    <h3>Installation</h3>
+
+    <div class="info-box">
+        <strong>1. Clone Repository:</strong>
+        <pre><code>git clone https://github.com/your-org/uatp-capsule-engine.git
+cd uatp-capsule-engine</code></pre>
+    </div>
+
+    <div class="info-box">
+        <strong>2. Create Virtual Environment:</strong>
+        <pre><code>python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate</code></pre>
+    </div>
+
+    <div class="info-box">
+        <strong>3. Install Dependencies:</strong>
+        <pre><code>pip install -r requirements.txt</code></pre>
+    </div>
+
+    <div class="info-box">
+        <strong>4. Configure Environment:</strong>
+        <pre><code>cp .env.example .env
+# Edit .env with your configuration</code></pre>
+    </div>
+
+    <h3>Configuration</h3>
+
+    <h4>Environment Variables:</h4>
+    <pre><code># Database
+DATABASE_URL=sqlite:///capsule_engine.db
+
+# API Keys
+STRIPE_API_KEY=sk_test_your_stripe_key
+PAYPAL_CLIENT_ID=your_paypal_client_id
+PAYPAL_CLIENT_SECRET=your_paypal_secret
+
+# Federation
+UATP_SIGNING_KEY=your_ed25519_private_key
+FEDERATION_ENDPOINT=https://your-federation-endpoint.com
+
+# Security
+JWT_SECRET_KEY=your_jwt_secret
+API_KEY_SALT=your_api_key_salt</code></pre>
+
+    <h3>Running the Application</h3>
+
+    <div class="success-box">
+        <strong>Development Mode:</strong>
+        <pre><code>python src/main.py</code></pre>
+    </div>
+
+    <div class="success-box">
+        <strong>Production Mode:</strong>
+        <pre><code>gunicorn -w 4 -k uvicorn.workers.UvicornWorker src.main:app</code></pre>
+    </div>
+
+    <h3>Testing</h3>
+
+    <div class="info-box">
+        <strong>Run All Tests:</strong>
+        <pre><code>python -m pytest tests/ -v</code></pre>
+    </div>
+
+    <div class="info-box">
+        <strong>Run Specific Test Category:</strong>
+        <pre><code>python -m pytest tests/test_engine/ -v
+python -m pytest tests/test_federation/ -v
+python -m pytest tests/test_payments/ -v</code></pre>
+    </div>
+
+    <div class="info-box">
+        <strong>Test Coverage:</strong>
+        <pre><code>python -m pytest --cov=src tests/</code></pre>
+    </div>
+
+    <h3>Code Style</h3>
+
+    <p>The project uses:</p>
+    <ul>
+        <li><strong>Black</strong>: Code formatting</li>
+        <li><strong>isort</strong>: Import sorting</li>
+        <li><strong>flake8</strong>: Linting</li>
+        <li><strong>mypy</strong>: Type checking</li>
+    </ul>
+
+    <div class="info-box">
+        <strong>Format Code:</strong>
+        <pre><code>black src/ tests/
+isort src/ tests/</code></pre>
+    </div>
+
+    <div class="info-box">
+        <strong>Check Code Quality:</strong>
+        <pre><code>flake8 src/ tests/
+mypy src/</code></pre>
+    </div>
+
+    <h2 id="deployment-guide">Deployment Guide</h2>
+
+    <h3>Docker Deployment</h3>
+
+    <div class="info-box">
+        <strong>Build Docker Image:</strong>
+        <pre><code>docker build -t uatp-capsule-engine .</code></pre>
+    </div>
+
+    <div class="info-box">
+        <strong>Run Container:</strong>
+        <pre><code>docker run -d \
+  --name capsule-engine \
+  -p 8000:8000 \
+  -e DATABASE_URL=postgresql://user:pass@db:5432/capsule_engine \
+  -e STRIPE_API_KEY=sk_live_your_stripe_key \
+  uatp-capsule-engine</code></pre>
+    </div>
+
+    <h4>Docker Compose:</h4>
+    <pre><code>version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/capsule_engine
+      - STRIPE_API_KEY=sk_live_your_stripe_key
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=capsule_engine
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:</code></pre>
+
+    <h3>Kubernetes Deployment</h3>
+
+    <h4>Deployment Configuration:</h4>
+    <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: capsule-engine
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: capsule-engine
+  template:
+    metadata:
+      labels:
+        app: capsule-engine
+    spec:
+      containers:
+      - name: capsule-engine
+        image: uatp-capsule-engine:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: capsule-engine-secrets
+              key: database-url
+        - name: STRIPE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: capsule-engine-secrets
+              key: stripe-api-key
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"</code></pre>
+
+    <h4>Service Configuration:</h4>
+    <pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: capsule-engine-service
+spec:
+  selector:
+    app: capsule-engine
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: LoadBalancer</code></pre>
+
+    <h3>Production Considerations</h3>
+
+    <div class="warning-box">
+        <strong>Database:</strong>
+        <ul>
+            <li>Use PostgreSQL for production</li>
+            <li>Enable connection pooling</li>
+            <li>Configure regular backups</li>
+            <li>Set up read replicas for scaling</li>
+        </ul>
+    </div>
+
+    <div class="warning-box">
+        <strong>Security:</strong>
+        <ul>
+            <li>Use HTTPS with valid SSL certificates</li>
+            <li>Enable CORS protection</li>
+            <li>Configure rate limiting</li>
+            <li>Set up Web Application Firewall (WAF)</li>
+        </ul>
+    </div>
+
+    <div class="warning-box">
+        <strong>Monitoring:</strong>
+        <ul>
+            <li>Deploy Prometheus for metrics collection</li>
+            <li>Set up Grafana for visualization</li>
+            <li>Configure alerting for critical issues</li>
+            <li>Enable distributed tracing</li>
+        </ul>
+    </div>
+
+    <div class="warning-box">
+        <strong>Scaling:</strong>
+        <ul>
+            <li>Use horizontal pod autoscaling</li>
+            <li>Configure load balancing</li>
+            <li>Set up database sharding if needed</li>
+            <li>Implement caching strategies</li>
+        </ul>
+    </div>
+
+    <h2 id="operations--monitoring">Operations & Monitoring</h2>
+
+    <h3>Health Monitoring</h3>
+
+    <h4>System Health Endpoints:</h4>
+    <pre><code>GET /api/v1/health
+GET /api/v1/engine/health
+GET /api/v1/federation/health
+GET /api/v1/payments/health
+GET /api/v1/compliance/health</code></pre>
+
+    <h4>Health Check Response:</h4>
+    <pre><code>{
+  "status": "healthy",
+  "timestamp": "2024-01-01T00:00:00Z",
+  "version": "1.0.0",
+  "components": {
+    "database": "healthy",
+    "redis": "healthy",
+    "external_apis": "healthy"
+  },
+  "metrics": {
+    "active_capsules": 1250,
+    "federation_members": 5,
+    "pending_payments": 23,
+    "compliance_assessments": 45
+  }
+}</code></pre>
+
+    <h3>Metrics Collection</h3>
+
+    <div class="info-box">
+        <strong>Prometheus Metrics:</strong>
+        <ul>
+            <li>Request rates and latencies</li>
+            <li>Error rates by endpoint</li>
+            <li>Database connection pool usage</li>
+            <li>Payment processing success rates</li>
+            <li>Federation member health status</li>
+        </ul>
+    </div>
+
+    <h4>Custom Metrics:</h4>
+    <pre><code># Capsule metrics
+capsule_creation_total = Counter('capsule_creation_total', 'Total capsules created')
+capsule_verification_duration = Histogram('capsule_verification_duration_seconds', 'Capsule verification time')
+
+# Federation metrics
+federation_request_total = Counter('federation_request_total', 'Total federation requests')
+federation_member_health = Gauge('federation_member_health', 'Federation member health status')
+
+# Payment metrics
+payment_processing_total = Counter('payment_processing_total', 'Total payments processed')
+payment_success_rate = Gauge('payment_success_rate', 'Payment success rate')</code></pre>
+
+    <h3>Logging</h3>
+
+    <h4>Log Configuration:</h4>
+    <pre><code>LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        },
+        'json': {
+            'format': '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "logger": "%(name)s", "message": "%(message)s"}'
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+            'level': 'INFO'
+        },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'capsule_engine.log',
+            'maxBytes': 10485760,  # 10MB
+            'backupCount': 5,
+            'formatter': 'json',
+            'level': 'DEBUG'
+        }
+    },
+    'loggers': {
+        'capsule_engine': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False
+        }
+    }
+}</code></pre>
+
+    <h3>Alerting</h3>
+
+    <div class="warning-box">
+        <strong>Critical Alerts:</strong>
+        <ul>
+            <li>Database connection failures</li>
+            <li>Payment processor outages</li>
+            <li>Federation member disconnections</li>
+            <li>Compliance assessment failures</li>
+            <li>Security breach attempts</li>
+        </ul>
+    </div>
+
+    <h4>Alert Configuration:</h4>
+    <pre><code># Prometheus AlertManager
+groups:
+- name: capsule_engine
+  rules:
+  - alert: DatabaseDown
+    expr: up{job="capsule-engine-db"} == 0
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Database is down"
+      description: "Database has been down for more than 30 seconds"
+
+  - alert: PaymentProcessorError
+    expr: payment_processor_error_rate > 0.1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High payment processor error rate"
+      description: "Payment processor error rate is above 10%"</code></pre>
+
+    <h3>Backup and Recovery</h3>
+
+    <div class="info-box">
+        <strong>Database Backup:</strong>
+        <pre><code># Daily backup
+pg_dump capsule_engine > backup_$(date +%Y%m%d).sql
+
+# Restore from backup
+psql capsule_engine < backup_20240101.sql</code></pre>
+    </div>
+
+    <div class="info-box">
+        <strong>File Storage Backup:</strong>
+        <pre><code># Backup capsule files
+tar -czf capsule_files_$(date +%Y%m%d).tar.gz /var/lib/capsule_engine/files/
+
+# Restore files
+tar -xzf capsule_files_20240101.tar.gz -C /var/lib/capsule_engine/</code></pre>
+    </div>
+
+    <h2 id="security">Security</h2>
+
+    <h3>Authentication & Authorization</h3>
+
+    <div class="success-box">
+        <strong>API Key Management:</strong>
+        <ul>
+            <li>Scoped API keys (read, write, admin)</li>
+            <li>Key rotation policies</li>
+            <li>Usage monitoring and rate limiting</li>
+            <li>Audit trail for key usage</li>
+        </ul>
+    </div>
+
+    <div class="success-box">
+        <strong>JWT Token Security:</strong>
+        <ul>
+            <li>Short-lived access tokens</li>
+            <li>Secure refresh token storage</li>
+            <li>Token blacklisting support</li>
+            <li>Cryptographic signature verification</li>
+        </ul>
+    </div>
+
+    <h3>Data Protection</h3>
+
+    <div class="info-box">
+        <strong>Encryption:</strong>
+        <ul>
+            <li>Data at rest: AES-256 encryption</li>
+            <li>Data in transit: TLS 1.3</li>
+            <li>API communications: HTTPS only</li>
+            <li>Database: Transparent Data Encryption (TDE)</li>
+        </ul>
+    </div>
+
+    <div class="info-box">
+        <strong>Personal Data Protection:</strong>
+        <ul>
+            <li>GDPR compliance measures</li>
+            <li>Data anonymization techniques</li>
+            <li>Right to be forgotten implementation</li>
+            <li>Consent management system</li>
+        </ul>
+    </div>
+
+    <h3>Network Security</h3>
+
+    <div class="warning-box">
+        <strong>API Security:</strong>
+        <ul>
+            <li>Rate limiting per endpoint</li>
+            <li>Request size limits</li>
+            <li>Input validation and sanitization</li>
+            <li>SQL injection prevention</li>
+            <li>XSS protection</li>
+        </ul>
+    </div>
+
+    <div class="warning-box">
+        <strong>Infrastructure Security:</strong>
+        <ul>
+            <li>VPC isolation</li>
+            <li>Security groups configuration</li>
+            <li>Network access control lists</li>
+            <li>DDoS protection</li>
+            <li>Web Application Firewall (WAF)</li>
+        </ul>
+    </div>
+
+    <h3>Audit and Compliance</h3>
+
+    <div class="info-box">
+        <strong>Audit Logging:</strong>
+        <ul>
+            <li>User action tracking</li>
+            <li>API request logging</li>
+            <li>System event monitoring</li>
+            <li>Compliance event recording</li>
+        </ul>
+    </div>
+
+    <div class="info-box">
+        <strong>Security Monitoring:</strong>
+        <ul>
+            <li>Intrusion detection system</li>
+            <li>Vulnerability scanning</li>
+            <li>Security incident response</li>
+            <li>Penetration testing</li>
+        </ul>
+    </div>
+
+    <h2 id="troubleshooting">Troubleshooting</h2>
+
+    <h3>Common Issues</h3>
+
+    <h4>Database Connection Issues</h4>
+
+    <div class="warning-box">
+        <strong>Problem:</strong> Database connection failures<br>
+        <strong>Symptoms:</strong>
+        <ul>
+            <li>"Database connection timeout" errors</li>
+            <li>500 errors on API requests</li>
+            <li>Health check failures</li>
+        </ul>
+    </div>
+
+    <div class="success-box">
+        <strong>Solutions:</strong>
+        <pre><code># Check database status
+pg_isready -h localhost -p 5432
+
+# Verify connection string
+echo $DATABASE_URL
+
+# Check connection pool settings
+# In src/config.py, adjust:
+DATABASE_POOL_SIZE = 10
+DATABASE_MAX_OVERFLOW = 20</code></pre>
+    </div>
+
+    <h4>Federation Member Communication</h4>
+
+    <div class="warning-box">
+        <strong>Problem:</strong> Federation member unreachable<br>
+        <strong>Symptoms:</strong>
+        <ul>
+            <li>Federation verification failures</li>
+            <li>Member health check failures</li>
+            <li>Trace aggregation timeouts</li>
+        </ul>
+    </div>
+
+    <div class="success-box">
+        <strong>Solutions:</strong>
+        <pre><code># Check member endpoint
+import requests
+response = requests.get(f"{member_endpoint}/health")
+print(response.status_code)
+
+# Verify member trust score
+trust_score = registry.trust_config.get_trust_score(member_id)
+print(f"Trust score: {trust_score}")
+
+# Reset member status
+await registry.reset_member_status(member_id)</code></pre>
+    </div>
+
+    <h4>Payment Processing Failures</h4>
+
+    <div class="warning-box">
+        <strong>Problem:</strong> Payment processor errors<br>
+        <strong>Symptoms:</strong>
+        <ul>
+            <li>Payment failures</li>
+            <li>Webhook processing errors</li>
+            <li>Processor health check failures</li>
+        </ul>
+    </div>
+
+    <div class="success-box">
+        <strong>Solutions:</strong>
+        <pre><code># Check processor status
+curl -X GET "http://localhost:8000/api/v1/payments/health"
+
+# Verify API keys
+echo $STRIPE_API_KEY
+echo $PAYPAL_CLIENT_ID
+
+# Check processor configuration
+python -c "from src.payments.payment_processor_manager import *; print(create_payment_processor_manager().get_processor_status())"</code></pre>
+    </div>
+
+    <h3>Error Codes</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Description</th>
+                <th>Resolution</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>E001</td>
+                <td>Database connection failed</td>
+                <td>Check database connectivity and credentials</td>
+            </tr>
+            <tr>
+                <td>E002</td>
+                <td>Invalid API key</td>
+                <td>Verify API key is valid and has required permissions</td>
+            </tr>
+            <tr>
+                <td>E003</td>
+                <td>Capsule not found</td>
+                <td>Verify capsule ID exists in the system</td>
+            </tr>
+            <tr>
+                <td>E004</td>
+                <td>Federation member unreachable</td>
+                <td>Check member endpoint and network connectivity</td>
+            </tr>
+            <tr>
+                <td>E005</td>
+                <td>Payment processor error</td>
+                <td>Verify payment processor configuration and API keys</td>
+            </tr>
+            <tr>
+                <td>E006</td>
+                <td>Compliance assessment failed</td>
+                <td>Review compliance evidence and requirements</td>
+            </tr>
+            <tr>
+                <td>E007</td>
+                <td>Rights validation error</td>
+                <td>Verify rights chain and ownership</td>
+            </tr>
+            <tr>
+                <td>E008</td>
+                <td>Insufficient permissions</td>
+                <td>Check user permissions and API key scopes</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Debug Mode</h3>
+
+    <div class="info-box">
+        <strong>Enable Debug Logging:</strong>
+        <pre><code># In src/config.py
+LOGGING_LEVEL = "DEBUG"
+DEBUG_MODE = True</code></pre>
+    </div>
+
+    <h4>Debug Utilities:</h4>
+    <pre><code># Debug capsule state
+from src.engine.capsule_engine import CapsuleEngine
+engine = CapsuleEngine()
+await engine.debug_capsule_state(capsule_id)
+
+# Debug federation status
+from src.integrations.federated_registry import FederatedModelRegistry
+registry = FederatedModelRegistry("debug", "Debug Member")
+registry.debug_federation_status()
+
+# Debug payment processing
+from src.payments.payment_processor_manager import PaymentProcessorManager
+manager = PaymentProcessorManager()
+manager.debug_processor_status()</code></pre>
+
+    <h3>Performance Optimization</h3>
+
+    <div class="info-box">
+        <strong>Database Optimization:</strong>
+        <pre><code>-- Add indexes for common queries
+CREATE INDEX idx_capsules_created_at ON capsules(created_at);
+CREATE INDEX idx_capsules_status ON capsules(status);
+CREATE INDEX idx_transactions_user_id ON transactions(user_id);</code></pre>
+    </div>
+
+    <div class="info-box">
+        <strong>Connection Pool Tuning:</strong>
+        <pre><code># In src/config.py
+DATABASE_POOL_SIZE = 20
+DATABASE_MAX_OVERFLOW = 40
+DATABASE_POOL_TIMEOUT = 30</code></pre>
+    </div>
+
+    <div class="info-box">
+        <strong>Cache Configuration:</strong>
+        <pre><code># Redis cache settings
+REDIS_URL = "redis://localhost:6379"
+CACHE_TTL = 3600  # 1 hour
+CACHE_MAX_CONNECTIONS = 20</code></pre>
+    </div>
+
+    <hr>
+
+    <h2>Conclusion</h2>
+
+    <p>The UATP Capsule Engine provides a comprehensive platform for AI reasoning trace management, federated model collaboration, and enterprise-grade payment processing. This guide covers the essential aspects of system architecture, development, deployment, and operations.</p>
+
+    <div class="success-box">
+        <strong>For additional support:</strong>
+        <ul>
+            <li>GitHub Issues: https://github.com/your-org/uatp-capsule-engine/issues</li>
+            <li>Documentation: https://docs.uatp-capsule-engine.com</li>
+            <li>Community Forum: https://forum.uatp-capsule-engine.com</li>
+            <li>Email Support: support@uatp-capsule-engine.com</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <p style="text-align: center; color: #666; font-size: 0.9em;">
+        <strong>Last Updated:</strong> January 2024<br>
+        <strong>Version:</strong> 1.0.0
+    </p>
+
+    <script>
+        // Add smooth scrolling for anchor links
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('a[href^="#"]');
+            
+            links.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

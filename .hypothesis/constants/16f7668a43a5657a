@@ -1,0 +1,4 @@
+# file: /Users/kay/uatp-capsule-engine/src/api/chain_routes.py
+# hypothesis_version: 6.135.26
+
+[200, 500, '/chain', '/seal', 'Failed to seal chain', 'GET', 'POST', 'Seal is valid.', 'Unknown', 'admin', 'agent_id', 'chain', 'chain_id', 'details', 'dummy-signature', 'is_valid', 'message', 'note', 'read', 'signature', 'signer_id', 'success', 'valid-key', 'write']

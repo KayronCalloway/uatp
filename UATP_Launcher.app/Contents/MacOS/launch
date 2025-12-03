@@ -1,0 +1,3 @@
+#!/bin/bash
+# Open Terminal and run the UATP system
+osascript -e 'tell application "Terminal" to do script "cd /Users/kay/uatp-capsule-engine && python3 launch_full_system.py"'

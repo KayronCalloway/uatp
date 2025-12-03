@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UATP Web Capture - Bookmarklet</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 40px; }
+        .bookmarklet { 
+            background: #007AFF; color: white; padding: 15px; 
+            border-radius: 8px; text-decoration: none; 
+            display: inline-block; margin: 10px 0;
+        }
+        .code { 
+            background: #f5f5f5; padding: 15px; 
+            border-radius: 8px; font-family: monospace; 
+            word-break: break-all; margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 UATP Web Capture Setup</h1>
+    
+    <h2>Step 1: Add Bookmarklet to Safari</h2>
+    <p>Drag this button to your Safari bookmarks bar:</p>
+    
+    <a href="javascript:(function(){const UATP_API='http://192.168.1.79:9090';const API_KEY='dev-key-001';let sessionId='web-'+Date.now();function detectPlatform(){if(window.location.hostname.includes('openai.com'))return 'chatgpt';if(window.location.hostname.includes('claude.ai'))return 'claude';return 'unknown';}function extractConversations(){const platform=detectPlatform();let conversations=[];if(platform==='chatgpt'){const messages=document.querySelectorAll('[data-message-author-role]');messages.forEach(msg=>{const role=msg.getAttribute('data-message-author-role');const content=msg.querySelector('.markdown, .whitespace-pre-wrap')?.textContent?.trim();if(content){conversations.push({role,content});}});}else if(platform==='claude'){const messages=document.querySelectorAll('[data-is-streaming], .font-claude-message');messages.forEach(msg=>{const isUser=msg.closest('[data-testid=\"user-message\"]')!==null;const role=isUser?'user':'assistant';const content=msg.textContent?.trim();if(content){conversations.push({role,content});}});}return conversations;}async function captureMessage(role,content,platform){try{const response=await fetch(`${UATP_API}/api/v1/live/capture/message`,{method:'POST',headers:{'X-API-Key':API_KEY,'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,user_id:role==='user'?'web-user':'ai-assistant',platform:platform,role:role,content:content,metadata:{source:'bookmarklet',url:window.location.href,automatic:false}})});if(response.ok){console.log('✅ UATP: Captured',role,'message');showNotification('✅ Captured '+role+' message');}else{console.log('❌ UATP: Capture failed');showNotification('❌ Capture failed');}}catch(error){console.log('❌ UATP: Error',error);showNotification('❌ Error: '+error.message);}}function showNotification(message){const notification=document.createElement('div');notification.style.cssText='position:fixed;top:20px;right:20px;z-index:10000;background:#10b981;color:white;padding:12px 20px;border-radius:8px;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);animation:fadeInOut 4s ease-in-out forwards;';notification.textContent=message;const style=document.createElement('style');style.textContent='@keyframes fadeInOut{0%{opacity:0;transform:translateY(-10px);}20%{opacity:1;transform:translateY(0);}80%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:translateY(-10px);}}';document.head.appendChild(style);document.body.appendChild(notification);setTimeout(()=>notification.remove(),4000);}const conversations=extractConversations();const platform=detectPlatform();if(conversations.length===0){showNotification('⚠️ No conversations found');return;}showNotification(`🚀 Capturing ${conversations.length} messages...`);let captured=0;conversations.forEach(async(conv,index)=>{if(conv.content&&conv.content.length>10){setTimeout(async()=>{await captureMessage(conv.role,conv.content,platform);captured++;if(captured===conversations.length){showNotification(`✅ Captured ${captured} messages to UATP`);}},index*500);}});})();" class="bookmarklet">📦 UATP Capture</a>
+    
+    <h2>Step 2: Usage Instructions</h2>
+    <ol>
+        <li>Go to <strong>chat.openai.com</strong> or <strong>claude.ai</strong></li>
+        <li>Have a conversation with the AI</li>
+        <li>Click the <strong>"📦 UATP Capture"</strong> bookmark</li>
+        <li>You'll see notifications showing the capture progress</li>
+        <li>Check your dashboard at <a href="http://localhost:3000">http://localhost:3000</a></li>
+    </ol>
+    
+    <h2>Step 3: Test Connection</h2>
+    <p>First, make sure your backend is running:</p>
+    <div class="code">
+        # In terminal, run:
+        ./start_backend_with_keys.sh
+    </div>
+    
+    <h2>How it Works</h2>
+    <ul>
+        <li>Automatically detects ChatGPT or Claude conversations</li>
+        <li>Extracts all messages from the current page</li>
+        <li>Sends them to your UATP backend with full attribution</li>
+        <li>Shows green notifications when successful</li>
+        <li>Creates cryptographic seals and confidence ratings</li>
+    </ul>
+    
+    <h2>Troubleshooting</h2>
+    <ul>
+        <li><strong>Red notification</strong>: Check that backend is running on port 9090</li>
+        <li><strong>No conversations found</strong>: Make sure you're on ChatGPT or Claude</li>
+        <li><strong>CORS errors</strong>: This is normal - the capture still works</li>
+    </ul>
+    
+    <p><strong>Next:</strong> Once this works, we can set up automatic capture that runs without clicking!</p>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Service identifier -->
+    <key>Label</key>
+    <string>com.uatp.auto-capture</string>
+
+    <!-- Program to run -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Library/Frameworks/Python.framework/Versions/3.12/bin/python3</string>
+        <string>/Users/kay/uatp-capsule-engine/claude_code_auto_capture.py</string>
+    </array>
+
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/kay/uatp-capsule-engine</string>
+
+    <!-- Run on load (startup) -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Keep it alive - restart if it exits -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+        <key>Crashed</key>
+        <true/>
+    </dict>
+
+    <!-- Restart after 30 seconds if it crashes -->
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
+    <!-- Output logs -->
+    <key>StandardOutPath</key>
+    <string>/Users/kay/uatp-capsule-engine/auto-capture-out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/kay/uatp-capsule-engine/auto-capture-err.log</string>
+
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Library/Frameworks/Python.framework/Versions/3.12/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>PYTHONPATH</key>
+        <string>/Users/kay/uatp-capsule-engine</string>
+    </dict>
+
+    <!-- Process priority (nice value) -->
+    <key>Nice</key>
+    <integer>5</integer>
+
+    <!-- Don't run if on battery power (optional) -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <!-- Check and restart daily at 3 AM if needed -->
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+</dict>
+</plist>

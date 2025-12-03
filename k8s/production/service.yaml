@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: uatp-api
+  namespace: uatp-production
+  labels:
+    app: uatp-api
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"  # For AWS
+spec:
+  type: ClusterIP  # Use ClusterIP with Ingress for production
+  selector:
+    app: uatp-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  sessionAffinity: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uatp-api-headless
+  namespace: uatp-production
+  labels:
+    app: uatp-api
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service for pod discovery
+  selector:
+    app: uatp-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP

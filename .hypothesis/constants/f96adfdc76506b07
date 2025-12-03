@@ -1,0 +1,4 @@
+# file: /Users/kay/uatp-capsule-engine/config/secrets.py
+# hypothesis_version: 6.135.26
+
+['Development API Key', 'OPENAI_API_KEY', 'Read-only API Key', 'UATP_API_KEYS', 'api_keys', 'api_keys.json', 'description', 'ed25519_private_key', 'name', 'openai_api_key', 'r', 'read', 'roles', 'sample-key-1', 'sample-key-2', 'sk-', 'uatp.secrets', 'w', 'write', '~/.uatp/secrets.json']

@@ -1,0 +1,24 @@
+{
+  "name": "UATP Auto Capture",
+  "icon": "doc.text.below.ecg",
+  "color": "blue",
+  "actions": [
+    {
+      "type": "get_clipboard",
+      "description": "Get conversation from clipboard"
+    },
+    {
+      "type": "text_processing",
+      "description": "Parse user message and AI response"
+    },
+    {
+      "type": "http_request",
+      "url": "http://192.168.1.79:9090/api/v1/live/capture/message",
+      "method": "POST",
+      "headers": {
+        "X-API-Key": "dev-key-001",
+        "Content-Type": "application/json"
+      }
+    }
+  ]
+}

@@ -1,0 +1,236 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "UATP Capsule Engine - Business Analytics",
+    "tags": ["uatp", "business", "analytics"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "1m",
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "User Registration Trends",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(user_registrations_total[1h]) * 3600",
+            "legendFormat": "Registrations per hour"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Registrations/hour",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "User Types Distribution",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "user_registrations_total",
+            "legendFormat": "{{user_type}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Agent Creation Activity",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(agent_creations_total[1h]) * 3600",
+            "legendFormat": "Agents created per hour"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Agents/hour",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Active Users vs Agents",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "active_users_current",
+            "legendFormat": "Active Users"
+          },
+          {
+            "expr": "active_agents_current",
+            "legendFormat": "Active Agents"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Count",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Citizenship Applications",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(citizenship_applications_total{status=\"submitted\"}[1h]) * 3600",
+            "legendFormat": "Applications submitted"
+          },
+          {
+            "expr": "rate(citizenship_applications_total{status=\"approved\"}[1h]) * 3600",
+            "legendFormat": "Applications approved"
+          },
+          {
+            "expr": "rate(citizenship_applications_total{status=\"rejected\"}[1h]) * 3600",
+            "legendFormat": "Applications rejected"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Applications/hour",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "Citizenship Application Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "citizenship_applications_total{status=\"pending\"}",
+            "legendFormat": "Pending"
+          },
+          {
+            "expr": "citizenship_applications_total{status=\"approved\"}",
+            "legendFormat": "Approved"
+          },
+          {
+            "expr": "citizenship_applications_total{status=\"rejected\"}",
+            "legendFormat": "Rejected"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "blue", "value": 0},
+                {"color": "green", "value": 100},
+                {"color": "red", "value": 1000}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 7,
+        "title": "Bond Creation Activity",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(bond_creations_total[1h]) * 3600",
+            "legendFormat": "Bonds created per hour"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Bonds/hour",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 8,
+        "title": "Payment Transactions",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(payment_transactions_total{status=\"completed\"}[1h]) * 3600",
+            "legendFormat": "Successful payments"
+          },
+          {
+            "expr": "rate(payment_transactions_total{status=\"failed\"}[1h]) * 3600",
+            "legendFormat": "Failed payments"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Transactions/hour",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      },
+      {
+        "id": 9,
+        "title": "Revenue Metrics",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(payment_amount_total{status=\"completed\"})",
+            "legendFormat": "Total Revenue"
+          },
+          {
+            "expr": "rate(payment_amount_total{status=\"completed\"}[24h]) * 86400",
+            "legendFormat": "Daily Revenue"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "currencyUSD"
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32}
+      },
+      {
+        "id": 10,
+        "title": "Top Performing Agents",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, sum by (agent_id) (bond_creations_total))",
+            "legendFormat": "{{agent_id}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 40}
+      },
+      {
+        "id": 11,
+        "title": "Geographic Distribution",
+        "type": "worldmap",
+        "targets": [
+          {
+            "expr": "sum by (country) (user_registrations_total)",
+            "legendFormat": "{{country}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 40}
+      }
+    ],
+    "schemaVersion": 27,
+    "version": 1
+  }
+}

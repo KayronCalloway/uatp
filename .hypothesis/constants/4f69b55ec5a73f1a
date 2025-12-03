@@ -1,0 +1,4 @@
+# file: /Users/kay/uatp-capsule-engine/src/api/ai_routes.py
+# hypothesis_version: 6.135.26
+
+[200, 400, 500, 503, '/ai', '/generate', 'POST', 'ai', 'ai_generation', 'application/json', 'success', 'write']

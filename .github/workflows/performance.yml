@@ -1,0 +1,95 @@
+name: Performance Testing
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly on Monday at 3 AM
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: uatp_perf
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:6-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install locust
+    
+    - name: Set up test environment
+      run: |
+        cp .env.example .env
+        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/uatp_perf" >> .env
+        echo "REDIS_URL=redis://localhost:6379" >> .env
+        echo "ENVIRONMENT=performance" >> .env
+    
+    - name: Run database migrations
+      run: |
+        python -m alembic upgrade head
+    
+    - name: Start UATP server
+      run: |
+        python src/api/server.py &
+        sleep 10
+        curl -f http://localhost:8000/health || exit 1
+    
+    - name: Run performance benchmarks
+      run: |
+        python src/testing/performance_benchmarks.py
+    
+    - name: Run load tests
+      run: |
+        python src/testing/load_testing.py
+    
+    - name: Run Locust load test
+      run: |
+        locust -f locustfile.py --host=http://localhost:8000 --headless --users=20 --spawn-rate=2 --run-time=2m --csv=performance_results
+    
+    - name: Upload performance reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: performance-reports
+        path: |
+          reports/
+          performance_results_*.csv
+    
+    - name: Performance regression check
+      run: |
+        python scripts/check_performance_regression.py
+      continue-on-error: true

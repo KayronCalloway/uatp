@@ -1,0 +1,263 @@
+# UATP Production Alert Rules
+groups:
+  - name: uatp-application
+    rules:
+    # Application Health Alerts
+    - alert: UATPApplicationDown
+      expr: up{job="uatp-api"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: application
+      annotations:
+        summary: "UATP application instance is down"
+        description: "UATP application instance {{ $labels.instance }} has been down for more than 1 minute."
+
+    - alert: UATPHighErrorRate
+      expr: rate(http_requests_total{job="uatp-api",status=~"5.."}[5m]) / rate(http_requests_total{job="uatp-api"}[5m]) > 0.05
+      for: 2m
+      labels:
+        severity: warning
+        component: application
+      annotations:
+        summary: "High error rate detected"
+        description: "Error rate is {{ $value | humanizePercentage }} for instance {{ $labels.instance }}"
+
+    - alert: UATPResponseTimeHigh
+      expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="uatp-api"}[5m])) > 2
+      for: 3m
+      labels:
+        severity: warning
+        component: application
+      annotations:
+        summary: "High response time detected"
+        description: "95th percentile response time is {{ $value }}s for instance {{ $labels.instance }}"
+
+    # Resource Utilization Alerts
+    - alert: UATPHighCPUUsage
+      expr: rate(process_cpu_seconds_total{job="uatp-api"}[5m]) * 100 > 80
+      for: 5m
+      labels:
+        severity: warning
+        component: application
+      annotations:
+        summary: "High CPU usage detected"
+        description: "CPU usage is {{ $value }}% for instance {{ $labels.instance }}"
+
+    - alert: UATPHighMemoryUsage
+      expr: process_resident_memory_bytes{job="uatp-api"} / 1024 / 1024 / 1024 > 1.5
+      for: 5m
+      labels:
+        severity: warning
+        component: application
+      annotations:
+        summary: "High memory usage detected"
+        description: "Memory usage is {{ $value }}GB for instance {{ $labels.instance }}"
+
+    # Attribution System Alerts
+    - alert: UATPAttributionProcessingFailed
+      expr: rate(uatp_attribution_processing_errors_total[5m]) > 0.1
+      for: 2m
+      labels:
+        severity: critical
+        component: attribution
+      annotations:
+        summary: "Attribution processing failures detected"
+        description: "Attribution processing error rate is {{ $value }} errors/sec"
+
+    - alert: UATPPayoutProcessingFailed
+      expr: rate(uatp_payout_processing_errors_total[5m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        component: payments
+      annotations:
+        summary: "Payout processing failures detected"
+        description: "Payout processing is failing at {{ $value }} errors/sec"
+
+  - name: uatp-database
+    rules:
+    # Database Health Alerts
+    - alert: PostgreSQLDown
+      expr: up{job="postgresql"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: database
+      annotations:
+        summary: "PostgreSQL is down"
+        description: "PostgreSQL instance {{ $labels.instance }} has been down for more than 1 minute."
+
+    - alert: PostgreSQLTooManyConnections
+      expr: pg_stat_activity_count{job="postgresql"} > 80
+      for: 2m
+      labels:
+        severity: warning
+        component: database
+      annotations:
+        summary: "PostgreSQL has too many connections"
+        description: "PostgreSQL has {{ $value }} active connections (threshold: 80)"
+
+    - alert: PostgreSQLSlowQueries
+      expr: rate(pg_stat_activity_max_tx_duration{job="postgresql"}[5m]) > 300
+      for: 3m
+      labels:
+        severity: warning
+        component: database
+      annotations:
+        summary: "PostgreSQL has slow queries"
+        description: "PostgreSQL has queries running longer than 5 minutes"
+
+    - alert: PostgreSQLHighCacheHitRatio
+      expr: pg_stat_database_blks_hit{job="postgresql"} / (pg_stat_database_blks_hit{job="postgresql"} + pg_stat_database_blks_read{job="postgresql"}) < 0.95
+      for: 5m
+      labels:
+        severity: warning
+        component: database
+      annotations:
+        summary: "PostgreSQL cache hit ratio is low"
+        description: "Cache hit ratio is {{ $value | humanizePercentage }} (threshold: 95%)"
+
+  - name: uatp-redis
+    rules:
+    # Redis Health Alerts
+    - alert: RedisDown
+      expr: up{job="redis"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: cache
+      annotations:
+        summary: "Redis is down"
+        description: "Redis instance {{ $labels.instance }} has been down for more than 1 minute."
+
+    - alert: RedisHighMemoryUsage
+      expr: redis_memory_used_bytes{job="redis"} / redis_memory_max_bytes{job="redis"} > 0.9
+      for: 5m
+      labels:
+        severity: warning
+        component: cache
+      annotations:
+        summary: "Redis memory usage is high"
+        description: "Redis memory usage is {{ $value | humanizePercentage }} of maximum"
+
+    - alert: RedisSlowCommands
+      expr: redis_slowlog_length{job="redis"} > 10
+      for: 2m
+      labels:
+        severity: warning
+        component: cache
+      annotations:
+        summary: "Redis has slow commands"
+        description: "Redis slow log length is {{ $value }}"
+
+  - name: uatp-infrastructure
+    rules:
+    # Load Balancer Alerts
+    - alert: LoadBalancerDown
+      expr: up{job="haproxy"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: loadbalancer
+      annotations:
+        summary: "Load balancer is down"
+        description: "HAProxy load balancer {{ $labels.instance }} is down"
+
+    - alert: LoadBalancerBackendDown
+      expr: haproxy_backend_up{job="haproxy"} == 0
+      for: 2m
+      labels:
+        severity: critical
+        component: loadbalancer
+      annotations:
+        summary: "Load balancer backend is down"
+        description: "Backend {{ $labels.backend }} in {{ $labels.proxy }} is down"
+
+    # SSL Certificate Expiration
+    - alert: SSLCertificateExpiringSoon
+      expr: probe_ssl_earliest_cert_expiry{job="blackbox"} - time() < 86400 * 7
+      for: 1h
+      labels:
+        severity: warning
+        component: ssl
+      annotations:
+        summary: "SSL certificate expiring soon"
+        description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+
+    # Disk Space Alerts
+    - alert: DiskSpaceRunningLow
+      expr: (node_filesystem_avail_bytes{job="node"} / node_filesystem_size_bytes{job="node"}) < 0.1
+      for: 5m
+      labels:
+        severity: critical
+        component: filesystem
+      annotations:
+        summary: "Disk space running low"
+        description: "Disk space on {{ $labels.device }} is {{ $value | humanizePercentage }} full"
+
+  - name: uatp-business-metrics
+    rules:
+    # Business Logic Alerts
+    - alert: UATPLowAttributionConfidence
+      expr: avg(uatp_attribution_confidence_score) < 0.5
+      for: 10m
+      labels:
+        severity: warning
+        component: attribution
+      annotations:
+        summary: "Attribution confidence is low"
+        description: "Average attribution confidence score is {{ $value }}"
+
+    - alert: UATPHighPayoutVolume
+      expr: sum(rate(uatp_payout_amount_total[1h])) > 10000
+      for: 5m
+      labels:
+        severity: info
+        component: payments
+      annotations:
+        summary: "High payout volume detected"
+        description: "Payout volume is ${{ $value }}/hour"
+
+    - alert: UATPUnusualTrafficPattern
+      expr: rate(http_requests_total{job="uatp-api"}[5m]) > 2 * rate(http_requests_total{job="uatp-api"}[1h])
+      for: 3m
+      labels:
+        severity: warning
+        component: security
+      annotations:
+        summary: "Unusual traffic pattern detected"
+        description: "Current request rate ({{ $value }}/sec) is significantly higher than normal"
+
+  - name: uatp-security
+    rules:
+    # Security Alerts
+    - alert: UATPAuthenticationFailures
+      expr: rate(uatp_authentication_failures_total[5m]) > 10
+      for: 2m
+      labels:
+        severity: warning
+        component: security
+      annotations:
+        summary: "High authentication failure rate"
+        description: "Authentication failure rate is {{ $value }} failures/sec"
+
+    - alert: UATPSuspiciousActivity
+      expr: rate(uatp_suspicious_activity_total[5m]) > 1
+      for: 1m
+      labels:
+        severity: critical
+        component: security
+      annotations:
+        summary: "Suspicious activity detected"
+        description: "Suspicious activity rate is {{ $value }} events/sec"
+
+    - alert: UATPRateLimitExceeded
+      expr: rate(uatp_rate_limit_exceeded_total[5m]) > 5
+      for: 3m
+      labels:
+        severity: warning
+        component: security
+      annotations:
+        summary: "Rate limit frequently exceeded"
+        description: "Rate limit exceeded {{ $value }} times/sec"

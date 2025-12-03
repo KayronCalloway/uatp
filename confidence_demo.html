@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Per-Step Confidence Tracking Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step {
+            border-left: 4px solid #3498db;
+            padding-left: 20px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .step-title {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .confidence-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .confidence-high { background: #d4edda; color: #155724; }
+        .confidence-medium { background: #d1ecf1; color: #0c5460; }
+        .confidence-low { background: #fff3cd; color: #856404; }
+        .confidence-very-low { background: #f8d7da; color: #721c24; }
+
+        .step-reasoning {
+            margin: 10px 0;
+            color: #2c3e50;
+        }
+
+        .info-box {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .uncertainty-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+        }
+
+        .measurements-box {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+        }
+
+        .alternatives-box {
+            background: #e7d5f5;
+            border: 1px solid #d7b9f0;
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+        }
+
+        .methodology {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .methodology-badge {
+            display: inline-block;
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #3498db;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Per-Step Confidence Tracking Demo</h1>
+            <p class="subtitle">UATP 7.0 - Transparent Multi-Decision Reasoning with Uncertainty Analysis</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Reasoning Steps</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">68%</div>
+                <div class="stat-label">Overall Confidence</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">12</div>
+                <div class="stat-label">Uncertainty Sources</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">11</div>
+                <div class="stat-label">Alternatives Considered</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📊 Reasoning Trace: Performance Analysis</div>
+
+            <!-- Step 1 -->
+            <div class="step">
+                <div class="step-header">
+                    <span class="step-title">Step 1: MEASUREMENT</span>
+                    <span class="confidence-badge confidence-high">95.0% confidence</span>
+                </div>
+                <div class="step-reasoning">
+                    Measured current system latency at 45ms average over 1000 requests
+                </div>
+                <div class="info-box measurements-box">
+                    <div class="info-box-title">📊 Measurements (5 data points):</div>
+                    <ul>
+                        <li>avg_latency_ms: 45.2</li>
+                        <li>p50_ms: 42.0</li>
+                        <li>p95_ms: 78.5</li>
+                        <li>p99_ms: 125.0</li>
+                        <li>sample_size: 1000</li>
+                    </ul>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.85em; color: #7f8c8d;">
+                    <strong>Confidence Basis:</strong> measured
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step">
+                <div class="step-header">
+                    <span class="step-title">Step 2: ESTIMATION</span>
+                    <span class="confidence-badge confidence-medium">72.0% confidence</span>
+                </div>
+                <div class="step-reasoning">
+                    Estimated system can handle 2000 RPS with caching enabled
+                </div>
+                <div class="info-box uncertainty-box">
+                    <div class="info-box-title">⚠️ Uncertainty Sources:</div>
+                    <ul>
+                        <li>Cache hit rate variability (65-85%)</li>
+                        <li>Database query performance under load</li>
+                        <li>Network latency fluctuations</li>
+                    </ul>
+                </div>
+                <div class="info-box alternatives-box">
+                    <div class="info-box-title">🔀 Alternatives Considered:</div>
+                    <ul>
+                        <li>Load balancing across 3 servers (est. 2500 RPS)</li>
+                        <li>Database read replicas (est. 2200 RPS)</li>
+                        <li>Query optimization only (est. 1500 RPS)</li>
+                    </ul>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.85em; color: #7f8c8d;">
+                    <strong>Confidence Basis:</strong> estimated | <strong>Depends on:</strong> step 1
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="step">
+                <div class="step-header">
+                    <span class="step-title">Step 3: DECISION (Critical)</span>
+                    <span class="confidence-badge confidence-low">68.0% confidence</span>
+                </div>
+                <div class="step-reasoning">
+                    Recommend implementing Redis caching layer as the primary optimization
+                </div>
+                <div class="info-box uncertainty-box">
+                    <div class="info-box-title">⚠️ Uncertainty Sources:</div>
+                    <ul>
+                        <li>Redis memory requirements unclear</li>
+                        <li>Cache invalidation strategy complexity</li>
+                        <li>Team familiarity with Redis operations</li>
+                    </ul>
+                </div>
+                <div class="info-box alternatives-box">
+                    <div class="info-box-title">🔀 Alternatives Considered:</div>
+                    <ul>
+                        <li>In-memory application cache (simpler but less effective)</li>
+                        <li>CDN caching (effective but limited to static content)</li>
+                        <li>Database query optimization (lower performance gain)</li>
+                    </ul>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.85em; color: #7f8c8d;">
+                    <strong>Confidence Basis:</strong> expert judgment | <strong>Depends on:</strong> steps 1, 2
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="step">
+                <div class="step-header">
+                    <span class="step-title">Step 4: SECURITY ASSESSMENT</span>
+                    <span class="confidence-badge confidence-medium">82.0% confidence</span>
+                </div>
+                <div class="step-reasoning">
+                    Redis caching poses minimal security risk with proper network isolation
+                </div>
+                <div class="info-box uncertainty-box">
+                    <div class="info-box-title">⚠️ Uncertainty Sources:</div>
+                    <ul>
+                        <li>Potential data leakage if cache keys predictable</li>
+                        <li>Redis AUTH strength depends on password complexity</li>
+                    </ul>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.85em; color: #7f8c8d;">
+                    <strong>Confidence Basis:</strong> security audit | <strong>Depends on:</strong> step 3
+                </div>
+            </div>
+
+            <!-- Step 5 -->
+            <div class="step">
+                <div class="step-header">
+                    <span class="step-title">Step 5: RECOMMENDATION</span>
+                    <span class="confidence-badge confidence-low">68.0% confidence</span>
+                </div>
+                <div class="step-reasoning">
+                    Implement Redis caching with network isolation and monitoring. Expected: 2000 RPS capacity with acceptable security posture.
+                </div>
+                <div style="margin-top: 10px; font-size: 0.85em; color: #7f8c8d;">
+                    <strong>Confidence Basis:</strong> weakest_critical_link | <strong>Depends on:</strong> steps 2, 3, 4
+                </div>
+            </div>
+
+            <!-- Methodology -->
+            <div class="methodology">
+                <div class="card-title">📈 Confidence Computation Method</div>
+                <p style="margin-bottom: 10px;">
+                    <strong>Method:</strong> <span class="methodology-badge">weakest critical link</span>
+                </p>
+                <p style="margin-bottom: 10px;">
+                    <strong>Critical Path Steps:</strong> 2, 3, 4, 5
+                </p>
+                <p style="font-style: italic; color: #7f8c8d;">
+                    Overall confidence limited by architectural decision (step 3) at 68%, which represents the highest uncertainty in the critical path. Steps 2, 4, and 5 depend on this decision.
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">✨ Key Features Demonstrated</div>
+            <ul style="padding-left: 20px;">
+                <li style="margin-bottom: 10px;"><strong>Per-Step Confidence:</strong> Each reasoning step has its own confidence level (95%, 72%, 68%, 82%, 68%)</li>
+                <li style="margin-bottom: 10px;"><strong>Confidence Basis:</strong> Clear explanation of how confidence was determined (measured, estimated, expert judgment, etc.)</li>
+                <li style="margin-bottom: 10px;"><strong>Uncertainty Sources:</strong> Explicit documentation of what creates doubt in each step</li>
+                <li style="margin-bottom: 10px;"><strong>Measurements:</strong> Supporting data and metrics for each decision</li>
+                <li style="margin-bottom: 10px;"><strong>Alternatives Considered:</strong> Transparency about options evaluated</li>
+                <li style="margin-bottom: 10px;"><strong>Dependencies:</strong> Clear tracking of which steps depend on others</li>
+                <li style="margin-bottom: 10px;"><strong>Methodology:</strong> Explicit explanation of how overall confidence is computed</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

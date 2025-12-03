@@ -1,0 +1,318 @@
+/*
+ * UATP Capsule Visualizer - Modern UI Styles
+ * A sophisticated design system for the visualizer
+ */
+
+/* Base Variables - Light Mode */
+:root {
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Roboto Mono', 'Courier New', monospace;
+
+    /* Core Colors */
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #f8fafc;
+    --color-bg-tertiary: #f1f5f9;
+    --color-text-primary: #1e293b;
+    --color-text-secondary: #64748b;
+    --color-text-muted: #94a3b8;
+    --color-border: #e2e8f0;
+    --color-shadow: rgba(0, 0, 0, 0.05);
+
+    /* Accent Color */
+    --color-accent: #3b82f6;
+    --color-accent-light: #eff6ff;
+    --color-accent-dark: #1d4ed8;
+
+    /* Functional Colors */
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-error: #ef4444;
+    --color-info: #3b82f6;
+
+    /* Capsule Type Colors */
+    --color-refusal: #ef4444;
+    --color-introspective: #3b82f6;
+    --color-joint: #10b981;
+    --color-merge: #f59e0b;
+    --color-perspective: #8b5cf6;
+
+    /* Spacing */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 var(--color-shadow);
+    --shadow-md: 0 4px 6px -1px var(--color-shadow);
+    --shadow-lg: 0 10px 15px -3px var(--color-shadow);
+
+    /* Radius */
+    --radius-sm: 0.125rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.75rem;
+    --radius-full: 9999px;
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-slow: 350ms ease;
+}
+
+/* Dark Mode Variables */
+[data-theme="dark"] {
+    --color-bg-primary: #0f172a;
+    --color-bg-secondary: #1e293b;
+    --color-bg-tertiary: #334155;
+    --color-text-primary: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+    --color-border: #334155;
+    --color-shadow: rgba(0, 0, 0, 0.3);
+
+    /* Accent Color */
+    --color-accent: #60a5fa;
+    --color-accent-light: #1e3a8a;
+    --color-accent-dark: #93c5fd;
+
+    /* Functional Colors */
+    --color-success: #059669;
+    --color-warning: #d97706;
+    --color-error: #dc2626;
+    --color-info: #2563eb;
+
+    /* Capsule Type Colors - Dark Mode Variants */
+    --color-refusal: #b91c1c;
+    --color-introspective: #1d4ed8;
+    --color-joint: #047857;
+    --color-merge: #b45309;
+    --color-perspective: #7c3aed;
+}
+
+/* Apply dark mode to Streamlit components */
+[data-theme="dark"] .stApp {
+    background-color: var(--color-bg-primary);
+}
+
+/* Base Typography */
+html, body, .stApp {
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-primary);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-4);
+}
+
+h1 {
+    font-weight: 300;
+    letter-spacing: -0.025em;
+}
+
+p {
+    margin-bottom: var(--space-4);
+    color: var(--color-text-secondary);
+}
+
+pre, code {
+    font-family: var(--font-mono);
+}
+
+/* Layout Components */
+.content-container {
+    padding: var(--space-4);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--space-4);
+}
+
+/* Card Component */
+.card {
+    background: var(--color-bg-primary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Timeline Item */
+.timeline-item {
+    position: relative;
+    padding-left: var(--space-8);
+    padding-bottom: var(--space-6);
+    border-left: 2px solid var(--color-border);
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 0;
+    height: 10px;
+    width: 10px;
+    border-radius: 50%;
+    background: var(--color-accent);
+}
+
+/* Badge */
+.badge {
+    display: inline-block;
+    padding: 0.25em 0.5em;
+    font-size: 0.75em;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+}
+
+.badge-refusal {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-refusal);
+}
+
+.badge-introspective {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--color-introspective);
+}
+
+.badge-joint {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-joint);
+}
+
+.badge-merge {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--color-merge);
+}
+
+.badge-perspective {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--color-perspective);
+}
+
+/* Button Enhancements */
+button[kind="primary"] {
+    background-color: var(--color-accent) !important;
+    color: white !important;
+}
+
+button[kind="secondary"] {
+    background-color: var(--color-bg-tertiary) !important;
+    color: var(--color-text-primary) !important;
+}
+
+/* Input Enhancements */
+input, select, textarea {
+    background-color: var(--color-bg-primary) !important;
+    color: var(--color-text-primary) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-md) !important;
+    padding: var(--space-2) var(--space-3) !important;
+}
+
+/* Focus Styles */
+input:focus, select:focus, textarea:focus, button:focus {
+    outline: 2px solid var(--color-accent-light) !important;
+    outline-offset: 2px !important;
+}
+
+/* Sidebar Enhancements */
+section[data-testid="stSidebar"] {
+    background-color: var(--color-bg-secondary) !important;
+    border-right: 1px solid var(--color-border);
+}
+
+/* Widget Label Enhancement */
+label {
+    color: var(--color-text-secondary) !important;
+    font-weight: 500 !important;
+}
+
+/* Expander Enhancements */
+.streamlit-expanderHeader {
+    background-color: var(--color-bg-secondary) !important;
+    color: var(--color-text-primary) !important;
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--color-border) !important;
+}
+
+.streamlit-expanderContent {
+    background-color: var(--color-bg-primary) !important;
+    border: 1px solid var(--color-border) !important;
+    border-top: none !important;
+    border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
+}
+
+/* Animation Utilities */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn var(--transition-normal);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .hide-mobile {
+        display: none !important;
+    }
+}
+
+/* Tooltip Styles */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltip-text {
+    visibility: hidden;
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    text-align: center;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    box-shadow: var(--shadow-md);
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Dark Mode Toggle Enhancement */
+.dark-mode-toggle {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+}
+
+.dark-mode-toggle span {
+    margin-right: var(--space-2);
+}

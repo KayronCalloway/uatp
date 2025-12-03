@@ -1,0 +1,23 @@
+
+📱 iOS Shortcut Setup Instructions
+
+1. Open Shortcuts app on iPhone
+2. Tap "+" to create new shortcut
+3. Name it "UATP Auto Capture"
+4. Add these actions in order:
+
+   Action 1: "Get Clipboard"
+   Action 2: "Get Text from Input" 
+   Action 3: "Make HTTP Request"
+      - URL: http://192.168.1.79:9090/api/v1/live/capture/message
+      - Method: POST
+      - Headers: 
+        * X-API-Key: dev-key-001
+        * Content-Type: application/json
+      - Body: [Dynamic based on clipboard content]
+
+5. Add to Share Sheet for easy access
+
+Usage:
+- In ChatGPT/Claude app: Long press conversation → Share → "UATP Auto Capture"
+- Conversations automatically captured to your UATP backend

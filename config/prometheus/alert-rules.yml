@@ -1,0 +1,332 @@
+groups:
+  # Application Health Alerts
+  - name: uatp_application_health
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(uatp_requests_failed_total[5m]))
+            /
+            sum(rate(uatp_requests_total[5m]))
+          ) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 1%)"
+          runbook: "Check application logs and recent deployments"
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(uatp_request_latency_seconds_bucket[5m])) by (le, endpoint)
+          ) > 1.0
+        for: 10m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High API latency detected on {{ $labels.endpoint }}"
+          description: "P95 latency is {{ $value }}s (threshold: 1s)"
+          runbook: "Check database performance and connection pool"
+
+      - alert: ServiceDown
+        expr: up{job="uatp-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "UATP API service is down"
+          description: "{{ $labels.instance }} has been down for more than 1 minute"
+          runbook: "Check pod status: kubectl get pods -n uatp-production"
+
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            container_memory_working_set_bytes{namespace="uatp-production",container="uatp-api"}
+            /
+            container_spec_memory_limit_bytes{namespace="uatp-production",container="uatp-api"}
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.pod }}"
+          description: "Memory usage is {{ $value | humanizePercentage }} (threshold: 90%)"
+          runbook: "Consider increasing memory limits or investigating memory leaks"
+
+      - alert: HighCPUUsage
+        expr: |
+          rate(container_cpu_usage_seconds_total{namespace="uatp-production",container="uatp-api"}[5m]) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High CPU usage on {{ $labels.pod }}"
+          description: "CPU usage is {{ $value | humanizePercentage }} (threshold: 90%)"
+          runbook: "Check for performance issues or consider scaling"
+
+  # Database Alerts
+  - name: uatp_database
+    interval: 30s
+    rules:
+      - alert: DatabaseConnectionPoolExhausted
+        expr: uatp_database_connections_active >= 18
+        for: 5m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "Active connections: {{ $value }} (pool size: 20)"
+          runbook: "Check for connection leaks or increase pool size"
+
+      - alert: DatabaseHighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(uatp_database_query_duration_seconds_bucket[5m])) by (le)
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High database query latency"
+          description: "P95 query latency is {{ $value }}s (threshold: 0.5s)"
+          runbook: "Check slow query logs and database performance"
+
+      - alert: DatabaseDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "Database has been unreachable for more than 1 minute"
+          runbook: "Check database service status immediately"
+
+  # Cache Alerts
+  - name: uatp_cache
+    interval: 30s
+    rules:
+      - alert: LowCacheHitRate
+        expr: |
+          (
+            sum(rate(uatp_cache_hits_total[10m]))
+            /
+            (sum(rate(uatp_cache_hits_total[10m])) + sum(rate(uatp_cache_misses_total[10m])))
+          ) < 0.7
+        for: 15m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }} (threshold: 70%)"
+          runbook: "Review cache configuration and TTL settings"
+
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been unreachable for more than 1 minute"
+          runbook: "Check Redis service status"
+
+  # Kubernetes Pod Alerts
+  - name: uatp_kubernetes
+    interval: 30s
+    rules:
+      - alert: PodCrashLooping
+        expr: |
+          rate(kube_pod_container_status_restarts_total{namespace="uatp-production",pod=~"uatp-api-.*"}[15m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Pod {{ $labels.pod }} is crash looping"
+          description: "Pod has restarted {{ $value }} times in the last 15 minutes"
+          runbook: "Check pod logs: kubectl logs {{ $labels.pod }} -n uatp-production"
+
+      - alert: PodNotReady
+        expr: |
+          sum by (pod) (
+            kube_pod_status_phase{namespace="uatp-production",pod=~"uatp-api-.*",phase!="Running"}
+          ) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Pod {{ $labels.pod }} is not ready"
+          description: "Pod has been in non-running state for 5 minutes"
+          runbook: "Check pod status: kubectl describe pod {{ $labels.pod }} -n uatp-production"
+
+      - alert: DeploymentReplicasMismatch
+        expr: |
+          kube_deployment_status_replicas_available{namespace="uatp-production",deployment="uatp-api"}
+          !=
+          kube_deployment_spec_replicas{namespace="uatp-production",deployment="uatp-api"}
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Deployment replica mismatch"
+          description: "Available replicas ({{ $value }}) don't match desired count"
+          runbook: "Check deployment status: kubectl get deployment uatp-api -n uatp-production"
+
+      - alert: HPAMaxedOut
+        expr: |
+          kube_horizontalpodautoscaler_status_current_replicas{namespace="uatp-production",horizontalpodautoscaler="uatp-api-hpa"}
+          ==
+          kube_horizontalpodautoscaler_spec_max_replicas{namespace="uatp-production",horizontalpodautoscaler="uatp-api-hpa"}
+        for: 15m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "HPA has reached maximum replica count"
+          description: "Running at {{ $value }} replicas (maximum configured)"
+          runbook: "Consider increasing max replicas or optimizing application performance"
+
+  # Business Metrics Alerts
+  - name: uatp_business
+    interval: 1m
+    rules:
+      - alert: CapsuleCreationDropped
+        expr: |
+          (
+            rate(uatp_capsules_created_total[10m]) offset 10m
+            -
+            rate(uatp_capsules_created_total[10m])
+          )
+          /
+          rate(uatp_capsules_created_total[10m]) offset 10m
+          > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: business
+        annotations:
+          summary: "Capsule creation rate dropped significantly"
+          description: "Creation rate dropped by {{ $value | humanizePercentage }}"
+          runbook: "Check for service degradation or user-facing issues"
+
+      - alert: HighCapsuleVerificationFailureRate
+        expr: |
+          (
+            sum(rate(uatp_capsule_verification_failed_total[5m]))
+            /
+            sum(rate(uatp_capsules_created_total[5m]))
+          ) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+          component: business
+        annotations:
+          summary: "High capsule verification failure rate"
+          description: "Failure rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          runbook: "Check cryptographic verification logic and signing key configuration"
+
+      - alert: NoRecentCapsuleCreation
+        expr: |
+          sum(rate(uatp_capsules_created_total[15m])) == 0
+        for: 15m
+        labels:
+          severity: warning
+          component: business
+        annotations:
+          summary: "No capsules created recently"
+          description: "No capsule creation activity for 15 minutes"
+          runbook: "Check if users are experiencing issues with capsule submission"
+
+  # SSL Certificate Alerts
+  - name: uatp_certificates
+    interval: 1h
+    rules:
+      - alert: CertificateExpiringSoon
+        expr: |
+          (certmanager_certificate_expiration_timestamp_seconds - time()) / 86400 < 30
+        for: 1h
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "SSL certificate {{ $labels.name }} expiring soon"
+          description: "Certificate will expire in {{ $value }} days"
+          runbook: "Check cert-manager and renewal process"
+
+      - alert: CertificateExpired
+        expr: |
+          (certmanager_certificate_expiration_timestamp_seconds - time()) <= 0
+        for: 5m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "SSL certificate {{ $labels.name }} has EXPIRED"
+          description: "Certificate expired {{ $value }} seconds ago"
+          runbook: "URGENT: Renew certificate immediately"
+
+  # WebAuthn Alerts
+  - name: uatp_webauthn
+    interval: 30s
+    rules:
+      - alert: HighWebAuthnFailureRate
+        expr: |
+          (
+            sum(rate(uatp_webauthn_authentication_failed_total[5m]))
+            /
+            sum(rate(uatp_webauthn_authentications_total[5m]))
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: authentication
+        annotations:
+          summary: "High WebAuthn authentication failure rate"
+          description: "Failure rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+          runbook: "Check for client compatibility issues or credential problems"
+
+  # Mobile API Alerts
+  - name: uatp_mobile
+    interval: 30s
+    rules:
+      - alert: HighMobileSyncFailureRate
+        expr: |
+          (
+            sum(rate(uatp_mobile_sync_failed_total[5m]))
+            /
+            sum(rate(uatp_mobile_sync_requests_total[5m]))
+          ) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          component: mobile_api
+        annotations:
+          summary: "High mobile sync failure rate"
+          description: "Sync failure rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          runbook: "Check mobile API endpoints and database connectivity"
+
+      - alert: MobileOfflineQueueBacklog
+        expr: sum(uatp_mobile_offline_queue_size) > 10000
+        for: 30m
+        labels:
+          severity: warning
+          component: mobile_api
+        annotations:
+          summary: "Large mobile offline queue backlog"
+          description: "Queue size is {{ $value }} items (threshold: 10000)"
+          runbook: "Check sync processing capacity and database performance"

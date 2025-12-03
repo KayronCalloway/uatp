@@ -1,0 +1,11 @@
+{
+  "chain_id": "test-chain-6f1684ee",
+  "seals": [
+    {
+      "seal_id": "seal-1751505889-25ce4416",
+      "timestamp": "2025-07-03T01:24:49.514029+00:00",
+      "signer_id": "test-signer",
+      "note": "Test seal for API verification"
+    }
+  ]
+}

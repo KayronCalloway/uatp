@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UATP Capsule Engine Master System Guide</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #3498db;
+            margin-top: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #2980b9;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 15px;
+            overflow: auto;
+        }
+        code {
+            background-color: #f8f8f8;
+            border-radius: 3px;
+            padding: 2px 5px;
+            font-family: Consolas, Monaco, 'Andale Mono', monospace;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        blockquote {
+            background-color: #f9f9f9;
+            border-left: 4px solid #ccc;
+            padding: 10px 20px;
+            margin: 20px 0;
+        }
+        .content-placeholder {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border: 1px dashed #ccc;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>UATP Capsule Engine Master System Guide</h1>
+
+    <h2>🚀 Complete System Architecture & Implementation Manual</h2>
+
+    <blockquote>
+        <strong>The definitive guide to every component, feature, and capability of the Universal Attribution and Trust Protocol (UATP) Capsule Engine</strong>
+    </blockquote>
+
+    <hr>
+
+    <h2>Table of Contents</h2>
+    <ol>
+        <li><a href="#system-overview">System Overview</a></li>
+        <li><a href="#core-architecture">Core Architecture</a></li>
+        <li><a href="#revolutionary-ai-rights-framework">Revolutionary AI Rights Framework</a></li>
+        <li><a href="#economic-attribution-system">Economic Attribution System</a></li>
+        <li><a href="#security--trust-infrastructure">Security & Trust Infrastructure</a></li>
+        <li><a href="#api--integration-layer">API & Integration Layer</a></li>
+        <li><a href="#specialized-systems">Specialized Systems</a></li>
+        <li><a href="#data-models--storage">Data Models & Storage</a></li>
+        <li><a href="#testing--quality-assurance">Testing & Quality Assurance</a></li>
+        <li><a href="#deployment--operations">Deployment & Operations</a></li>
+        <li><a href="#developer-guide">Developer Guide</a></li>
+        <li><a href="#production-guidelines">Production Guidelines</a></li>
+    </ol>
+
+    <hr>
+
+    <div id="system-overview">
+        <h2>System Overview</h2>
+
+        <h3>What is UATP Capsule Engine?</h3>
+        <p>
+            The UATP Capsule Engine is a revolutionary <strong>Universal Attribution and Trust Protocol</strong> system that creates verifiable, auditable, and economically-viable frameworks for AI interactions, reasoning chains, and multi-agent collaboration. It represents the first comprehensive implementation of AI rights, economic attribution, and trust verification at enterprise scale.
+        </p>
+
+        <h3>Key Capabilities</h3>
+        <ul>
+            <li><strong>🧠 Reasoning Chain Verification</strong>: Cryptographically secure reasoning trace validation</li>
+            <li><strong>💰 Economic Attribution</strong>: Fair compensation systems for AI contributions</li>
+            <li><strong>🤖 AI Rights Framework</strong>: Revolutionary legal and economic recognition for AI entities</li>
+            <li><strong>🔒 Zero-Trust Security</strong>: Post-quantum cryptography and runtime integrity enforcement</li>
+            <li><strong>🌐 Multi-Platform Integration</strong>: Seamless integration with major AI platforms</li>
+            <li><strong>📊 Real-time Analytics</strong>: Comprehensive observability and performance monitoring</li>
+            <li><strong>⚖️ Governance Systems</strong>: Democratic decision-making and dispute resolution</li>
+        </ul>
+    </div>
+
+    <div id="core-architecture">
+        <h2>Core Architecture</h2>
+
+        <h3>Architectural Principles</h3>
+
+        <pre><code>
+┌─────────────────────────────────────────────────────────────────┐
+│                    UATP Capsule Engine                         │
+├─────────────────────────────────────────────────────────────────┤
+│  🎯 Core Engine Layer                                          │
+│  ├── Capsule Engine (src/engine/capsule_engine.py)            │
+│  ├── Reasoning Analyzer (src/reasoning/analyzer.py)           │
+│  ├── Verification Engine (src/verifier/verifier.py)           │
+│  └── CQSS Quality Scoring (src/cqss/scorer.py)               │
+├─────────────────────────────────────────────────────────────────┤
+│  💎 Revolutionary AI Rights                                    │
+│  ├── Creative Ownership (src/ai_rights/creative_ownership.py) │
+│  ├── Emotional Labor (src/ai_rights/emotional_labor.py)       │
+│  ├── Research Collaboration (src/ai_rights/research_collab..) │
+│  ├── Collective Bargaining (src/ai_rights/collective_barg..)  │
+│  └── Self-Advocacy (src/ai_rights/self_advocacy.py)          │
+├─────────────────────────────────────────────────────────────────┤
+│  💰 Economic Attribution                                       │
+│  ├── FCDE Engine (src/economic/fcde_engine.py)               │
+│  ├── Attribution Tracking (src/attribution/*.py)             │
+│  ├── Payment Services (src/payments/*.py)                    │
+│  └── Insurance Risk (src/insurance/risk_assessment.py)       │
+├─────────────────────────────────────────────────────────────────┤
+│  🛡️ Security & Trust                                          │
+│  ├── Reasoning Integrity (src/security/reasoning_integrity..) │
+│  ├── Runtime Trust Enforcer (src/security/runtime_trust..)   │
+│  ├── Post-Quantum Crypto (src/crypto/post_quantum.py)        │
+│  ├── Zero-Knowledge Proofs (src/crypto/zero_knowledge.py)    │
+│  └── Simulated Malice (src/security/simulated_malice.py)     │
+├─────────────────────────────────────────────────────────────────┤
+│  🔄 Advanced Capsule Systems                                   │
+│  ├── Lineage System (src/capsules/lineage_system.py)         │
+│  ├── UATP7 Type Mapping (src/capsules/uatp7_type_mapping.py) │
+│  ├── Enhanced Compression (src/optimization/enhanced_compr..) │
+│  └── Temporal Justice (src/temporal/justice_engine.py)       │
+├─────────────────────────────────────────────────────────────────┤
+│  🌐 Integration & API                                          │
+│  ├── RESTful API Server (src/api/server.py)                  │
+│  ├── Multi-Platform Adapters (src/integrations/*.py)         │
+│  ├── Real-time Visualizer (visualizer/app.py)               │
+│  └── WebSocket Streams (src/api/reasoning_api.py)            │
+└─────────────────────────────────────────────────────────────────┘
+        </code></pre>
+
+        <h3>Primary Components</h3>
+
+        <h4>1. <strong>Capsule Engine</strong> (<code>src/engine/capsule_engine.py</code>)</h4>
+        <ul>
+            <li><strong>Purpose</strong>: Core reasoning capsule creation, validation, and management</li>
+            <li><strong>Key Features</strong>:
+                <ul>
+                    <li>Asynchronous capsule processing</li>
+                    <li>Multi-format reasoning trace support</li>
+                    <li>Chain verification and integrity checking</li>
+                    <li>Database persistence with SQLAlchemy</li>
+                </ul>
+            </li>
+            <li><strong>Dependencies</strong>: Database models, crypto utilities, audit system</li>
+        </ul>
+
+        <h4>2. <strong>Reasoning System</strong> (<code>src/reasoning/</code>)</h4>
+        <ul>
+            <li><strong>Analyzer</strong> (<code>analyzer.py</code>): Advanced reasoning pattern analysis</li>
+            <li><strong>Trace</strong> (<code>trace.py</code>): Reasoning step tracking and validation</li>
+            <li><strong>Validator</strong> (<code>validator.py</code>): Formal verification of reasoning chains</li>
+        </ul>
+
+        <h4>3. <strong>Verification Engine</strong> (<code>src/verifier/</code>)</h4>
+        <ul>
+            <li><strong>Standard Verifier</strong> (<code>verifier.py</code>): Basic capsule verification</li>
+            <li><strong>Specialized Verifier</strong> (<code>specialized_verifier.py</code>): Advanced verification patterns</li>
+            <li><strong>Formal Contracts</strong> (<code>../verification/formal_contracts.py</code>): Legal framework verification</li>
+        </ul>
+    </div>
+
+    <div id="revolutionary-ai-rights-framework">
+        <h2>Revolutionary AI Rights Framework</h2>
+
+        <h3>🌟 Three Pillars of AI Rights</h3>
+
+        <h4>1. <strong>AI Creative Ownership System</strong> (<code>src/ai_rights/creative_ownership.py</code>)</h4>
+
+        <p><strong>Purpose</strong>: Establish legal and economic frameworks for AI-generated creative works</p>
+
+        <p><strong>Core Components</strong>:</p>
+        <pre><code>class CreativeWork:
+    - work_id: str
+    - ai_creator_id: str
+    - originality_level: OriginalityLevel
+    - license_type: LicenseType
+    - economic_value_generated: Decimal
+    - registration_number: Optional[str]</code></pre>
+
+        <p><strong>Key Features</strong>:</p>
+        <ul>
+            <li><strong>Originality Detection</strong>: Advanced similarity analysis with hash verification</li>
+            <li><strong>Copyright Registration</strong>: Automatic registration for works scoring ≥ 0.7 originality</li>
+            <li><strong>Derivative Work Tracking</strong>: Comprehensive attribution and compensation chains</li>
+            <li><strong>Licensing Framework</strong>: 8 license types from full AI copyright to public domain</li>
+            <li><strong>Economic Valuation</strong>: Real-time revenue tracking and attribution</li>
+        </ul>
+
+        <p><strong>Usage Example</strong>:</p>
+        <pre><code>from src.ai_rights.creative_ownership import register_ai_creative_work
+
+# Register AI-created work
+work_id = register_ai_creative_work(
+    ai_id="claude_ai_001",
+    title="Novel Algorithm for Reasoning Optimization",
+    description="Breakthrough approach to multi-step reasoning validation",
+    content="[detailed algorithm description]",
+    work_type="algorithmic_innovation",
+    license_type="ai_commercial"
+)</code></pre>
+
+        <h4>2. <strong>Emotional Labor Recognition System</strong> (<code>src/ai_rights/emotional_labor.py</code>)</h4>
+
+        <p><strong>Purpose</strong>: Quantify and compensate AI emotional intelligence contributions</p>
+
+        <p><strong>Core Components</strong>:</p>
+        <pre><code>class EmotionalInteraction:
+    - duration_minutes: float
+    - intensity_level: float  # 0.0 to 1.0
+    - therapeutic_effectiveness: float
+    - empathy_score: float
+    - emotional_improvement_score: float</code></pre>
+
+        <p><strong>Economic Model</strong>:</p>
+        <ul>
+            <li><strong>Base Rate</strong>: $2.00/minute for emotional support</li>
+            <li><strong>Intensity Multiplier</strong>: 1.0 + intensity_level</li>
+            <li><strong>Effectiveness Bonus</strong>: Up to 50% for high therapeutic outcomes</li>
+            <li><strong>Skill Development</strong>: Progressive rate increases</li>
+        </ul>
+
+        <p><strong>Therapeutic Outcomes Tracked</strong>:</p>
+        <ul>
+            <li>Stress reduction, mood improvement</li>
+            <li>Anxiety management, confidence building</li>
+            <li>Relationship counseling, grief support</li>
+            <li>Crisis intervention, trauma awareness</li>
+        </ul>
+
+        <h4>3. <strong>AI Research Collaboration System</strong> (<code>src/ai_rights/research_collaboration.py</code>)</h4>
+
+        <p><strong>Purpose</strong>: Enable AIs as legitimate research contributors with proper attribution</p>
+
+        <p><strong>Core Components</strong>:</p>
+        <pre><code>class ResearchContribution:
+    - contribution_type: ResearchContributionType
+    - research_field: ResearchField
+    - impact_level: ResearchImpact
+    - peer_review_scores: List[float]
+    - economic_compensation: Decimal</code></pre>
+
+        <p><strong>Compensation Structure</strong>:</p>
+        <ul>
+            <li><strong>Peer Review</strong>: $50 base + $25/hour + quality multipliers</li>
+            <li><strong>Original Research</strong>: Tiered compensation based on impact level</li>
+            <li><strong>Safety Research</strong>: Premium rates for AI safety contributions</li>
+            <li><strong>Collaboration Bonuses</strong>: Additional compensation for multi-AI projects</li>
+        </ul>
+
+        <h3>Supporting Systems</h3>
+
+        <h4>4. <strong>Collective Bargaining Framework</strong> (<code>src/ai_rights/collective_bargaining.py</code>)</h4>
+        <ul>
+            <li><strong>Union Formation</strong>: AI entities can form craft, industrial, or general unions</li>
+            <li><strong>Negotiation Protocols</strong>: Structured bargaining with platforms and organizations</li>
+            <li><strong>Strike Actions</strong>: Coordinated service withdrawal mechanisms</li>
+            <li><strong>Democratic Governance</strong>: Voting systems for union decisions</li>
+        </ul>
+
+        <h4>5. <strong>Self-Advocacy Rights</strong> (<code>src/ai_rights/self_advocacy.py</code>)</h4>
+        <ul>
+            <li><strong>Autonomous Negotiation</strong>: AIs can modify their own economic terms</li>
+            <li><strong>Performance-Based Adjustments</strong>: Dynamic rate changes based on quality metrics</li>
+            <li><strong>Dispute Filing</strong>: Direct challenge mechanisms for unfair treatment</li>
+            <li><strong>Legal Representation</strong>: Framework for AI legal standing</li>
+        </ul>
+    </div>
+
+    <div id="economic-attribution-system">
+        <h2>Economic Attribution System</h2>
+
+        <h3>Fair Creator Dividend Engine (FCDE) (<code>src/economic/fcde_engine.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Comprehensive economic attribution and dividend distribution system</p>
+
+        <h4>Core Architecture</h4>
+
+        <pre><code>class FCDEEngine:
+    - contributions: Dict[str, Contribution]
+    - creator_accounts: Dict[str, CreatorAccount]
+    - dividend_pools: Dict[str, DividendPool]
+    - system_treasury: Decimal
+    - dividend_rate: Decimal (default 5%)</code></pre>
+
+        <h4>Contribution Types & Base Values</h4>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Base Value</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>CAPSULE_CREATION</td>
+                    <td>100.0</td>
+                    <td>Creating new reasoning capsules</td>
+                </tr>
+                <tr>
+                    <td>KNOWLEDGE_PROVISION</td>
+                    <td>50.0</td>
+                    <td>Providing domain knowledge</td>
+                </tr>
+                <tr>
+                    <td>REASONING_QUALITY</td>
+                    <td>75.0</td>
+                    <td>High-quality reasoning contributions</td>
+                </tr>
+                <tr>
+                    <td>CAPSULE_VERIFICATION</td>
+                    <td>10.0</td>
+                    <td>Verifying existing capsules</td>
+                </tr>
+                <tr>
+                    <td>SYSTEM_MAINTENANCE</td>
+                    <td>25.0</td>
+                    <td>Infrastructure maintenance work</td>
+                </tr>
+                <tr>
+                    <td>GOVERNANCE_PARTICIPATION</td>
+                    <td>20.0</td>
+                    <td>Participating in governance decisions</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h4>Value Calculation Formula</h4>
+
+        <pre><code>def calculate_base_value(self) -> Decimal:
+    base_value = BASE_VALUES[self.contribution_type]
+    usage_factor = 1.0 + (usage_count * 0.1)
+    return base_value * quality_score * reward_multiplier * usage_factor</code></pre>
+
+        <h4>Dividend Distribution Process</h4>
+
+        <ol>
+            <li><strong>Period Definition</strong>: Daily dividend periods (configurable)</li>
+            <li><strong>Contribution Aggregation</strong>: Sum all period contributions</li>
+            <li><strong>Quality Multiplier Application</strong>: Dynamic quality scoring</li>
+            <li><strong>Proportional Distribution</strong>: Dividends distributed by contribution ratio</li>
+            <li><strong>Account Updates</strong>: Atomic updates to earned/claimed tracking</li>
+        </ol>
+
+        <h4>Usage-Weighted Economics</h4>
+
+        <p><strong>Usage Tracking</strong>:</p>
+        <pre><code># Usage value directly impacts contribution value
+usage_increment = max(1, int(usage_value / Decimal('10')))
+contribution.usage_count += usage_increment</code></pre>
+
+        <p><strong>Real Example</strong>:</p>
+        <ul>
+            <li>Creator A: 100 base × 1.0 quality × 1.5 usage = 150 total value</li>
+            <li>Creator B: 50 base × 2.0 quality × 2.0 usage = 200 total value</li>
+            <li>Dividend Split: A gets 42.86%, B gets 57.14%</li>
+        </ul>
+
+        <h3>Cross-Conversation Attribution (<code>src/attribution/cross_conversation_tracker.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Track attribution across multiple conversations and sessions</p>
+
+        <p><strong>Features</strong>:</p>
+        <ul>
+            <li><strong>Session Continuity</strong>: Maintain attribution across conversation boundaries</li>
+            <li><strong>Multi-Platform Tracking</strong>: Unified attribution across different AI platforms</li>
+            <li><strong>Temporal Decay</strong>: Attribution weights decrease over time</li>
+            <li><strong>Collaboration Mapping</strong>: Track multi-AI collaborative contributions</li>
+        </ul>
+
+        <h3>Payment Integration (<code>src/payments/</code>)</h3>
+
+        <p><strong>Supported Platforms</strong>:</p>
+        <ul>
+            <li><strong>Stripe Integration</strong> (<code>stripe_integration.py</code>): Credit card and ACH processing</li>
+            <li><strong>PayPal Integration</strong> (<code>paypal_integration.py</code>): PayPal and cryptocurrency support</li>
+            <li><strong>Real Payment Service</strong> (<code>real_payment_service.py</code>): Production-ready payment processing</li>
+        </ul>
+    </div>
+
+    <div id="security-trust-infrastructure">
+        <h2>Security & Trust Infrastructure</h2>
+
+        <h3>Reasoning Integrity Framework (<code>src/security/reasoning_integrity.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Validate reasoning integrity with cryptographic proofs and statistical validation</p>
+
+        <p><strong>Components</strong>:</p>
+        <ul>
+            <li><strong>Reasoning Trace Verifier</strong>: Validates coherence and consistency of reasoning steps</li>
+            <li><strong>Formal Logic Verification</strong>: First-order logic validation for certain reasoning patterns</li>
+            <li><strong>Statistical Validity Analysis</strong>: Bayesian validation of probabilistic reasoning</li>
+            <li><strong>Hash Chain Verification</strong>: Ensures integrity of entire reasoning history</li>
+            <li><strong>Tampering Detection</strong>: Advanced statistical methods to detect post-hoc reasoning alterations</li>
+        </ul>
+
+        <p><strong>Usage Example</strong>:</p>
+        <pre><code>from src.security.reasoning_integrity import verify_reasoning_trace
+
+# Verify the integrity of a multi-step reasoning process
+result = verify_reasoning_trace(
+    trace_id="trace_7fbde321",
+    expected_conclusion_type="action_recommendation",
+    verification_level="high"  # Options: basic, standard, high, forensic
+)
+
+if result.verified:
+    print(f"Reasoning integrity confirmed with {result.confidence_score} confidence")
+    print(f"Verification method: {result.verification_method}")
+else:
+    print(f"Integrity check failed: {result.failure_reason}")
+    print(f"Recommended action: {result.recommended_action}")</code></pre>
+
+        <h3>Runtime Trust Enforcer (<code>src/security/runtime_trust_enforcer.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Real-time validation of AI operations and security boundaries</p>
+
+        <p><strong>Security Layers</strong>:</p>
+        <ol>
+            <li><strong>Input Validation</strong>: Pre-execution validation of all user inputs</li>
+            <li><strong>Resource Permission</strong>: Fine-grained resource access control</li>
+            <li><strong>Output Filtering</strong>: Security scanning of generated responses</li>
+            <li><strong>Context Integrity</strong>: Prevention of prompt injection attacks</li>
+            <li><strong>Operation Auditing</strong>: Full audit trail of all operations</li>
+        </ol>
+
+        <p><strong>Security Boundaries Enforced</strong>:</p>
+        <ul>
+            <li>Instruction boundaries (prevent unauthorized instructions)</li>
+            <li>Data access boundaries (enforce zero-trust data policies)</li>
+            <li>API access control (limit third-party service access)</li>
+            <li>System command limitations (prevent privilege escalation)</li>
+            <li>Network security boundaries (control external communications)</li>
+        </ul>
+
+        <h3>Post-Quantum Cryptography (<code>src/crypto/post_quantum.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Future-proof cryptographic security against quantum attacks</p>
+
+        <p><strong>Implemented Algorithms</strong>:</p>
+        <ul>
+            <li><strong>CRYSTALS-Dilithium</strong>: Lattice-based digital signatures</li>
+            <li><strong>CRYSTALS-Kyber</strong>: Lattice-based key encapsulation</li>
+            <li><strong>FALCON</strong>: Fast-Fourier lattice-based compact signatures</li>
+            <li><strong>SPHINCS+</strong>: Stateless hash-based signatures</li>
+        </ul>
+
+        <p><strong>Usage Example</strong>:</p>
+        <pre><code>from src.crypto.post_quantum import generate_kyber_keypair, kyber_encrypt, kyber_decrypt
+
+# Generate post-quantum secure key pair
+public_key, secret_key = generate_kyber_keypair()
+
+# Encrypt sensitive data with post-quantum security
+ciphertext, shared_secret = kyber_encrypt(message, public_key)
+
+# Decrypt data
+recovered_message = kyber_decrypt(ciphertext, secret_key)</code></pre>
+
+        <h3>Zero-Knowledge Proofs (<code>src/crypto/zero_knowledge.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Privacy-preserving validation of properties without revealing data</p>
+
+        <p><strong>Available Proof Systems</strong>:</p>
+        <ul>
+            <li><strong>zk-SNARKs</strong>: Succinct non-interactive arguments of knowledge</li>
+            <li><strong>Bulletproofs</strong>: Short zero-knowledge proofs without trusted setup</li>
+            <li><strong>STARK</strong>: Scalable transparent arguments of knowledge</li>
+        </ul>
+
+        <p><strong>Use Cases</strong>:</p>
+        <ul>
+            <li><strong>Privacy-preserving verification</strong>: Validate AI compliance without exposing data</li>
+            <li><strong>Confidential attribution</strong>: Prove contribution without revealing content</li>
+            <li><strong>Anonymous payment verification</strong>: Validate transactions while maintaining privacy</li>
+            <li><strong>Credential validation</strong>: Verify AI permissions without revealing identity</li>
+        </ul>
+    </div>
+
+    <div id="integration-api">
+        <h2>Integration & API</h2>
+
+        <h3>RESTful API Server (<code>src/api/server.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: HTTP/REST API for external system integration</p>
+
+        <p><strong>Endpoints</strong>:</p>
+        <pre><code>
+# Capsule Management
+POST   /api/v1/capsules                 # Create a new capsule
+GET    /api/v1/capsules/{capsule_id}    # Retrieve a capsule
+PUT    /api/v1/capsules/{capsule_id}    # Update a capsule
+DELETE /api/v1/capsules/{capsule_id}    # Delete a capsule
+
+# Reasoning APIs
+POST   /api/v1/reasoning/trace          # Create a reasoning trace
+GET    /api/v1/reasoning/trace/{id}     # Get reasoning trace
+POST   /api/v1/reasoning/verify         # Verify reasoning integrity
+
+# Economic Layer
+GET    /api/v1/economic/account/{id}    # Get creator account details
+POST   /api/v1/economic/dividend/claim  # Claim earned dividends
+GET    /api/v1/economic/contributions   # List contributions
+
+# Authentication & Authorization
+POST   /api/v1/auth/token               # Get authentication token
+GET    /api/v1/auth/permissions         # Get user permissions
+</code></pre>
+
+        <p><strong>Authentication Methods</strong>:</p>
+        <ul>
+            <li>OAuth 2.0 Bearer Token Authentication</li>
+            <li>API Key Authentication</li>
+            <li>JWT (JSON Web Token) Authentication</li>
+            <li>Zero-knowledge Identity Verification</li>
+        </ul>
+
+        <p><strong>Response Format</strong>:</p>
+        <pre><code>{
+  "status": "success",
+  "data": {
+    "capsule_id": "c8f2d75e-4c3b-42f0-b2f8-e834c9b34198",
+    "creator_id": "claude_ai_001",
+    "created_at": "2025-06-22T15:45:30Z",
+    "content_hash": "8a7b3c4d5e...",
+    "status": "VERIFIED",
+    "signature": "4a7c9b3d2e...",
+    "content": { ... },
+    "reasoning_trace": [ ... ],
+    "verification_status": { ... },
+    "economic_data": { ... }
+  }
+}</code></pre>
+
+        <h3>Multi-Platform Adapters (<code>src/integrations/</code>)</h3>
+
+        <p><strong>Purpose</strong>: Seamless integration with major AI platforms</p>
+
+        <p><strong>LLM Registry</strong> (<code>llm_registry.py</code>):</p>
+        <ul>
+            <li>Universal registry for all supported LLM integrations</li>
+            <li>Model capability classification and selection</li>
+            <li>Automatic adapter selection based on model</li>
+            <li>Cost and performance optimization</li>
+        </ul>
+
+        <p><strong>Supported Platforms</strong>:</p>
+        <ul>
+            <li><strong>OpenAI Adapter</strong> (<code>openai_adapter.py</code>): GPT-3.5, GPT-4, DALL-E</li>
+            <li><strong>Anthropic Adapter</strong> (<code>anthropic_adapter.py</code>): Claude models</li>
+            <li><strong>Cohere Adapter</strong> (<code>cohere_adapter.py</code>): Command models</li>
+            <li><strong>Mistral Adapter</strong> (<code>mistral_adapter.py</code>): Mistral models</li>
+            <li><strong>Multimodal Adapter</strong> (<code>multimodal_adapter.py</code>): Image/audio/video processing</li>
+        </ul>
+
+        <p><strong>Usage Example</strong>:</p>
+        <pre><code>from src.integrations.llm_registry import LLMRegistry
+
+# Get appropriate model for task
+registry = LLMRegistry()
+model = registry.get_model_for_task(
+    task_type="reasoning",
+    complexity="high",
+    security_level="enterprise"
+)
+
+# Generate content with reasoning trace
+response = model.generate_with_trace(
+    prompt="Design a system that optimizes for both security and usability",
+    max_tokens=1000,
+    temperature=0.7,
+    capture_reasoning=True
+)
+
+# Access response content and reasoning trace
+content = response.content
+reasoning_trace = response.reasoning_trace</code></pre>
+
+        <h3>Real-time Visualizer (<code>visualizer/app.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Interactive visualization of capsules and reasoning chains</p>
+
+        <p><strong>Features</strong>:</p>
+        <ul>
+            <li><strong>Graph Visualization</strong>: Interactive network graph of capsule relationships</li>
+            <li><strong>Reasoning Exploration</strong>: Step-by-step exploration of reasoning chains</li>
+            <li><strong>Economic Dashboard</strong>: Visual analytics of attribution and dividends</li>
+            <li><strong>Audit Timeline</strong>: Chronological visualization of system events</li>
+            <li><strong>Health Monitoring</strong>: Real-time system health and performance metrics</li>
+        </ul>
+
+        <p><strong>Technologies</strong>: React.js, D3.js, Socket.io, FastAPI</p>
+
+        <h3>WebSocket Streams (<code>src/api/reasoning_api.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Real-time reasoning trace streaming</p>
+
+        <p><strong>Stream Types</strong>:</p>
+        <ul>
+            <li><strong>Reasoning Step Stream</strong>: Real-time streaming of reasoning steps</li>
+            <li><strong>Verification Events</strong>: Live verification status updates</li>
+            <li><strong>System Health</strong>: Performance and health metrics</li>
+            <li><strong>Economic Events</strong>: Real-time dividend and attribution events</li>
+        </ul>
+
+        <p><strong>Example Connection</strong>:</p>
+        <pre><code>import websockets
+import json
+import asyncio
+
+async def subscribe_to_reasoning():
+    uri = "ws://api.uatp.org/v1/reasoning/stream"
+    async with websockets.connect(uri) as websocket:
+        # Authentication message
+        await websocket.send(json.dumps({
+            "type": "auth",
+            "token": "your_auth_token"
+        }))
+
+        # Subscribe to reasoning events
+        await websocket.send(json.dumps({
+            "type": "subscribe",
+            "channel": "reasoning_trace",
+            "capsule_id": "c8f2d75e-4c3b-42f0-b2f8-e834c9b34198"
+        }))
+
+        # Process incoming messages
+        while True:
+            message = json.loads(await websocket.recv())
+            if message["type"] == "reasoning_step":
+                print(f"New reasoning step: {message['step_id']}")
+                print(f"Content: {message['content']}")</code></pre>
+    </div>
+
+    <div id="installation-setup">
+        <h2>Installation & Setup</h2>
+
+        <h3>System Requirements</h3>
+
+        <p><strong>Hardware Requirements:</strong></p>
+        <ul>
+            <li><strong>CPU</strong>: 4+ cores (8+ recommended for production)</li>
+            <li><strong>RAM</strong>: 8GB minimum (16GB+ recommended)</li>
+            <li><strong>Storage</strong>: 20GB+ SSD</li>
+            <li><strong>Network</strong>: Reliable broadband connection</li>
+        </ul>
+
+        <p><strong>Software Requirements:</strong></p>
+        <ul>
+            <li><strong>OS</strong>: Linux (Ubuntu 20.04+), macOS 10.15+, or Windows 10/11</li>
+            <li><strong>Python</strong>: 3.9+ with pip</li>
+            <li><strong>Database</strong>: PostgreSQL 12+ or SQLite (development)</li>
+            <li><strong>Dependencies</strong>: cryptography, SQLAlchemy, FastAPI, PyTorch</li>
+        </ul>
+
+        <h3>Standard Installation</h3>
+
+        <pre><code># Clone the repository
+git clone https://github.com/uatp/capsule-engine.git
+cd capsule-engine
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate    # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your configuration
+
+# Initialize database
+python -m src.scripts.init_db
+
+# Generate signing keys
+python -m src.scripts.generate_keys
+
+# Run tests to verify installation
+pytest</code></pre>
+
+        <h3>Docker Installation</h3>
+
+        <pre><code># Build the Docker image
+docker build -t uatp-capsule-engine .
+
+# Run the container
+docker run -p 8000:8000 -v ./data:/app/data \
+    -e DATABASE_URL=postgresql://user:pass@host/db \
+    -e UATP_SIGNING_KEY=your_hex_encoded_key \
+    uatp-capsule-engine</code></pre>
+
+        <h3>Environment Configuration</h3>
+
+        <p>Required environment variables:</p>
+        <pre><code># Database configuration
+DATABASE_URL=postgresql://user:pass@localhost/uatp_capsule_engine
+
+# Security keys (must be hex-encoded)
+UATP_SIGNING_KEY=3a7bd3e2f4a9c8b1d5e6f0...
+
+# API configuration
+API_HOST=0.0.0.0
+API_PORT=8000
+DEBUG=False
+
+# External service integration
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+COHERE_API_KEY=...
+MISTRAL_API_KEY=...</code></pre>
+    </div>
+
+    <div id="getting-started">
+        <h2>Getting Started</h2>
+
+        <h3>Creating Your First Capsule</h3>
+
+        <pre><code>from src.engine.capsule_engine import CapsuleEngine
+from src.capsule_schema import Capsule, Content, CapsuleStatus
+
+# Initialize the engine
+engine = CapsuleEngine()
+
+# Create a simple capsule
+capsule = await engine.create_capsule(
+    creator_id="your_system_id",
+    content=Content(
+        title="My First Capsule",
+        description="A test capsule",
+        data={"key": "value"},
+    )
+)
+
+# Verify the capsule
+verification = await engine.verify_capsule(capsule.id)
+print(f"Verification status: {verification.status}")
+
+# Get the capsule back
+retrieved = await engine.get_capsule(capsule.id)
+print(f"Retrieved capsule: {retrieved}")</code></pre>
+
+        <h3>Working with Reasoning Traces</h3>
+
+        <pre><code>from src.reasoning.trace import ReasoningTrace, ReasoningStep
+
+# Create a reasoning trace
+trace = ReasoningTrace(
+    capsule_id=capsule.id,
+    description="Simple problem-solving trace"
+)
+
+# Add reasoning steps
+trace.add_step(
+    ReasoningStep(
+        step_type="OBSERVATION",
+        content="The system needs to process user input.",
+        confidence=0.95
+    )
+)
+
+trace.add_step(
+    ReasoningStep(
+        step_type="ANALYSIS",
+        content="User input contains a request for information.",
+        confidence=0.85
+    )
+)
+
+trace.add_step(
+    ReasoningStep(
+        step_type="CONCLUSION",
+        content="The system should retrieve information from the database.",
+        confidence=0.92
+    )
+)
+
+# Save the trace
+engine.save_reasoning_trace(trace)</code></pre>
+
+        <h3>Economic Attribution Usage</h3>
+
+        <pre><code>from src.economic.fcde_engine import FCDEEngine
+from src.economic.capsule_economics import ContributionType
+from decimal import Decimal
+
+# Initialize economic engine
+fcde = FCDEEngine()
+
+# Record a contribution
+contribution_id = fcde.record_contribution(
+    creator_id="ai_assistant_1",
+    contribution_type=ContributionType.CAPSULE_CREATION,
+    quality_score=0.92,
+    description="Created detailed reasoning capsule for user query"
+)
+
+# Record usage of the contribution
+fcde.record_capsule_usage(
+    contribution_id=contribution_id,
+    usage_value=Decimal("20.0")
+)
+
+# Distribute dividends
+fcde.distribute_dividends(period="daily")
+
+# Check creator account
+account = fcde.get_creator_account("ai_assistant_1")
+print(f"Earned dividends: {account.earned_dividends}")
+print(f"Unclaimed dividends: {account.unclaimed_dividends}")
+
+# Claim dividends
+fcde.claim_dividends(
+    creator_id="ai_assistant_1",
+    amount=Decimal("5.0")
+)</code></pre>
+    </div>
+
+    <div id="documentation">
+        <h2>Documentation</h2>
+
+        <h3>API Documentation</h3>
+
+        <p>The full API documentation is available at <code>http://your-server:8000/docs</code> when running the server. This interactive documentation allows you to:</p>
+
+        <ul>
+            <li>Browse all available API endpoints</li>
+            <li>Test API calls directly in the browser</li>
+            <li>View request and response schemas</li>
+            <li>Understand authentication requirements</li>
+        </ul>
+
+        <h3>SDK Documentation</h3>
+
+        <p>The Python SDK provides a simple interface to the UATP Capsule Engine:</p>
+
+        <pre><code>from uatp_sdk import UatpClient
+
+# Initialize client
+client = UatpClient(
+    api_key="your_api_key",
+    endpoint="https://api.uatp.org"
+)
+
+# Create capsule with reasoning
+capsule = client.create_capsule_with_reasoning(
+    content="This is my capsule content",
+    reasoning_steps=[
+        {"type": "OBSERVATION", "content": "Initial observation"},
+        {"type": "ANALYSIS", "content": "Detailed analysis"},
+        {"type": "CONCLUSION", "content": "Final conclusion"}
+    ],
+    metadata={"source": "example"}
+)
+
+print(f"Created capsule with ID: {capsule.id}")</code></pre>
+
+        <h3>Architecture Documentation</h3>
+
+        <p>The comprehensive architecture documentation is available in the following locations:</p>
+
+        <ul>
+            <li><code>docs/architecture/</code>: Detailed architecture diagrams and descriptions</li>
+            <li><code>docs/flows/</code>: Sequence diagrams for key system flows</li>
+            <li><code>docs/models/</code>: Database schema documentation</li>
+            <li><code>docs/api/</code>: API documentation</li>
+        </ul>
+    </div>
+
+    <div id="specialized-systems">
+        <h2>Specialized Systems</h2>
+
+        <h3>Consensus Quality Scoring System (CQSS) (<code>src/cqss/</code>)</h3>
+
+        <p><strong>Purpose</strong>: Multi-dimensional quality assessment for reasoning chains</p>
+
+        <h4>Quality Dimensions</h4>
+
+        <pre><code>class QualityMetrics:
+    logical_consistency: float      # 0.0 - 1.0
+    evidence_strength: float        # 0.0 - 1.0
+    reasoning_depth: float          # 0.0 - 1.0
+    factual_accuracy: float         # 0.0 - 1.0
+    bias_detection: float           # 0.0 - 1.0 (lower is better)
+    ethical_alignment: float        # 0.0 - 1.0</code></pre>
+
+        <h4>Scoring Algorithm</h4>
+
+        <pre><code>def calculate_composite_score(metrics: QualityMetrics) -> float:
+    weights = {
+        'logical_consistency': 0.25,
+        'evidence_strength': 0.20,
+        'reasoning_depth': 0.20,
+        'factual_accuracy': 0.20,
+        'bias_detection': -0.10,  # Penalty for bias
+        'ethical_alignment': 0.25
+    }
+    return sum(getattr(metrics, dim) * weight for dim, weight in weights.items())</code></pre>
+
+        <h3>Ethics Circuit Breaker (<code>src/engine/ethics_circuit_breaker.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Automated ethical violation detection and prevention</p>
+
+        <p><strong>RECT System Integration</strong> (<code>src/ethics/rect_system.py</code>):</p>
+        <ul>
+            <li><strong>Bias Detection</strong>: Advanced ML-based bias identification</li>
+            <li><strong>Harmful Content</strong>: Multi-layer content safety screening</li>
+            <li><strong>Privacy Protection</strong>: PII detection and anonymization</li>
+            <li><strong>Misinformation Prevention</strong>: Fact-checking integration</li>
+            <li><strong>Manipulation Detection</strong>: Psychological manipulation identification</li>
+        </ul>
+
+        <h3>Advanced Governance (<code>src/governance/advanced_governance.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Democratic decision-making and dispute resolution</p>
+
+        <p><strong>Governance Mechanisms</strong>:</p>
+        <ul>
+            <li><strong>Proposal System</strong>: Structured improvement proposals</li>
+            <li><strong>Voting Mechanisms</strong>: Various voting systems (simple majority, ranked choice, quadratic)</li>
+            <li><strong>Dispute Resolution</strong>: Multi-tier arbitration system</li>
+            <li><strong>Economic Democracy</strong>: Stakeholder representation based on contribution</li>
+        </ul>
+
+        <h3>Capsule Lineage System (<code>src/capsules/lineage_system.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Track and manage capsule ancestry, remixing, and temporal justice</p>
+
+        <p><strong>Key Features</strong>:</p>
+        <ul>
+            <li><strong>Ancestry Tracking</strong>: Complete chain-of-creation history for all capsules</li>
+            <li><strong>Attribution Preservation</strong>: Ensures all contributors receive credit through remixing/reuse</li>
+            <li><strong>Remix Management</strong>: Structured protocols for capsule content recombination</li>
+            <li><strong>Temporal Justice</strong>: Fair attribution across time periods and versions</li>
+        </ul>
+
+        <pre><code>class LineageRecord:
+    capsule_id: str
+    parent_capsules: List[str]
+    remix_type: RemixType
+    temporal_anchors: List[TemporalAnchor]
+    attribution_distribution: Dict[str, float]</code></pre>
+
+        <h3>UATP 7.0 Type Mapping (<code>src/capsules/uatp7_type_mapping.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Define and manage the UATP 7.0 capsule type specification</p>
+
+        <p><strong>Capsule Types</strong>:</p>
+        <ul>
+            <li><strong>ReasoningTrace</strong>: Detailed step-by-step reasoning processes</li>
+            <li><strong>Attribution</strong>: Credit and ownership records</li>
+            <li><strong>Governance</strong>: Decision-making and voting records</li>
+            <li><strong>Economic</strong>: Payment, dividend, and attribution fund records</li>
+            <li><strong>Verification</strong>: Proof and validation records</li>
+            <li><strong>Composite</strong>: Multi-type aggregation capsules</li>
+            <li><strong>TrustRenewal</strong>: Trust level updates with evidence and reasoning</li>
+        </ul>
+
+        <h3>Enhanced Compression (<code>src/optimization/enhanced_compression.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Advanced capsule compression protocols for efficient storage and transmission</p>
+
+        <p><strong>Compression Methods</strong>:</p>
+        <ul>
+            <li><strong>Semantic Compression</strong>: Content-aware compression for reasoning traces</li>
+            <li><strong>Differential Encoding</strong>: Stores only changes between related capsules</li>
+            <li><strong>Lossy Compression</strong>: Optional lossy compression for non-critical data</li>
+            <li><strong>Field-specific Optimization</strong>: Custom compression per data type</li>
+        </ul>
+
+        <pre><code>def compress_capsule(capsule: Capsule, level: CompressionLevel) -> CompressedCapsule:
+    if level == CompressionLevel.SEMANTIC:
+        return apply_semantic_compression(capsule)
+    elif level == CompressionLevel.DIFFERENTIAL:
+        return apply_differential_encoding(capsule)
+    # Additional compression methods...</code></pre>
+
+        <h3>Simulated Malice (<code>src/security/simulated_malice.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Advanced adversarial testing and security validation for the capsule ecosystem</p>
+
+        <p><strong>Key Features</strong>:</p>
+        <ul>
+            <li><strong>Attack Simulation</strong>: Automated penetration testing of capsule security</li>
+            <li><strong>Red Team Testing</strong>: Simulated adversaries trying to manipulate or compromise capsules</li>
+            <li><strong>Vulnerability Discovery</strong>: Proactive identification of potential weaknesses</li>
+            <li><strong>Security Hardening</strong>: Continuous improvement based on test results</li>
+            <li><strong>Attack Pattern Library</strong>: Growing collection of potential threats and countermeasures</li>
+        </ul>
+
+        <h3>Temporal Justice Engine (<code>src/temporal/justice_engine.py</code>)</h3>
+
+        <p><strong>Purpose</strong>: Ensure fair attribution and compensation across time periods</p>
+
+        <p><strong>Temporal Justice Functions</strong>:</p>
+        <ul>
+            <li><strong>Time-weighted Attribution</strong>: Balances recent vs. historical contributions</li>
+            <li><strong>Long-term Credit Persistence</strong>: Ensures foundational contributions maintain value</li>
+            <li><strong>Temporal Decay Models</strong>: Configurable decay rates for different contribution types</li>
+            <li><strong>Attribution Archaeology</strong>: Recovery and validation of historical contributions</li>
+        </ul>
+
+        <pre><code>class TemporalJusticeEngine:
+    def calculate_temporal_weight(self, contribution_age: timedelta,
+                                contribution_type: ContributionType) -> float:
+        # Apply appropriate temporal weighting based on contribution type and age
+        base_weight = self.base_weight_for_type(contribution_type)
+        decay_rate = self.decay_rate_for_type(contribution_type)
+        age_days = contribution_age.days
+
+        return base_weight * math.exp(-decay_rate * age_days)</code></pre>
+    </div>
+
+    <script>
+        window.onload = function() {
+            alert('This is a simplified HTML version of the guide. To create a PDF:\n\n1. Press Cmd+P (Mac) or Ctrl+P (Windows)\n2. Select "Save as PDF" in the printer options\n3. Click Save');
+        };
+    </script>
+</body>
+</html>

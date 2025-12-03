@@ -1,0 +1,640 @@
+"""
+UATP Application Factory
+Creates and configures the FastAPI application instance
+"""
+
+import os
+import traceback
+import uuid
+from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import Any, Dict
+
+import structlog
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse
+from prometheus_client import Counter, Histogram, generate_latest
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+
+from .auth.auth_middleware import setup_auth_middleware
+from .auth.auth_routes import router as auth_router
+from .api.constellations_routes import router as constellations_router
+from .insurance.api import router as insurance_router
+from .core.database import db
+from .database.connection import get_database_manager
+
+db_manager = get_database_manager()
+from .database.migrations import run_migrations
+from .integrations.ai_platform_framework import setup_multi_platform_attribution
+from .payments.real_payment_service import create_real_payment_service
+from .security.csrf_protection import csrf_middleware
+from .security.input_validation import (
+    PAYMENT_REQUEST_SCHEMA,
+    USER_REGISTRATION_SCHEMA,
+    security_validator,
+)
+from .user_management.user_service import create_user_service
+
+
+def configure_logging():
+    """Configure structured logging"""
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.JSONRenderer(),
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+
+
+def create_metrics():
+    """Create Prometheus metrics"""
+    return {
+        "REQUEST_COUNT": Counter(
+            "http_requests_total",
+            "Total HTTP requests",
+            ["method", "endpoint", "status"],
+        ),
+        "REQUEST_DURATION": Histogram(
+            "http_request_duration_seconds", "HTTP request duration"
+        ),
+        "ATTRIBUTION_PROCESSING_TIME": Histogram(
+            "attribution_processing_duration_seconds", "Attribution processing time"
+        ),
+    }
+
+
+def create_limiter():
+    """Create rate limiter"""
+    return Limiter(key_func=get_remote_address)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan management"""
+    logger = structlog.get_logger(__name__)
+    logger.info("Starting UATP application...")
+
+    try:
+        # Initialize SQLAlchemy database (needed for migrations)
+        logger.info("Initializing SQLAlchemy database...")
+        db.init_app(app)
+
+        # Initialize asyncpg database manager
+        logger.info("Initializing database connection...")
+        await db_manager.connect()
+
+        # Run migrations
+        logger.info("Running database migrations...")
+        await run_migrations()
+
+        # Initialize services
+        logger.info("Initializing services...")
+        app.state.user_service = create_user_service()
+        app.state.ai_orchestrator = setup_multi_platform_attribution(
+            openai_key=os.getenv("OPENAI_API_KEY"),
+            anthropic_key=os.getenv("ANTHROPIC_API_KEY"),
+        )
+        app.state.payment_service = create_real_payment_service(app.state.user_service)
+
+        # Initialize live capture conversation monitor
+        logger.info("Initializing live capture conversation monitor...")
+        from .live_capture.conversation_monitor import get_monitor
+
+        app.state.conversation_monitor = get_monitor(db_manager=db_manager)
+        logger.info(
+            f"Live capture enabled with significance threshold: {app.state.conversation_monitor.significance_threshold}"
+        )
+
+        logger.info("UATP application started successfully")
+
+    except Exception as e:
+        logger.error("Failed to start application", error=str(e))
+        raise
+
+    yield
+
+    # Cleanup
+    logger.info("Shutting down UATP application...")
+
+    try:
+        # Cleanup services
+        if hasattr(app.state, "attribution_middleware"):
+            await app.state.attribution_middleware.shutdown()
+
+        logger.info("UATP application shut down successfully")
+
+    except Exception as e:
+        logger.error("Error during shutdown", error=str(e))
+
+
+def setup_middleware(app: FastAPI, limiter: Limiter, metrics: Dict[str, Any]):
+    """Setup application middleware"""
+    # CORS - Production-safe configuration
+    # Get allowed origins from environment or use secure defaults
+    allowed_origins = os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "https://uatp.app,https://api.uatp.app,https://dashboard.uatp.app",
+    ).split(",")
+
+    # Add localhost for development only (controlled by environment variable)
+    if os.getenv("ENVIRONMENT") == "development":
+        dev_origins = os.getenv(
+            "DEV_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080"
+        ).split(",")
+        allowed_origins.extend(dev_origins)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=[
+            "Content-Type",
+            "Authorization",
+            "X-API-Key",
+            "X-Correlation-ID",
+        ],
+        expose_headers=["X-Correlation-ID"],
+    )
+
+    # Trusted hosts
+    allowed_hosts = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
+
+    # Rate limiting
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # Authentication and security middleware
+    setup_auth_middleware(app)
+    app.middleware("http")(csrf_middleware)
+
+    # Metrics and correlation ID middleware
+    @app.middleware("http")
+    async def metrics_middleware(request: Request, call_next):
+        """Collect HTTP metrics and add correlation IDs"""
+        # Generate or extract correlation ID
+        correlation_id = request.headers.get("X-Correlation-ID") or str(uuid.uuid4())
+
+        # Add correlation ID to request state for access in route handlers
+        request.state.correlation_id = correlation_id
+
+        with metrics["REQUEST_DURATION"].time():
+            try:
+                response = await call_next(request)
+
+                # Add correlation ID to response headers
+                response.headers["X-Correlation-ID"] = correlation_id
+
+                metrics["REQUEST_COUNT"].labels(
+                    method=request.method,
+                    endpoint=request.url.path,
+                    status=response.status_code,
+                ).inc()
+
+                return response
+
+            except Exception:
+                metrics["REQUEST_COUNT"].labels(
+                    method=request.method, endpoint=request.url.path, status=500
+                ).inc()
+                raise
+
+
+def setup_exception_handlers(app: FastAPI):
+    """Setup exception handlers with structured error handling and correlation IDs"""
+    logger = structlog.get_logger(__name__)
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ):
+        """Handle validation errors with correlation ID"""
+        correlation_id = str(uuid.uuid4())
+
+        logger.warning(
+            "Validation error",
+            correlation_id=correlation_id,
+            path=request.url.path,
+            method=request.method,
+            errors=exc.errors(),
+            client_ip=request.client.host if request.client else "unknown",
+        )
+
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": "Validation failed",
+                "detail": "Request validation failed",
+                "errors": exc.errors(),
+                "correlation_id": correlation_id,
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+            headers={"X-Correlation-ID": correlation_id},
+        )
+
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException):
+        """Handle HTTP exceptions with correlation ID"""
+        correlation_id = str(uuid.uuid4())
+
+        logger.info(
+            "HTTP exception",
+            correlation_id=correlation_id,
+            path=request.url.path,
+            method=request.method,
+            status_code=exc.status_code,
+            detail=exc.detail,
+            client_ip=request.client.host if request.client else "unknown",
+        )
+
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": "HTTP error",
+                "detail": exc.detail,
+                "correlation_id": correlation_id,
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+            headers={"X-Correlation-ID": correlation_id},
+        )
+
+    @app.exception_handler(Exception)
+    async def general_exception_handler(request: Request, exc: Exception):
+        """Handle general exceptions with structured logging and correlation ID"""
+        correlation_id = str(uuid.uuid4())
+
+        # Log with full context for debugging
+        logger.error(
+            "Unhandled exception",
+            correlation_id=correlation_id,
+            path=request.url.path,
+            method=request.method,
+            error_type=type(exc).__name__,
+            error_message=str(exc),
+            stack_trace=traceback.format_exc(),
+            client_ip=request.client.host if request.client else "unknown",
+            user_agent=request.headers.get("user-agent", "unknown"),
+        )
+
+        # Return sanitized error response (don't expose internal details in production)
+        is_production = os.getenv("ENVIRONMENT") == "production"
+
+        response_content = {
+            "error": "Internal server error",
+            "detail": "An unexpected error occurred. Please try again later.",
+            "correlation_id": correlation_id,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+        # Add debug info in non-production environments
+        if not is_production:
+            response_content["debug"] = {
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
+            }
+
+        return JSONResponse(
+            status_code=500,
+            content=response_content,
+            headers={"X-Correlation-ID": correlation_id},
+        )
+
+
+def setup_health_routes(app: FastAPI):
+    """Setup health check routes"""
+    logger = structlog.get_logger(__name__)
+
+    @app.get("/health", tags=["Monitoring"])
+    async def health_check():
+        """Health check endpoint"""
+        return {"status": "healthy", "timestamp": "2024-07-10T00:00:00Z"}
+
+    @app.get("/ready", tags=["Monitoring"])
+    async def readiness_check():
+        """Readiness check endpoint"""
+        try:
+            # Check Redis connection
+            health = db_manager.health_check()
+            if not health["database"]:
+                raise HTTPException(status_code=503, detail="Database not ready")
+
+            return {"status": "ready", "checks": health}
+
+        except Exception as e:
+            logger.error("Readiness check failed", error=str(e))
+            raise HTTPException(status_code=503, detail="Service not ready") from e
+
+    @app.get("/startup")
+    async def startup_check():
+        """Startup check endpoint"""
+        return {"status": "started", "timestamp": "2024-07-10T00:00:00Z"}
+
+    @app.get("/metrics", tags=["Monitoring"])
+    async def metrics():
+        """Prometheus metrics endpoint"""
+        return generate_latest()
+
+
+def setup_api_routes(app: FastAPI, limiter: Limiter):
+    """Setup API routes"""
+    logger = structlog.get_logger(__name__)
+
+    @app.get("/")
+    async def root():
+        """Root endpoint"""
+        return {
+            "message": "UATP - Unified Agent Trust Protocol",
+            "version": "1.0.0",
+            "environment": os.getenv("ENVIRONMENT", "development"),
+        }
+
+    @app.get("/api/v1/status")
+    async def api_status():
+        """API status endpoint"""
+        return {
+            "api_version": "1.0.0",
+            "status": "operational",
+            "features": {
+                "attribution_tracking": True,
+                "payment_processing": True,
+                "ai_integrations": True,
+                "privacy_compliance": True,
+            },
+        }
+
+    @app.post("/api/v1/users/register", tags=["Authentication"])
+    @limiter.limit("5/minute")
+    async def register_user(request: Request, user_data: Dict[str, Any]):
+        """Register a new user with validation"""
+        try:
+            # Validate input data
+            validated_data = security_validator.validate_json_schema(
+                user_data, USER_REGISTRATION_SCHEMA
+            )
+
+            user_service = app.state.user_service
+            result = await user_service.register_user(**validated_data)
+
+            if result["success"]:
+                logger.info("User registered", user_id=result["user_id"])
+                return {"success": True, "user_id": result["user_id"]}
+            else:
+                logger.warning("User registration failed", error=result["error"])
+                raise HTTPException(status_code=400, detail=result["error"])
+
+        except Exception as e:
+            logger.error("User registration error", error=str(e))
+            raise HTTPException(status_code=500, detail="Registration failed") from e
+
+    @app.get("/api/v1/users/{user_id}", tags=["Authentication"])
+    @limiter.limit("100/minute")
+    async def get_user(request: Request, user_id: str):
+        """Get user profile"""
+        try:
+            user_service = app.state.user_service
+            user = await user_service.get_user_profile(user_id)
+
+            if user:
+                return {
+                    "user_id": user.user_id,
+                    "username": user.username,
+                    "email": user.email,
+                    "total_earnings": float(user.total_earnings),
+                    "total_attributions": user.total_attributions,
+                }
+            else:
+                raise HTTPException(status_code=404, detail="User not found")
+
+        except Exception as e:
+            logger.error("Get user error", user_id=user_id, error=str(e))
+            raise HTTPException(status_code=500, detail="Failed to get user") from e
+
+    @app.post("/api/v1/attribution/track", tags=["Attribution"])
+    @limiter.limit("1000/minute")
+    async def track_attribution(request: Request, attribution_data: Dict[str, Any]):
+        """Track attribution event"""
+        try:
+            # This would integrate with the attribution middleware
+            logger.info("Attribution tracked", data=attribution_data)
+            return {"success": True, "attribution_id": "attr_123"}
+
+        except Exception as e:
+            logger.error("Attribution tracking error", error=str(e))
+            raise HTTPException(
+                status_code=500, detail="Attribution tracking failed"
+            ) from e
+
+    @app.post("/api/v1/payments/payout", tags=["Economics"])
+    @limiter.limit("10/minute")
+    async def request_payout(request: Request, payout_data: Dict[str, Any]):
+        """Request payout with real payment processing"""
+        try:
+            # Validate input data
+            validated_data = security_validator.validate_json_schema(
+                payout_data, PAYMENT_REQUEST_SCHEMA
+            )
+
+            payment_service = app.state.payment_service
+            result = await payment_service.initiate_payout(
+                user_id=validated_data.get("user_id"),
+                amount=validated_data["amount"],
+                description=validated_data.get("description"),
+            )
+
+            if result["success"]:
+                logger.info("Payout initiated", transaction_id=result["transaction_id"])
+                return result
+            else:
+                logger.warning("Payout failed", error=result["error"])
+                raise HTTPException(status_code=400, detail=result["error"])
+
+        except Exception as e:
+            logger.error("Payout request error", error=str(e))
+            raise HTTPException(status_code=500, detail="Payout request failed") from e
+
+    @app.get("/api/v1/admin/stats", tags=["Monitoring"])
+    @limiter.limit("60/minute")
+    async def admin_stats(request: Request):
+        """Get admin statistics"""
+        try:
+            # This would be protected by authentication
+            stats = {
+                "total_users": 1000,
+                "total_attributions": 50000,
+                "total_payouts": 25000.00,
+                "active_conversations": 150,
+            }
+            return stats
+
+        except Exception as e:
+            logger.error("Admin stats error", error=str(e))
+            raise HTTPException(status_code=500, detail="Failed to get stats") from e
+
+
+def setup_development_routes(app: FastAPI):
+    """Setup development-only routes"""
+    if os.getenv("ENVIRONMENT") == "development":
+
+        @app.get("/debug/info")
+        async def debug_info():
+            """Debug information (development only)"""
+            return {
+                "environment": os.getenv("ENVIRONMENT"),
+                "database_url": os.getenv("DATABASE_URL", "").replace(
+                    os.getenv("DATABASE_PASSWORD", ""), "***"
+                ),
+                "redis_url": os.getenv("REDIS_URL"),
+                "services": {
+                    "user_service": hasattr(app.state, "user_service"),
+                    "ai_orchestrator": hasattr(app.state, "ai_orchestrator"),
+                },
+            }
+
+
+def create_app() -> FastAPI:
+    """
+    Application factory function.
+    Creates and configures a FastAPI application instance.
+    """
+    # Configure logging
+    configure_logging()
+
+    # Create metrics
+    metrics = create_metrics()
+
+    # Create rate limiter
+    limiter = create_limiter()
+
+    # Create FastAPI app with comprehensive documentation
+    app = FastAPI(
+        title="UATP - Unified Agent Trust Protocol",
+        description="""
+        ## Advanced AI Attribution and Payment Platform
+
+        The UATP Capsule Engine provides a comprehensive framework for:
+
+        * **AI Attribution Tracking** - Real-time attribution across multiple AI platforms
+        * **Economic Engine** - Fair Creator Dividend Engine (FCDE) for value distribution
+        * **Governance System** - Decentralized decision-making and voting mechanisms
+        * **Capsule Management** - Cryptographically sealed reasoning chains
+        * **Security & Privacy** - Post-quantum cryptography and zero-knowledge proofs
+
+        ### Quick Start
+
+        1. Register as a stakeholder in the governance system
+        2. Configure your AI platform integrations
+        3. Start tracking attributions through the unified API
+        4. Monitor economic value distribution via the dashboard
+
+        ### Authentication
+
+        All API endpoints require proper authentication. See the `/auth` endpoints for details.
+        """,
+        version="1.0.0",
+        lifespan=lifespan,
+        docs_url="/docs" if os.getenv("ENVIRONMENT") != "production" else None,
+        redoc_url="/redoc" if os.getenv("ENVIRONMENT") != "production" else None,
+        openapi_tags=[
+            {
+                "name": "Authentication",
+                "description": "User authentication and authorization",
+            },
+            {
+                "name": "Capsules",
+                "description": "Capsule creation, management, and retrieval operations",
+            },
+            {
+                "name": "Attribution",
+                "description": "AI attribution tracking and economic value calculation",
+            },
+            {
+                "name": "Governance",
+                "description": "Decentralized governance, voting, and proposals",
+            },
+            {
+                "name": "Economics",
+                "description": "Economic engine, payments, and FCDE operations",
+            },
+            {
+                "name": "Registry",
+                "description": "LLM provider and model registry management",
+            },
+            {
+                "name": "Monitoring",
+                "description": "Performance monitoring, health checks, and metrics",
+            },
+            {
+                "name": "Security",
+                "description": "Security validation, cryptographic operations",
+            },
+            {
+                "name": "Insurance",
+                "description": "Insurance policy and claim management for AI liability",
+            },
+        ],
+        contact={
+            "name": "UATP Development Team",
+            "url": "https://github.com/username/uatp-capsule-engine",
+            "email": "support@uatp.com",
+        },
+        license_info={
+            "name": "MIT License",
+            "url": "https://opensource.org/licenses/MIT",
+        },
+    )
+
+    # Setup middleware
+    setup_middleware(app, limiter, metrics)
+
+    # Setup exception handlers
+    setup_exception_handlers(app)
+
+    # Include authentication routes
+    app.include_router(auth_router)
+    # Include Constellations routes
+    app.include_router(constellations_router)
+    # Include Insurance routes
+    app.include_router(insurance_router)
+
+    # Include real database-backed capsules router
+    from .api.capsules_fastapi_router import router as capsules_router
+
+    app.include_router(capsules_router)
+
+    # Include live capture router for real-time monitoring
+    from .api.live_capture_fastapi_router import router as live_capture_router
+
+    app.include_router(live_capture_router)
+
+    # Include trust management router
+    from .api.trust_fastapi_router import router as trust_router
+
+    app.include_router(trust_router)
+
+    # Include onboarding router
+    from .api.onboarding_fastapi_router import router as onboarding_router
+
+    app.include_router(onboarding_router)
+
+    # Setup routes
+    setup_health_routes(app)
+    setup_api_routes(app, limiter)
+    setup_development_routes(app)
+
+    return app

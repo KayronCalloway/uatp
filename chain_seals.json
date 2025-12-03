@@ -1,0 +1,24 @@
+{
+  "test-chain-0a923a51": {
+    "chain_id": "test-chain-0a923a51",
+    "sealed_at": "2025-07-03T01:07:40.996177+00:00",
+    "signer_id": "test-signer",
+    "capsule_count": 11,
+    "first_capsule_id": "851fa3b4-1423-4251-b7b0-d9afdf480e7d",
+    "last_capsule_id": "832fd642-2ccf-4a9c-8338-b6c9afde3d41",
+    "chain_hash": "2b0d0d167d595c66bf7275819fb602ebbb8b5ba0111eb5ef9971ca0754a4b065",
+    "note": "Test seal for API verification",
+    "signature": "bd63971537037d2f382d3405e2afa7f2972a6155907d37e0f67ad994b61a91e265fc352aa3a638db03c46979949e29e70fde0eeace364296b528a9e30cee560c"
+  },
+  "test-chain-2cda2064": {
+    "chain_id": "test-chain-2cda2064",
+    "sealed_at": "2025-07-03T01:14:21.352581+00:00",
+    "signer_id": "test-signer",
+    "capsule_count": 13,
+    "first_capsule_id": "851fa3b4-1423-4251-b7b0-d9afdf480e7d",
+    "last_capsule_id": "c3087824-b9de-4d96-9bad-1b790c1f3bb8",
+    "chain_hash": "ddcd33443b057b5d1d233090a7b35af155151d5a5666b0c09429974b6f8846e4",
+    "note": "Test seal for API verification",
+    "signature": "edac291756774d2e6956fd6fe998bf810cbb42bbcf2981b5bfb9a798eeda173baf08e34e31ac0d7ad4c0d1312e90c8f8f3db962a487a45663923ed30fbc3f404"
+  }
+}

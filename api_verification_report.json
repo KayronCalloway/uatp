@@ -1,0 +1,17 @@
+{
+  "summary": {
+    "passed": 1,
+    "total": 5,
+    "success_rate": "20.0%",
+    "overall_status": "FAILED"
+  },
+  "detailed_results": {
+    "api_server_accessible": true,
+    "capsule_creation": false,
+    "verification_endpoints": false,
+    "capsule_retrieval": false,
+    "frontend_compatibility": false,
+    "created_capsules": []
+  },
+  "created_capsules": []
+}

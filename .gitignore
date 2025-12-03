@@ -1,0 +1,44 @@
+# Environments
+.venv/
+venv/
+env/
+
+# IDE / Editor
+.idea/
+.vscode/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database files
+*.sqlite3
+*.db
+file:memdb_*
+:memory:*
+
+# Docker
+docker-compose.override.yml
+
+# Backup files
+backups/
+
+# Log files
+*.log
+auto-capture-*.log
+claude_capture.log
+
+# Large documentation files (can be regenerated)
+docs/**/*.pdf

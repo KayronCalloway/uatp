@@ -1,0 +1,4 @@
+# file: /Users/kay/uatp-capsule-engine/src/config/settings.py
+# hypothesis_version: 6.135.26
+
+[100, 5000, 10000, 65535, './storage', '1', '127.0.0.1', '6.0', '7.0', 'CRITICAL', 'DEBUG', 'ERROR', 'INFO', 'UATP_API_HOST', 'UATP_API_KEYS', 'UATP_API_PORT', 'UATP_CORS_ORIGINS', 'UATP_ENV', 'UATP_LOG_FORMAT', 'UATP_LOG_LEVEL', 'UATP_MAX_CHAIN_SIZE', 'UATP_RATE_LIMIT', 'UATP_STORAGE_DIR', 'WARNING', '_', 'development', 'production', 'r', 't', 'testing', 'true', 'uatp.config']
