@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 from functools import lru_cache
 
-from pydantic import Field, validator, SecretStr
+from pydantic import Field, field_validator, SecretStr, ValidationInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import structlog
 
@@ -113,8 +113,7 @@ class AuthSettings(BaseSettings):
         default="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
     )
 
-    class Config:
-        env_prefix = "AUTH_"
+    model_config = SettingsConfigDict(env_prefix="AUTH_")
 
 
 class DatabaseSettings(BaseSettings):
@@ -143,18 +142,19 @@ class DatabaseSettings(BaseSettings):
     run_migrations_on_startup: bool = Field(default=True)
     create_tables_on_startup: bool = Field(default=False)
 
-    @validator("database_url", pre=True, always=True)
-    def build_database_url(cls, v, values):
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def build_database_url(cls, v, info: ValidationInfo):
         """Build database URL from components if not provided"""
         if v:
             return v
 
-        db_type = values.get("database_type", DatabaseType.POSTGRESQL)
-        username = values.get("database_username", "uatp_user")
-        password = values.get("database_password", "changeme")
-        host = values.get("database_host", "localhost")
-        port = values.get("database_port", 5432)
-        name = values.get("database_name", "uatp_capsule_engine")
+        db_type = info.data.get("database_type", DatabaseType.POSTGRESQL)
+        username = info.data.get("database_username", "uatp_user")
+        password = info.data.get("database_password", "changeme")
+        host = info.data.get("database_host", "localhost")
+        port = info.data.get("database_port", 5432)
+        name = info.data.get("database_name", "uatp_capsule_engine")
 
         if db_type == DatabaseType.POSTGRESQL:
             return f"postgresql://{username}:{password}@{host}:{port}/{name}"
@@ -165,8 +165,7 @@ class DatabaseSettings(BaseSettings):
 
         return None
 
-    class Config:
-        env_prefix = "DB_"
+    model_config = SettingsConfigDict(env_prefix="DB_")
 
 
 class CacheSettings(BaseSettings):
@@ -189,28 +188,28 @@ class CacheSettings(BaseSettings):
     cache_pool_size: int = Field(default=10, ge=1, le=100)
     cache_pool_timeout: int = Field(default=5, ge=1, le=30)
 
-    @validator("cache_url", pre=True, always=True)
-    def build_cache_url(cls, v, values):
+    @field_validator("cache_url", mode="before")
+    @classmethod
+    def build_cache_url(cls, v, info: ValidationInfo):
         """Build cache URL from components if not provided"""
         if v:
             return v
 
-        cache_type = values.get("cache_type", CacheType.REDIS)
+        cache_type = info.data.get("cache_type", CacheType.REDIS)
         if cache_type != CacheType.REDIS:
             return None
 
-        host = values.get("cache_host", "localhost")
-        port = values.get("cache_port", 6379)
-        database = values.get("cache_database", 0)
-        password = values.get("cache_password")
+        host = info.data.get("cache_host", "localhost")
+        port = info.data.get("cache_port", 6379)
+        database = info.data.get("cache_database", 0)
+        password = info.data.get("cache_password")
 
         if password:
             return f"redis://:{password.get_secret_value()}@{host}:{port}/{database}"
         else:
             return f"redis://{host}:{port}/{database}"
 
-    class Config:
-        env_prefix = "CACHE_"
+    model_config = SettingsConfigDict(env_prefix="CACHE_")
 
 
 class AIServiceSettings(BaseSettings):
@@ -235,8 +234,7 @@ class AIServiceSettings(BaseSettings):
     ai_failure_threshold: int = Field(default=5, ge=2, le=20)
     ai_recovery_timeout_seconds: int = Field(default=60, ge=10, le=300)
 
-    class Config:
-        env_prefix = "AI_"
+    model_config = SettingsConfigDict(env_prefix="AI_")
 
 
 class MonitoringSettings(BaseSettings):
@@ -268,8 +266,7 @@ class MonitoringSettings(BaseSettings):
     alert_webhook_url: Optional[str] = Field(default=None)
     error_threshold_per_minute: int = Field(default=10, ge=1, le=1000)
 
-    class Config:
-        env_prefix = "MONITORING_"
+    model_config = SettingsConfigDict(env_prefix="MONITORING_")
 
 
 class PerformanceSettings(BaseSettings):
@@ -297,8 +294,7 @@ class PerformanceSettings(BaseSettings):
     max_memory_usage_mb: int = Field(default=1024, ge=128, le=8192)
     garbage_collection_threshold: int = Field(default=1000, ge=100, le=10000)
 
-    class Config:
-        env_prefix = "PERFORMANCE_"
+    model_config = SettingsConfigDict(env_prefix="PERFORMANCE_")
 
 
 class UATPSettings(BaseSettings):
@@ -338,7 +334,8 @@ class UATPSettings(BaseSettings):
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
     performance: PerformanceSettings = Field(default_factory=PerformanceSettings)
 
-    @validator("storage_dir", pre=True, always=True)
+    @field_validator("storage_dir", mode="before")
+    @classmethod
     def create_storage_dir(cls, v):
         """Ensure storage directory exists"""
         if isinstance(v, str):
@@ -346,10 +343,11 @@ class UATPSettings(BaseSettings):
         v.mkdir(parents=True, exist_ok=True)
         return v
 
-    @validator("debug", pre=True, always=True)
-    def set_debug_based_on_environment(cls, v, values):
+    @field_validator("debug", mode="before")
+    @classmethod
+    def set_debug_based_on_environment(cls, v, info: ValidationInfo):
         """Set debug mode based on environment"""
-        env = values.get("environment", Environment.DEVELOPMENT)
+        env = info.data.get("environment", Environment.DEVELOPMENT)
         if env == Environment.DEVELOPMENT:
             return True
         elif env == Environment.PRODUCTION:
@@ -407,14 +405,13 @@ class UATPSettings(BaseSettings):
 
         return results
 
-    class Config:
-        model_config = SettingsConfigDict(
-            env_file=".env",
-            env_file_encoding="utf-8",
-            env_nested_delimiter="__",
-            case_sensitive=False,
-            extra="ignore",
-        )
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_nested_delimiter="__",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
 
 @lru_cache()
