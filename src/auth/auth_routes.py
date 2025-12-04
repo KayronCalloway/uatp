@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator
 from sqlalchemy.orm import Session
 
 from ..api.dependencies import get_db
@@ -36,7 +36,8 @@ class UserRegistration(BaseModel):
     password: str
     full_name: str
 
-    @validator("username")
+    @field_validator("username")
+    @classmethod
     def validate_username(cls, v):
         if len(v) < 3:
             raise ValueError("Username must be at least 3 characters long")
@@ -44,7 +45,8 @@ class UserRegistration(BaseModel):
             raise ValueError("Username must contain only alphanumeric characters")
         return v
 
-    @validator("password")
+    @field_validator("password")
+    @classmethod
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
@@ -83,7 +85,8 @@ class PasswordResetConfirm(BaseModel):
     token: str
     new_password: str
 
-    @validator("new_password")
+    @field_validator("new_password")
+    @classmethod
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
@@ -100,7 +103,8 @@ class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
 
-    @validator("new_password")
+    @field_validator("new_password")
+    @classmethod
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")

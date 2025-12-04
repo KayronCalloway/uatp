@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from src.insurance.models import PolicyStatus, ClaimStatus
 
@@ -54,8 +54,7 @@ class InsurancePolicyResponse(InsurancePolicyBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AILiabilityEventLogResponse(AILiabilityEventLogBase):
@@ -63,8 +62,7 @@ class AILiabilityEventLogResponse(AILiabilityEventLogBase):
     claim_id: uuid.UUID
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InsuranceClaimResponse(InsuranceClaimBase):
@@ -76,8 +74,7 @@ class InsuranceClaimResponse(InsuranceClaimBase):
     updated_at: datetime
     event_logs: list[AILiabilityEventLogResponse] = []
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Schema for full policy details including claims

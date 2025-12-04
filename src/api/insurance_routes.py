@@ -21,7 +21,7 @@ from quart import Blueprint, jsonify, request
 from pydantic import (
     BaseModel,
     Field,
-    validator,
+    field_validator,
     EmailStr,
     conint,
     constr,
@@ -70,7 +70,8 @@ class RiskAssessmentRequest(BaseModel):
     )
     user_id: Optional[constr(min_length=1, max_length=255)] = None
 
-    @validator("capsule_chain")
+    @field_validator("capsule_chain")
+    @classmethod
     def validate_capsule_chain(cls, v):
         """Ensure each capsule has minimum required fields"""
         if not v:
@@ -108,7 +109,8 @@ class PolicyCreationRequest(BaseModel):
     payment_method_id: Optional[constr(max_length=255)] = None
     auto_activate: bool = False
 
-    @validator("contact_phone")
+    @field_validator("contact_phone")
+    @classmethod
     def validate_phone(cls, v):
         """Basic phone validation"""
         if v is not None:
@@ -118,7 +120,8 @@ class PolicyCreationRequest(BaseModel):
                 raise ValueError("Phone must contain 10-15 digits")
         return v
 
-    @validator("deductible")
+    @field_validator("deductible")
+    @classmethod
     def validate_deductible(cls, v, values):
         """Ensure deductible is reasonable compared to coverage"""
         if "coverage_amount" in values and v > values["coverage_amount"]:
@@ -152,7 +155,8 @@ class ClaimSubmissionRequest(BaseModel):
         default_factory=list, max_items=20
     )
 
-    @validator("capsule_chain")
+    @field_validator("capsule_chain")
+    @classmethod
     def validate_capsule_chain(cls, v):
         """Ensure each capsule has minimum required fields"""
         if not v:
@@ -164,7 +168,8 @@ class ClaimSubmissionRequest(BaseModel):
                 raise ValueError(f"Capsule {i} missing required field: capsule_id")
         return v
 
-    @validator("incident_date")
+    @field_validator("incident_date")
+    @classmethod
     def validate_incident_date(cls, v):
         """Validate incident date format and reasonableness"""
         try:
@@ -194,7 +199,8 @@ class ClaimAppealRequest(BaseModel):
         default=None, description="Additional evidence to support appeal"
     )
 
-    @validator("appeal_reason")
+    @field_validator("appeal_reason")
+    @classmethod
     def validate_appeal_reason(cls, v):
         """Ensure appeal reason is substantive"""
         if not v or v.strip() == "":
