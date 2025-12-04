@@ -29,7 +29,7 @@ import bcrypt
 import structlog
 from fastapi import HTTPException, Request, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator
 from prometheus_client import Counter, Histogram
 
 logger = structlog.get_logger(__name__)
@@ -171,7 +171,8 @@ class UserModel(BaseModel):
     login_attempts: int = 0
     locked_until: Optional[datetime] = None
 
-    @validator("roles")
+    @field_validator("roles")
+    @classmethod
     def validate_roles(cls, v):
         if not v:
             return [UserRole.USER]

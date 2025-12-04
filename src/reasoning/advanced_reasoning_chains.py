@@ -11,7 +11,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from ..attribution.cross_conversation_tracker import CrossConversationTracker
 from ..capsules.specialized_capsules import create_specialized_capsule
@@ -50,7 +50,8 @@ class ReasoningStep(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=datetime.now)
 
-    @validator("confidence")
+    @field_validator("confidence")
+    @classmethod
     def validate_confidence(cls, v):
         if not 0.0 <= v <= 1.0:
             raise ValueError("Confidence must be between 0.0 and 1.0")

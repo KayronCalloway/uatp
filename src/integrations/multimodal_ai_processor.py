@@ -15,7 +15,7 @@ import aiofiles
 import moviepy as mp
 import speech_recognition as sr
 from PIL import Image
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from ..attribution.cross_conversation_tracker import CrossConversationTracker
 from ..capsules.specialized_capsules import create_specialized_capsule
@@ -82,7 +82,8 @@ class MultiModalRequest(BaseModel):
     processing_options: Dict[str, Any] = Field(default_factory=dict)
     attribution_context: Dict[str, Any] = Field(default_factory=dict)
 
-    @validator("media_inputs")
+    @field_validator("media_inputs")
+    @classmethod
     def validate_media_inputs(cls, v):
         if not v:
             raise ValueError("At least one media input is required")
