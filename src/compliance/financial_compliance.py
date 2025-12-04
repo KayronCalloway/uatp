@@ -3,15 +3,13 @@ Financial Compliance Framework
 Complete KYC/AML compliance system for payment processing
 """
 
-import asyncio
 import hashlib
-import json
 import logging
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -86,12 +84,12 @@ class CustomerRecord:
 
     # Contact information
     address_line1: str
-    address_line2: Optional[str] = None
     city: str
     state_province: str
     postal_code: str
     phone_number: str
     email: str
+    address_line2: Optional[str] = None
 
     # KYC status
     kyc_status: KYCStatus = KYCStatus.PENDING
@@ -923,3 +921,11 @@ class FinancialComplianceEngine:
 def create_financial_compliance_engine() -> FinancialComplianceEngine:
     """Create financial compliance engine instance"""
     return FinancialComplianceEngine()
+
+
+# Aliases for backward compatibility
+KYCAMLEngine = FinancialComplianceEngine
+TransactionMonitor = FinancialComplianceEngine
+SuspiciousActivityReporter = FinancialComplianceEngine
+TransactionType = TransactionRiskFlag
+ComplianceStatus = KYCStatus

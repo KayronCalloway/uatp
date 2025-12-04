@@ -6,11 +6,11 @@ Comprehensive data models for the UATP Capsule Engine using modern PostgreSQL
 features including JSONB, UUID, and advanced indexing.
 """
 
+import uuid
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
-import uuid
+from typing import Any, Dict, List, Optional
 
 
 # Define enums for database consistency
@@ -521,10 +521,10 @@ class OrganizationInvitation:
     metadata: Dict[str, Any]
 
 
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import Column, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.sql import func
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.sql import func
 
 # Create the declarative base
 Base = declarative_base()
@@ -806,3 +806,7 @@ class AKCDataValidator:
             errors.append("Reward multiplier cannot be negative")
 
         return errors
+
+
+# Alias for backward compatibility
+CapsuleModel = Capsule

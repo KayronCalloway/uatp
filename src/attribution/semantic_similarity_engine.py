@@ -5,7 +5,7 @@ This module implements cutting-edge semantic similarity analysis using the lates
 breakthrough models from 2024-2025 research including:
 
 🏆 2025 BREAKTHROUGH MODELS:
-- E5-Mistral-7B-instruct (66.63 MTEB benchmark leader)  
+- E5-Mistral-7B-instruct (66.63 MTEB benchmark leader)
 - BGE-Large-en-v1.5 (64.23 MTEB, optimized efficiency)
 - LLaMA 3 multimodal reasoning (405B parameters, 128K context)
 - Sentence Transformers v3.0 (15,000+ models available)
@@ -21,7 +21,7 @@ breakthrough models from 2024-2025 research including:
 🛡️ SECURITY FEATURES:
 - Multi-model ensemble for attribution confidence
 - Adversarial detection and mitigation
-- Cross-validation framework  
+- Cross-validation framework
 - Gaming attack prevention
 - Tamper-evident similarity computation
 - Post-quantum cryptographic verification
@@ -29,15 +29,17 @@ breakthrough models from 2024-2025 research including:
 
 import hashlib
 import logging
-import pickle
 import warnings
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime, timezone
+from typing import Any, Dict, List
 
 import numpy as np
-from datetime import datetime, timezone
 
 try:
     import torch
+    from sentence_transformers import SentenceTransformer
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
     from transformers import (
         AutoModel,
         AutoTokenizer,
@@ -47,9 +49,6 @@ try:
         RobertaTokenizer,
         pipeline,
     )
-    from sentence_transformers import SentenceTransformer
-    from sklearn.metrics.pairwise import cosine_similarity
-    from sklearn.feature_extraction.text import TfidfVectorizer
 
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
@@ -59,7 +58,6 @@ except ImportError:
 from src.audit.events import audit_emitter
 
 # Import the 2025 breakthrough semantic analysis engine
-from .advanced_semantic_engine import advanced_semantic_engine, SemanticAnalysisResult
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +153,7 @@ class SemanticSimilarityEngine:
 
     def _initialize_models(self):
         """Initialize semantic similarity models."""
+        global TRANSFORMERS_AVAILABLE
         if not TRANSFORMERS_AVAILABLE:
             logger.warning("Transformers not available. Using fallback methods only.")
             return
@@ -237,34 +236,34 @@ class SemanticSimilarityEngine:
 
         if TRANSFORMERS_AVAILABLE:
             # BERT embeddings similarity
-            similarity_results[
-                SimilarityMethod.BERT_EMBEDDINGS
-            ] = self._calculate_bert_similarity(content1, content2)
+            similarity_results[SimilarityMethod.BERT_EMBEDDINGS] = (
+                self._calculate_bert_similarity(content1, content2)
+            )
 
             # RoBERTa embeddings similarity
-            similarity_results[
-                SimilarityMethod.ROBERTA_EMBEDDINGS
-            ] = self._calculate_roberta_similarity(content1, content2)
+            similarity_results[SimilarityMethod.ROBERTA_EMBEDDINGS] = (
+                self._calculate_roberta_similarity(content1, content2)
+            )
 
             # Sentence Transformers similarity
-            similarity_results[
-                SimilarityMethod.SENTENCE_TRANSFORMERS
-            ] = self._calculate_sentence_transformer_similarity(content1, content2)
+            similarity_results[SimilarityMethod.SENTENCE_TRANSFORMERS] = (
+                self._calculate_sentence_transformer_similarity(content1, content2)
+            )
 
         # TF-IDF cosine similarity (always available)
-        similarity_results[
-            SimilarityMethod.TFIDF_COSINE
-        ] = self._calculate_tfidf_similarity(content1, content2)
+        similarity_results[SimilarityMethod.TFIDF_COSINE] = (
+            self._calculate_tfidf_similarity(content1, content2)
+        )
 
         # Semantic density analysis
-        similarity_results[
-            SimilarityMethod.SEMANTIC_DENSITY
-        ] = self._calculate_semantic_density_similarity(content1, content2)
+        similarity_results[SimilarityMethod.SEMANTIC_DENSITY] = (
+            self._calculate_semantic_density_similarity(content1, content2)
+        )
 
         # Structural analysis
-        similarity_results[
-            SimilarityMethod.STRUCTURAL_ANALYSIS
-        ] = self._calculate_structural_similarity(content1, content2)
+        similarity_results[SimilarityMethod.STRUCTURAL_ANALYSIS] = (
+            self._calculate_structural_similarity(content1, content2)
+        )
 
         # Ensemble analysis and consensus building
         ensemble_result = self._build_similarity_consensus(

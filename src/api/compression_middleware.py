@@ -12,12 +12,17 @@ High-performance response compression middleware with:
 
 import asyncio
 import gzip
-import time
-from typing import Optional, Dict, Any, Callable, List
-from asgiref.typing import ASGI3Application, Receive, Scope, Send
-from quart import current_app
-import brotli
 import logging
+import time
+from typing import Any, Dict, List, Optional
+
+import brotli
+from asgiref.typing import (
+    ASGI3Application,
+    ASGIReceiveCallable,
+    ASGISendCallable,
+    Scope,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +72,9 @@ class CompressionMiddleware:
             "brotli_requests": 0,
         }
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(
+        self, scope: Scope, receive: ASGIReceiveCallable, send: ASGISendCallable
+    ) -> None:
         """ASGI middleware entry point."""
         if scope["type"] != "http":
             await self.app(scope, receive, send)
@@ -165,7 +172,7 @@ class CompressionSendWrapper:
 
     def __init__(
         self,
-        send: Send,
+        send: ASGISendCallable,
         compression_method: str,
         minimum_size: int,
         compressible_types: List[str],

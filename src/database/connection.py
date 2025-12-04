@@ -9,11 +9,12 @@ health monitoring, and automatic reconnection capabilities.
 import asyncio
 import logging
 import os
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, AsyncGenerator
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from typing import Any, AsyncGenerator, Dict, List, Optional
+
 import asyncpg
-from asyncpg import Pool, Connection
+from asyncpg import Connection, Pool
 
 logger = logging.getLogger(__name__)
 
@@ -420,3 +421,20 @@ async def close_database() -> None:
         await _global_db_manager.disconnect()
         _global_db_manager = None
         logger.info("Database manager closed")
+
+
+@asynccontextmanager
+async def get_async_session() -> AsyncGenerator[Any, None]:
+    """
+    Get an async database session.
+
+    This is a placeholder implementation for SQLAlchemy async session support.
+    In production, this would return a proper SQLAlchemy AsyncSession.
+    For now, it returns a connection from the pool.
+    """
+    db_manager = get_database_manager()
+    if not db_manager.pool:
+        await db_manager.connect()
+
+    async with db_manager.pool.acquire() as conn:
+        yield conn

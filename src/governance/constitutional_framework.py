@@ -2,7 +2,7 @@
 Constitutional Framework for UATP Governance System.
 
 This module implements immutable constitutional principles that cannot be changed
-through normal governance processes. These principles protect the democratic 
+through normal governance processes. These principles protect the democratic
 nature of the system and prevent capture by malicious actors.
 
 CRITICAL SECURITY NOTE: This framework implements hard-coded protections that
@@ -14,7 +14,7 @@ import hashlib
 import logging
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.audit.events import audit_emitter
 
@@ -562,3 +562,6 @@ class ConstitutionalFramework:
 
 # Global constitutional framework instance
 constitutional_framework = ConstitutionalFramework()
+
+# Alias for backward compatibility
+ViolationType = ConstitutionalViolationType

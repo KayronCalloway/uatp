@@ -14,22 +14,20 @@ Key Features:
 - Byzantine fault tolerance for malicious forks
 """
 
-import asyncio
 import hashlib
-import json
 import logging
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 import networkx as nx
+
 from src.capsule_schema import Capsule
 
-from .cqss import CQSSResult, compute_cqss
-from ..consensus.multi_agent_consensus import consensus_engine
+from .cqss import compute_cqss
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +102,7 @@ class QualityBasedForkResolver:
             consensus_engine: Consensus engine for weighted decisions
         """
         self.economic_engine = economic_engine
-        self.consensus_engine = consensus_engine or consensus_engine
+        self.consensus_engine = consensus_engine
 
         # Fork detection and tracking
         self.active_forks: Dict[str, List[ForkCandidate]] = {}
