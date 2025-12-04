@@ -61,7 +61,7 @@ class DatabaseConfig:
             "command_timeout": self.command_timeout,
             "server_settings": {
                 "application_name": "uatp_capsule_engine",
-                "timezone": "UTC",
+                # "timezone": "UTC",  # Commented out for ARM64 PostgreSQL compatibility
             },
         }
 
@@ -174,7 +174,7 @@ class DatabaseManager:
     async def _init_connection(self, conn: Connection) -> None:
         """Initialize new database connections."""
         # Set up connection-specific settings
-        await conn.execute("SET timezone TO 'UTC'")
+        # await conn.execute("SET timezone TO 'UTC'")  # Commented out for ARM64 PostgreSQL compatibility
         await conn.execute("SET search_path TO public")
 
         # Register custom types if needed

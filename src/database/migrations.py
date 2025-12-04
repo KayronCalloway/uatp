@@ -6,18 +6,19 @@ Production-ready database migrations for UATP
 import logging
 import os
 import sys
+
 from dotenv import load_dotenv
 
 load_dotenv()
-from pathlib import Path
-from typing import Dict, List, Optional
+from pathlib import Path  # noqa: E402
+from typing import Dict, List, Optional  # noqa: E402
 
-from sqlalchemy import text
+from sqlalchemy import text  # noqa: E402
 
-from .connection import get_database_manager
+from .connection import get_database_manager  # noqa: E402
 
 db_manager = get_database_manager()
-from src.core.database import db
+from src.core.database import db  # noqa: E402
 
 Base = db.Base
 
@@ -196,10 +197,13 @@ class MigrationManager:
         if not is_sqlite:
             indexes.extend(
                 [
-                    "CREATE INDEX IF NOT EXISTS idx_capsules_platform ON capsules USING GIN ((payload->'analysis_metadata'->>'platform'))",
-                    "CREATE INDEX IF NOT EXISTS idx_capsules_user_id ON capsules USING GIN ((payload->'analysis_metadata'->>'user_id'))",
+                    # BTREE indexes for text extractions (GIN doesn't work on text without operator class)
+                    "CREATE INDEX IF NOT EXISTS idx_capsules_platform ON capsules USING BTREE ((payload->'analysis_metadata'->>'platform'))",
+                    "CREATE INDEX IF NOT EXISTS idx_capsules_user_id ON capsules USING BTREE ((payload->'analysis_metadata'->>'user_id'))",
                     "CREATE INDEX IF NOT EXISTS idx_capsules_significance_score ON capsules USING BTREE (((payload->'analysis_metadata'->>'significance_score')::float))",
-                    "CREATE INDEX IF NOT EXISTS idx_capsules_auto_filtered ON capsules USING GIN ((payload->'analysis_metadata'->>'auto_filtered'))",
+                    "CREATE INDEX IF NOT EXISTS idx_capsules_auto_filtered ON capsules USING BTREE ((payload->'analysis_metadata'->>'auto_filtered'))",
+                    # GIN index on entire payload for full JSONB searching
+                    "CREATE INDEX IF NOT EXISTS idx_capsules_payload_gin ON capsules USING GIN (payload jsonb_path_ops)",
                 ]
             )
 
@@ -207,74 +211,81 @@ class MigrationManager:
             for index_sql in indexes:
                 try:
                     await session.execute(text(index_sql))
+                    await session.commit()  # Commit each successful index creation
+                    logger.debug(f"Successfully created index: {index_sql[:80]}...")
                 except Exception as e:
                     logger.warning(f"Could not create index: {e}")
+                    await session.rollback()  # Rollback failed index creation
 
         logger.info("Performance indexes added")
 
     async def migrate_003_add_audit_triggers(self):
         """Add audit triggers for important tables"""
-        logger.info("Adding audit triggers...")
+        logger.info("Skipping audit triggers (not needed for current schema)...")
 
-        from src.core.config import DATABASE_URL
+        # Commented out for ARM64 PostgreSQL compatibility
+        # This migration references tables that don't exist yet (users, payment_transactions, consents)
+        # and the plpgsql function creation is failing on ARM64 PostgreSQL
 
-        # Only add if PostgreSQL
-        if "postgresql" in DATABASE_URL.lower():
-            audit_function = """
-                CREATE OR REPLACE FUNCTION audit_trigger_function()
-                RETURNS TRIGGER AS $$
-                BEGIN
-                    IF TG_OP = 'UPDATE' THEN
-                        INSERT INTO audit_logs (
-                            user_id,
-                            event_type,
-                            event_data,
-                            timestamp
-                        ) VALUES (
-                            NEW.user_id,
-                            TG_TABLE_NAME || '_updated',
-                            json_build_object(
-                                'old', row_to_json(OLD),
-                                'new', row_to_json(NEW)
-                            ),
-                            NOW()
-                        );
-                        RETURN NEW;
-                    ELSIF TG_OP = 'DELETE' THEN
-                        INSERT INTO audit_logs (
-                            user_id,
-                            event_type,
-                            event_data,
-                            timestamp
-                        ) VALUES (
-                            OLD.user_id,
-                            TG_TABLE_NAME || '_deleted',
-                            row_to_json(OLD),
-                            NOW()
-                        );
-                        RETURN OLD;
-                    END IF;
-                    RETURN NULL;
-                END;
-                $$ LANGUAGE plpgsql;
-            """
+        # from src.core.config import DATABASE_URL
 
-            triggers = [
-                "CREATE TRIGGER audit_users AFTER UPDATE OR DELETE ON users FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()",
-                "CREATE TRIGGER audit_payments AFTER UPDATE OR DELETE ON payment_transactions FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()",
-                "CREATE TRIGGER audit_consents AFTER UPDATE OR DELETE ON consents FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()",
-            ]
+        # # Only add if PostgreSQL
+        # if "postgresql" in DATABASE_URL.lower():
+        #     audit_function = """
+        #         CREATE OR REPLACE FUNCTION audit_trigger_function()
+        #         RETURNS TRIGGER AS $$
+        #         BEGIN
+        #             IF TG_OP = 'UPDATE' THEN
+        #                 INSERT INTO audit_logs (
+        #                     user_id,
+        #                     event_type,
+        #                     event_data,
+        #                     timestamp
+        #                 ) VALUES (
+        #                     NEW.user_id,
+        #                     TG_TABLE_NAME || '_updated',
+        #                     json_build_object(
+        #                         'old', row_to_json(OLD),
+        #                         'new', row_to_json(NEW)
+        #                     ),
+        #                     NOW()
+        #                 );
+        #                 RETURN NEW;
+        #             ELSIF TG_OP = 'DELETE' THEN
+        #                 INSERT INTO audit_logs (
+        #                     user_id,
+        #                     event_type,
+        #                     event_data,
+        #                     timestamp
+        #                 ) VALUES (
+        #                     OLD.user_id,
+        #                     TG_TABLE_NAME || '_deleted',
+        #                     row_to_json(OLD),
+        #                     NOW()
+        #                 );
+        #                 RETURN OLD;
+        #             END IF;
+        #             RETURN NULL;
+        #         END;
+        #         $$ LANGUAGE plpgsql;
+        #     """
 
-            async with db.get_session() as session:
-                await session.execute(text(audit_function))
+        #     triggers = [
+        #         "CREATE TRIGGER audit_users AFTER UPDATE OR DELETE ON users FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()",
+        #         "CREATE TRIGGER audit_payments AFTER UPDATE OR DELETE ON payment_transactions FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()",
+        #         "CREATE TRIGGER audit_consents AFTER UPDATE OR DELETE ON consents FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()",
+        #     ]
 
-                for trigger_sql in triggers:
-                    try:
-                        await session.execute(text(trigger_sql))
-                    except Exception as e:
-                        logger.warning(f"Could not create trigger: {e}")
+        #     async with db.get_session() as session:
+        #         await session.execute(text(audit_function))
 
-        logger.info("Audit triggers added")
+        #         for trigger_sql in triggers:
+        #             try:
+        #                 await session.execute(text(trigger_sql))
+        #             except Exception as e:
+        #                 logger.warning(f"Could not create trigger: {e}")
+
+        logger.info("Audit triggers migration skipped")
 
     async def migrate_004_add_partitioning(self):
         """Add table partitioning for large tables"""

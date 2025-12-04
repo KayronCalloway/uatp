@@ -2,18 +2,23 @@
 > frontend@0.1.0 dev
 > next dev
 
- ⚠ Warning: Found multiple lockfiles. Selecting /Users/kay/package-lock.json.
-   Consider removing the lockfiles at:
-   * /Users/kay/uatp-capsule-engine/frontend/package-lock.json
-
- ⚠ Port 3000 is in use by process 62436, using available port 3001 instead.
+   Downloading swc package @next/swc-darwin-arm64... to /Users/kay/Library/Caches/next-swc
    ▲ Next.js 15.4.1
-   - Local:        http://localhost:3001
-   - Network:      http://192.168.1.79:3001
-   - Environments: .env.local
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.218:3000
+   - Environments: .env.local, .env.development
 
  ✓ Starting...
- ✓ Ready in 1711ms
-   Reload env: .env.local
-   Reload env: .env.local
-[?25h
+ ✓ Ready in 1149ms
+ ○ Compiling / ...
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled / in 1964ms (1206 modules)
+ GET / 200 in 2272ms
+ ✓ Compiled in 332ms (505 modules)
+ HEAD / 200 in 61ms
+ GET / 200 in 59ms
+ ✓ Compiled /favicon.ico in 135ms (700 modules)
+ GET / 200 in 284ms
+ GET / 200 in 101ms

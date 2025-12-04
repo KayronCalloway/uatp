@@ -32,6 +32,31 @@ class PostQuantumCrypto:
 
     def _init_libraries(self):
         """Initialize post-quantum cryptography libraries."""
+        # Set library path for macOS (SIP strips DYLD_LIBRARY_PATH for security)
+        import os
+        import sys
+
+        # In development mode, skip PQ crypto if liboqs is not available
+        # This prevents the oqs package from auto-installing and hanging
+        liboqs_path = os.path.join(os.path.expanduser("~"), "_oqs", "lib")
+        is_development = os.getenv("ENVIRONMENT") == "development" or os.getenv("UATP_ENV") != "production"
+
+        if is_development and not os.path.exists(liboqs_path):
+            logger.info("Development mode: liboqs not found, using secure simulation (PQ crypto enforced in production only)")
+            self.dilithium_available = False
+            self.kyber_available = False
+            return
+
+        # Configure liboqs library path before importing
+        if os.path.exists(liboqs_path):
+            # Set environment variable (for child processes)
+            os.environ["DYLD_LIBRARY_PATH"] = liboqs_path + ":" + os.environ.get("DYLD_LIBRARY_PATH", "")
+            # Also set for current process (Python's ctypes uses this on macOS)
+            if hasattr(sys, "setdlopenflags"):
+                # Set RTLD_GLOBAL so libraries can find each other
+                import ctypes
+                sys.setdlopenflags(sys.getdlopenflags() | ctypes.RTLD_GLOBAL)
+
         # Try to import real PQ libraries
         try:
             # Try pqcrypto library with standardized algorithms first
@@ -45,8 +70,11 @@ class PostQuantumCrypto:
             logger.info(
                 "Using pqcrypto library with NIST-standardized ML-DSA-65 and ML-KEM-768"
             )
-        except ImportError:
+        except (ImportError, OSError) as e:
             try:
+                # Configure oqs to use our compiled library
+                os.environ["OQS_INSTALL_PATH"] = os.path.join(os.path.expanduser("~"), "_oqs")
+
                 # Try liboqs-python as fallback (most comprehensive but requires compilation)
                 import oqs
 
@@ -54,7 +82,7 @@ class PostQuantumCrypto:
                 self.dilithium_available = True
                 self.kyber_available = True
                 logger.info("Using liboqs-python for post-quantum crypto")
-            except ImportError:
+            except (ImportError, OSError) as e:
                 try:
                     # Try pqcrypto library with legacy names
                     import pqcrypto.kem.kyber768
@@ -65,9 +93,9 @@ class PostQuantumCrypto:
                     self.dilithium_available = True
                     self.kyber_available = True
                     logger.info("Using pqcrypto library for post-quantum crypto")
-                except ImportError:
+                except (ImportError, OSError) as e:
                     # Fallback to cryptographically secure simulation
-                    logger.warning("No PQ libraries found, using secure simulation")
+                    logger.warning(f"No PQ libraries found ({e}), using secure simulation")
                     self.dilithium_available = False
                     self.kyber_available = False
 

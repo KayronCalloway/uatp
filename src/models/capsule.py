@@ -3,6 +3,7 @@ from pydantic import TypeAdapter
 
 from src.capsule_schema import AnyCapsule, CapsuleType, CAPSULE_TYPE_MAP
 from src.core.database import db
+from src.utils.uatp_envelope import wrap_in_uatp_envelope, is_envelope_format
 
 
 class CapsuleModel(db.Base):
@@ -39,6 +40,30 @@ class CapsuleModel(db.Base):
         # Extract the payload by finding the field that matches the capsule_type
         payload_field_name = pydantic_obj.capsule_type.value
         payload_data = getattr(pydantic_obj, payload_field_name)
+
+        # Convert payload to dict
+        payload_dict = payload_data.model_dump()
+
+        # Wrap in UATP 7.0 envelope structure if not already wrapped
+        if not is_envelope_format(payload_dict):
+            # Extract parent capsule ID and agent ID for lineage
+            parent_capsules = []
+            if "parent_capsule_id" in payload_dict and payload_dict["parent_capsule_id"]:
+                parent_capsules = [payload_dict["parent_capsule_id"]]
+
+            # Extract agent ID from verification if available
+            agent_id = None
+            if hasattr(pydantic_obj.verification, "signer"):
+                agent_id = pydantic_obj.verification.signer
+
+            # Wrap the payload in UATP 7.0 envelope
+            payload_dict = wrap_in_uatp_envelope(
+                payload_data=payload_dict,
+                capsule_id=pydantic_obj.capsule_id,
+                capsule_type=pydantic_obj.capsule_type.value,
+                agent_id=agent_id,
+                parent_capsules=parent_capsules,
+            )
 
         # Generate model_map dynamically from all available capsule types
         model_map = {
@@ -79,7 +104,7 @@ class CapsuleModel(db.Base):
             timestamp=pydantic_obj.timestamp,
             status=pydantic_obj.status,
             verification=pydantic_obj.verification.model_dump(),
-            payload=payload_data.model_dump(),
+            payload=payload_dict,  # Now contains the wrapped envelope
         )
 
     def to_pydantic(self) -> AnyCapsule:

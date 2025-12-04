@@ -252,3 +252,41 @@ DEFAULT_CAPSULE_VERSION = settings.DEFAULT_CAPSULE_VERSION
 SUPPORTED_CAPSULE_VERSIONS = settings.SUPPORTED_CAPSULE_VERSIONS
 LOG_LEVEL = settings.LOG_LEVEL
 LOG_FORMAT = settings.LOG_FORMAT
+
+
+def validate_production_secrets():
+    """
+    Validate all secrets are properly configured for production environment.
+
+    Raises:
+        RuntimeError: If production validation fails
+    """
+    env = os.getenv("UATP_ENV", "development")
+
+    if env == "production":
+        errors = []
+
+        # Check CSRF secret
+        csrf_secret = os.getenv("CSRF_SECRET_KEY")
+        if not csrf_secret:
+            errors.append("CSRF_SECRET_KEY must be set in production")
+        elif len(csrf_secret) < 32:
+            errors.append(
+                "CSRF_SECRET_KEY must be at least 32 characters in production"
+            )
+
+        # Check JWT secret
+        jwt_secret = os.getenv("JWT_SECRET")
+        if not jwt_secret:
+            errors.append("JWT_SECRET must be set in production")
+        elif jwt_secret == "your-jwt-secret-key-change-in-production":
+            errors.append("JWT_SECRET must be changed from default value in production")
+        elif len(jwt_secret) < 32:
+            errors.append("JWT_SECRET must be at least 32 characters in production")
+
+        # If there are errors, raise RuntimeError
+        if errors:
+            error_msg = "Production secret validation failed:\n" + "\n".join(
+                f"  - {err}" for err in errors
+            )
+            raise RuntimeError(error_msg)

@@ -1,0 +1,13 @@
+{
+  "prompt": "UATP 7.0 Envelope Verification Test",
+  "reasoning_steps": [
+    {
+      "step": 1,
+      "content": "Testing that new capsules created after the fix have proper UATP 7.0 envelope structure",
+      "step_type": "verification"
+    }
+  ],
+  "final_answer": "This capsule should have the complete UATP 7.0 envelope structure with content, metadata, trace, attribution, lineage, and chain_context fields.",
+  "confidence": 1.0,
+  "model_used": "verification-test"
+}

@@ -21,24 +21,24 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
+from .api.constellations_routes import router as constellations_router
 from .auth.auth_middleware import setup_auth_middleware
 from .auth.auth_routes import router as auth_router
-from .api.constellations_routes import router as constellations_router
-from .insurance.api import router as insurance_router
 from .core.database import db
 from .database.connection import get_database_manager
+from .insurance.api import router as insurance_router
 
 db_manager = get_database_manager()
-from .database.migrations import run_migrations
-from .integrations.ai_platform_framework import setup_multi_platform_attribution
-from .payments.real_payment_service import create_real_payment_service
-from .security.csrf_protection import csrf_middleware
-from .security.input_validation import (
+from .database.migrations import run_migrations  # noqa: E402
+from .integrations.ai_platform_framework import setup_multi_platform_attribution  # noqa: E402
+from .payments.real_payment_service import create_real_payment_service  # noqa: E402
+from .security.csrf_protection import csrf_middleware  # noqa: E402
+from .security.input_validation import (  # noqa: E402
     PAYMENT_REQUEST_SCHEMA,
     USER_REGISTRATION_SCHEMA,
     security_validator,
 )
-from .user_management.user_service import create_user_service
+from .user_management.user_service import create_user_service  # noqa: E402
 
 
 def configure_logging():
@@ -90,6 +90,11 @@ async def lifespan(app: FastAPI):
     logger.info("Starting UATP application...")
 
     try:
+        # Validate production secrets before initializing services
+        from src.config.settings import validate_production_secrets
+
+        validate_production_secrets()
+
         # Initialize SQLAlchemy database (needed for migrations)
         logger.info("Initializing SQLAlchemy database...")
         db.init_app(app)

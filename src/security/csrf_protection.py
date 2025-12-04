@@ -19,13 +19,18 @@ class CSRFProtection:
     """CSRF protection implementation"""
 
     def __init__(self, secret_key: str = None, token_expiry: int = 3600):
-        self.secret_key = secret_key or secrets.token_urlsafe(32)
+        # Load from environment variable if not provided
+        import os
+
+        self.secret_key = (
+            secret_key or os.getenv("CSRF_SECRET_KEY") or secrets.token_urlsafe(32)
+        )
         self.token_expiry = token_expiry  # seconds
         self.token_store = {}  # In production, use Redis
 
-        if not secret_key:
+        if not secret_key and not os.getenv("CSRF_SECRET_KEY"):
             logger.warning(
-                "Using generated CSRF secret key - set a fixed key in production"
+                "Using generated CSRF secret key - set CSRF_SECRET_KEY environment variable in production"
             )
 
     def generate_token(self, session_id: str = None) -> str:
@@ -144,7 +149,7 @@ class CSRFProtection:
                 token = form_data.get("csrf_token")
                 if token:
                     return token
-            except:
+            except Exception:
                 pass
 
         # Check query parameters
@@ -230,7 +235,7 @@ async def csrf_middleware(request: Request, call_next):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="CSRF validation error",
-            )
+            ) from e
 
     response = await call_next(request)
     return response
@@ -297,7 +302,7 @@ class DoubleSubmitCSRF:
                 if hasattr(request, "form"):
                     form_data = request.form()
                     header_token = form_data.get("csrf_token")
-            except:
+            except Exception:
                 pass
 
         if not header_token:
