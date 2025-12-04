@@ -430,7 +430,6 @@ class ReasoningStep(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
         alias_generator=None,
-        allow_population_by_field_name=True,
         extra="allow",  # allow unknown fields for forward compatibility
     )
 
@@ -504,7 +503,7 @@ class ReasoningTracePayload(BaseModel):
     """
 
     model_config = ConfigDict(
-        populate_by_name=True, allow_population_by_field_name=True
+        populate_by_name=True
     )
 
     reasoning_steps: list[ReasoningStep] = Field(alias="steps")
