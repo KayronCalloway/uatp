@@ -292,33 +292,62 @@ class MigrationManager:
         logger.info("Setting up table partitioning...")
 
         from src.core.config import DATABASE_URL
+        from datetime import datetime, timedelta
+        from dateutil.relativedelta import relativedelta
 
         # Only for PostgreSQL
         if "postgresql" in DATABASE_URL.lower():
-            # Partition attributions table by month
-            partition_sql = """
+            # Calculate dynamic partition dates
+            now = datetime.now()
+            current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            prev_month_start = current_month_start - relativedelta(months=1)
+            next_month_start = current_month_start + relativedelta(months=1)
+            next_next_month_start = current_month_start + relativedelta(months=2)
+
+            # Format dates for partition names and SQL
+            prev_partition_name = prev_month_start.strftime("attributions_y%Ym%m")
+            prev_partition_start = prev_month_start.strftime("%Y-%m-%d")
+            prev_partition_end = current_month_start.strftime("%Y-%m-%d")
+
+            current_partition_name = current_month_start.strftime("attributions_y%Ym%m")
+            current_partition_start = current_month_start.strftime("%Y-%m-%d")
+            current_partition_end = next_month_start.strftime("%Y-%m-%d")
+
+            next_partition_name = next_month_start.strftime("attributions_y%Ym%m")
+            next_partition_start = next_month_start.strftime("%Y-%m-%d")
+            next_partition_end = next_next_month_start.strftime("%Y-%m-%d")
+
+            # Build dynamic partition SQL
+            partition_sql = f"""
                 -- Create partitioned table for new attributions
                 CREATE TABLE IF NOT EXISTS attributions_partitioned (
                     LIKE attributions INCLUDING ALL
                 ) PARTITION BY RANGE (timestamp);
 
-                -- Create partition for current month
-                CREATE TABLE IF NOT EXISTS attributions_y2024m07
+                -- Create partition for previous month (for late arrivals)
+                CREATE TABLE IF NOT EXISTS {prev_partition_name}
                 PARTITION OF attributions_partitioned
-                FOR VALUES FROM ('2024-07-01') TO ('2024-08-01');
+                FOR VALUES FROM ('{prev_partition_start}') TO ('{prev_partition_end}');
 
-                -- Create partition for next month
-                CREATE TABLE IF NOT EXISTS attributions_y2024m08
+                -- Create partition for current month
+                CREATE TABLE IF NOT EXISTS {current_partition_name}
                 PARTITION OF attributions_partitioned
-                FOR VALUES FROM ('2024-08-01') TO ('2024-09-01');
+                FOR VALUES FROM ('{current_partition_start}') TO ('{current_partition_end}');
+
+                -- Create partition for next month (pre-provisioned)
+                CREATE TABLE IF NOT EXISTS {next_partition_name}
+                PARTITION OF attributions_partitioned
+                FOR VALUES FROM ('{next_partition_start}') TO ('{next_partition_end}');
             """
 
             async with db.get_session() as session:
                 try:
                     await session.execute(text(partition_sql))
-                    logger.info("Table partitioning configured")
+                    await session.commit()
+                    logger.info(f"Table partitioning configured for {prev_partition_name}, {current_partition_name}, {next_partition_name}")
                 except Exception as e:
                     logger.warning(f"Could not create partitioning: {e}")
+                    await session.rollback()
 
     async def rollback_migration(self, version: str):
         """Rollback a migration"""
