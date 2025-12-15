@@ -6,37 +6,27 @@ Claude Code Live Capture Hook
 This module provides a hook to capture live Claude Code conversations
 and automatically create attribution capsules.
 
+Refactored to use BaseHook for reduced duplication.
+
 Usage:
     python claude_code_hook.py --session-id current-session
 """
 
 import asyncio
 import logging
-import os
-import sys
 from typing import Any, Dict, Optional
 
-# Add project root to path
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
-
-from src.live_capture.real_time_capsule_generator import (
-    capture_live_interaction,
-    get_real_time_generator,
-)
+from src.live_capture.base_hook import BaseHook
+from src.live_capture.real_time_capsule_generator import get_real_time_generator
 from src.utils.timezone_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
 
-class ClaudeCodeLiveCapture:
+class ClaudeCodeLiveCapture(BaseHook):
     """Live capture system for Claude Code conversations."""
 
     def __init__(self, session_id: str = "claude-code-session"):
-        self.session_id = session_id
-        self.user_id = "kay"  # Default user
-        self.platform = "claude_code"
-        self.model = "claude-sonnet-4"
-
         self.generator = get_real_time_generator()
         self.conversation_history = []
 
@@ -46,7 +36,19 @@ class ClaudeCodeLiveCapture:
             "interaction_captured", self._on_interaction_captured
         )
 
-        logger.info(f"🎯 Claude Code Live Capture initialized for session {session_id}")
+        super().__init__(platform="claude_code", user_id="kay", session_id=session_id)
+
+    def get_platform_emoji(self) -> str:
+        return "🎯"
+
+    def get_platform_specific_metadata(self, **kwargs) -> Dict[str, Any]:
+        """Get Claude Code-specific metadata."""
+        return {
+            "model": "claude-sonnet-4",
+            "interface": "claude_code",
+            "conversation_turn": kwargs.get("conversation_turn", len(self.conversation_history)),
+            "total_exchanges": len(self.conversation_history),
+        }
 
     async def _on_capsule_created(self, interaction, capsule_id):
         """Called when a capsule is created."""
@@ -73,8 +75,10 @@ class ClaudeCodeLiveCapture:
     async def capture_current_conversation(
         self, user_message: str, ai_response: str
     ) -> Optional[str]:
-        """Capture the current conversation exchange."""
+        """Capture the current conversation exchange.
 
+        Thin wrapper around BaseHook.capture_interaction with conversation tracking.
+        """
         # Add to conversation history
         self.conversation_history.append(
             {
@@ -84,21 +88,13 @@ class ClaudeCodeLiveCapture:
             }
         )
 
-        # Capture the interaction
-        capsule_id = await capture_live_interaction(
-            session_id=self.session_id,
-            user_message=user_message,
-            ai_response=ai_response,
-            user_id=self.user_id,
-            platform=self.platform,
-            model=self.model,
-            metadata={
-                "conversation_turn": len(self.conversation_history),
-                "total_exchanges": len(self.conversation_history),
-            },
+        # Capture the interaction using BaseHook
+        return await self.capture_interaction(
+            user_input=user_message,
+            assistant_response=ai_response,
+            model="claude-sonnet-4",
+            conversation_turn=len(self.conversation_history),
         )
-
-        return capsule_id
 
     async def end_session(self):
         """End the live capture session."""
@@ -170,7 +166,7 @@ class ClaudeCodeLiveCapture:
 async def main():
     """Main function to demonstrate live capture."""
 
-    print("🚀 Claude Code Live Capture Demo")
+    print("🎯 Claude Code Live Capture Demo (with BaseHook)")
     print("=" * 50)
 
     # Create live capture instance
@@ -180,7 +176,7 @@ async def main():
         # Demo capturing this conversation
         capsules = await capture.demo_capture_this_conversation()
 
-        print("\n✅ Demo complete!")
+        print("\n✅ Demo complete (with BaseHook refactoring)!")
         print(f"   Created {len(capsules)} capsules from live conversation")
 
         if capsules:

@@ -5,34 +5,55 @@ Windsurf Live Capture Integration
 
 This module provides integration with Windsurf IDE for live conversation
 capture and automatic capsule generation.
+
+Refactored to use BaseHook for reduced duplication.
 """
 
 import asyncio
 import logging
 import os
-import sys
-import time
-from typing import Optional
+from typing import Dict, Optional
 
-# Add project root to path
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
-
-from src.live_capture.real_time_capsule_generator import capture_live_interaction
+from src.live_capture.base_hook import BaseHook
 
 logger = logging.getLogger(__name__)
 
 
-class WindsurfLiveCapture:
+class WindsurfLiveCapture(BaseHook):
     """Live capture integration for Windsurf IDE."""
 
-    def __init__(self, user_id: str = "windsurf_user"):
-        self.platform = "windsurf"
-        self.user_id = user_id
-        self.session_id = f"windsurf_session_{int(time.time())}"
+    def __init__(self, user_id: str = "windsurf_user", workspace_path: Optional[str] = None):
+        self.workspace_path = workspace_path or os.getcwd()
+        super().__init__(platform="windsurf", user_id=user_id)
 
-        logger.info("🌊 Windsurf Live Capture initialized")
-        logger.info(f"   User ID: {user_id}")
-        logger.info(f"   Session ID: {self.session_id}")
+    def get_platform_emoji(self) -> str:
+        return "🌊"
+
+    def get_platform_specific_metadata(self, **kwargs) -> Dict:
+        """Get Windsurf-specific metadata."""
+        return {
+            "windsurf_version": "1.0",
+            "ide_platform": "windsurf",
+            "workspace_path": self.workspace_path,
+            "file_context": kwargs.get("file_context"),
+            "project_context": kwargs.get("project_context"),
+            "language": kwargs.get("language"),
+        }
+
+    def _log_platform_specific_init(self) -> None:
+        """Log Windsurf-specific initialization."""
+        logger.info(f"   Workspace: {self.workspace_path}")
+
+    def _log_platform_specific_success(self, capsule_id: str, **kwargs) -> None:
+        """Log Windsurf-specific success info."""
+        file_context = kwargs.get("file_context")
+        language = kwargs.get("language")
+        if file_context:
+            logger.info(f"   File: {file_context}")
+        if language:
+            logger.info(f"   Language: {language}")
+
+    # Convenience methods for Windsurf-specific interactions
 
     async def capture_windsurf_interaction(
         self,
@@ -42,58 +63,24 @@ class WindsurfLiveCapture:
         file_context: Optional[str] = None,
         project_context: Optional[str] = None,
         language: Optional[str] = None,
+        windsurf_model: str = "windsurf-ai",
         **kwargs,
     ) -> Optional[str]:
         """
         Capture a Windsurf interaction and create capsule if significant.
 
-        Args:
-            user_input: User's message to Windsurf
-            assistant_response: Windsurf's response
-            interaction_type: Type of interaction (code_completion, debugging, etc.)
-            file_context: File being worked on
-            project_context: Project context
-            language: Programming language
-            **kwargs: Additional metadata
-
-        Returns:
-            Capsule ID if created, None if not significant
+        Thin wrapper around BaseHook.capture_interaction with Windsurf-specific parameters.
         """
-
-        try:
-            # Enhance metadata with Windsurf-specific context
-            metadata = {
-                "interaction_type": interaction_type,
-                "file_context": file_context,
-                "project_context": project_context,
-                "language": language,
-                "windsurf_version": "1.0",
-                "ide_platform": "windsurf",
-                **kwargs,
-            }
-
-            # Capture the interaction
-            capsule_id = await capture_live_interaction(
-                session_id=self.session_id,
-                user_message=user_input,
-                ai_response=assistant_response,
-                user_id=self.user_id,
-                platform=self.platform,
-                model="windsurf-ai",
-                metadata=metadata,
-            )
-
-            if capsule_id:
-                logger.info(f"🌊 Windsurf interaction encapsulated: {capsule_id}")
-                logger.info(f"   Type: {interaction_type}")
-                logger.info(f"   File: {file_context}")
-                logger.info(f"   Language: {language}")
-
-            return capsule_id
-
-        except Exception as e:
-            logger.error(f"❌ Windsurf interaction capture failed: {e}")
-            return None
+        return await self.capture_interaction(
+            user_input=user_input,
+            assistant_response=assistant_response,
+            model=windsurf_model,
+            interaction_type=interaction_type,
+            file_context=file_context,
+            project_context=project_context,
+            language=language,
+            **kwargs,
+        )
 
     async def capture_code_completion(
         self,
@@ -226,7 +213,7 @@ async def capture_windsurf_interaction(
 async def main():
     """Test the Windsurf integration."""
 
-    print("🌊 Testing Windsurf Live Capture Integration")
+    print("🌊 Testing Windsurf Live Capture Integration (with BaseHook)")
     print("=" * 50)
 
     # Test code completion
@@ -368,7 +355,7 @@ Make sure to handle the loading and error states properly.""",
     else:
         print("❌ No capsule created - interaction not significant enough")
 
-    print("\n✅ Windsurf integration test completed!")
+    print("\n✅ Windsurf integration test completed (with BaseHook refactoring)!")
 
 
 if __name__ == "__main__":

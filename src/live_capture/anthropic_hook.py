@@ -5,36 +5,51 @@ Anthropic Live Capture Integration
 
 This module provides integration with Anthropic's Claude API for live conversation
 capture and automatic capsule generation.
+
+Refactored to use BaseHook for reduced duplication.
 """
 
 import asyncio
 import logging
 import os
-import sys
-import time
 from typing import Any, Dict, List, Optional
 
-# Add project root to path
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
-
-from src.live_capture.real_time_capsule_generator import capture_live_interaction
+from src.live_capture.base_hook import BaseHook
 
 logger = logging.getLogger(__name__)
 
 
-class AnthropicLiveCapture:
+class AnthropicLiveCapture(BaseHook):
     """Live capture integration for Anthropic's Claude API."""
 
     def __init__(self, user_id: str = "anthropic_user", api_key: Optional[str] = None):
-        self.platform = "anthropic"
-        self.user_id = user_id
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-        self.session_id = f"anthropic_session_{int(time.time())}"
+        super().__init__(platform="anthropic", user_id=user_id)
 
-        logger.info("🧠 Anthropic Live Capture initialized")
-        logger.info(f"   User ID: {user_id}")
-        logger.info(f"   Session ID: {self.session_id}")
+    def get_platform_emoji(self) -> str:
+        return "🧠"
+
+    def get_platform_specific_metadata(self, **kwargs) -> Dict[str, Any]:
+        """Get Anthropic-specific metadata."""
+        return {
+            "anthropic_version": "1.0",
+            "api_provider": "anthropic",
+            "conversation_context": kwargs.get("conversation_context"),
+            "usage_info": kwargs.get("usage_info"),
+            "system_prompt": kwargs.get("system_prompt"),
+        }
+
+    def _log_platform_specific_init(self) -> None:
+        """Log Anthropic-specific initialization."""
         logger.info(f"   API Key: {'✅ Set' if self.api_key else '❌ Missing'}")
+
+    def _log_platform_specific_success(self, capsule_id: str, **kwargs) -> None:
+        """Log Anthropic-specific success info."""
+        usage_info = kwargs.get("usage_info")
+        if usage_info:
+            logger.info(f"   Tokens: {usage_info.get('total_tokens', 'unknown')}")
+
+    # Convenience methods for Anthropic-specific interactions
 
     async def capture_anthropic_interaction(
         self,
@@ -50,58 +65,18 @@ class AnthropicLiveCapture:
         """
         Capture an Anthropic interaction and create capsule if significant.
 
-        Args:
-            user_input: User's message to Claude
-            assistant_response: Claude's response
-            model: Claude model used (claude-3-sonnet, claude-3-haiku, etc.)
-            interaction_type: Type of interaction (message, completion, etc.)
-            conversation_context: Full conversation history
-            usage_info: Token usage information
-            system_prompt: System prompt if used
-            **kwargs: Additional metadata
-
-        Returns:
-            Capsule ID if created, None if not significant
+        Thin wrapper around BaseHook.capture_interaction with Anthropic-specific parameters.
         """
-
-        try:
-            # Enhance metadata with Anthropic-specific context
-            metadata = {
-                "interaction_type": interaction_type,
-                "model": model,
-                "conversation_context": conversation_context,
-                "usage_info": usage_info,
-                "system_prompt": system_prompt,
-                "anthropic_version": "1.0",
-                "api_provider": "anthropic",
-                **kwargs,
-            }
-
-            # Capture the interaction
-            capsule_id = await capture_live_interaction(
-                session_id=self.session_id,
-                user_message=user_input,
-                ai_response=assistant_response,
-                user_id=self.user_id,
-                platform=self.platform,
-                model=model,
-                metadata=metadata,
-            )
-
-            if capsule_id:
-                logger.info(f"🧠 Anthropic interaction encapsulated: {capsule_id}")
-                logger.info(f"   Model: {model}")
-                logger.info(f"   Type: {interaction_type}")
-                if usage_info:
-                    logger.info(
-                        f"   Tokens: {usage_info.get('total_tokens', 'unknown')}"
-                    )
-
-            return capsule_id
-
-        except Exception as e:
-            logger.error(f"❌ Anthropic interaction capture failed: {e}")
-            return None
+        return await self.capture_interaction(
+            user_input=user_input,
+            assistant_response=assistant_response,
+            model=model,
+            interaction_type=interaction_type,
+            conversation_context=conversation_context,
+            usage_info=usage_info,
+            system_prompt=system_prompt,
+            **kwargs,
+        )
 
     async def capture_message(
         self,
@@ -343,7 +318,7 @@ class CaptureEnabledAnthropic:
 async def main():
     """Test the Anthropic integration."""
 
-    print("🧠 Testing Anthropic Live Capture Integration")
+    print("🧠 Testing Anthropic Live Capture Integration (with BaseHook)")
     print("=" * 50)
 
     # Test reasoning task
@@ -393,7 +368,7 @@ async def main():
     else:
         print("❌ No capsule created - interaction not significant enough")
 
-    print("\n✅ Anthropic integration test completed!")
+    print("\n✅ Anthropic integration test completed (with BaseHook refactoring)!")
 
 
 if __name__ == "__main__":

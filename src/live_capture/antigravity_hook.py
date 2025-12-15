@@ -13,6 +13,8 @@ Matches the detail level of Claude Code capture including:
 - Rich metadata (confidence, uncertainty, topics)
 - Automatic capsule creation
 
+Refactored to use BaseHook for reduced duplication.
+
 Usage:
     python antigravity_hook.py
 
@@ -24,21 +26,16 @@ Usage:
 import asyncio
 import logging
 import os
-import sys
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Add project root to path
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
-
-from src.live_capture.real_time_capsule_generator import capture_live_interaction
+from src.live_capture.base_hook import BaseHook
 
 logger = logging.getLogger(__name__)
 
 
-class AntigravityLiveCapture:
+class AntigravityLiveCapture(BaseHook):
     """Live capture integration for Google's Antigravity (Gemini)."""
 
     def __init__(
@@ -47,12 +44,7 @@ class AntigravityLiveCapture:
         session_id: Optional[str] = None,
         model: str = "gemini-2.5-pro",
     ):
-        self.platform = "google_antigravity"
-        self.user_id = user_id
         self.model = model
-
-        # Session tracking
-        self.session_id = session_id or f"antigravity_session_{int(time.time())}"
 
         # Conversation buffer for significance analysis
         self.conversation_buffer: List[Dict[str, Any]] = []
@@ -68,11 +60,47 @@ class AntigravityLiveCapture:
         self.brain_dir = self.antigravity_home / "brain"
         self.conversations_dir = self.antigravity_home / "conversations"
 
-        logger.info("🤖 Antigravity Live Capture initialized")
-        logger.info(f"   User ID: {user_id}")
-        logger.info(f"   Session ID: {self.session_id}")
-        logger.info(f"   Model: {model}")
-        logger.info(f"   Platform: {self.platform}")
+        super().__init__(platform="google_antigravity", user_id=user_id, session_id=session_id)
+
+    def get_platform_emoji(self) -> str:
+        return "✨"
+
+    def get_platform_specific_metadata(self, **kwargs) -> Dict[str, Any]:
+        """Get Antigravity-specific metadata."""
+        return {
+            "antigravity_version": "1.0",
+            "api_provider": "google",
+            "gemini_model": self.model,
+            "workspace_context": kwargs.get("workspace_context"),
+            "open_files": kwargs.get("open_files"),
+            "artifacts_created": kwargs.get("artifacts_created", []),
+            "tool_calls": kwargs.get("tool_calls", []),
+            "total_artifacts_in_session": len(self.artifacts_created),
+            "total_tool_calls_in_session": len(self.tool_calls_made),
+            "task_status": kwargs.get("task_status"),
+            "task_mode": kwargs.get("task_mode"),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "conversation_turn": len(self.conversation_buffer) + 1,
+        }
+
+    def _log_platform_specific_init(self) -> None:
+        """Log Antigravity-specific initialization."""
+        logger.info(f"   Model: {self.model}")
+
+    def _log_platform_specific_success(self, capsule_id: str, **kwargs) -> None:
+        """Log Antigravity-specific success info."""
+        task_mode = kwargs.get("task_mode")
+        artifacts = kwargs.get("artifacts_created", [])
+        tool_calls = kwargs.get("tool_calls", [])
+
+        if task_mode:
+            logger.info(f"   Mode: {task_mode}")
+        if artifacts:
+            logger.info(f"   Artifacts: {len(artifacts)}")
+        if tool_calls:
+            logger.info(f"   Tool calls: {len(tool_calls)}")
+
+    # Convenience methods for Antigravity-specific interactions
 
     async def capture_antigravity_interaction(
         self,
@@ -90,98 +118,49 @@ class AntigravityLiveCapture:
         """
         Capture an Antigravity interaction and create capsule if significant.
 
-        Args:
-            user_input: User's message to Gemini
-            assistant_response: Gemini's response
-            interaction_type: Type of interaction (agentic_coding, planning, execution, verification)
-            workspace_context: Current workspace/project context
-            open_files: List of currently open files
-            artifacts_created: List of artifacts created (task.md, walkthrough.md, etc.)
-            tool_calls: List of tool calls made during this interaction
-            task_status: Current task status from task_boundary
-            task_mode: Current mode (PLANNING, EXECUTION, VERIFICATION)
-            **kwargs: Additional metadata
-
-        Returns:
-            Capsule ID if created, None if not significant
+        Thin wrapper around BaseHook.capture_interaction with Antigravity-specific tracking.
         """
-        try:
-            # Track artifacts and tool calls
-            if artifacts_created:
-                self.artifacts_created.extend(artifacts_created)
-            if tool_calls:
-                self.tool_calls_made.extend(tool_calls)
+        # Track artifacts and tool calls
+        if artifacts_created:
+            self.artifacts_created.extend(artifacts_created)
+        if tool_calls:
+            self.tool_calls_made.extend(tool_calls)
 
-            # Build comprehensive metadata matching Claude Code detail level
-            metadata = {
-                # Interaction context
-                "interaction_type": interaction_type,
-                "task_status": task_status,
-                "task_mode": task_mode,
-                # Workspace context
-                "workspace_context": workspace_context,
-                "open_files": open_files,
-                # Artifacts and tools
-                "artifacts_created": artifacts_created or [],
-                "tool_calls": tool_calls or [],
-                "total_artifacts_in_session": len(self.artifacts_created),
-                "total_tool_calls_in_session": len(self.tool_calls_made),
-                # Platform-specific
-                "antigravity_version": "1.0",
-                "api_provider": "google",
-                "gemini_model": self.model,
-                # Timing
+        # Add to conversation buffer
+        self.conversation_buffer.append(
+            {
+                "role": "user",
+                "content": user_input,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "conversation_turn": len(self.conversation_buffer) + 1,
-                # Additional context
-                **kwargs,
+                "metadata": {"source": "antigravity"},
             }
+        )
+        self.conversation_buffer.append(
+            {
+                "role": "assistant",
+                "content": assistant_response,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "metadata": {
+                    "interaction_type": interaction_type,
+                    "task_status": task_status,
+                    "task_mode": task_mode,
+                },
+            }
+        )
 
-            # Add to conversation buffer
-            self.conversation_buffer.append(
-                {
-                    "role": "user",
-                    "content": user_input,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "metadata": {"source": "antigravity"},
-                }
-            )
-            self.conversation_buffer.append(
-                {
-                    "role": "assistant",
-                    "content": assistant_response,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "metadata": metadata,
-                }
-            )
-
-            # Capture the interaction through real-time generator
-            capsule_id = await capture_live_interaction(
-                session_id=self.session_id,
-                user_message=user_input,
-                ai_response=assistant_response,
-                user_id=self.user_id,
-                platform=self.platform,
-                model=self.model,
-                metadata=metadata,
-            )
-
-            if capsule_id:
-                logger.info(f"🤖 Antigravity interaction encapsulated: {capsule_id}")
-                logger.info(f"   Model: {self.model}")
-                logger.info(f"   Type: {interaction_type}")
-                logger.info(f"   Mode: {task_mode}")
-                logger.info(f"   Artifacts: {len(artifacts_created or [])}")
-                logger.info(f"   Tool calls: {len(tool_calls or [])}")
-
-            return capsule_id
-
-        except Exception as e:
-            logger.error(f"❌ Antigravity interaction capture failed: {e}")
-            import traceback
-
-            traceback.print_exc()
-            return None
+        return await self.capture_interaction(
+            user_input=user_input,
+            assistant_response=assistant_response,
+            model=self.model,
+            interaction_type=interaction_type,
+            workspace_context=workspace_context,
+            open_files=open_files,
+            artifacts_created=artifacts_created,
+            tool_calls=tool_calls,
+            task_status=task_status,
+            task_mode=task_mode,
+            **kwargs,
+        )
 
     async def capture_planning_session(
         self,
@@ -358,7 +337,7 @@ async def capture_antigravity_interaction(
 async def main():
     """Test the Antigravity integration."""
 
-    print("🤖 Testing Antigravity Live Capture Integration")
+    print("✨ Testing Antigravity Live Capture Integration (with BaseHook)")
     print("=" * 60)
 
     # Test agentic coding interaction
@@ -415,7 +394,7 @@ async def main():
     for key, value in stats.items():
         print(f"   {key}: {value}")
 
-    print("\n✅ Antigravity integration test completed!")
+    print("\n✅ Antigravity integration test completed (with BaseHook refactoring)!")
 
 
 if __name__ == "__main__":
