@@ -9,15 +9,16 @@ including token generation, validation, and user management.
 
 import asyncio
 import hashlib
-import json
-import jwt
 import logging
 import os
 import secrets
-import time
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional
+
+import jwt
+
+from src.utils.timezone_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +121,7 @@ class JWTAuthenticator:
             email=email,
             password_hash=password_hash,
             roles=roles,
-            created_at=datetime.utcnow(),
+            created_at=utc_now(),
         )
 
         self.users[username] = user
@@ -141,14 +142,14 @@ class JWTAuthenticator:
             return None
 
         # Update last login
-        user.last_login = datetime.utcnow()
+        user.last_login = utc_now()
         logger.info(f"🔓 User authenticated: {username}")
         return user
 
     def generate_access_token(self, user: User) -> str:
         """Generate an access token for a user."""
 
-        now = datetime.utcnow()
+        now = utc_now()
         exp = now + timedelta(hours=JWT_EXPIRATION_HOURS)
 
         payload = TokenPayload(
@@ -168,7 +169,7 @@ class JWTAuthenticator:
     def generate_refresh_token(self, user: User) -> str:
         """Generate a refresh token for a user."""
 
-        now = datetime.utcnow()
+        now = utc_now()
         exp = now + timedelta(days=JWT_REFRESH_EXPIRATION_DAYS)
 
         payload = TokenPayload(

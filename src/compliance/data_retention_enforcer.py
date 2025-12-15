@@ -5,12 +5,11 @@ GDPR Article 17 compliant automated data deletion and retention management
 
 import asyncio
 import hashlib
-import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Callable
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +64,48 @@ class StorageLocation(Enum):
     EXTERNAL_SYSTEM = "external_system"
     CDN = "cdn"
     SEARCH_INDEX = "search_index"
+
+
+class RetentionPeriod(Enum):
+    """Standard retention periods for regulatory compliance"""
+
+    DAYS_30 = 30
+    DAYS_90 = 90
+    DAYS_180 = 180
+    YEAR_1 = 365
+    YEARS_2 = 730
+    YEARS_3 = 1095
+    YEARS_5 = 1825
+    YEARS_7 = 2555
+    YEARS_10 = 3650
+    INDEFINITE = -1
+
+
+@dataclass
+class ErasureRequest:
+    """Request for data erasure"""
+
+    request_id: str
+    user_id: str
+    data_categories: List[DataCategory]
+    requested_at: datetime
+    deadline: datetime
+    status: DeletionStatus = DeletionStatus.PENDING
+    completion_date: Optional[datetime] = None
+
+
+@dataclass
+class LitigationHold:
+    """Legal hold on data deletion"""
+
+    hold_id: str
+    case_reference: str
+    affected_users: List[str]
+    data_categories: List[DataCategory]
+    imposed_at: datetime
+    expires_at: Optional[datetime] = None
+    reason: str = ""
+    active: bool = True
 
 
 @dataclass
@@ -667,9 +708,9 @@ class DataRetentionEnforcer:
                     policy.litigation_hold_exempt or policy.regulatory_hold_exempt
                 ):
                     request.data_retained.append(record.record_id)
-                    request.retention_reasons[
-                        record.record_id
-                    ] = f"Policy exemption: {policy.legal_basis}"
+                    request.retention_reasons[record.record_id] = (
+                        f"Policy exemption: {policy.legal_basis}"
+                    )
                     request.audit_log.append(
                         f"Record {record.record_id} retained due to policy exemption"
                     )

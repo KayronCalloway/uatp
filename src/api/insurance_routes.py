@@ -17,19 +17,17 @@ Endpoints:
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from quart import Blueprint, jsonify, request
 from pydantic import (
     BaseModel,
-    Field,
-    field_validator,
     EmailStr,
+    Field,
+    ValidationError,
     conint,
     constr,
-    ValidationError,
+    field_validator,
 )
+from quart import Blueprint, jsonify, request
 
-from .auth_utils import require_auth, get_current_user, AuthorizationError
-from .rate_limiting import rate_limit
 from ..insurance.claims_processor import (
     ClaimEvidence,
     ClaimsProcessor,
@@ -42,7 +40,9 @@ from ..insurance.policy_manager import (
     PolicyTerms,
 )
 from ..insurance.risk_assessor import DecisionCategory, RiskAssessor
-
+from ..utils.timezone_utils import utc_now
+from .auth_utils import AuthorizationError, get_current_user, require_auth
+from .rate_limiting import rate_limit
 
 # Create blueprint
 insurance_bp = Blueprint("insurance", __name__)
@@ -175,12 +175,12 @@ class ClaimSubmissionRequest(BaseModel):
         try:
             incident_dt = datetime.fromisoformat(v.replace("Z", "+00:00"))
             # Cannot be in the future
-            if incident_dt > datetime.utcnow():
+            if incident_dt > utc_now():
                 raise ValueError("Incident date cannot be in the future")
             # Cannot be more than 2 years old
             from datetime import timedelta
 
-            if incident_dt < datetime.utcnow() - timedelta(days=730):
+            if incident_dt < utc_now() - timedelta(days=730):
                 raise ValueError("Incident date cannot be more than 2 years old")
         except ValueError as e:
             if "Incident date" in str(e):
@@ -222,7 +222,7 @@ async def insurance_health():
         {
             "status": "healthy",
             "service": "insurance_api",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": utc_now().isoformat(),
             "version": "1.0.0",
         }
     )
@@ -625,9 +625,8 @@ async def submit_claim():
         policy = await policy_manager.get_policy(req.policy_id)
 
         # Authorization check: user must own the policy or be an admin
-        if (
-            policy.holder.user_id != current_user_id
-            and "admin" not in current_user.get("scopes", [])
+        if policy.holder.user_id != current_user_id and "admin" not in current_user.get(
+            "scopes", []
         ):
             raise AuthorizationError(
                 "You do not have permission to submit a claim for this policy"

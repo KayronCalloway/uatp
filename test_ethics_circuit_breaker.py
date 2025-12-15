@@ -97,6 +97,7 @@ import src.engine.ethics_circuit_breaker as ecb_module
 from src.engine.ethics_circuit_breaker import (
     EthicsCircuitBreaker,
 )
+from src.security.refusal_policy import TestRefusalPolicy
 
 ecb_module.RECTSystem = MockRECTSystem
 ecb_module.audit_emitter = MockAuditEmitter()
@@ -107,8 +108,10 @@ async def test_ethics_circuit_breaker():
     print("🛡️ Ethics Circuit Breaker Test")
     print("=" * 40)
 
-    # Create circuit breaker with manual mock injection
-    circuit_breaker = EthicsCircuitBreaker(enable_refusal=True, strict_mode=False)
+    # Create circuit breaker with TestRefusalPolicy (allows testing ethics evaluation without real refusals)
+    circuit_breaker = EthicsCircuitBreaker(
+        refusal_policy=TestRefusalPolicy(), strict_mode=False
+    )
     # Manually replace the RECT system
     circuit_breaker.rect_system = MockRECTSystem()
 

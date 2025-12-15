@@ -8,8 +8,9 @@ functions to configure loggers consistently across the application.
 import json
 import logging
 import os
-from datetime import datetime
 from typing import Optional
+
+from src.utils.timezone_utils import utc_now
 
 
 class StructuredLogFormatter(logging.Formatter):
@@ -24,7 +25,7 @@ class StructuredLogFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON string."""
         log_data = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": utc_now().isoformat() + "Z",
             "level": record.levelname,
             "message": record.getMessage(),
             "module": record.module,

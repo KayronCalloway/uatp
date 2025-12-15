@@ -57,15 +57,6 @@ class SQLAlchemyDB:
         from src.models.capsule import CapsuleModel  # noqa
         from src.models.payment import PayoutMethodModel, TransactionModel  # noqa
         from src.models.user import UserModel  # noqa
-        from src.models.user_management import (
-            UserSessionModel,
-            IdentityVerificationModel,
-        )  # noqa
-        from src.insurance.models import (
-            InsurancePolicy,
-            InsuranceClaim,
-            AILiabilityEventLog,
-        )  # noqa
 
         async with self.engine.begin() as conn:
             await conn.run_sync(self.Base.metadata.create_all)
@@ -76,6 +67,76 @@ class SQLAlchemyDB:
                 "Database has not been initialized. Call init_app first."
             )
         return self.session_factory()
+
+    async def fetch(self, query: str, *args):
+        """
+        Execute a raw SQL query and fetch all results.
+        Compatible with asyncpg-style queries for CapsuleEngine.
+
+        Args:
+            query: SQL query string (asyncpg format with $1, $2, etc.)
+            *args: Query parameters
+
+        Returns:
+            List of Row objects (dict-like) with column names as keys
+        """
+        import logging
+        import re
+
+        from sqlalchemy import text
+
+        logger = logging.getLogger(__name__)
+
+        if not self.engine:
+            raise RuntimeError("Database engine not initialized")
+
+        #  Handle PostgreSQL array syntax FIRST (e.g., ANY($1::text[]))
+        # Convert to SQLAlchemy compatible IN clause
+        converted_query = query
+        converted_query = re.sub(
+            r"=\s*ANY\(\$(\d+)::text\[\]\)", r"IN (:\1)", converted_query
+        )
+
+        # Convert all asyncpg-style placeholders ($1, $2, etc.) to SQLAlchemy style (:1, :2, etc.)
+        # We use numbered placeholders to avoid name conflicts
+        for i in range(
+            len(args), 0, -1
+        ):  # Process in reverse to avoid replacing $1 in $10
+            converted_query = converted_query.replace(f"${i}", f":{i}")
+
+        # Build params dict with numbered keys
+        params = {str(i): arg for i, arg in enumerate(args, 1)}
+
+        # For list/array parameters (like the capsule_types list), we need special handling
+        # SQLAlchemy's IN clause can handle lists directly
+        for key, value in list(params.items()):
+            if isinstance(value, (list, tuple)):
+                # Convert list to comma-separated placeholders
+                placeholders = [f":{key}_{j}" for j in range(len(value))]
+                converted_query = converted_query.replace(
+                    f":{key}", ", ".join(placeholders)
+                )
+                # Add individual values to params
+                for j, item in enumerate(value):
+                    params[f"{key}_{j}"] = item
+                # Remove the original list param
+                del params[key]
+
+        # Debug logging to trace SQL conversion
+        logger.info(f"🔍 DATABASE FETCH - Original query: {query[:200]}...")
+        logger.info(f"🔍 DATABASE FETCH - Converted query: {converted_query[:200]}...")
+        logger.info(f"🔍 DATABASE FETCH - Params: {params}")
+
+        async with self.engine.connect() as conn:
+            result = await conn.execute(text(converted_query), params)
+            # Convert to list of dict-like objects similar to asyncpg Records
+            rows = []
+            for row in result:
+                # Convert Row to dict
+                row_dict = dict(row._mapping)
+                rows.append(row_dict)
+            logger.info(f"🔍 DATABASE FETCH - Retrieved {len(rows)} rows")
+            return rows
 
 
 db = SQLAlchemyDB()

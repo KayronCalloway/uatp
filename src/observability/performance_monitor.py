@@ -3,13 +3,14 @@ Performance monitoring for UATP Capsule Engine.
 Tracks query latency, connection pool usage, and database performance.
 """
 
-import time
-import asyncio
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from collections import deque
 import statistics
+import time
+from collections import deque
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from src.utils.timezone_utils import utc_now
 
 
 @dataclass
@@ -85,7 +86,7 @@ class PerformanceMonitor:
             metric = QueryMetrics(
                 query_name=query_name,
                 duration_ms=duration_ms,
-                timestamp=datetime.utcnow(),
+                timestamp=utc_now(),
                 success=success,
                 error=error,
             )

@@ -7,13 +7,13 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  Filter, 
-  Database, 
-  Eye, 
-  Calendar, 
-  User, 
+import {
+  Search,
+  Filter,
+  Database,
+  Eye,
+  Calendar,
+  User,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
@@ -21,25 +21,28 @@ import {
   SortDesc,
   X,
   Tag,
-  Clock
+  Clock,
+  ArrowLeft
 } from 'lucide-react';
 import { formatDate, truncateText, getCapsuleTypeColor } from '@/lib/utils';
 import { ListCapsulesQuery, AnyCapsule } from '@/types/api';
 import { useDemoMode } from '@/contexts/demo-mode-context';
 import { getMockCapsules, mockApiCall } from '@/lib/mock-data';
+import { QualityBadgeInline } from '@/components/capsules/quality-badge';
 
 interface CapsuleListProps {
   onCapsuleSelect?: (capsule: AnyCapsule) => void;
+  onBack?: () => void;
 }
 
-export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
+export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
   const { isDemoMode } = useDemoMode();
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [compress, setCompress] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Advanced filtering state
   const [filters, setFilters] = useState({
     type: '',
@@ -55,6 +58,7 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
     page: currentPage,
     per_page: pageSize,
     compress,
+    demo_mode: false,  // Explicit: fetch live data only (exclude demo-* capsules)
   };
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -72,33 +76,33 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
   });
 
   const capsules = data?.capsules || [];
-  
+
   // Advanced filtering and sorting
   const filteredCapsules = useMemo(() => {
     const filtered = capsules.filter(capsule => {
       // Search term filter
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
-        const matchesSearch = 
+        const matchesSearch =
           capsule.id?.toLowerCase().includes(searchLower) ||
           capsule.content?.toLowerCase().includes(searchLower) ||
           capsule.type?.toLowerCase().includes(searchLower) ||
           capsule.agent_id?.toLowerCase().includes(searchLower);
         if (!matchesSearch) return false;
       }
-      
+
       // Type filter
       if (filters.type && capsule.type !== filters.type) return false;
-      
+
       // Agent filter
       if (filters.agent && capsule.agent_id !== filters.agent) return false;
-      
+
       // Date range filter
       if (filters.dateRange) {
         const now = new Date();
         const capsuleDate = new Date(capsule.created_at);
         const daysDiff = Math.floor((now.getTime() - capsuleDate.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         switch (filters.dateRange) {
           case 'today':
             if (daysDiff > 0) return false;
@@ -114,7 +118,7 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
             break;
         }
       }
-      
+
       // Trust score filter
       if (filters.trustScore) {
         const trustScore = capsule.trust_score || 0;
@@ -130,14 +134,14 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
             break;
         }
       }
-      
+
       return true;
     });
-    
+
     // Sorting
     const sortedFiltered = [...filtered].sort((a, b) => {
       let aVal, bVal;
-      
+
       switch (filters.sortBy) {
         case 'created_at':
           aVal = new Date(a.created_at).getTime();
@@ -159,24 +163,24 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
           aVal = a.id || '';
           bVal = b.id || '';
       }
-      
+
       if (filters.sortOrder === 'asc') {
         return aVal > bVal ? 1 : -1;
       } else {
         return aVal < bVal ? 1 : -1;
       }
     });
-    
+
     return sortedFiltered;
   }, [capsules, searchTerm, filters]);
-  
+
   // Get unique values for filter options
   const filterOptions = useMemo(() => {
     const types = [...new Set(capsules.map(c => c.type).filter(Boolean))];
     const agents = [...new Set(capsules.map(c => c.agent_id).filter(Boolean))];
     return { types, agents };
   }, [capsules]);
-  
+
   const clearFilters = () => {
     setFilters({
       type: '',
@@ -189,14 +193,14 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
     });
     setSearchTerm('');
   };
-  
-  const activeFiltersCount = Object.values(filters).filter(v => 
+
+  const activeFiltersCount = Object.values(filters).filter(v =>
     Array.isArray(v) ? v.length > 0 : v !== '' && v !== 'created_at' && v !== 'desc'
   ).length + (searchTerm ? 1 : 0);
-  
+
   // Legacy simple filter for backward compatibility
-  const legacyFilteredCapsules = capsules.filter(capsule => 
-    !searchTerm || 
+  const legacyFilteredCapsules = capsules.filter(capsule =>
+    !searchTerm ||
     capsule.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     capsule.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     capsule.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -227,10 +231,17 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center space-x-2">
-              <Database className="h-5 w-5" />
-              <span>Capsules</span>
-            </CardTitle>
+            <div className="flex items-center space-x-3">
+              {onBack && (
+                <Button variant="ghost" size="sm" onClick={onBack}>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              )}
+              <CardTitle className="flex items-center space-x-2">
+                <Database className="h-5 w-5" />
+                <span>Capsules</span>
+              </CardTitle>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -287,7 +298,7 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
                 )}
               </div>
             </div>
-            
+
             {/* Advanced Filters */}
             {showFilters && (
               <div className="border-t pt-4">
@@ -306,7 +317,7 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
                       ))}
                     </select>
                   </div>
-                  
+
                   {/* Agent Filter */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Agent</label>
@@ -321,7 +332,7 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
                       ))}
                     </select>
                   </div>
-                  
+
                   {/* Date Range Filter */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Date Range</label>
@@ -337,7 +348,7 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
                       <option value="year">This Year</option>
                     </select>
                   </div>
-                  
+
                   {/* Trust Score Filter */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Trust Score</label>
@@ -352,7 +363,7 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
                       <option value="low">Low (0.5-)</option>
                     </select>
                   </div>
-                  
+
                   {/* Sort Options */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Sort By</label>
@@ -378,7 +389,7 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Filter Summary */}
                 <div className="mt-4 pt-4 border-t">
                   <div className="flex flex-wrap gap-2 items-center">
@@ -422,7 +433,7 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
                 </div>
               </div>
             )}
-            
+
             <div className="flex items-center space-x-2">
               <Filter className="h-4 w-4 text-gray-400" />
               <select
@@ -473,15 +484,16 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCapsuleTypeColor(capsule.capsule_type)}`}>
                           {capsule.capsule_type}
                         </span>
+                        <QualityBadgeInline capsuleId={capsule.capsule_id} />
                         <span className="text-sm text-gray-500 font-mono">
                           {truncateText(capsule.capsule_id, 12)}
                         </span>
                       </div>
-                      
+
                       <h3 className="text-sm font-medium text-gray-900 mb-1">
                         {truncateText(capsule.capsule_type, 100)}
                       </h3>
-                      
+
                       <div className="flex items-center space-x-4 text-xs text-gray-500">
                         <div className="flex items-center space-x-1">
                           <User className="h-3 w-3" />
@@ -493,7 +505,7 @@ export function CapsuleList({ onCapsuleSelect }: CapsuleListProps) {
                         </div>
                       </div>
                     </div>
-                    
+
                     <Button variant="ghost" size="sm">
                       <Eye className="h-4 w-4" />
                     </Button>

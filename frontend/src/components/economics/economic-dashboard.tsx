@@ -29,7 +29,7 @@ export function EconomicDashboard() {
 
   const { data: capsuleStats, isLoading: statsLoading, refetch: refetchStats } = useQuery({
     queryKey: ['capsule-stats'],
-    queryFn: api.getCapsuleStats,
+    queryFn: () => api.getCapsuleStats(false),
     refetchInterval: 60000,
   });
 
@@ -239,7 +239,7 @@ export function EconomicDashboard() {
               {capsuleStats?.types && Object.entries(capsuleStats.types).map(([type, count]) => {
                 const percentage = ((count as number) / capsuleStats.total_capsules) * 100;
                 const estimatedValue = (count as number) * 25; // Mock calculation
-                
+
                 return (
                   <div key={type} className="space-y-2">
                     <div className="flex justify-between text-sm">
@@ -247,8 +247,8 @@ export function EconomicDashboard() {
                       <span className="font-medium">${estimatedValue}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
+                      <div
+                        className="bg-blue-600 h-2 rounded-full"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>

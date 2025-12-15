@@ -6,25 +6,21 @@ Automated compliance report generation supporting SOX, GDPR, HIPAA, ISO 27001
 and other regulatory frameworks with real-time monitoring and alerting.
 """
 
+import csv
 import json
 import logging
 import uuid
-import asyncio
-from datetime import datetime, timedelta
-from enum import Enum
-from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 from pathlib import Path
-import csv
-import io
-import base64
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
 import jinja2
-from weasyprint import HTML, CSS
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
+from pydantic import BaseModel, Field
+from weasyprint import HTML
+
+from src.utils.timezone_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -1056,14 +1052,14 @@ class ComplianceReportingEngine:
                 <p>Generated: {{ report.generation_timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
                 <p>Score: <span class="{% if report.compliance_score >= 80 %}compliant{% else %}non-compliant{% endif %}">{{ "%.1f"|format(report.compliance_score) }}%</span></p>
             </div>
-            
+
             <div class="section">
                 <h2>Executive Summary</h2>
                 <p>Overall Status: {{ report.executive_summary.overall_status }}</p>
                 <p>Total Violations: {{ report.executive_summary.total_violations }}</p>
                 <p>Critical Violations: {{ report.executive_summary.critical_violations }}</p>
             </div>
-            
+
             <div class="section">
                 <h2>Compliance Metrics</h2>
                 {% for metric in report.metrics %}
@@ -1075,7 +1071,7 @@ class ComplianceReportingEngine:
                 </div>
                 {% endfor %}
             </div>
-            
+
             <div class="section">
                 <h2>Recommendations</h2>
                 <ul>
@@ -1335,7 +1331,7 @@ class GDPRMetricsCollector:
             target=98.0,
             unit="%",
             status=ComplianceStatus.COMPLIANT,
-            last_updated=datetime.utcnow(),
+            last_updated=utc_now(),
             trend="stable",
             risk_level="low",
         )
@@ -1353,7 +1349,7 @@ class GDPRMetricsCollector:
             target=30.0,
             unit="days",
             status=ComplianceStatus.COMPLIANT,
-            last_updated=datetime.utcnow(),
+            last_updated=utc_now(),
             trend="improving",
             risk_level="low",
         )

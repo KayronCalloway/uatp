@@ -15,6 +15,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from capsules.specialized_capsules import EconomicCapsule
+from src.utils.timezone_utils import utc_now
 
 # from engine.specialized_engine import SpecializedCapsuleEngine  # Not needed for demo
 
@@ -201,7 +202,7 @@ class UatpEconomicEngine:
             Decay factor from 0.0 to 1.0
         """
         if current_time is None:
-            current_time = datetime.utcnow()
+            current_time = utc_now()
 
         # Calculate years elapsed
         time_diff = current_time - timestamp
@@ -231,7 +232,7 @@ class UatpEconomicEngine:
             List of attribution results sorted by confidence
         """
         attribution_results = []
-        current_time = datetime.utcnow()
+        current_time = utc_now()
 
         # Analyze against conversation registry
         for conv_id, conv_data in self.conversation_registry.items():
@@ -505,7 +506,7 @@ class UatpEconomicEngine:
             dividend_distribution=recipients,
             economic_value={
                 "transaction_type": "transfer",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now().isoformat(),
                 **(metadata or {}),
             },
         )
@@ -559,7 +560,7 @@ class UatpEconomicEngine:
             economic_value={
                 "transaction_type": "stake",
                 "purpose": purpose,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now().isoformat(),
                 **(metadata or {}),
             },
         )
@@ -608,7 +609,7 @@ class UatpEconomicEngine:
                 "transaction_type": "reward",
                 "verified_capsule_id": verified_capsule_id,
                 "quality_score": quality_score,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now().isoformat(),
                 **(metadata or {}),
             },
         )
@@ -734,7 +735,7 @@ class UatpEconomicEngine:
                 "transaction_type": "dividend",
                 "contributors": contributors,
                 "distribution": distribution,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now().isoformat(),
                 **(metadata or {}),
             },
         )
@@ -818,7 +819,7 @@ class UatpEconomicEngine:
                 "transaction_type": "penalty",
                 "violation_type": violation_type,
                 "amount": actual_penalty,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now().isoformat(),
                 **(metadata or {}),
             },
         )
@@ -890,7 +891,7 @@ class UatpEconomicEngine:
                 "emergence_detection_threshold": self.emergence_detection_threshold,
             },
             "registered_conversations": len(self.conversation_registry),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": utc_now().isoformat(),
         }
 
     def save_state(self, filepath: str) -> None:
@@ -903,7 +904,7 @@ class UatpEconomicEngine:
             "agent_balances": self.agent_balances,
             "agent_stakes": self.agent_stakes,
             "agent_reputation": self.agent_reputation,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": utc_now().isoformat(),
         }
 
         with open(filepath, "w") as f:
@@ -987,7 +988,7 @@ class UatpEconomicEngine:
                 "emergence_bonus": distribution.emergence_bonus,
                 "attribution_confidence": distribution.attribution_confidence,
                 "attribution_count": len(attribution_results),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now().isoformat(),
                 "context": context or {},
                 **(metadata or {}),
             },
@@ -1039,7 +1040,7 @@ class UatpEconomicEngine:
                 "distribution_amount": distribution_amount,
                 "recipient_count": len(recipients),
                 "distribution_reason": distribution_reason,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now().isoformat(),
             },
         )
 

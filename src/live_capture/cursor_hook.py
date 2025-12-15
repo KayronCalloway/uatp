@@ -8,18 +8,16 @@ capture and automatic capsule generation.
 """
 
 import asyncio
-import json
 import logging
 import os
 import sys
 import time
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, Optional
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from live_capture.real_time_capsule_generator import capture_live_interaction
+from src.live_capture.real_time_capsule_generator import capture_live_interaction
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +33,7 @@ class CursorLiveCapture:
         self.workspace_path = workspace_path or os.getcwd()
         self.session_id = f"cursor_session_{int(time.time())}"
 
-        logger.info(f"🎯 Cursor Live Capture initialized")
+        logger.info("🎯 Cursor Live Capture initialized")
         logger.info(f"   User ID: {user_id}")
         logger.info(f"   Session ID: {self.session_id}")
         logger.info(f"   Workspace: {self.workspace_path}")
@@ -364,16 +362,16 @@ from typing import bool
 def validate_email(email: str) -> bool:
     \"\"\"
     Validate an email address using regex pattern.
-    
+
     Args:
         email (str): Email address to validate
-        
+
     Returns:
         bool: True if email is valid, False otherwise
     \"\"\"
     # RFC 5322 compliant email regex pattern
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'
-    
+
     return bool(re.match(pattern, email))
 
 # Example usage
@@ -385,7 +383,7 @@ if __name__ == "__main__":
         "user@",
         "@domain.com"
     ]
-    
+
     for email in test_emails:
         is_valid = validate_email(email)
         print(f"{email}: {'Valid' if is_valid else 'Invalid'}")
@@ -418,7 +416,7 @@ This function uses a regex pattern that validates most common email formats whil
    # Problem
    user_data = {'id': 123, 'email': 'user@example.com'}
    name = user_data['name']  # KeyError: 'name'
-   
+
    # Solution - use get() method
    name = user_data.get('name', 'Unknown')
    ```

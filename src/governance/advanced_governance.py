@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from src.audit.events import audit_emitter
 from src.crypto.post_quantum import pq_crypto
-from src.auth.user_service import user_service
 
 logger = logging.getLogger(__name__)
 
@@ -261,9 +260,19 @@ class GovernanceDAOEngine:
     CONCENTRATION_CHECK_ENABLED = True
     MIN_REPUTATION_FOR_VOTING = 50.0  # Minimum reputation to vote
     MIN_STAKE_FOR_PROPOSAL = 1000.0  # Minimum stake to create proposals
-    SYBIL_DETECTION_ENABLED = True
+    # Note: Sybil detection is enforced via dependency injection (no boolean flag)
 
-    def __init__(self):
+    def __init__(self, sybil_detector: Optional["SybilDetector"] = None):
+        """Initialize governance engine with dependency injection.
+
+        Args:
+            sybil_detector: SybilDetector implementation for stakeholder validation.
+                          Defaults to RealSybilDetector() for production.
+                          Tests can inject TestSybilDetector() or MockSybilDetector().
+        """
+        # Import here to avoid circular dependencies
+        from src.security.sybil_detection import RealSybilDetector
+
         self.stakeholders: Dict[str, Stakeholder] = {}
         self.proposals: Dict[str, Proposal] = {}
         self.executed_actions: Dict[str, GovernanceAction] = {}
@@ -286,6 +295,9 @@ class GovernanceDAOEngine:
         ] = {}  # Track power changes
         self.minority_protection_enabled = True
 
+        # Dependency injection: Use provided detector or default to production implementation
+        self.sybil_detector = sybil_detector or RealSybilDetector()
+
     def register_stakeholder(
         self,
         stakeholder_id: str,
@@ -294,11 +306,10 @@ class GovernanceDAOEngine:
     ) -> Stakeholder:
         """Register a new stakeholder with identity verification."""
 
-        # Sybil resistance checks
-        if self.SYBIL_DETECTION_ENABLED:
-            sybil_check = self._perform_sybil_check(stakeholder_id, identity_proof)
-            if not sybil_check[0]:
-                raise ValueError(f"Sybil resistance check failed: {sybil_check[1]}")
+        # Sybil resistance checks using injected detector
+        is_valid, reason = self.sybil_detector.check(stakeholder_id, identity_proof)
+        if not is_valid:
+            raise ValueError(f"Sybil resistance check failed: {reason}")
 
         # Enforce stake concentration limits
         concentration_check = self.enforce_voting_power_limits(
@@ -473,16 +484,15 @@ class GovernanceDAOEngine:
                 f"Voter must have at least {self.MIN_REPUTATION_FOR_VOTING} reputation to vote"
             )
 
-        # Sybil resistance check
-        if self.SYBIL_DETECTION_ENABLED:
-            if voter_id not in self.identity_verifications:
-                raise ValueError(
-                    "Voter must complete identity verification to participate in governance"
-                )
+        # Sybil resistance check (always enforced via injected detector)
+        if voter_id not in self.identity_verifications:
+            raise ValueError(
+                "Voter must complete identity verification to participate in governance"
+            )
 
-            verification = self.identity_verifications[voter_id]
-            if verification["verification_score"] < 0.7:
-                raise ValueError("Insufficient identity verification score for voting")
+        verification = self.identity_verifications[voter_id]
+        if verification["verification_score"] < 0.7:
+            raise ValueError("Insufficient identity verification score for voting")
 
         # Check if voting is open
         current_time = datetime.now(timezone.utc)
@@ -1644,13 +1654,8 @@ class GovernanceDAOEngine:
             # Restore immutable value
             self.CONCENTRATION_CHECK_ENABLED = True
 
-        current_sybil_detection = getattr(self, "SYBIL_DETECTION_ENABLED", True)
-        if not current_sybil_detection:
-            logger.critical(
-                "CONSTITUTIONAL VIOLATION: Attempt to disable Sybil detection"
-            )
-            # Restore immutable value
-            self.SYBIL_DETECTION_ENABLED = True
+        # Note: Sybil detection is enforced via dependency injection at construction time
+        # and cannot be disabled at runtime (no boolean flag to tamper with)
 
         return immutable_protections
 
@@ -1744,9 +1749,9 @@ class GovernanceDAOEngine:
                     ).total_seconds()
                     if time_diff < 86400:  # Increased within 24 hours of voting
                         result["suspicious"] = True
-                        result[
-                            "reason"
-                        ] = f"Suspicious {power_increase:.1f} voting power increase 24h before voting"
+                        result["reason"] = (
+                            f"Suspicious {power_increase:.1f} voting power increase 24h before voting"
+                        )
                         result["confidence"] = 0.8
 
         # SECURITY: Check for coordinated voting patterns
@@ -1856,9 +1861,9 @@ class GovernanceDAOEngine:
         )  # 1 rep per 100 stake
         if stakeholder.reputation_score < expected_min_reputation * 0.5:
             result["legitimate"] = False
-            result[
-                "reason"
-            ] = f"Reputation {stakeholder.reputation_score} too low for stake {stakeholder.stake_amount}"
+            result["reason"] = (
+                f"Reputation {stakeholder.reputation_score} too low for stake {stakeholder.stake_amount}"
+            )
             return result
 
         return result

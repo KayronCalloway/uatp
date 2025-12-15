@@ -11,20 +11,19 @@ Usage:
 """
 
 import asyncio
-import json
 import logging
 import os
 import sys
-from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, Optional
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from src.live_capture.real_time_capsule_generator import (
-    get_real_time_generator,
     capture_live_interaction,
+    get_real_time_generator,
 )
+from src.utils.timezone_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +80,7 @@ class ClaudeCodeLiveCapture:
             {
                 "user": user_message,
                 "assistant": ai_response,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": utc_now().isoformat(),  # Fixed: timezone-aware UTC
             }
         )
 
@@ -152,11 +151,11 @@ class ClaudeCodeLiveCapture:
                 created_capsules.append(capsule_id)
                 print(f"   ✅ Created capsule: {capsule_id}")
             else:
-                print(f"   ❌ No capsule created (not significant enough)")
+                print("   ❌ No capsule created (not significant enough)")
 
         # Show final stats
         stats = self.get_session_stats()
-        print(f"\n📊 Session Statistics:")
+        print("\n📊 Session Statistics:")
         print(f"   Total capsules created: {len(created_capsules)}")
         print(f"   Active sessions: {stats['generator_stats']['active_sessions']}")
         print(
@@ -181,7 +180,7 @@ async def main():
         # Demo capturing this conversation
         capsules = await capture.demo_capture_this_conversation()
 
-        print(f"\n✅ Demo complete!")
+        print("\n✅ Demo complete!")
         print(f"   Created {len(capsules)} capsules from live conversation")
 
         if capsules:

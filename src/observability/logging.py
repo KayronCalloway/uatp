@@ -3,13 +3,12 @@ Structured Logging with OpenTelemetry Integration for UATP
 Provides correlated logs with traces and metrics for comprehensive observability
 """
 
-import os
 import json
 import logging
+import os
 import sys
-from typing import Dict, Any, Optional, Union
-from datetime import datetime
 from contextvars import ContextVar
+from typing import Any, Dict, Optional
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
@@ -17,6 +16,8 @@ from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.semantic_conventions.resource import ResourceAttributes
+
+from src.utils.timezone_utils import utc_now
 
 # Context variables for structured logging
 current_user_id: ContextVar[Optional[str]] = ContextVar("current_user_id", default=None)
@@ -44,7 +45,7 @@ class UATPStructuredFormatter(logging.Formatter):
         """Format log record as structured JSON with trace correlation"""
         # Base log structure
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": utc_now().isoformat() + "Z",
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -479,7 +480,7 @@ class LogRequestContext:
         self.start_time = None
 
     def __enter__(self):
-        self.start_time = datetime.utcnow()
+        self.start_time = utc_now()
 
         # Set context variables
         set_request_context(self.request_id)
@@ -500,7 +501,7 @@ class LogRequestContext:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        duration = (datetime.utcnow() - self.start_time).total_seconds()
+        duration = (utc_now() - self.start_time).total_seconds()
         success = exc_type is None
 
         self.logger.info(

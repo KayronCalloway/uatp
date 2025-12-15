@@ -42,3 +42,13 @@ claude_capture.log
 
 # Large documentation files (can be regenerated)
 docs/**/*.pdf
+
+# UATP Runtime
+*.pid
+api_server.log
+frontend.log
+frontend/.next/
+frontend/node_modules/
+
+# System Status
+SYSTEM_STATUS.md

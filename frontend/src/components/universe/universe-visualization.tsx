@@ -5,12 +5,12 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Globe, 
-  ZoomIn, 
-  ZoomOut, 
-  RotateCcw, 
-  Play, 
+import {
+  Globe,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Play,
   Pause,
   Settings,
   Info
@@ -64,7 +64,7 @@ export function UniverseVisualization() {
 
   const { data: statsData } = useQuery({
     queryKey: ['capsule-stats'],
-    queryFn: api.getCapsuleStats,
+    queryFn: () => api.getCapsuleStats(false),
     refetchInterval: 30000,
     retry: 2,
   });
@@ -93,14 +93,14 @@ export function UniverseVisualization() {
         const agentRadius = 150;
         const agentCenterX = Math.cos(agentAngle) * agentRadius;
         const agentCenterY = Math.sin(agentAngle) * agentRadius;
-        
+
         // Position capsules around their agent's center
         const capsuleAngle = (index / capsulesData.capsules.length) * Math.PI * 2;
         const capsuleRadius = 30 + (Math.random() * 40);
-        
+
         const trustScore = Array.isArray(trustData) ? trustData.find(t => t.agent_id === capsule.agent_id)?.trust_score || 0.8 : 0.8;
         const depth = capsule.lineage?.depth || 0;
-        
+
         return {
           id: capsule.id,
           x: agentCenterX + Math.cos(capsuleAngle) * capsuleRadius,
@@ -355,7 +355,7 @@ export function UniverseVisualization() {
           <CardContent>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <div 
+                <div
                   className="w-4 h-4 rounded-full"
                   style={{ backgroundColor: selectedNode.color }}
                 />
@@ -400,31 +400,31 @@ function getNodeColor(type: string, trustScore: number = 0.8): string {
     'perspective': '#06B6D4',
     'governance': '#F97316'
   };
-  
+
   const baseColor = baseColors[type as keyof typeof baseColors] || '#6B7280';
-  
+
   // Dim color for low trust scores
   if (trustScore < 0.5) {
     return baseColor + '80'; // 50% opacity
   } else if (trustScore < 0.7) {
     return baseColor + 'CC'; // 80% opacity
   }
-  
+
   return baseColor;
 }
 
 function findConnections(capsule: any, allCapsules: any[]): string[] {
   const connections: string[] = [];
-  
+
   // Find parent connection
   if (capsule.lineage?.parent_id) {
     connections.push(capsule.lineage.parent_id);
   }
-  
+
   // Find children connections
   const children = allCapsules.filter(c => c.lineage?.parent_id === capsule.id);
   connections.push(...children.map(c => c.id));
-  
+
   return connections;
 }
 
@@ -435,7 +435,7 @@ function drawStarField(ctx: CanvasRenderingContext2D, width: number, height: num
     const y = Math.random() * height;
     const size = Math.random() * 1.5;
     const alpha = Math.random() * 0.8 + 0.2;
-    
+
     ctx.globalAlpha = alpha;
     ctx.beginPath();
     ctx.arc(x, y, size, 0, Math.PI * 2);
@@ -452,32 +452,32 @@ function drawCapsuleNode(ctx: CanvasRenderingContext2D, node: CapsuleNode) {
   );
   gradient.addColorStop(0, node.color + '80');
   gradient.addColorStop(1, node.color + '00');
-  
+
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.arc(node.x, node.y, node.radius * 2, 0, Math.PI * 2);
   ctx.fill();
-  
+
   // Draw main node
   ctx.fillStyle = node.color;
   ctx.globalAlpha = node.brightness;
   ctx.beginPath();
   ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
   ctx.fill();
-  
+
   // Draw bright center
   ctx.fillStyle = '#FFFFFF';
   ctx.globalAlpha = 0.8;
   ctx.beginPath();
   ctx.arc(node.x, node.y, node.radius * 0.3, 0, Math.PI * 2);
   ctx.fill();
-  
+
   ctx.globalAlpha = 1;
 }
 
 function drawConnections(ctx: CanvasRenderingContext2D, nodes: CapsuleNode[]) {
   ctx.lineWidth = 1;
-  
+
   nodes.forEach((node) => {
     node.connections.forEach((connectionId) => {
       const target = nodes.find(n => n.id === connectionId);
@@ -485,17 +485,17 @@ function drawConnections(ctx: CanvasRenderingContext2D, nodes: CapsuleNode[]) {
         // Different colors for different connection types
         const isParentChild = true; // Could be enhanced to detect connection type
         ctx.strokeStyle = isParentChild ? '#FFFFFF40' : '#00FF0030';
-        
+
         ctx.beginPath();
         ctx.moveTo(node.x, node.y);
         ctx.lineTo(target.x, target.y);
         ctx.stroke();
-        
+
         // Draw arrow for directional relationships
         const angle = Math.atan2(target.y - node.y, target.x - node.x);
         const arrowLength = 8;
         const arrowAngle = Math.PI / 6;
-        
+
         ctx.beginPath();
         ctx.moveTo(
           target.x - arrowLength * Math.cos(angle - arrowAngle),
@@ -524,11 +524,11 @@ function drawNodeInfo(ctx: CanvasRenderingContext2D, node: CapsuleNode, width: n
   const infoY = 10;
   const infoWidth = 200;
   const infoHeight = 80;
-  
+
   // Draw info background
   ctx.fillStyle = '#00000080';
   ctx.fillRect(infoX, infoY, infoWidth, infoHeight);
-  
+
   // Draw info text
   ctx.fillStyle = '#FFFFFF';
   ctx.font = '12px Arial';

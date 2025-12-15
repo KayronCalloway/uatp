@@ -3,14 +3,11 @@ Cross-Border Data Transfer Compliance
 GDPR Articles 44-49 compliant international data transfer validation and controls
 """
 
-import asyncio
-import hashlib
-import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -73,10 +70,10 @@ class AdequacyDecision:
     country_name: str
     decision_date: datetime
     effective_date: datetime
-    expiry_date: Optional[datetime] = None
-
-    # Decision details
     commission_decision_reference: str
+
+    # Optional fields
+    expiry_date: Optional[datetime] = None
     scope_limitations: List[str] = field(default_factory=list)
     sector_limitations: List[str] = field(default_factory=list)
 
@@ -160,6 +157,39 @@ class TransferImpactAssessment:
     # Review
     next_review_date: Optional[datetime] = None
     review_frequency_months: int = 12
+
+    # Metadata
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class DataTransferRequest:
+    """Request for cross-border data transfer"""
+
+    request_id: str
+    requested_by: str
+    requested_at: datetime
+
+    # Transfer details
+    data_controller: str
+    origin_country: str
+    destination_country: str
+    data_types: List[DataType]
+    purpose: TransferPurpose
+
+    # Proposed mechanism
+    proposed_mechanism: TransferMechanism
+    legal_basis: str = ""
+
+    # Risk assessment
+    estimated_data_subjects: int = 0
+    estimated_volume_mb: float = 0.0
+
+    # Status
+    status: str = "pending"  # pending, approved, rejected, under_review
+    approved_at: Optional[datetime] = None
+    approved_by: Optional[str] = None
+    rejection_reason: Optional[str] = None
 
     # Metadata
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -1226,3 +1256,7 @@ class CrossBorderTransferController:
 def create_cross_border_transfer_controller() -> CrossBorderTransferController:
     """Create cross-border transfer controller instance"""
     return CrossBorderTransferController()
+
+
+# Type alias for backwards compatibility with test imports
+CrossBorderTransferValidator = CrossBorderTransferController

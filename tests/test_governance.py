@@ -14,12 +14,13 @@ from src.governance.advanced_governance import (
     VoteType,
     VotingMethod,
 )
+from src.security.sybil_detection import TestSybilDetector
 
 
 def test_stakeholder_registration():
     """Test stakeholder registration."""
 
-    engine = GovernanceDAOEngine()
+    engine = GovernanceDAOEngine(sybil_detector=TestSybilDetector())
 
     # Register stakeholder
     stakeholder = engine.register_stakeholder("test_stakeholder_001", 1000.0)
@@ -33,7 +34,7 @@ def test_stakeholder_registration():
 def test_proposal_creation():
     """Test proposal creation."""
 
-    engine = GovernanceDAOEngine()
+    engine = GovernanceDAOEngine(sybil_detector=TestSybilDetector())
 
     # Register proposer
     engine.register_stakeholder("proposer_001", 5000.0)
@@ -57,7 +58,7 @@ def test_proposal_creation():
 def test_voting_process():
     """Test the voting process."""
 
-    engine = GovernanceDAOEngine()
+    engine = GovernanceDAOEngine(sybil_detector=TestSybilDetector())
 
     # Register stakeholders
     engine.register_stakeholder("voter_001", 2000.0)
@@ -110,7 +111,7 @@ def test_voting_process():
 def test_proposal_finalization():
     """Test proposal finalization."""
 
-    engine = GovernanceDAOEngine()
+    engine = GovernanceDAOEngine(sybil_detector=TestSybilDetector())
 
     # Register stakeholders
     engine.register_stakeholder("final_voter_001", 3000.0)
@@ -152,7 +153,7 @@ def test_proposal_finalization():
 def test_delegation():
     """Test voting power delegation."""
 
-    engine = GovernanceDAOEngine()
+    engine = GovernanceDAOEngine(sybil_detector=TestSybilDetector())
 
     # Register stakeholders
     engine.register_stakeholder("delegator_001", 1000.0)
@@ -173,7 +174,7 @@ def test_delegation():
 def test_circular_delegation_prevention():
     """Test prevention of circular delegation."""
 
-    engine = GovernanceDAOEngine()
+    engine = GovernanceDAOEngine(sybil_detector=TestSybilDetector())
 
     # Register stakeholders
     engine.register_stakeholder("circular_001", 1000.0)
@@ -192,7 +193,7 @@ def test_circular_delegation_prevention():
 def test_proposal_status_tracking():
     """Test proposal status tracking."""
 
-    engine = GovernanceDAOEngine()
+    engine = GovernanceDAOEngine(sybil_detector=TestSybilDetector())
 
     # Register stakeholder
     engine.register_stakeholder("status_voter_001", 1000.0)
@@ -219,7 +220,7 @@ def test_proposal_status_tracking():
 def test_governance_analytics():
     """Test governance analytics."""
 
-    engine = GovernanceDAOEngine()
+    engine = GovernanceDAOEngine(sybil_detector=TestSybilDetector())
 
     # Register stakeholders
     engine.register_stakeholder("analytics_001", 1000.0)
@@ -254,7 +255,7 @@ def test_governance_analytics():
 def test_emergency_proposal():
     """Test emergency proposal handling."""
 
-    engine = GovernanceDAOEngine()
+    engine = GovernanceDAOEngine(sybil_detector=TestSybilDetector())
 
     # Register stakeholder
     engine.register_stakeholder("emergency_001", 5000.0)
@@ -279,7 +280,7 @@ def test_emergency_proposal():
 def test_voting_power_calculation():
     """Test voting power calculation."""
 
-    engine = GovernanceDAOEngine()
+    engine = GovernanceDAOEngine(sybil_detector=TestSybilDetector())
 
     # Register stakeholder
     stakeholder = engine.register_stakeholder("power_test_001", 1000.0)
@@ -302,7 +303,7 @@ def test_voting_power_calculation():
 def test_proposal_execution():
     """Test proposal execution."""
 
-    engine = GovernanceDAOEngine()
+    engine = GovernanceDAOEngine(sybil_detector=TestSybilDetector())
 
     # Register stakeholder
     engine.register_stakeholder("executor_001", 1000.0)

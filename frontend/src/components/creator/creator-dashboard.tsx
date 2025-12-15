@@ -23,7 +23,7 @@ export function CreatorDashboard() {
   // Fetch real capsule stats
   const { data: statsData, isLoading } = useQuery({
     queryKey: ['capsule-stats'],
-    queryFn: api.getCapsuleStats,
+    queryFn: () => api.getCapsuleStats(false),
     refetchInterval: 60000,
     retry: 1,
     enabled: !isDemoMode // Only fetch when not in demo mode

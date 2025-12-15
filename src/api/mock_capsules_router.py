@@ -3,10 +3,13 @@ Mock Capsules Router - FastAPI
 Provides demo capsule data until full migration is complete
 """
 
-from fastapi import APIRouter, Query
-from typing import Optional
 import random
 from datetime import datetime, timedelta
+from typing import Optional
+
+from fastapi import APIRouter, Query
+
+from src.utils.timezone_utils import utc_now
 
 router = APIRouter(prefix="/capsules", tags=["Capsules"])
 
@@ -26,7 +29,7 @@ def generate_mock_capsules(count: int = 100):
         "perspective": "From my perspective, this approach would work best because...",
     }
 
-    base_time = datetime.utcnow()
+    base_time = utc_now()
 
     for i in range(count):
         capsule_type = random.choice(capsule_types)
@@ -113,7 +116,7 @@ async def get_capsule_stats():
                     c
                     for c in MOCK_CAPSULES
                     if (
-                        datetime.utcnow()
+                        utc_now()
                         - datetime.fromisoformat(c["timestamp"].replace("Z", ""))
                     ).days
                     == 0
@@ -124,7 +127,7 @@ async def get_capsule_stats():
                     c
                     for c in MOCK_CAPSULES
                     if (
-                        datetime.utcnow()
+                        utc_now()
                         - datetime.fromisoformat(c["timestamp"].replace("Z", ""))
                     ).days
                     < 7

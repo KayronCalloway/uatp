@@ -6,22 +6,21 @@ Tiered rate limiting system with organization-based quotas, usage analytics,
 overage billing, and SLA monitoring for enterprise clients.
 """
 
-import json
 import logging
 import time
-import asyncio
+from collections import defaultdict, deque
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, field
-import hashlib
-import redis.asyncio as redis
-from collections import defaultdict, deque
+from typing import Any, Dict, List, Optional, Tuple
 
+import redis.asyncio as redis
+from fastapi import Request
 from pydantic import BaseModel, Field
-from fastapi import Request, HTTPException, Depends
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
+
+from src.utils.timezone_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -529,13 +528,13 @@ class EnterpriseRateLimiter:
                 quota_type=quota_type,
                 current_usage=0,
                 quota_value=float("inf"),
-                period_start=datetime.utcnow(),
-                period_end=datetime.utcnow() + timedelta(days=30),
+                period_start=utc_now(),
+                period_end=utc_now() + timedelta(days=30),
                 usage_percent=0.0,
             )
 
         # Calculate current usage in the quota period
-        current_time = datetime.utcnow()
+        current_time = utc_now()
         period_start = current_time.replace(
             day=1, hour=0, minute=0, second=0, microsecond=0
         )
@@ -690,7 +689,7 @@ class EnterpriseRateLimiter:
                 quantity=usage_record.quantity,
                 unit_cost=unit_cost,
                 total_cost=total_cost,
-                billing_period=f"{datetime.utcnow().year}-{datetime.utcnow().month:02d}",
+                billing_period=f"{utc_now().year}-{utc_now().month:02d}",
                 metadata={
                     "endpoint": usage_record.endpoint,
                     "method": usage_record.method,

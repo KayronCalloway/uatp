@@ -4,6 +4,8 @@ Test the major improvements implemented based on the audit feedback.
 
 from datetime import datetime, timezone
 
+import pytest
+
 from src.audit.events import AuditEventType, audit_emitter
 from src.capsule_schema import (
     CapsuleStatus,
@@ -16,6 +18,7 @@ from src.capsule_schema import (
     UncertaintyPayload,
     Verification,
 )
+from src.crypto.post_quantum import pq_crypto
 from src.crypto_utils import (
     generate_post_quantum_keypair,
     hash_capsule_dict,
@@ -95,6 +98,10 @@ def test_canonical_json_hashing():
     assert hash1 == hash3
 
 
+@pytest.mark.skipif(
+    not pq_crypto.dilithium_available,
+    reason="Post-quantum cryptography library (liboqs) not installed",
+)
 def test_post_quantum_crypto():
     """Test post-quantum cryptography functions."""
     # Test key generation

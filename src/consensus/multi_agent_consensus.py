@@ -19,7 +19,7 @@ from src.audit.events import audit_emitter
 from src.capsule_schema import AnyCapsule
 from src.crypto.post_quantum import pq_crypto
 from src.engine.cqss import compute_cqss
-from src.engine.fork_resolver import fork_resolver, ForkResolutionStrategy
+from src.engine.fork_resolver import ForkResolutionStrategy, fork_resolver
 
 logger = logging.getLogger(__name__)
 
@@ -850,9 +850,9 @@ class MultiAgentConsensusEngine:
                         node.vote_weight *= 0.5 + block_quality * 0.5
 
                         # Store original weight for restoration
-                        node.metadata[
-                            f"original_weight_{id(capsules)}"
-                        ] = original_weight
+                        node.metadata[f"original_weight_{id(capsules)}"] = (
+                            original_weight
+                        )
 
             # Attempt consensus
             success = await consensus_engine.propose_block(capsules)
@@ -1011,7 +1011,7 @@ class MultiAgentConsensusEngine:
             # This is a simplified heuristic
             if len(vote_history) > 10:
                 recent_votes = vote_history[-10:]
-                consistency_score = len(set(v.get("position") for v in recent_votes))
+                consistency_score = len({v.get("position") for v in recent_votes})
                 if consistency_score > 7:  # Too much variation in voting positions
                     conflicting_count = consistency_score - 5
 
@@ -1425,6 +1425,37 @@ class MultiAgentConsensusEngine:
             if ConsensusProtocol.AVALANCHE in self.active_protocols:
                 self.default_protocol = ConsensusProtocol.AVALANCHE
                 logger.info("Switched to Avalanche consensus for partition tolerance")
+
+
+def initialize_quality_integrated_consensus(
+    engine: Optional[MultiAgentConsensusEngine] = None,
+    enable_quality_adjustment: bool = True,
+    quality_weight: float = 0.3,
+) -> MultiAgentConsensusEngine:
+    """
+    Initialize consensus engine with quality system integration.
+
+    Args:
+        engine: Existing consensus engine instance (uses global if None)
+        enable_quality_adjustment: Enable quality-based consensus adjustments
+        quality_weight: Weight factor for quality scores (0.0-1.0)
+
+    Returns:
+        Initialized consensus engine with quality integration
+    """
+    if engine is None:
+        engine = consensus_engine
+
+    # Configure quality integration settings
+    engine.enable_quality_adjustment = enable_quality_adjustment
+    engine.quality_weight = max(0.0, min(1.0, quality_weight))
+
+    logger.info(
+        f"Initialized quality-integrated consensus "
+        f"(quality_adjustment={enable_quality_adjustment}, weight={quality_weight})"
+    )
+
+    return engine
 
 
 # Global consensus engine instance

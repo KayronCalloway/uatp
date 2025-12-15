@@ -4,6 +4,7 @@ from decimal import Decimal, getcontext
 import pytest
 
 from src.economic.fcde_engine import ContributionType, FCDEEngine
+from src.security.identity_verification import TestIdentityVerifier
 
 getcontext().prec = 28
 
@@ -11,7 +12,7 @@ getcontext().prec = 28
 @pytest.fixture
 def engine():
     """Provides a fresh instance of the FCDEEngine for each test."""
-    return FCDEEngine()
+    return FCDEEngine(identity_verifier=TestIdentityVerifier())
 
 
 def test_engine_initialization(engine: FCDEEngine):

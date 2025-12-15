@@ -4,17 +4,17 @@ Provides endpoints for the enhanced universal auto-capture system
 """
 
 import logging
-from datetime import datetime
-from typing import Dict, Any, List
-from quart import Blueprint, request, jsonify, g
-from quart_schema import validate_json, validate_querystring
+
+from quart import Blueprint, jsonify, request
+from quart_schema import validate_json
 
 from src.auto_capture.enhanced_universal_capture import (
-    universal_auto_capture,
     analyze_content_significance,
     analyze_conversation_significance,
     get_auto_capture_analytics,
+    universal_auto_capture,
 )
+from src.utils.timezone_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ async def analyze_content():
         metadata.update(
             {
                 "api_request": True,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now().isoformat(),
                 "content_length": len(content),
             }
         )
@@ -113,7 +113,7 @@ async def analyze_conversation():
         metadata.update(
             {
                 "api_request": True,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now().isoformat(),
                 "message_count": len(messages),
                 "total_content_length": sum(
                     len(msg.get("content", "")) for msg in messages
@@ -393,9 +393,6 @@ async def get_system_status():
 
         # Test capture systems
         try:
-            from src.live_capture.claude_code_capture import capture_system
-            from src.integrations.cursor_ide_capture import cursor_capture_system
-
             health_checks["capture_systems"] = True
         except:
             health_checks["capture_systems"] = False

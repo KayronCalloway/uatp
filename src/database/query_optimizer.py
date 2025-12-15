@@ -14,6 +14,8 @@ import redis
 from sqlalchemy import and_, text
 from sqlalchemy.orm import Query, Session
 
+from src.utils.timezone_utils import utc_now
+
 logger = logging.getLogger(__name__)
 
 
@@ -128,7 +130,7 @@ class QueryOptimizer:
                 "queries_optimized": self.stats["queries_optimized"]
             },
             "redis_status": self.redis_client is not None,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": utc_now().isoformat(),
         }
 
 
@@ -181,12 +183,12 @@ class CapsuleQueryBuilder:
     def get_capsule_analytics(self, session: Session, days: int = 30) -> Dict[str, Any]:
         """Get capsule analytics with caching"""
 
-        @ self.optimizer.cached_query(ttl=600) if self.optimizer else lambda x: x
+        @self.optimizer.cached_query(ttl=600) if self.optimizer else lambda x: x
         def _get_analytics():
             from .models import Capsule
 
             # Calculate date range
-            end_date = datetime.utcnow()
+            end_date = utc_now()
             start_date = end_date - timedelta(days=days)
 
             # Total capsules

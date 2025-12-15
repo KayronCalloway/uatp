@@ -15,6 +15,8 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Dict, List, Optional
 
+from src.utils.timezone_utils import utc_now
+
 from .risk_assessor import DecisionCategory, RiskLevel
 
 
@@ -134,7 +136,7 @@ class PolicyManager:
             holder=holder,
             terms=terms,
             status=PolicyStatus.PENDING,
-            created_at=datetime.utcnow(),
+            created_at=utc_now(),
         )
 
         # Store in database
@@ -179,7 +181,7 @@ class PolicyManager:
 
             policy.payment_history.append(
                 {
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": utc_now(),
                     "amount": policy.terms.premium_monthly,
                     "status": PaymentStatus.PAID,
                     "transaction_id": payment_result.get("transaction_id"),
@@ -187,7 +189,7 @@ class PolicyManager:
             )
 
         # Activate policy
-        now = datetime.utcnow()
+        now = utc_now()
         policy.status = PolicyStatus.ACTIVE
         policy.activated_at = now
         policy.expires_at = now + timedelta(days=30 * policy.terms.term_months)
@@ -224,7 +226,7 @@ class PolicyManager:
             policy.terms.term_months = new_term_months
 
         # Extend expiration
-        now = datetime.utcnow()
+        now = utc_now()
         if policy.expires_at and policy.expires_at > now:
             # Add to existing expiration
             policy.expires_at += timedelta(days=30 * policy.terms.term_months)
@@ -263,7 +265,7 @@ class PolicyManager:
         if policy.status == PolicyStatus.CANCELLED:
             raise ValueError("Policy is already cancelled")
 
-        now = datetime.utcnow()
+        now = utc_now()
         policy.status = PolicyStatus.CANCELLED
         policy.cancelled_at = now
         policy.cancellation_reason = reason
@@ -318,7 +320,7 @@ class PolicyManager:
 
         policy.status = PolicyStatus.SUSPENDED
         policy.metadata["suspension_reason"] = reason
-        policy.metadata["suspended_at"] = datetime.utcnow().isoformat()
+        policy.metadata["suspended_at"] = utc_now().isoformat()
 
         # Update database
         if self.db:
@@ -350,7 +352,7 @@ class PolicyManager:
             }
 
         # Check if payment is due
-        now = datetime.utcnow()
+        now = utc_now()
         if policy.next_payment_due and now < policy.next_payment_due:
             return {"success": False, "error": "Payment not yet due"}
 
@@ -420,7 +422,7 @@ class PolicyManager:
             }
 
         # Check expiration
-        now = datetime.utcnow()
+        now = utc_now()
         if policy.expires_at and now > policy.expires_at:
             return {
                 "eligible": False,
@@ -576,8 +578,9 @@ class PolicyManager:
 
     async def _store_policy(self, policy: Policy):
         """Store policy in database"""
-        from src.insurance.models import InsurancePolicy as DBPolicy
         from sqlalchemy import select
+
+        from src.insurance.models import InsurancePolicy as DBPolicy
 
         session = self.db.get_session()
         async with session:
@@ -596,7 +599,7 @@ class PolicyManager:
                 )
                 existing.premium_amount = policy.terms.premium_monthly
                 existing.coverage_amount = policy.terms.coverage_amount
-                existing.end_date = policy.expires_at or datetime.utcnow() + timedelta(
+                existing.end_date = policy.expires_at or utc_now() + timedelta(
                     days=policy.terms.term_months * 30
                 )
                 existing.parameters = {
@@ -616,7 +619,7 @@ class PolicyManager:
                     "holder_contact_phone": policy.holder.contact_phone,
                     "metadata": policy.metadata,
                 }
-                existing.updated_at = datetime.utcnow()
+                existing.updated_at = utc_now()
             else:
                 # Create new policy
                 db_policy = DBPolicy(
@@ -628,10 +631,9 @@ class PolicyManager:
                     status=policy.status.value
                     if isinstance(policy.status, PolicyStatus)
                     else policy.status,
-                    start_date=policy.activated_at or datetime.utcnow(),
+                    start_date=policy.activated_at or utc_now(),
                     end_date=policy.expires_at
-                    or datetime.utcnow()
-                    + timedelta(days=policy.terms.term_months * 30),
+                    or utc_now() + timedelta(days=policy.terms.term_months * 30),
                     parameters={
                         "deductible": policy.terms.deductible,
                         "term_months": policy.terms.term_months,
@@ -661,9 +663,9 @@ class PolicyManager:
 
     async def _fetch_policy(self, policy_id: str) -> Policy:
         """Fetch policy from database"""
-        from src.insurance.models import InsurancePolicy as DBPolicy
-        from src.insurance.models import PolicyStatus as DBPolicyStatus
         from sqlalchemy import select
+
+        from src.insurance.models import InsurancePolicy as DBPolicy
 
         session = self.db.get_session()
         async with session:
@@ -735,8 +737,9 @@ class PolicyManager:
         limit: int = 100,
     ) -> List[Policy]:
         """Query policies from database"""
-        from src.insurance.models import InsurancePolicy as DBPolicy
         from sqlalchemy import select
+
+        from src.insurance.models import InsurancePolicy as DBPolicy
 
         session = self.db.get_session()
         async with session:

@@ -9,16 +9,15 @@ compliance monitoring, and approval workflows.
 import json
 import logging
 import uuid
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Any, Set, Union
-from dataclasses import dataclass, field
-from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, validator
-from sqlalchemy import Column, String, DateTime, Boolean, Text, Integer, ForeignKey
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
+
+from src.utils.timezone_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -458,9 +457,9 @@ class EnterpriseGovernance:
             status=PolicyStatus.ACTIVE,
             rules=data_protection_rules,
             created_by="system",
-            created_at=datetime.utcnow(),
-            effective_date=datetime.utcnow(),
-            expiry_date=datetime.utcnow() + timedelta(days=365),
+            created_at=utc_now(),
+            effective_date=utc_now(),
+            expiry_date=utc_now() + timedelta(days=365),
             notification_settings={
                 "violations": ["security@company.com", "dpo@company.com"],
                 "policy_updates": ["all_users"],
@@ -495,9 +494,9 @@ class EnterpriseGovernance:
             status=PolicyStatus.ACTIVE,
             rules=access_control_rules,
             created_by="system",
-            created_at=datetime.utcnow(),
-            effective_date=datetime.utcnow(),
-            expiry_date=datetime.utcnow() + timedelta(days=365),
+            created_at=utc_now(),
+            effective_date=utc_now(),
+            expiry_date=utc_now() + timedelta(days=365),
         )
 
         self.policies.update(
@@ -767,10 +766,10 @@ class EnterpriseGovernance:
             "reason": reason,
             "context": context,
             "status": ApprovalStatus.PENDING,
-            "created_at": datetime.utcnow(),
+            "created_at": utc_now(),
             "current_step": 0,
             "approvals": [],
-            "expires_at": datetime.utcnow() + timedelta(hours=workflow.timeout_hours),
+            "expires_at": utc_now() + timedelta(hours=workflow.timeout_hours),
         }
 
         self.pending_approvals[approval_id] = approval_record
@@ -912,7 +911,7 @@ class EnterpriseGovernance:
             "recommendations": await self._generate_compliance_recommendations(
                 framework, filtered_violations
             ),
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": utc_now().isoformat(),
             "generated_by": "enterprise_governance_system",
         }
 
@@ -1215,7 +1214,7 @@ class ComplianceMonitor:
     ) -> Dict[str, Any]:
         """Calculate current compliance metrics."""
 
-        now = datetime.utcnow()
+        now = utc_now()
         last_24h = now - timedelta(hours=24)
 
         recent_violations = [

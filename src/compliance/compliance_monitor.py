@@ -4,13 +4,11 @@ Real-time compliance validation and automated audit controls
 """
 
 import asyncio
-import hashlib
-import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Callable, Union
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -809,7 +807,7 @@ class ContinuousComplianceMonitor:
                 f"{violation['metric_name']}: {violation['current_value']:.2f}% (threshold: {violation['threshold']:.2f}%)"
             )
 
-        alert.description += f"\n\nViolations:\n" + "\n".join(violation_details)
+        alert.description += "\n\nViolations:\n" + "\n".join(violation_details)
 
         # Add recommended actions
         if rule.alert_severity == AlertSeverity.CRITICAL:
@@ -981,7 +979,7 @@ class ContinuousComplianceMonitor:
         framework_scores = {}
         framework_status = {}
 
-        frameworks = set(metric.regulation_type for metric in self.metrics.values())
+        frameworks = {metric.regulation_type for metric in self.metrics.values()}
 
         for framework in frameworks:
             framework_metrics = [
@@ -1149,3 +1147,8 @@ class ContinuousComplianceMonitor:
 def create_continuous_compliance_monitor() -> ContinuousComplianceMonitor:
     """Create continuous compliance monitor instance"""
     return ContinuousComplianceMonitor()
+
+
+# Type aliases for backwards compatibility with test imports
+ComplianceMonitor = ContinuousComplianceMonitor
+AlertRule = MonitoringRule

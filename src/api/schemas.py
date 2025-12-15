@@ -1,12 +1,13 @@
 from typing import Any, Dict, List, Optional
 
+from pydantic import BaseModel
+
 from src.capsule_schema import (
     AnyCapsule,
-    ReasoningTracePayload,
-    CapsuleType,
     CapsuleStatus,
+    CapsuleType,
+    ReasoningTracePayload,
 )
-from pydantic import BaseModel
 
 
 class ErrorResponse(BaseModel):
@@ -34,6 +35,7 @@ class ListCapsulesQuery(BaseModel):
     page: int = 1
     per_page: int = 10
     compress: bool = False
+    demo_mode: bool = False  # If False, exclude capsules with IDs starting with 'demo-'
 
 
 class GetCapsuleQuery(BaseModel):

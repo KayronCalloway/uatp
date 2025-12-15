@@ -11,13 +11,12 @@ Handles the complete claims lifecycle:
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional
 
-from ..crypto_utils import verify_capsule
-from .policy_manager import Policy, PolicyManager
-from .risk_assessor import DecisionCategory
+from ..utils.timezone_utils import utc_now
+from .policy_manager import PolicyManager
 
 
 class ClaimStatus(str, Enum):
@@ -171,7 +170,7 @@ class ClaimsProcessor:
             status=ClaimStatus.SUBMITTED,
             claimed_amount=claimed_amount,
             evidence=evidence,
-            submitted_at=datetime.utcnow(),
+            submitted_at=utc_now(),
         )
 
         # Store claim
@@ -210,7 +209,7 @@ class ClaimsProcessor:
             raise ValueError(f"Claim status is {claim.status}, cannot review")
 
         claim.status = ClaimStatus.UNDER_REVIEW
-        claim.reviewed_at = datetime.utcnow()
+        claim.reviewed_at = utc_now()
 
         # Verify capsule chain
         chain_verification = await self._verify_evidence_chain(
@@ -284,7 +283,7 @@ class ClaimsProcessor:
         # Create investigation record
         investigation = ClaimInvestigation(
             investigator_id=investigator_id,
-            started_at=datetime.utcnow(),
+            started_at=utc_now(),
         )
 
         # Verify capsule chain
@@ -325,7 +324,7 @@ class ClaimsProcessor:
             f"Recommended: {investigation.recommended_action}"
         )
 
-        investigation.completed_at = datetime.utcnow()
+        investigation.completed_at = utc_now()
         claim.investigation = investigation
 
         self._add_note(
@@ -376,7 +375,7 @@ class ClaimsProcessor:
         # Update claim
         claim.status = ClaimStatus.APPROVED
         claim.approved_amount = approved_amount
-        claim.resolved_at = datetime.utcnow()
+        claim.resolved_at = utc_now()
 
         self._add_note(
             claim,
@@ -444,7 +443,7 @@ class ClaimsProcessor:
 
         claim.status = ClaimStatus.DENIED
         claim.denial_reason = reason
-        claim.resolved_at = datetime.utcnow()
+        claim.resolved_at = utc_now()
 
         self._add_note(claim, author=denier_id, note=f"Claim denied. Reason: {reason}")
 
@@ -474,7 +473,7 @@ class ClaimsProcessor:
         claim = await self.get_claim(claim_id)
 
         if claim.status != ClaimStatus.DENIED:
-            raise ValueError(f"Can only appeal denied claims")
+            raise ValueError("Can only appeal denied claims")
 
         claim.status = ClaimStatus.APPEALED
 
@@ -548,7 +547,7 @@ class ClaimsProcessor:
                 if signature:
                     valid_signatures += 1
 
-            except Exception as e:
+            except Exception:
                 # Signature verification failed - continue processing
                 pass
 
@@ -684,7 +683,7 @@ class ClaimsProcessor:
         """Add a note to claim history"""
         claim.notes.append(
             {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now().isoformat(),
                 "author": author,
                 "note": note,
             }
@@ -696,11 +695,14 @@ class ClaimsProcessor:
 
     async def _store_claim(self, claim: Claim):
         """Store claim in database"""
+        from sqlalchemy import select
+
         from src.insurance.models import (
             InsuranceClaim as DBClaim,
+        )
+        from src.insurance.models import (
             InsurancePolicy as DBPolicy,
         )
-        from sqlalchemy import select
 
         async with self.db.get_session() as session:
             # Get the policy to link the claim
@@ -782,7 +784,7 @@ class ClaimsProcessor:
                     if claim.evidence.incident_description
                     else None
                 )
-                existing.updated_at = datetime.utcnow()
+                existing.updated_at = utc_now()
                 # Store full claim data in a JSON field (assuming we add one to the model)
                 # For now, we'll use the existing schema and store extra data in reason field as JSON
             else:
@@ -810,12 +812,12 @@ class ClaimsProcessor:
 
     async def _fetch_claim(self, claim_id: str) -> Claim:
         """Fetch claim from database"""
-        from src.insurance.models import (
-            InsuranceClaim as DBClaim,
-            InsurancePolicy as DBPolicy,
-        )
         from sqlalchemy import select
         from sqlalchemy.orm import selectinload
+
+        from src.insurance.models import (
+            InsuranceClaim as DBClaim,
+        )
 
         async with self.db.get_session() as session:
             result = await session.execute(
@@ -885,12 +887,15 @@ class ClaimsProcessor:
         limit: int = 100,
     ) -> List[Claim]:
         """Query claims from database"""
-        from src.insurance.models import (
-            InsuranceClaim as DBClaim,
-            InsurancePolicy as DBPolicy,
-        )
         from sqlalchemy import select
         from sqlalchemy.orm import selectinload
+
+        from src.insurance.models import (
+            InsuranceClaim as DBClaim,
+        )
+        from src.insurance.models import (
+            InsurancePolicy as DBPolicy,
+        )
 
         async with self.db.get_session() as session:
             query = select(DBClaim)

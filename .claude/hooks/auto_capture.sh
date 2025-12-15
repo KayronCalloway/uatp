@@ -3,7 +3,7 @@
 # Automatically captures conversations after each user message
 
 UATP_DIR="/Users/kay/uatp-capsule-engine"
-CAPTURE_SCRIPT="$UATP_DIR/capture_this_session.py"
+CAPTURE_SCRIPT="$UATP_DIR/rich_hook_capture.py"
 LOG_FILE="$UATP_DIR/hook_capture.log"
 COUNTER_FILE="/tmp/claude_code_capture_counter"
 
@@ -35,10 +35,10 @@ for keyword in "${CRITICAL_KEYWORDS[@]}"; do
     fi
 done
 
-# If critical, capture immediately
+# If critical, capture immediately with RICH metadata
 if [ "$SHOULD_CAPTURE_NOW" = true ]; then
-    echo "[$(date)] CRITICAL: Immediate capture triggered" >> "$LOG_FILE"
-    (cd "$UATP_DIR" && python3 "$CAPTURE_SCRIPT" >> "$LOG_FILE" 2>&1) &
+    echo "[$(date)] CRITICAL: Immediate RICH capture triggered" >> "$LOG_FILE"
+    echo "$USER_MESSAGE" | (cd "$UATP_DIR" && python3 "$CAPTURE_SCRIPT" >> "$LOG_FILE" 2>&1) &
     echo "0" > "$COUNTER_FILE"  # Reset counter
     exit 0
 fi
@@ -53,11 +53,9 @@ fi
 COUNTER=$(cat "$COUNTER_FILE")
 COUNTER=$((COUNTER + 1))
 
-# Capture every 5 interactions
-if [ $((COUNTER % 5)) -eq 0 ]; then
-    echo "[$(date)] Auto-capture (interaction #$COUNTER)" >> "$LOG_FILE"
-    (cd "$UATP_DIR" && python3 "$CAPTURE_SCRIPT" >> "$LOG_FILE" 2>&1) &
-    echo "0" > "$COUNTER_FILE"  # Reset counter
-else
-    echo "$COUNTER" > "$COUNTER_FILE"
-fi
+# RICH CAPTURE: Now captures EVERY interaction with full metadata!
+echo "[$(date)] Rich capture (interaction #$COUNTER)" >> "$LOG_FILE"
+echo "$USER_MESSAGE" | (cd "$UATP_DIR" && python3 "$CAPTURE_SCRIPT" >> "$LOG_FILE" 2>&1) &
+
+# Update counter
+echo "$COUNTER" > "$COUNTER_FILE"

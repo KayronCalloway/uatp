@@ -14,7 +14,7 @@ Components:
 
 Usage:
     from live_capture import get_real_time_generator, capture_live_interaction
-    
+
     generator = get_real_time_generator()
     capsule_id = await capture_live_interaction(
         session_id="my-session",
@@ -24,19 +24,26 @@ Usage:
     )
 """
 
-from .real_time_capsule_generator import (
-    RealTimeCapsuleGenerator,
-    LiveInteraction,
-    get_real_time_generator,
-    capture_live_interaction,
+from .antigravity_hook import (
+    AntigravityLiveCapture,
+    capture_antigravity_interaction,
+    get_antigravity_capture,
 )
-
 from .claude_code_hook import ClaudeCodeLiveCapture
+from .real_time_capsule_generator import (
+    LiveInteraction,
+    RealTimeCapsuleGenerator,
+    capture_live_interaction,
+    get_real_time_generator,
+)
 
 __all__ = [
     "RealTimeCapsuleGenerator",
     "LiveInteraction",
     "ClaudeCodeLiveCapture",
+    "AntigravityLiveCapture",
     "get_real_time_generator",
     "capture_live_interaction",
+    "get_antigravity_capture",
+    "capture_antigravity_interaction",
 ]

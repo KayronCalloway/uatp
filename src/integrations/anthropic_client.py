@@ -91,9 +91,26 @@ class AnthropicAttributionClient:
             # Get API key from environment
             self.api_key = os.getenv("ANTHROPIC_API_KEY")
             if self.api_key:
-                # Initialize clients
-                self.client = anthropic.Anthropic(api_key=self.api_key)
-                self.async_client = anthropic.AsyncAnthropic(api_key=self.api_key)
+                try:
+                    # Initialize clients with error handling for SDK compatibility
+                    self.client = anthropic.Anthropic(api_key=self.api_key)
+                    self.async_client = anthropic.AsyncAnthropic(api_key=self.api_key)
+                except TypeError as e:
+                    # Handle SDK compatibility issues (e.g., 'proxies' parameter error)
+                    logger.warning(
+                        f"Failed to initialize Anthropic client (SDK compatibility issue): {e}. "
+                        f"Running in demo mode. Consider updating the anthropic package."
+                    )
+                    self.client = None
+                    self.async_client = None
+                except Exception as e:
+                    # Handle any other initialization errors
+                    logger.error(
+                        f"Unexpected error initializing Anthropic client: {e}. "
+                        f"Running in demo mode."
+                    )
+                    self.client = None
+                    self.async_client = None
             else:
                 logger.warning("ANTHROPIC_API_KEY not set, running in demo mode")
                 self.client = None

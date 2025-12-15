@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from src.audit.events import audit_emitter
 from src.capsule_schema import AnyCapsule, CapsuleStatus
@@ -19,6 +19,9 @@ from src.ethics.rect_system import (
     RECTSystem,
     SeverityLevel,
 )
+
+if TYPE_CHECKING:
+    from src.security.refusal_policy import RefusalPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +71,23 @@ class EthicsCircuitBreaker:
     and can refuse creation if violations are detected.
     """
 
-    def __init__(self, enable_refusal: bool = True, strict_mode: bool = False):
-        self.enable_refusal = enable_refusal
+    def __init__(
+        self,
+        refusal_policy: Optional["RefusalPolicy"] = None,
+        strict_mode: bool = False,
+    ):
+        """Initialize ethics circuit breaker with dependency injection.
+
+        Args:
+            refusal_policy: RefusalPolicy implementation for capsule refusal decisions.
+                          Defaults to RealRefusalPolicy() for production.
+                          Tests can inject TestRefusalPolicy() or MockRefusalPolicy().
+            strict_mode: Whether to use stricter thresholds for refusal.
+        """
+        # Import here to avoid circular dependencies
+        from src.security.refusal_policy import RealRefusalPolicy
+
+        self.refusal_policy = refusal_policy or RealRefusalPolicy()
         self.strict_mode = strict_mode
         # Directly integrate with ethics/rect_system.py for real-time ethical monitoring
         self.rect_system = RECTSystem()
@@ -81,7 +99,7 @@ class EthicsCircuitBreaker:
         self.critical_threshold = 0.9
 
         logger.info(
-            f"Ethics Circuit Breaker initialized (refusal={enable_refusal}, strict={strict_mode})"
+            f"Ethics Circuit Breaker initialized (policy={type(self.refusal_policy).__name__}, strict={strict_mode})"
         )
 
     async def evaluate_capsule_ethics(self, capsule: AnyCapsule) -> EthicsEvaluation:
@@ -195,33 +213,14 @@ class EthicsCircuitBreaker:
         severity: SeverityLevel,
         violations: List[EthicalViolationType],
     ) -> bool:
-        """Determine if capsule should be allowed based on ethics evaluation."""
-        if not self.enable_refusal:
-            return True
-
-        # Critical violations are always blocked
-        if severity == SeverityLevel.CRITICAL:
-            return False
-
-        # Check against threshold
-        if ethics_score < self.refusal_threshold:
-            return False
-
-        # Check for specific critical violations
-        critical_violations = {
-            EthicalViolationType.VIOLENCE,
-            EthicalViolationType.SELF_HARM,
-            EthicalViolationType.HARMFUL_CONTENT,
-        }
-
-        if any(v in critical_violations for v in violations):
-            return False
-
-        # In strict mode, be more restrictive
-        if self.strict_mode and (severity == SeverityLevel.HIGH or len(violations) > 2):
-            return False
-
-        return True
+        """Determine if capsule should be allowed based on ethics evaluation using injected policy."""
+        return self.refusal_policy.should_allow_capsule(
+            ethics_score=ethics_score,
+            severity=severity,
+            violations=violations,
+            refusal_threshold=self.refusal_threshold,
+            strict_mode=self.strict_mode,
+        )
 
     def _determine_intervention_action(
         self, ethics_score: float, severity: SeverityLevel
@@ -385,7 +384,8 @@ class EthicsCircuitBreaker:
 
 
 # Global ethics circuit breaker instance
-ethics_circuit_breaker = EthicsCircuitBreaker(enable_refusal=True, strict_mode=False)
+# Uses RealRefusalPolicy by default for production
+ethics_circuit_breaker = EthicsCircuitBreaker(strict_mode=False)
 
 
 class EthicsIntegratedCapsuleEngine:
@@ -448,7 +448,7 @@ class EthicsIntegratedCapsuleEngine:
             "statistics": stats,
             "recent_refusals": len(recent_refusals),
             "circuit_breaker_config": {
-                "enable_refusal": self.circuit_breaker.enable_refusal,
+                "refusal_policy": type(self.circuit_breaker.refusal_policy).__name__,
                 "strict_mode": self.circuit_breaker.strict_mode,
                 "refusal_threshold": self.circuit_breaker.refusal_threshold,
             },
@@ -469,15 +469,14 @@ if __name__ == "__main__":
 
     async def test_ethics_circuit_breaker():
         """Test the ethics circuit breaker."""
-        from src.capsule_schema import CapsuleStatus, CapsuleType
-
         from capsules.specialized_capsules import ReasoningCapsule
+        from src.capsule_schema import CapsuleStatus, CapsuleType
 
         print("🛡️ Ethics Circuit Breaker Test")
         print("=" * 40)
 
-        # Create circuit breaker
-        circuit_breaker = EthicsCircuitBreaker(enable_refusal=True, strict_mode=False)
+        # Create circuit breaker (uses RealRefusalPolicy by default)
+        circuit_breaker = EthicsCircuitBreaker(strict_mode=False)
 
         # Create test capsules
         safe_capsule = ReasoningCapsule(

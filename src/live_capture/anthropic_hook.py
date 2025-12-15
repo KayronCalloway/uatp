@@ -8,18 +8,16 @@ capture and automatic capsule generation.
 """
 
 import asyncio
-import json
 import logging
 import os
 import sys
 import time
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
+from typing import Any, Dict, List, Optional
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from live_capture.real_time_capsule_generator import capture_live_interaction
+from src.live_capture.real_time_capsule_generator import capture_live_interaction
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +31,7 @@ class AnthropicLiveCapture:
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         self.session_id = f"anthropic_session_{int(time.time())}"
 
-        logger.info(f"🧠 Anthropic Live Capture initialized")
+        logger.info("🧠 Anthropic Live Capture initialized")
         logger.info(f"   User ID: {user_id}")
         logger.info(f"   Session ID: {self.session_id}")
         logger.info(f"   API Key: {'✅ Set' if self.api_key else '❌ Missing'}")

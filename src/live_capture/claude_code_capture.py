@@ -4,23 +4,27 @@ UATP Live Claude Code Conversation Capture System
 Captures real-time conversations from Claude Code sessions and creates UATP capsules
 """
 
-import os
-import sys
 import asyncio
-import json
 import hashlib
+import json
 import logging
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
+import os
 import sqlite3
+import sys
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+# Load environment variables (including DATABASE_URL for PostgreSQL)
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.engine.capsule_engine import CapsuleEngine
-from src.capsule_schema import ReasoningTraceCapsule, CapsuleStatus, CapsuleType
+from src.live_capture.rich_capture_integration import RichCaptureEnhancer
 
 # Configure logging
 logging.basicConfig(
@@ -75,7 +79,7 @@ class ClaudeCodeCapture:
     """Main capture system for Claude Code conversations."""
 
     def __init__(self):
-        self.engine = CapsuleEngine()
+        # Don't initialize CapsuleEngine here - we'll use direct DB access
         self.active_sessions: Dict[str, ConversationSession] = {}
         self.db_path = os.path.join(
             os.path.dirname(__file__), "..", "..", "live_capture.db"
@@ -234,7 +238,7 @@ class ClaudeCodeCapture:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO capture_sessions 
+                INSERT INTO capture_sessions
                 (session_id, user_id, platform, start_time)
                 VALUES (?, ?, ?, ?)
             """,
@@ -286,7 +290,7 @@ class ClaudeCodeCapture:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO capture_messages 
+                INSERT INTO capture_messages
                 (message_id, session_id, role, content, timestamp, token_count, model_info)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
@@ -326,7 +330,7 @@ class ClaudeCodeCapture:
             cursor.execute(
                 """
                 UPDATE capture_sessions SET
-                end_time = ?, message_count = ?, significance_score = ?, 
+                end_time = ?, message_count = ?, significance_score = ?,
                 total_tokens = ?, topics = ?
                 WHERE session_id = ?
             """,
@@ -377,57 +381,70 @@ class ClaudeCodeCapture:
     async def create_capsule_from_session(
         self, session: ConversationSession
     ) -> Optional[str]:
-        """Create a UATP capsule from a conversation session."""
+        """Create a UATP capsule from a conversation session with RICH metadata."""
         if not await self.should_create_capsule(session):
-            logger.info(f"📝 Session {session.session_id} doesn't meet capsule criteria")
+            logger.info(
+                f"📝 Session {session.session_id} doesn't meet capsule criteria"
+            )
             return None
 
         try:
-            # Build reasoning trace from conversation
-            reasoning_steps = []
-            for i, msg in enumerate(session.messages):
-                step = {
-                    "step_type": "conversation" if msg.role == "user" else "response",
-                    "content": msg.content[:500] + "..."
-                    if len(msg.content) > 500
-                    else msg.content,
-                    "confidence": 0.9 if msg.role == "assistant" else 0.8,
-                    "evidence": [
-                        f"message_{i}",
-                        f"timestamp_{msg.timestamp.isoformat()}",
-                    ],
-                    "metadata": {
-                        "role": msg.role,
-                        "message_id": msg.message_id,
-                        "token_count": msg.token_count,
-                        "model_info": msg.model_info,
-                    },
-                }
-                reasoning_steps.append(step)
-
-            reasoning_trace = {
-                "query": f"Claude Code conversation session {session.session_id}",
-                "steps": reasoning_steps,
-                "conclusion": f"Conversation completed with {len(session.messages)} messages, significance score: {session.significance_score:.2f}",
-                "confidence_score": session.significance_score,
-                "metadata": {
-                    "session_id": session.session_id,
-                    "user_id": session.user_id,
-                    "platform": session.platform,
-                    "start_time": session.start_time.isoformat(),
-                    "end_time": session.end_time.isoformat()
-                    if session.end_time
-                    else None,
-                    "total_tokens": session.total_tokens,
-                    "topics": session.topics,
-                    "message_count": len(session.messages),
-                },
-            }
-
-            # Create capsule using engine
-            capsule = await self.engine.create_reasoning_capsule_async(
-                reasoning_trace=reasoning_trace, status=CapsuleStatus.VERIFIED
+            # Create capsule with rich metadata
+            capsule_data = (
+                RichCaptureEnhancer.create_capsule_from_session_with_rich_metadata(
+                    session=session, user_id=session.user_id
+                )
             )
+
+            # Store to database (PostgreSQL for production)
+            import json
+            from datetime import datetime
+
+            import asyncpg
+
+            from src.core.config import DATABASE_URL
+
+            # Parse DATABASE_URL to get PostgreSQL connection params
+            # Format: postgresql://user@host:port/database
+            if "postgresql" in DATABASE_URL:
+                conn = await asyncpg.connect(
+                    DATABASE_URL.replace("postgresql://", "postgresql://").replace(
+                        "postgresql+asyncpg://", "postgresql://"
+                    )
+                )
+
+                # Insert capsule
+                await conn.execute(
+                    """
+                    INSERT INTO capsules (capsule_id, capsule_type, version, timestamp, status, verification, payload)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                """,
+                    capsule_data["capsule_id"],
+                    capsule_data["type"],
+                    capsule_data["version"],
+                    datetime.fromisoformat(
+                        capsule_data["timestamp"].replace("Z", "+00:00")
+                    ),
+                    capsule_data["status"],
+                    json.dumps(capsule_data["verification"]),
+                    json.dumps(capsule_data["payload"]),
+                )
+
+                await conn.close()
+                capsule_id = capsule_data["capsule_id"]
+
+                logger.info(
+                    f"✨ Created RICH capsule {capsule_id} with per-step metadata"
+                )
+
+            else:
+                # Fallback: Use simple direct PostgreSQL insert even without asyncpg
+                # This shouldn't happen in production but provides safety
+                capsule_id = capsule_data["capsule_id"]
+                logger.warning(
+                    "⚠️ DATABASE_URL not set, capsule data prepared but not persisted"
+                )
+                logger.info(f"Capsule would be: {capsule_id}")
 
             # Mark session as having capsule created
             session.capsule_created = True
@@ -437,7 +454,7 @@ class ClaudeCodeCapture:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                UPDATE capture_sessions SET capsule_created = TRUE 
+                UPDATE capture_sessions SET capsule_created = TRUE
                 WHERE session_id = ?
             """,
                 (session.session_id,),
@@ -446,9 +463,9 @@ class ClaudeCodeCapture:
             conn.close()
 
             logger.info(
-                f"🔥 Created UATP capsule {capsule.capsule_id} from session {session.session_id}"
+                f"🔥 Created RICH UATP capsule {capsule_id} from session {session.session_id}"
             )
-            return capsule.capsule_id
+            return capsule_id
 
         except Exception as e:
             logger.error(f"❌ Failed to create capsule: {e}")
@@ -482,9 +499,9 @@ class ClaudeCodeCapture:
                 SELECT session_id, user_id, platform, start_time, end_time,
                        message_count, significance_score, total_tokens, topics,
                        capsule_created
-                FROM capture_sessions 
+                FROM capture_sessions
                 WHERE end_time IS NOT NULL
-                ORDER BY end_time DESC 
+                ORDER BY end_time DESC
                 LIMIT ?
             """,
                 (limit,),

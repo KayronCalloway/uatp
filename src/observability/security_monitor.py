@@ -3,11 +3,13 @@ Security monitoring for UATP Capsule Engine.
 Tracks authentication failures, validation errors, and potential attacks.
 """
 
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, field
+from collections import defaultdict, deque
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from collections import deque, defaultdict
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from src.utils.timezone_utils import utc_now
 
 
 class SecurityEventType(Enum):
@@ -77,7 +79,7 @@ class SecurityMonitor:
             event_type=event_type,
             severity=severity,
             description=description,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             source_ip=source_ip,
             user_id=user_id,
             details=details or {},
@@ -115,7 +117,7 @@ class SecurityMonitor:
 
     def _check_patterns(self, event: SecurityEvent):
         """Check for suspicious patterns."""
-        now = datetime.utcnow()
+        now = utc_now()
 
         # Check for repeated events from same IP
         if event.source_ip:
@@ -149,7 +151,7 @@ class SecurityMonitor:
         """Alert on detected attack pattern."""
         print(f"🚨 ATTACK PATTERN DETECTED: {title}")
         print(f"   {details}")
-        print(f"   Consider blocking source or enabling additional security measures")
+        print("   Consider blocking source or enabling additional security measures")
 
     def record_sql_injection_attempt(
         self, query: str, source_ip: Optional[str] = None, user_id: Optional[str] = None
@@ -219,7 +221,7 @@ class SecurityMonitor:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get security statistics."""
-        now = datetime.utcnow()
+        now = utc_now()
 
         # Events in last hour
         recent_hour = [
@@ -278,7 +280,7 @@ class SecurityMonitor:
     def check_alerts(self) -> List[str]:
         """Check for security issues requiring attention."""
         alerts = []
-        now = datetime.utcnow()
+        now = utc_now()
 
         # Check for high rate of critical events
         recent_hour = [

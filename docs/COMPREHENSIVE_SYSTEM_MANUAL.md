@@ -770,10 +770,15 @@ print(f"Attribution distribution: {distribution}")
 
 ```python
 from src.engine.ethics_circuit_breaker import EthicsCircuitBreaker
+from src.security.refusal_policy import RealRefusalPolicy
 from src.ethics.rect_system import RECTSystem
 
-# Initialize ethics system
-ethics_breaker = EthicsCircuitBreaker(enable_refusal=True, strict_mode=False)
+# Initialize ethics system (uses RealRefusalPolicy by default for production)
+ethics_breaker = EthicsCircuitBreaker(refusal_policy=RealRefusalPolicy(), strict_mode=False)
+
+# For testing, you can inject TestRefusalPolicy:
+# from src.security.refusal_policy import TestRefusalPolicy
+# ethics_breaker = EthicsCircuitBreaker(refusal_policy=TestRefusalPolicy(), strict_mode=False)
 
 # Check if capsule creation should be allowed
 allowed, refusal = await ethics_breaker.pre_creation_check(capsule)

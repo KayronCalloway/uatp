@@ -5,27 +5,27 @@ Tests all major attack vectors including attribution gaming, dividend manipulati
 Sybil attacks, flash loan attacks, governance token attacks, and payment exploits.
 """
 
-import pytest
 import asyncio
-import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 from src.attribution.cross_conversation_tracker import CrossConversationTracker
-from src.economic.common_attribution_fund import CommonAttributionFund
-from src.economic.fcde_engine import FCDEEngine
-from src.integrations.economic.capsule_dividend_engine import CapsuleDividendEngine
-from src.governance.advanced_governance import GovernanceDAOEngine, VoteType
-from src.economic.security_monitor import (
-    EconomicSecurityMonitor,
-    AttackType,
-    ThreatLevel,
-)
 from src.economic.circuit_breakers import (
     EconomicCircuitBreakerManager,
-    CircuitOpenException,
 )
+from src.economic.common_attribution_fund import CommonAttributionFund
+from src.economic.fcde_engine import FCDEEngine
+from src.economic.security_monitor import (
+    AttackType,
+    EconomicSecurityMonitor,
+    ThreatLevel,
+)
+from src.governance.advanced_governance import GovernanceDAOEngine, VoteType
+from src.integrations.economic.capsule_dividend_engine import CapsuleDividendEngine
+from src.security.identity_verification import TestIdentityVerifier
 
 
 class TestAttributionGamingProtection:
@@ -168,7 +168,7 @@ class TestSybilAttackProtection:
     @pytest.fixture
     def fcde_engine(self):
         """Create an FCDE engine for testing."""
-        return FCDEEngine()
+        return FCDEEngine(identity_verifier=TestIdentityVerifier())
 
     @pytest.mark.asyncio
     async def test_rate_limiting_account_creation(self, fcde_engine):
@@ -607,7 +607,7 @@ class TestIntegratedSecurity:
                 await monitor.record_dividend_event(**event_data)
 
         # Should detect multiple attack vectors
-        attack_types_detected = set(alert.attack_type for alert in monitor.alerts)
+        attack_types_detected = {alert.attack_type for alert in monitor.alerts}
 
         # Should detect at least some of the attack vectors
         assert (

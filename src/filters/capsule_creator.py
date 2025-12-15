@@ -7,11 +7,10 @@ the JSONL file format, integrating with the universal filter system.
 """
 
 import json
-import os
-import uuid
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
 import logging
+import os
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +155,7 @@ class FilterCapsuleCreator:
         return ""
 
     async def _append_to_chain(self, capsule_data: Dict[str, Any]):
-        """Append capsule data to the chain file."""
+        """Append capsule data to the chain file AND database."""
 
         try:
             # Convert to JSON line
@@ -167,6 +166,109 @@ class FilterCapsuleCreator:
                 f.write(json_line + "\n")
 
             logger.debug(f"✅ Appended capsule to chain: {self.chain_file}")
+
+            # Write to SQLite database (backup)
+            try:
+                import sqlite3
+                from datetime import datetime as dt
+
+                db_path = os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                    "uatp_dev.db",
+                )
+
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+
+                cursor.execute(
+                    """
+                    INSERT OR IGNORE INTO capsules
+                    (capsule_id, capsule_type, timestamp, status, payload, verification)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                    (
+                        capsule_data.get("capsule_id"),
+                        capsule_data.get("type", "reasoning_trace"),
+                        capsule_data.get("timestamp", dt.now().isoformat()),
+                        capsule_data.get("status", "SEALED"),
+                        json.dumps(capsule_data),
+                        json.dumps(capsule_data.get("metadata", {})),
+                    ),
+                )
+
+                conn.commit()
+                conn.close()
+                logger.debug("✅ Saved to SQLite")
+
+            except Exception as sqlite_error:
+                logger.warning(f"⚠️ SQLite save failed: {sqlite_error}")
+
+            # ALSO write to PostgreSQL for frontend visibility (primary database)
+            try:
+                from datetime import datetime as dt
+
+                import asyncpg
+
+                # Get PostgreSQL URL from environment
+                pg_url = os.getenv("DATABASE_URL", "")
+                if "postgresql" in pg_url:
+                    # Run async in sync context
+                    import asyncio
+
+                    async def save_to_postgres():
+                        # Clean up URL for asyncpg
+                        clean_url = pg_url.replace(
+                            "postgresql+asyncpg://", "postgresql://"
+                        )
+                        conn = await asyncpg.connect(clean_url)
+
+                        try:
+                            # Check if exists
+                            existing = await conn.fetchval(
+                                "SELECT capsule_id FROM capsules WHERE capsule_id = $1",
+                                capsule_data.get("capsule_id"),
+                            )
+
+                            if not existing:
+                                # Parse timestamp
+                                ts_str = capsule_data.get(
+                                    "timestamp", dt.now().isoformat()
+                                )
+                                try:
+                                    ts = dt.fromisoformat(ts_str.replace("Z", "+00:00"))
+                                except:
+                                    ts = dt.now()
+
+                                await conn.execute(
+                                    """
+                                    INSERT INTO capsules (capsule_id, capsule_type, version, timestamp, status, verification, payload)
+                                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                                """,
+                                    capsule_data.get("capsule_id"),
+                                    capsule_data.get("type", "reasoning_trace"),
+                                    "1.0",
+                                    ts,
+                                    capsule_data.get("status", "SEALED"),
+                                    json.dumps(capsule_data.get("metadata", {})),
+                                    json.dumps(capsule_data),
+                                )
+                                logger.info(
+                                    "✅ Saved to PostgreSQL for frontend visibility"
+                                )
+                        finally:
+                            await conn.close()
+
+                    # Try to run in existing event loop or create new one
+                    try:
+                        loop = asyncio.get_running_loop()
+                        asyncio.create_task(save_to_postgres())
+                    except RuntimeError:
+                        asyncio.run(save_to_postgres())
+
+            except Exception as pg_error:
+                logger.warning(
+                    f"⚠️ PostgreSQL save failed (JSONL/SQLite still saved): {pg_error}"
+                )
 
         except Exception as e:
             logger.error(f"❌ Error appending to chain file: {e}")
@@ -219,7 +321,7 @@ class FilterCapsuleCreator:
                 }
 
             # Count lines in file
-            with open(self.chain_file, "r", encoding="utf-8") as f:
+            with open(self.chain_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             total_capsules = len(lines)

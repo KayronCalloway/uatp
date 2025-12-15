@@ -6,23 +6,23 @@ knowledge source management, discovery, verification, and integration
 with the FCDE engine.
 """
 
-import pytest
-import asyncio
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import uuid4
+
+import pytest
 
 from src.attribution.akc_system import (
     AKCSystem,
     KnowledgeSource,
     KnowledgeSourceType,
     VerificationStatus,
-    KnowledgeCluster,
 )
 from src.attribution.knowledge_discovery import KnowledgeDiscovery
-from src.economic.fcde_engine import FCDEEngine
-from src.economic.common_attribution_fund import CommonAttributionFund
 from src.economic.akc_integration import AKCFCDEIntegration
+from src.economic.common_attribution_fund import CommonAttributionFund
+from src.economic.fcde_engine import FCDEEngine
+from src.security.identity_verification import TestIdentityVerifier
 
 
 class TestAKCSystem:
@@ -31,7 +31,7 @@ class TestAKCSystem:
     @pytest.fixture
     async def akc_system(self):
         """Create AKC system instance for testing"""
-        fcde_engine = FCDEEngine()
+        fcde_engine = FCDEEngine(identity_verifier=TestIdentityVerifier())
         caf = CommonAttributionFund()
         akc_system = AKCSystem(fcde_engine, caf)
         await akc_system.initialize()
@@ -334,7 +334,7 @@ class TestAKCFCDEIntegration:
     @pytest.fixture
     async def akc_fcde_integration(self):
         """Create AKC-FCDE integration instance for testing"""
-        fcde_engine = FCDEEngine()
+        fcde_engine = FCDEEngine(identity_verifier=TestIdentityVerifier())
         caf = CommonAttributionFund()
         akc_system = AKCSystem(fcde_engine, caf)
         await akc_system.initialize()
@@ -498,7 +498,7 @@ class TestAKCEndToEnd:
     async def test_complete_akc_workflow(self):
         """Test complete AKC workflow from discovery to payout"""
         # Initialize system
-        fcde_engine = FCDEEngine()
+        fcde_engine = FCDEEngine(identity_verifier=TestIdentityVerifier())
         caf = CommonAttributionFund()
         akc_system = AKCSystem(fcde_engine, caf)
         await akc_system.initialize()
@@ -507,8 +507,8 @@ class TestAKCEndToEnd:
 
         # Step 1: Discover sources from content
         test_content = """
-        This work builds on the seminal paper by Vaswani et al. (2017) 
-        "Attention Is All You Need" published in NIPS. The original 
+        This work builds on the seminal paper by Vaswani et al. (2017)
+        "Attention Is All You Need" published in NIPS. The original
         implementation can be found at https://github.com/tensorflow/tensor2tensor.
         """
 

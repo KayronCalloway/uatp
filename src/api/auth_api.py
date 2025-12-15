@@ -8,20 +8,21 @@ including login, registration, token refresh, and user management.
 """
 
 import asyncio
-import json
 import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-
-from quart import request, jsonify, g
-from werkzeug.exceptions import BadRequest, Unauthorized, Forbidden
-import sys
 import os
+import sys
+from typing import List
+
+from quart import g, jsonify, request
+from werkzeug.exceptions import BadRequest, Forbidden, Unauthorized
+
+from src.utils.timezone_utils import utc_now
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from auth.jwt_auth import get_authenticator, User, TokenPayload
+from auth.jwt_auth import get_authenticator
+
 from .custom_quart import CustomQuart
 
 logger = logging.getLogger(__name__)
@@ -448,7 +449,7 @@ async def health_check():
             {
                 "status": "healthy",
                 "service": "uatp-auth",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now().isoformat(),
             }
         ),
         200,

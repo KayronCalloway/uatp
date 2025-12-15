@@ -1,0 +1,443 @@
+Metadata-Version: 2.4
+Name: uatp
+Version: 0.1.0
+Summary: Make AI decisions auditable with cryptographic proof
+Home-page: https://github.com/uatp/uatp-python-sdk
+Author: UATP Team
+Author-email: support@uatp.ai
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: requests>=2.28.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: mypy>=0.991; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# UATP Python SDK
+
+Make AI decisions auditable with cryptographic proof in 3 lines of code.
+
+## Installation
+
+```bash
+# Install from GitHub
+pip install git+https://github.com/your-org/uatp-capsule-engine.git#subdirectory=sdk/python
+
+# Or clone and install locally
+git clone https://github.com/your-org/uatp-capsule-engine
+cd uatp-capsule-engine/sdk/python
+pip install -e .
+```
+
+**Note:** PyPI package coming soon! For now, install from GitHub.
+
+## Quick Start
+
+```python
+from uatp import UATP
+
+# Initialize client (no API key required for now)
+client = UATP()
+
+# Certify an AI decision
+result = client.certify(
+    task="Book doctor appointment",
+    decision="Booked Dr. Smith for Dec 17 at 3PM",
+    reasoning=[
+        {"step": 1, "thought": "User requested Tuesday afternoon", "confidence": 0.95},
+        {"step": 2, "thought": "Found available slot at 3PM", "confidence": 0.92}
+    ]
+)
+
+print(result.proof_url)
+# http://localhost:8000/capsules/cap_abc123/verify
+```
+
+## Why UATP?
+
+**Problem:** AI decisions are black boxes. Users don't trust them. Regulators can't audit them. Insurance companies won't cover them.
+
+**Solution:** UATP provides **court-admissible cryptographic evidence** of AI reasoning.
+
+### What You Get:
+
+- **Ed25519 signatures** (NIST-approved, Daubert-compliant)
+- **Immutable audit trails** (tamper-proof capsules)
+- **EU AI Act compliance** (conformity assessments ready)
+- **Insurance readiness** (actuarial data for AI liability coverage)
+
+## Features
+
+### 1. Certify AI Decisions
+
+```python
+from uatp import UATP
+
+client = UATP()  # No API key required for now
+
+# Any AI decision can be certified
+result = client.certify(
+    task="Approve loan application",
+    decision="Loan approved for $50,000 at 5.2% APR",
+    reasoning=[
+        {
+            "step": 1,
+            "thought": "Credit score 720 (excellent)",
+            "confidence": 0.99,
+            "data_source": "TransUnion"
+        },
+        {
+            "step": 2,
+            "thought": "Debt-to-income ratio 0.28 (acceptable)",
+            "confidence": 0.95,
+            "data_source": "Income verification"
+        },
+        {
+            "step": 3,
+            "thought": "3 years employment stability",
+            "confidence": 0.97,
+            "data_source": "Employment records"
+        }
+    ],
+    confidence=0.87,
+    metadata={
+        "model": "gpt-4",
+        "application_id": "app_12345",
+        "reviewer": "AI-Agent-v2"
+    }
+)
+
+# Share proof URL with user
+print(f"Loan decision proof: {result.proof_url}")
+```
+
+### 2. Retrieve Proofs
+
+```python
+# Get full cryptographic proof
+proof = client.get_proof("cap_abc123")
+
+print(proof.task)
+# "Approve loan application"
+
+print(proof.confidence)
+# 0.87
+
+# Verify signature
+is_valid = proof.verify()
+# True (cryptographic signature verified)
+```
+
+### 3. List Your Capsules
+
+```python
+# Get recent capsules
+capsules = client.list_capsules(limit=10)
+
+for capsule in capsules:
+    print(f"{capsule.capsule_id}: {capsule.task} (confidence: {capsule.confidence})")
+```
+
+## Use Cases
+
+### Healthcare AI
+
+```python
+# Certify medical diagnoses
+result = client.certify(
+    task="Diagnose patient symptoms",
+    decision="Likely common cold, recommend rest and fluids",
+    reasoning=[
+        {"step": 1, "thought": "Patient reports sore throat, congestion", "confidence": 0.98},
+        {"step": 2, "thought": "No fever >101°F rules out flu", "confidence": 0.85},
+        {"step": 3, "thought": "Symptoms match common cold profile", "confidence": 0.87}
+    ],
+    metadata={"patient_id": "redacted", "model": "medical-ai-v1"}
+)
+```
+
+### Financial Services
+
+```python
+# Certify lending decisions (CFPB compliance)
+result = client.certify(
+    task="Credit decision for auto loan",
+    decision="Approved: $25,000 at 6.5% APR",
+    reasoning=[...],
+    metadata={"applicant_id": "redacted", "fair_lending_check": "passed"}
+)
+```
+
+### Legal AI
+
+```python
+# Certify contract review
+result = client.certify(
+    task="Review employment contract",
+    decision="3 concerning clauses identified",
+    reasoning=[...],
+    metadata={"contract_id": "contract_789", "jurisdiction": "CA"}
+)
+```
+
+## Integration Examples
+
+### With OpenAI
+
+```python
+from openai import OpenAI
+from uatp import UATP
+
+openai_client = OpenAI()
+uatp_client = UATP(api_key="your-uatp-key")
+
+def make_decision(prompt: str):
+    # Get AI decision
+    response = openai_client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    decision = response.choices[0].message.content
+
+    # Certify with UATP
+    result = uatp_client.certify(
+        task=prompt,
+        decision=decision,
+        reasoning=[
+            {"step": 1, "thought": "Analyzed user request", "confidence": 0.9},
+            {"step": 2, "thought": "Generated response", "confidence": 0.85}
+        ],
+        metadata={"model": "gpt-4", "tokens": response.usage.total_tokens}
+    )
+
+    return decision, result.proof_url
+
+decision, proof = make_decision("Should I invest in stocks or bonds?")
+print(f"Decision: {decision}")
+print(f"Proof: {proof}")
+```
+
+### With Anthropic
+
+```python
+from anthropic import Anthropic
+from uatp import UATP
+
+anthropic_client = Anthropic()
+uatp_client = UATP(api_key="your-uatp-key")
+
+def make_auditable_decision(task: str):
+    # Claude generates decision
+    message = anthropic_client.messages.create(
+        model="claude-3-5-sonnet-20241022",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": task}]
+    )
+
+    decision = message.content[0].text
+
+    # Certify with UATP
+    result = uatp_client.certify(
+        task=task,
+        decision=decision,
+        reasoning=[{"step": 1, "thought": "Analyzed task", "confidence": 0.9}],
+        metadata={"model": "claude-3-5-sonnet", "usage": message.usage}
+    )
+
+    return decision, result.proof_url
+```
+
+## EU AI Act Compliance
+
+UATP provides out-of-box compliance with EU AI Act requirements:
+
+```python
+# Article 12: Automatic logging
+result = client.certify(...)  # Automatic logging
+
+# Article 13: Transparency to users
+print(result.proof_url)  # User can view full reasoning
+
+# Article 9: Risk assessment
+proof = client.get_proof(capsule_id)
+if proof.confidence < 0.7:
+    print("Low confidence - manual review required")
+```
+
+## API Reference
+
+### `UATP(api_key, base_url="https://api.uatp.ai")`
+
+Initialize UATP client.
+
+**Parameters:**
+- `api_key` (str): Your UATP API key
+- `base_url` (str): API endpoint (default: production)
+
+### `client.certify(task, decision, reasoning, confidence=None, metadata=None)`
+
+Create cryptographically certified capsule.
+
+**Parameters:**
+- `task` (str): Description of the task
+- `decision` (str): The AI's final decision
+- `reasoning` (List[Dict]): Reasoning steps, each with `step`, `thought`, `confidence`
+- `confidence` (float, optional): Overall confidence (0-1)
+- `metadata` (Dict, optional): Additional metadata
+
+**Returns:**
+- `CertificationResult` with `capsule_id`, `proof_url`, `signature`, `timestamp`
+
+### `client.get_proof(capsule_id)`
+
+Retrieve full cryptographic proof.
+
+**Parameters:**
+- `capsule_id` (str): Capsule ID to retrieve
+
+**Returns:**
+- `CapsuleProof` with full decision details
+
+### `client.list_capsules(limit=10, offset=0, min_confidence=None)`
+
+List your capsules.
+
+**Parameters:**
+- `limit` (int): Maximum capsules to return
+- `offset` (int): Pagination offset
+- `min_confidence` (float, optional): Filter by minimum confidence
+
+**Returns:**
+- `List[CapsuleProof]`
+
+## Configuration
+
+### Environment Variables
+
+```bash
+export UATP_API_KEY="your-api-key"
+export UATP_BASE_URL="https://api.uatp.ai"  # optional
+```
+
+```python
+import os
+from uatp import UATP
+
+client = UATP(api_key=os.getenv("UATP_API_KEY"))
+```
+
+### Context Manager
+
+```python
+with UATP(api_key="your-key") as client:
+    result = client.certify(...)
+    # Session automatically closed
+```
+
+## Error Handling
+
+```python
+from uatp import UATP
+
+client = UATP(api_key="your-key")
+
+try:
+    result = client.certify(
+        task="Make decision",
+        decision="Decision made",
+        reasoning=[...]
+    )
+except ValueError as e:
+    print(f"Invalid parameters: {e}")
+except Exception as e:
+    print(f"API error: {e}")
+```
+
+## Pricing
+
+Currently in **open beta** - free to use while we gather feedback!
+
+Planned pricing:
+- **Free tier:** 1,000 capsules/month
+- **Professional:** $49/month (10,000 capsules)
+- **Enterprise:** Custom pricing (unlimited + SLA)
+
+## Support
+
+- **Issues:** https://github.com/your-org/uatp-capsule-engine/issues
+- **Discussions:** https://github.com/your-org/uatp-capsule-engine/discussions
+- **Email:** your@email.com
+
+**Looking for beta testers!** We'd love your feedback.
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Why Cryptographic Proof Matters
+
+### Without UATP:
+- ❌ AI decisions are black boxes
+- ❌ No audit trail for regulators
+- ❌ Insurance companies won't cover
+- ❌ Users don't trust the system
+- ❌ Liability is unclear
+
+### With UATP:
+- ✅ Cryptographic evidence of reasoning
+- ✅ Court-admissible proof (Daubert-compliant)
+- ✅ EU AI Act conformity assessments ready
+- ✅ Insurance-ready actuarial data
+- ✅ User transparency via proof URLs
+
+## Get Started
+
+1. **Clone & install:**
+```bash
+git clone https://github.com/your-org/uatp-capsule-engine
+cd uatp-capsule-engine/sdk/python
+pip install -e .
+```
+
+2. **Start backend:**
+```bash
+cd ../..
+./start_backend_dev.sh
+```
+
+3. **Make first decision auditable:**
+```python
+from uatp import UATP
+
+client = UATP()
+result = client.certify(
+    task="Your AI task",
+    decision="Your AI decision",
+    reasoning=[{"step": 1, "thought": "Your reasoning", "confidence": 0.9}]
+)
+print(result.proof_url)
+```
+
+4. **See full quickstart:** [QUICKSTART.md](./QUICKSTART.md)
+
+**Ship auditable AI in 5 minutes.**

@@ -8,18 +8,16 @@ capture and automatic capsule generation.
 """
 
 import asyncio
-import json
 import logging
 import os
 import sys
 import time
-from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Optional
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from live_capture.real_time_capsule_generator import capture_live_interaction
+from src.live_capture.real_time_capsule_generator import capture_live_interaction
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +30,7 @@ class WindsurfLiveCapture:
         self.user_id = user_id
         self.session_id = f"windsurf_session_{int(time.time())}"
 
-        logger.info(f"🌊 Windsurf Live Capture initialized")
+        logger.info("🌊 Windsurf Live Capture initialized")
         logger.info(f"   User ID: {user_id}")
         logger.info(f"   Session ID: {self.session_id}")
 
@@ -250,7 +248,7 @@ const AuthComponent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       await login(email, password);
     } catch (err) {
@@ -273,7 +271,7 @@ const AuthComponent = () => {
           disabled={isLoading}
         />
       </div>
-      
+
       <div className="form-group">
         <label htmlFor="password">Password:</label>
         <input
@@ -285,9 +283,9 @@ const AuthComponent = () => {
           disabled={isLoading}
         />
       </div>
-      
+
       {error && <div className="error-message">{error}</div>}
-      
+
       <button type="submit" disabled={isLoading}>
         {isLoading ? 'Authenticating...' : 'Login'}
       </button>

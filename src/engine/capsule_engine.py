@@ -1,10 +1,14 @@
+import asyncio
 import logging
 import os
 import uuid
-import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, List, Optional, Dict
+from typing import Any, AsyncGenerator, Dict, List, Optional
+
+from dotenv import load_dotenv
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.audit.events import audit_emitter
 from src.capsule_schema import (
@@ -15,32 +19,27 @@ from src.capsule_schema import (
     ReasoningTracePayload,
     Verification,
 )
-from dotenv import load_dotenv
-from src.integrations.openai_client import OpenAIClient
-from src.models.capsule import CapsuleModel
-from src.security.runtime_trust_enforcer import EnforcementAction, RuntimeTrustEnforcer
-from src.security.secrets_manager import SecretsManager
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.crypto_utils import (
     get_verify_key_from_signing_key,
     hash_for_signature,
     sign_capsule,
     verify_capsule,
 )
+from src.integrations.openai_client import OpenAIClient
+from src.models.capsule import CapsuleModel
+from src.security.runtime_trust_enforcer import EnforcementAction, RuntimeTrustEnforcer
+from src.security.secrets_manager import SecretsManager
 
+from ..security.security_manager import (
+    HSMConfiguration,
+    HSMSecurityLevel,
+    HSMType,
+    SecurityConfiguration,
+    SecurityLevel,
+    UnifiedSecurityManager,
+)
 from .ethics_circuit_breaker import EthicsCircuitBreaker
 from .exceptions import UATPEngineError
-from ..security.security_manager import (
-    UnifiedSecurityManager,
-    SecurityConfiguration,
-    HSMConfiguration,
-    HSMType,
-    HSMSecurityLevel,
-    SecurityLevel,
-    get_security_manager,
-)
 
 # Load environment variables
 load_dotenv()
@@ -77,18 +76,29 @@ class CapsuleEngine:
         self.openai_client = openai_client or OpenAIClient()
 
         # Initialize ethics circuit breaker
-        # Determine whether ethics refusal should be enabled.  Tests need it disabled
-        # to avoid blocking capsule creation.  Use an environment variable so
-        # production deployments can enable it explicitly.
+        # Determine which refusal policy to use for ethics evaluation.
+        # Tests need TestRefusalPolicy to avoid blocking capsule creation.
+        # Use environment variable so production deployments can control behavior.
+        from src.security.refusal_policy import RealRefusalPolicy, TestRefusalPolicy
+
         enable_refusal_env = os.environ.get("UATP_ETHICS_ENABLE_REFUSAL")
         if enable_refusal_env is not None:
-            enable_refusal = enable_refusal_env.lower() == "true"
+            # Explicit configuration via environment variable
+            refusal_policy = (
+                RealRefusalPolicy()
+                if enable_refusal_env.lower() == "true"
+                else TestRefusalPolicy()
+            )
         else:
-            # Disable by default when running under pytest (detected via env var)
-            enable_refusal = False if os.environ.get("PYTEST_CURRENT_TEST") else True
+            # Default: use TestRefusalPolicy when running under pytest, RealRefusalPolicy otherwise
+            refusal_policy = (
+                TestRefusalPolicy()
+                if os.environ.get("PYTEST_CURRENT_TEST")
+                else RealRefusalPolicy()
+            )
 
         self.ethics_circuit_breaker = EthicsCircuitBreaker(
-            enable_refusal=enable_refusal,
+            refusal_policy=refusal_policy,
             strict_mode=os.environ.get("UATP_ETHICS_STRICT_MODE", "false").lower()
             == "true",
         )
@@ -337,7 +347,7 @@ class CapsuleEngine:
             ):
                 parent_id = capsule.reasoning_trace.parent_capsule_id
             elif hasattr(capsule, "parent_capsule_id"):
-                parent_id = getattr(capsule, "parent_capsule_id")
+                parent_id = capsule.parent_capsule_id
 
             if parent_id:
                 _constellations_service.add_edge(parent_id, capsule.capsule_id)
@@ -676,9 +686,18 @@ class CapsuleEngine:
         - Pre-validated query parameters (SQL injection prevention)
         - Parameterized queries (asyncpg prepared statements)
         - Efficient type filtering at database level
+
+        Args:
+            skip: Number of capsules to skip (for pagination)
+            limit: Maximum number of capsules to return
+
+        Note:
+            Demo/test filtering is handled at the API router level, not here.
+            See: src/api/capsules_fastapi_router.py for demo_mode filtering.
         """
         from pydantic import TypeAdapter, ValidationError
-        from src.database.secure_queries import SecureCapsuleQueries, QueryValidator
+
+        from src.database.secure_queries import QueryValidator, SecureCapsuleQueries
 
         # Security: Validate pagination parameters
         skip, limit = QueryValidator.validate_pagination(skip, limit)
@@ -687,9 +706,9 @@ class CapsuleEngine:
         valid_types = list(QueryValidator.VALID_CAPSULE_TYPES)
 
         # Performance: Use pre-defined, parameterized query
-        rows = await self.db_manager.fetch(
-            SecureCapsuleQueries.LOAD_CAPSULES, valid_types, skip, limit
-        )
+        query = SecureCapsuleQueries.LOAD_CAPSULES
+
+        rows = await self.db_manager.fetch(query, valid_types, skip, limit)
 
         capsules = []
         skipped_count = 0

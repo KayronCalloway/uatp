@@ -1,0 +1,283 @@
+#!/usr/bin/env python3
+"""
+UATP Instant Capture - Works Immediately on iPhone
+Creates a bookmarklet that captures conversations with one tap
+"""
+
+
+def create_bookmarklet():
+    """Create a JavaScript bookmarklet for instant capture."""
+
+    # Minified JavaScript bookmarklet
+    bookmarklet_js = """
+javascript:(function(){
+    const UATP_API='http://192.168.1.79:9090';
+    const API_KEY='dev-key-001';
+
+    function detectPlatform(){
+        if(window.location.hostname.includes('openai.com')) return 'chatgpt';
+        if(window.location.hostname.includes('claude.ai')) return 'claude';
+        return 'web';
+    }
+
+    function extractConversation(){
+        let messages=[];
+        const platform=detectPlatform();
+
+        if(platform==='chatgpt'){
+            document.querySelectorAll('[data-message-author-role]').forEach(msg=>{
+                const role=msg.getAttribute('data-message-author-role');
+                const content=msg.querySelector('.markdown, .whitespace-pre-wrap')?.textContent?.trim();
+                if(content) messages.push({role,content});
+            });
+        }else if(platform==='claude'){
+            document.querySelectorAll('.font-claude-message, [data-testid]').forEach(msg=>{
+                const isUser=msg.closest('[data-testid="user-message"]')!==null;
+                const role=isUser?'user':'assistant';
+                const content=msg.textContent?.trim();
+                if(content&&content.length>10) messages.push({role,content});
+            });
+        }
+
+        return {messages,platform};
+    }
+
+    async function captureToUATP(messages,platform){
+        const sessionId='bookmarklet-'+Date.now();
+        let captured=0;
+
+        for(let msg of messages){
+            try{
+                await fetch(`${UATP_API}/api/v1/live/capture/message`,{
+                    method:'POST',
+                    headers:{'X-API-Key':API_KEY,'Content-Type':'application/json'},
+                    body:JSON.stringify({
+                        session_id:sessionId,
+                        user_id:msg.role==='user'?'web-user':'ai-assistant',
+                        platform:platform,
+                        role:msg.role,
+                        content:msg.content,
+                        metadata:{source:'bookmarklet',automatic:true}
+                    })
+                });
+                captured++;
+            }catch(e){console.log('UATP capture failed:',e);}
+        }
+        return captured;
+    }
+
+    async function main(){
+        const {messages,platform}=extractConversation();
+
+        if(messages.length===0){
+            alert('🤖 No conversation found on this page');
+            return;
+        }
+
+        const notification=document.createElement('div');
+        notification.style.cssText='position:fixed;top:20px;right:20px;z-index:99999;background:#3b82f6;color:white;padding:12px 20px;border-radius:8px;font-family:system-ui;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+        notification.textContent='📦 Capturing conversation...';
+        document.body.appendChild(notification);
+
+        const captured=await captureToUATP(messages,platform);
+
+        notification.style.background='#10b981';
+        notification.textContent=`✅ Captured ${captured} messages to UATP!`;
+
+        setTimeout(()=>notification.remove(),3000);
+    }
+
+    main();
+})();
+""".replace("\n", "").replace("    ", "")
+
+    return bookmarklet_js
+
+
+def create_setup_page():
+    """Create an HTML page for easy bookmarklet installation."""
+
+    bookmarklet = create_bookmarklet()
+
+    setup_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UATP Instant Capture Setup</title>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }}
+        .container {{
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }}
+        h1 {{ text-align: center; margin-bottom: 30px; }}
+        .step {{
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }}
+        .step-number {{
+            background: #10b981;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }}
+        .bookmarklet {{
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin: 10px 0;
+            border: 2px dashed #10b981;
+        }}
+        .drag-me {{
+            background: #10b981;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 16px;
+        }}
+        .demo-video {{
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 20px 0;
+        }}
+        .feature {{
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }}
+        .feature-icon {{ margin-right: 10px; font-size: 20px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 UATP Instant Capture</h1>
+        <p style="text-align: center; font-size: 18px; margin-bottom: 30px;">
+            Capture ChatGPT & Claude conversations with <strong>one tap</strong>
+        </p>
+
+        <div class="step">
+            <span class="step-number">1</span>
+            <strong>Drag this button to your bookmarks bar:</strong>
+            <br><br>
+            <a href="{bookmarklet}" class="drag-me">📦 UATP Capture</a>
+            <br><br>
+            <small>💡 On iPhone: Long press the button above → "Add Bookmark"</small>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span>
+            <strong>Visit ChatGPT or Claude:</strong>
+            <br><br>
+            <a href="https://chat.openai.com" style="color: #10b981;">chat.openai.com</a> or
+            <a href="https://claude.ai" style="color: #10b981;">claude.ai</a>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span>
+            <strong>Have a conversation, then tap your bookmark!</strong>
+            <br><br>
+            ✨ All messages automatically captured to your UATP system
+        </div>
+
+        <div class="demo-video">
+            <h3>✨ What You Get:</h3>
+            <div class="feature">
+                <span class="feature-icon">🤖</span>
+                <span>Works with ChatGPT and Claude (web versions)</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">⚡</span>
+                <span>One-tap capture of entire conversations</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🔒</span>
+                <span>Encrypted storage in your UATP system</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">📊</span>
+                <span>Automatic value tracking and attribution</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">💰</span>
+                <span>Economic modeling of your AI conversations</span>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <p><strong>🔗 Monitor your captures:</strong></p>
+            <a href="http://localhost:3000" style="color: #10b981; font-size: 18px;">
+                View UATP Dashboard
+            </a>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px; opacity: 0.8; font-size: 14px;">
+            <p>🛡️ All data stays on your device and UATP system</p>
+            <p>🚀 No external services or accounts required</p>
+        </div>
+    </div>
+</body>
+</html>"""
+
+    with open("uatp_instant_capture.html", "w") as f:
+        f.write(setup_html)
+
+    return "uatp_instant_capture.html"
+
+
+def main():
+    print("⚡ Creating UATP Instant Capture")
+    print("=" * 40)
+
+    # Create setup page
+    setup_file = create_setup_page()
+    print(f"✅ Setup page created: {setup_file}")
+
+    print("\n🎯 Instant Setup Instructions:")
+    print("1. Open: http://localhost:3001/uatp_instant_capture.html")
+    print("2. Drag the 'UATP Capture' button to bookmarks")
+    print("3. Visit ChatGPT or Claude")
+    print("4. Tap the bookmark after having a conversation")
+    print("5. Watch the magic happen! ✨")
+
+    print("\n🚀 This gives you:")
+    print("• 100% automatic conversation capture")
+    print("• Works immediately on iPhone Safari")
+    print("• No apps to install or configure")
+    print("• One-tap operation")
+    print("• Steve Jobs level simplicity")
+
+    print("\n📱 iPhone URL: http://192.168.1.79:3001/uatp_instant_capture.html")
+
+
+if __name__ == "__main__":
+    main()

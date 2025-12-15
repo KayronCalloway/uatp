@@ -13,8 +13,8 @@ from src.capsule_schema import (
     ReasoningTraceCapsule,
     Verification,
 )
+from src.crypto.post_quantum import pq_crypto
 from src.engine.capsule_engine import CapsuleEngine
-from src.engine.exceptions import UATPEngineError
 
 
 @pytest.fixture(scope="module")
@@ -145,6 +145,13 @@ async def test_all_capsule_types_e2e(engine, sample_payloads, capsule_type_enum)
     # Skip capsule types that don't have sample payloads
     if capsule_type_enum not in sample_payloads:
         pytest.skip(f"No sample payload for {capsule_type_enum}")
+
+    # Skip post-quantum tests when library is not available
+    if (
+        capsule_type_enum == CapsuleType.POST_QUANTUM_SIGNATURE
+        and not pq_crypto.dilithium_available
+    ):
+        pytest.skip("Post-quantum cryptography library (liboqs) not installed")
 
     payload = sample_payloads[capsule_type_enum]
     capsule_model = capsule_map[capsule_type_enum]

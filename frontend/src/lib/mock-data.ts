@@ -390,3 +390,93 @@ export async function mockApiCall<T>(data: T): Promise<T> {
   await simulateApiDelay();
   return data;
 }
+
+/**
+ * Generate mock recent activity feed
+ * In production, this would come from WebSocket/SSE or polling endpoint
+ */
+export function getMockRecentActivity() {
+  return {
+    activities: [
+      {
+        id: '1',
+        type: 'capsule_created',
+        status: 'success',
+        timestamp: new Date(Date.now() - 2 * 60 * 1000),
+        title: 'Chat capsule created',
+        description: 'Agent_A via OpenAI',
+        metadata: { agent: 'Agent_A', provider: 'OpenAI' }
+      },
+      {
+        id: '2',
+        type: 'trust_verified',
+        status: 'success',
+        timestamp: new Date(Date.now() - 5 * 60 * 1000),
+        title: 'Trust score verified',
+        description: 'Agent_B score +2.1',
+        metadata: { agent: 'Agent_B', score: 2.1 }
+      },
+      {
+        id: '3',
+        type: 'chain_sealed',
+        status: 'warning',
+        timestamp: new Date(Date.now() - 7 * 60 * 1000),
+        title: 'Chain seal pending',
+        description: 'chain-7d4bec awaiting confirmation',
+        metadata: { chainId: 'chain-7d4bec' }
+      },
+      {
+        id: '4',
+        type: 'attribution_paid',
+        status: 'success',
+        timestamp: new Date(Date.now() - 10 * 60 * 1000),
+        title: 'Attribution paid',
+        description: 'Agent_A earned $127.50',
+        metadata: { agent: 'Agent_A', amount: 127.50 }
+      },
+      {
+        id: '5',
+        type: 'reasoning_verified',
+        status: 'success',
+        timestamp: new Date(Date.now() - 12 * 60 * 1000),
+        title: 'Reasoning verified',
+        description: 'Agent_C via Dilithium signature',
+        metadata: { agent: 'Agent_C', signature: 'Dilithium' }
+      },
+      {
+        id: '6',
+        type: 'federation_sync',
+        status: 'success',
+        timestamp: new Date(Date.now() - 15 * 60 * 1000),
+        title: 'Federation sync complete',
+        description: 'EU-Node synchronized 245 items',
+        metadata: { itemCount: 245 }
+      },
+      {
+        id: '7',
+        type: 'spatial_capture',
+        status: 'success',
+        timestamp: new Date(Date.now() - 18 * 60 * 1000),
+        title: 'Spatial capsule created',
+        description: 'ZED_Camera_01 perception data',
+        metadata: { agent: 'ZED_Camera_01' }
+      },
+    ]
+  };
+}
+
+/**
+ * Generate mock system health metrics
+ * In production, this would come from system monitoring endpoints
+ */
+export function getMockHealthMetrics() {
+  return {
+    metrics: [
+      { name: 'capture', label: 'Capture', value: 100, status: 'healthy', icon: 'Radio' },
+      { name: 'trust', label: 'Trust', value: 82, status: 'warning', icon: 'Shield' },
+      { name: 'economics', label: 'Economics', value: 100, status: 'healthy', icon: 'DollarSign' },
+      { name: 'federation', label: 'Federation', value: 85, status: 'healthy', icon: 'Globe' },
+      { name: 'governance', label: 'Governance', value: 100, status: 'healthy', icon: 'Scale' },
+    ]
+  };
+}

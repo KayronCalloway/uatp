@@ -8,18 +8,16 @@ capture and automatic capsule generation.
 """
 
 import asyncio
-import json
 import logging
 import os
 import sys
 import time
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
+from typing import Any, Dict, List, Optional
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from live_capture.real_time_capsule_generator import capture_live_interaction
+from src.live_capture.real_time_capsule_generator import capture_live_interaction
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +31,7 @@ class OpenAILiveCapture:
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.session_id = f"openai_session_{int(time.time())}"
 
-        logger.info(f"🤖 OpenAI Live Capture initialized")
+        logger.info("🤖 OpenAI Live Capture initialized")
         logger.info(f"   User ID: {user_id}")
         logger.info(f"   Session ID: {self.session_id}")
         logger.info(f"   API Key: {'✅ Set' if self.api_key else '❌ Missing'}")
@@ -347,10 +345,10 @@ async def main():
 def fibonacci_dp(n):
     '''
     Calculate the nth Fibonacci number using dynamic programming (bottom-up approach).
-    
+
     Args:
         n (int): The position in the Fibonacci sequence (0-indexed)
-        
+
     Returns:
         int: The nth Fibonacci number
     '''
@@ -358,16 +356,16 @@ def fibonacci_dp(n):
         return 0
     elif n == 1:
         return 1
-    
+
     # Create a DP table to store results
     dp = [0] * (n + 1)
     dp[0] = 0
     dp[1] = 1
-    
+
     # Fill the DP table bottom-up
     for i in range(2, n + 1):
         dp[i] = dp[i - 1] + dp[i - 2]
-    
+
     return dp[n]
 
 # Example usage
@@ -399,15 +397,15 @@ def fibonacci_optimized(n):
         return 0
     elif n == 1:
         return 1
-    
+
     prev2 = 0  # F(i-2)
     prev1 = 1  # F(i-1)
-    
+
     for i in range(2, n + 1):
         current = prev1 + prev2
         prev2 = prev1
         prev1 = current
-    
+
     return prev1
 ```
 
@@ -490,9 +488,9 @@ def authenticate_user(username: str, password: str):
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = utc_now() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = utc_now() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -510,7 +508,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    
+
     user = fake_users_db.get(username)
     if user is None:
         raise credentials_exception
@@ -524,13 +522,13 @@ async def register(user: UserCreate):
             status_code=400,
             detail="Username already registered"
         )
-    
+
     hashed_password = pwd_context.hash(user.password)
     fake_users_db[user.username] = {
         "username": user.username,
         "hashed_password": hashed_password
     }
-    
+
     return {"message": "User registered successfully"}
 
 @app.post("/login", response_model=Token)
@@ -542,13 +540,13 @@ async def login(user: UserLogin):
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": authenticated_user["username"]}, 
+        data={"sub": authenticated_user["username"]},
         expires_delta=access_token_expires
     )
-    
+
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/protected")

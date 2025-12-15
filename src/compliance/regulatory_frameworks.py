@@ -7,7 +7,7 @@ import hashlib
 import json
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -1259,3 +1259,25 @@ class RegulatoryComplianceSystem:
     async def get_audit_log(self, limit: int = 100) -> List[Dict[str, Any]]:
         """Get audit log entries"""
         return self.audit_log[-limit:] if limit else self.audit_log
+
+
+@dataclass
+class ValidationResult:
+    """Result of compliance validation"""
+
+    is_valid: bool
+    validation_id: str
+    timestamp: datetime
+    messages: List[str] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        data = asdict(self)
+        data["timestamp"] = self.timestamp.isoformat()
+        return data
+
+
+# Type alias for backwards compatibility with test imports
+RegulatoryComplianceFramework = ComplianceFramework

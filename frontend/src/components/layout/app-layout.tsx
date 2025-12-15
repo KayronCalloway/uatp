@@ -6,35 +6,20 @@ import { Button } from '@/components/ui/button';
 import { NotificationSystem } from '@/components/notifications/notification-system';
 import { OnboardingBanner } from '@/components/onboarding/onboarding-banner';
 import { DemoModeToggle } from '@/components/ui/demo-mode-toggle';
-import { 
-  Globe, 
-  Database, 
-  Shield, 
-  TrendingUp, 
-  Settings, 
+import {
+  Globe,
+  Database,
+  Activity,
   LogOut,
   Menu,
-  X,
-  Network,
-  Vote,
-  Building,
-  Brain,
-  Crown,
-  Activity,
-  Lock,
-  Database as DatabaseIcon,
-  Search,
-  DollarSign,
-  ShieldCheck,
-  Key,
-  Zap
+  X
 } from 'lucide-react';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-export type ViewType = 'dashboard' | 'capsules' | 'trust' | 'analytics' | 'universe' | 'federation' | 'governance' | 'organization' | 'attribution' | 'rights-evolution' | 'live-capture' | 'chain-sealing' | 'akc' | 'mirror-mode' | 'payments' | 'compliance' | 'platforms' | 'reasoning' | 'system' | 'debug' | 'settings';
+export type ViewType = 'home' | 'capsules' | 'system';
 
 interface NavigationItem {
   id: ViewType;
@@ -45,130 +30,22 @@ interface NavigationItem {
 
 const navigationItems: NavigationItem[] = [
   {
-    id: 'dashboard',
-    label: 'Dashboard',
-    icon: TrendingUp,
-    description: 'System overview and metrics'
+    id: 'home',
+    label: 'Home',
+    icon: Globe,
+    description: 'Universal Autonomous Transaction Protocol'
   },
   {
     id: 'capsules',
     label: 'Capsules',
     icon: Database,
-    description: 'Explore and manage capsules'
-  },
-  {
-    id: 'trust',
-    label: 'Trust',
-    icon: Shield,
-    description: 'Trust scores and security'
-  },
-  {
-    id: 'analytics',
-    label: 'Analytics',
-    icon: TrendingUp,
-    description: 'Economic and governance analytics'
-  },
-  {
-    id: 'universe',
-    label: 'Universe',
-    icon: Globe,
-    description: 'Cosmic capsule visualization'
-  },
-  {
-    id: 'federation',
-    label: 'Federation',
-    icon: Network,
-    description: 'Multi-node network coordination'
-  },
-  {
-    id: 'governance',
-    label: 'Governance',
-    icon: Vote,
-    description: 'Voting and proposals'
-  },
-  {
-    id: 'organization',
-    label: 'Organization',
-    icon: Building,
-    description: 'Team and enterprise management'
-  },
-  {
-    id: 'attribution',
-    label: 'Attribution',
-    icon: Brain,
-    description: 'Advanced attribution algorithms'
-  },
-  {
-    id: 'rights-evolution',
-    label: 'Rights Evolution',
-    icon: Crown,
-    description: 'AI rights and autonomy tracking'
-  },
-  {
-    id: 'live-capture',
-    label: 'Live Capture',
-    icon: Activity,
-    description: 'Real-time conversation monitoring'
-  },
-  {
-    id: 'chain-sealing',
-    label: 'Chain Sealing',
-    icon: Lock,
-    description: 'Cryptographic chain integrity'
-  },
-  {
-    id: 'akc',
-    label: 'AKC',
-    icon: DatabaseIcon,
-    description: 'Automatic Knowledge Classification'
-  },
-  {
-    id: 'mirror-mode',
-    label: 'Mirror Mode',
-    icon: Search,
-    description: 'Security auditing & compliance'
-  },
-  {
-    id: 'payments',
-    label: 'Payments',
-    icon: DollarSign,
-    description: 'Economic transactions & payouts'
-  },
-  {
-    id: 'compliance',
-    label: 'Compliance',
-    icon: ShieldCheck,
-    description: 'Regulatory compliance monitoring'
-  },
-  {
-    id: 'platforms',
-    label: 'Platforms',
-    icon: Key,
-    description: 'AI platform & API key management'
-  },
-  {
-    id: 'reasoning',
-    label: 'Reasoning',
-    icon: Brain,
-    description: 'Advanced multi-step reasoning analysis'
+    description: 'Browse and verify transaction capsules'
   },
   {
     id: 'system',
-    label: 'System Graph',
-    icon: Network,
-    description: 'Complete UATP ecosystem visualization'
-  },
-  {
-    id: 'debug',
-    label: 'Debug',
-    icon: Shield,
-    description: 'Connection testing and hallucination detection'
-  },
-  {
-    id: 'settings',
-    label: 'Settings',
-    icon: Settings,
-    description: 'System configuration'
+    label: 'System',
+    icon: Activity,
+    description: 'System health and status'
   }
 ];
 
@@ -187,7 +64,7 @@ export function AppLayoutWithNav({ children, currentView, onViewChange }: AppLay
     <div className="flex h-screen bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -223,7 +100,7 @@ export function AppLayoutWithNav({ children, currentView, onViewChange }: AppLay
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentView === item.id;
-                
+
                 return (
                   <button
                     key={item.id}
@@ -233,8 +110,8 @@ export function AppLayoutWithNav({ children, currentView, onViewChange }: AppLay
                     }}
                     className={`
                       w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors
-                      ${isActive 
-                        ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                      ${isActive
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                       }
                     `}
@@ -277,7 +154,7 @@ export function AppLayoutWithNav({ children, currentView, onViewChange }: AppLay
               >
                 <Menu className="h-5 w-5" />
               </Button>
-              
+
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">
                   {currentItem?.label}
@@ -287,11 +164,11 @@ export function AppLayoutWithNav({ children, currentView, onViewChange }: AppLay
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <DemoModeToggle />
               <div className="hidden xl:block text-sm text-gray-500">
-                Civilization-grade AI attribution infrastructure
+                Universal Autonomous Transaction Protocol
               </div>
             </div>
           </div>
@@ -304,7 +181,7 @@ export function AppLayoutWithNav({ children, currentView, onViewChange }: AppLay
             {children}
           </div>
         </main>
-        
+
         {/* Notification System */}
         <NotificationSystem />
       </div>

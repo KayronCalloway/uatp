@@ -6,48 +6,41 @@ Comprehensive API endpoints for enterprise features including SSO, governance,
 compliance reporting, rate limiting, and multi-tenant management.
 """
 
-import json
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Query, Body
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
+from fastapi.responses import FileResponse
+from fastapi.security import HTTPBearer
+from pydantic import BaseModel
 
-from ..auth.enterprise_sso import (
-    EnterpriseSSO,
-    EnterpriseConfig,
-    SAMLConfig,
-    OIDCConfig,
-    EnterpriseUser,
-    require_permission,
-    require_role,
-    sso_manager,
-)
-from ..governance.enterprise_governance import (
-    EnterpriseGovernance,
-    GovernancePolicy,
-    PolicyViolation,
-    AuditEvent,
-    ComplianceFramework,
-    PolicyType,
-    ViolationSeverity,
-)
-from ..compliance.reporting_engine import (
-    ComplianceReportingEngine,
-    ComplianceReport,
-    ReportFormat,
-    ReportFrequency,
-)
 from ..api.enterprise_rate_limiting import (
     EnterpriseRateLimiter,
     OrganizationPlan,
     OrganizationTier,
-    UsageRecord,
 )
+from ..auth.enterprise_sso import (
+    EnterpriseConfig,
+    EnterpriseUser,
+    OIDCConfig,
+    SAMLConfig,
+    require_permission,
+    require_role,
+    sso_manager,
+)
+from ..compliance.reporting_engine import (
+    ComplianceReportingEngine,
+    ReportFormat,
+)
+from ..governance.enterprise_governance import (
+    EnterpriseGovernance,
+    GovernancePolicy,
+    PolicyType,
+    ViolationSeverity,
+)
+from ..utils.timezone_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -229,15 +222,15 @@ async def create_governance_policy(
             rules.append(rule)
 
         policy = GovernancePolicy(
-            policy_id=f"pol_{int(datetime.utcnow().timestamp())}",
+            policy_id=f"pol_{int(utc_now().timestamp())}",
             name=policy_request.name,
             description=policy_request.description,
             policy_type=PolicyType(policy_request.policy_type),
             status="pending_approval" if policy_request.approval_required else "active",
             rules=rules,
             created_by=current_user.user_id,
-            created_at=datetime.utcnow(),
-            effective_date=datetime.utcnow(),
+            created_at=utc_now(),
+            effective_date=utc_now(),
             approval_required=policy_request.approval_required,
             auto_enforce=policy_request.auto_enforce,
         )
@@ -611,10 +604,10 @@ async def update_organization_plan(
     """Update organization subscription plan."""
     try:
         from ..api.enterprise_rate_limiting import (
-            RateLimit,
-            UsageQuota,
-            RateLimitType,
             QuotaType,
+            RateLimit,
+            RateLimitType,
+            UsageQuota,
         )
 
         # Create rate limits
@@ -641,7 +634,7 @@ async def update_organization_plan(
 
         # Create organization plan
         plan = OrganizationPlan(
-            plan_id=f"custom_{int(datetime.utcnow().timestamp())}",
+            plan_id=f"custom_{int(utc_now().timestamp())}",
             organization_id=organization_id,
             tier=OrganizationTier(plan_request.tier),
             plan_name=plan_request.plan_name,
@@ -751,7 +744,7 @@ async def enterprise_health_check():
     try:
         health_status = {
             "status": "healthy",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": utc_now().isoformat(),
             "components": {
                 "sso": {
                     "status": "healthy",
@@ -790,7 +783,7 @@ async def enterprise_health_check():
         return {
             "status": "unhealthy",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": utc_now().isoformat(),
         }
 
 
@@ -805,11 +798,11 @@ async def get_dashboard_summary(
         recent_violations = [
             v
             for v in governance_system.violations
-            if v.detected_at >= datetime.utcnow() - timedelta(days=7)
+            if v.detected_at >= utc_now() - timedelta(days=7)
         ]
 
         # Get usage summary
-        end_date = datetime.utcnow()
+        end_date = utc_now()
         start_date = end_date - timedelta(days=30)
         usage_analytics = await rate_limiter.get_usage_analytics(
             current_user.organization_id, start_date, end_date

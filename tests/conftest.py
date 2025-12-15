@@ -9,18 +9,20 @@ import asyncio
 import os
 import tempfile
 from pathlib import Path
-from typing import Dict, Any
-from unittest.mock import Mock, AsyncMock
+from typing import Any
+from unittest.mock import Mock
 
 import pytest
+import pytest_asyncio
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from src.config.production_settings import Environment, UATPSettings
+
 # Import core components for testing
-from src.core.circuit_breaker import CircuitBreakerManager, CircuitBreakerConfig
-from src.core.jwt_auth import JWTAuthenticator, AuthConfig
+from src.core.circuit_breaker import CircuitBreakerConfig, CircuitBreakerManager
 from src.core.dependency_injection import ServiceContainer
-from src.config.production_settings import UATPSettings, Environment
+from src.core.jwt_auth import AuthConfig, JWTAuthenticator
 
 
 @pytest.fixture(scope="session")
@@ -461,40 +463,128 @@ def mock_openai_client():
     return MockOpenAIClient()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def engine():
     """CapsuleEngine instance for testing"""
-    from src.engine.capsule_engine import CapsuleEngine
-    from src.core.database import DatabaseManager
+    import os
 
-    # Create test database manager
-    db_manager = DatabaseManager(database_url="sqlite:///:memory:")
-    await db_manager.init_engine()
-    await db_manager.create_tables()
+    from src.core.database import db
+    from src.engine.capsule_engine import CapsuleEngine
+
+    # Set test database URL
+    os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
+
+    # Initialize database
+    db.init_app(None)
+    await db.create_all()
 
     # Create engine instance
-    test_engine = CapsuleEngine(db_manager=db_manager)
+    test_engine = CapsuleEngine(db_manager=db)
 
     yield test_engine
 
     # Cleanup
-    await db_manager.engine.dispose()
+    if db.engine:
+        await db.engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def engine_with_signed_capsules():
+    """Create engine with pre-created signed capsules for testing"""
+    import os
+    import uuid
+    from datetime import datetime, timezone
+
+    from src.capsule_schema import (
+        CapsuleStatus,
+        ReasoningStep,
+        ReasoningTraceCapsule,
+        ReasoningTracePayload,
+        Verification,
+    )
+    from src.core.database import db
+    from src.engine.capsule_engine import CapsuleEngine
+
+    # Set test database URL
+    os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
+
+    # Initialize database
+    db.init_app(None)
+    await db.create_all()
+
+    # Create engine instance
+    test_engine = CapsuleEngine(db_manager=db)
+
+    created_capsules = []
+
+    # Create 3 test capsules with signatures
+    for i in range(3):
+        # Create unsigned capsule
+        unsigned_capsule = ReasoningTraceCapsule(
+            capsule_id=f"caps_{datetime.now(timezone.utc).strftime('%Y_%m_%d')}_{uuid.uuid4().hex[:16]}",
+            timestamp=datetime.now(timezone.utc),
+            status=CapsuleStatus.DRAFT,
+            verification=Verification(
+                signature=f"ed25519:{'0'*128}", merkle_root=f"sha256:{'0'*64}"
+            ),
+            reasoning_trace=ReasoningTracePayload(
+                reasoning_steps=[
+                    ReasoningStep(
+                        step_id=1,
+                        operation="observation",
+                        reasoning=f"Test reasoning step for capsule {i}",
+                        confidence=0.9,
+                    )
+                ],
+                total_confidence=0.9,
+            ),
+        )
+        # Sign and store capsule
+        signed_capsule = await test_engine.create_capsule_async(unsigned_capsule)
+        created_capsules.append(signed_capsule)
+
+    yield test_engine, created_capsules
+
+    # Cleanup
+    if db.engine:
+        await db.engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def async_session_factory():
+    """Create a database manager for testing (async session factory)"""
+    import os
+
+    from src.core.database import db
+
+    # Set test database URL
+    os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
+
+    # Initialize database
+    db.init_app(None)
+    await db.create_all()
+
+    yield db
+
+    # Cleanup
+    if db.engine:
+        await db.engine.dispose()
 
 
 @pytest.fixture
 def mock_policy_manager(mock_db_manager):
     """PolicyManager instance for testing"""
+    import uuid
+    from datetime import datetime
+
     from src.insurance.policy_manager import (
-        PolicyManager,
-        PolicyStatus,
         Policy,
         PolicyHolder,
+        PolicyManager,
+        PolicyStatus,
         PolicyTerms,
     )
-    from src.insurance.risk_assessor import RiskLevel, DecisionCategory
-    from unittest.mock import AsyncMock, patch
-    from datetime import datetime
-    import uuid
+    from src.insurance.risk_assessor import DecisionCategory, RiskLevel
 
     manager = PolicyManager(database_manager=mock_db_manager)
 

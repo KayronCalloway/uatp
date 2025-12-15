@@ -13,14 +13,12 @@ Risk Factors Analyzed:
 6. Historical Performance - Past capsule verification success rate
 """
 
-import hashlib
-import json
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
-from ..crypto_utils import verify_capsule
+from ..utils.timezone_utils import utc_now
 
 
 class RiskLevel(str, Enum):
@@ -210,7 +208,7 @@ class RiskAssessor:
             policy_term_months=policy_term,
             conditions=conditions,
             exclusions=exclusions,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
         )
 
     async def _assess_chain_integrity(self, capsule_chain: List[Dict]) -> RiskFactor:
@@ -527,9 +525,10 @@ class RiskAssessor:
         Queries database for past capsules and calculates success rate.
         """
         try:
+            from sqlalchemy import and_, func, select
+
             from src.core.database import db
             from src.models.capsule import CapsuleModel
-            from sqlalchemy import select, func, and_
 
             # Query user's historical capsules
             async with db.session() as session:

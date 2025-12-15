@@ -51,7 +51,7 @@ export function Dashboard({ onViewChange }: DashboardProps) {
       if (isDemoMode) {
         return mockApiCall(getMockCapsuleStats());
       }
-      return api.getCapsuleStats();
+      return api.getCapsuleStats(false);  // false = live data only (exclude demo capsules)
     },
     refetchInterval: 60000, // Refresh every minute
     retry: isDemoMode ? 0 : 3,
@@ -191,10 +191,10 @@ export function Dashboard({ onViewChange }: DashboardProps) {
                     <span className="text-sm font-medium capitalize">{type}</span>
                     <div className="flex items-center space-x-2">
                       <div className="w-32 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full" 
-                          style={{ 
-                            width: `${((count as number) / (statsData?.total_capsules || 1)) * 100}%` 
+                        <div
+                          className="bg-blue-600 h-2 rounded-full"
+                          style={{
+                            width: `${((count as number) / (statsData?.total_capsules || 1)) * 100}%`
                           }}
                         />
                       </div>
@@ -213,32 +213,32 @@ export function Dashboard({ onViewChange }: DashboardProps) {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               variant="outline"
               onClick={() => onViewChange?.('capsules')}
             >
               <Database className="h-4 w-4 mr-2" />
               View Capsules
             </Button>
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               variant="outline"
               onClick={() => onViewChange?.('analytics')}
             >
               <TrendingUp className="h-4 w-4 mr-2" />
               Analytics
             </Button>
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               variant="outline"
               onClick={() => onViewChange?.('trust')}
             >
               <Shield className="h-4 w-4 mr-2" />
               Trust Dashboard
             </Button>
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               variant="outline"
               onClick={() => onViewChange?.('universe')}
             >

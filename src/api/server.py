@@ -11,16 +11,15 @@ import os
 
 from asgi_caches.middleware import CacheMiddleware
 from caches import Cache
-from src.core.database import db
 from dotenv import load_dotenv
-from src.engine.capsule_engine import CapsuleEngine
 from quart import g, jsonify
-from quart_cors import cors
 from quart_rate_limiter import RateLimiter
-from quart_schema import Info, QuartSchema, tag
+from quart_schema import Info, QuartSchema
 from quart_schema.validation import DataSource
 
 from src.config.settings import Settings
+from src.core.database import db
+from src.engine.capsule_engine import CapsuleEngine
 
 from .custom_quart import CustomQuart
 from .logger import configure_logging
@@ -42,15 +41,6 @@ def create_app(config_overrides: dict = None, engine_override: CapsuleEngine = N
     app.config.from_object(config)
     if config_overrides:
         app.config.update(config_overrides)
-
-    # Enable mobile/cross-origin support for iOS
-    app.config["QUART_CORS_ALLOW_ORIGIN"] = ["*"]  # Allow iOS connections
-    app.config["QUART_CORS_ALLOW_METHODS"] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    app.config["QUART_CORS_ALLOW_HEADERS"] = [
-        "Content-Type",
-        "Authorization",
-        "X-API-Key",
-    ]
 
     # Set default Flask config values that Quart might expect
     app.config.setdefault("QUART_SCHEMA_CONVERT_CASING", False)
@@ -92,17 +82,18 @@ def create_app(config_overrides: dict = None, engine_override: CapsuleEngine = N
     from src.models.capsule import CapsuleModel  # noqa
     from src.models.payment import PayoutMethodModel, TransactionModel  # noqa
     from src.models.user import UserModel  # noqa
-    from src.models.user_management import (
-        UserSessionModel,
-        IdentityVerificationModel,
-    )  # noqa
+    from src.models.outcome import (  # noqa
+        CapsuleOutcomeModel,
+        ConfidenceCalibrationModel,
+        ReasoningPatternModel,
+    )
 
     try:
         from src.insurance.models import (
-            InsurancePolicy,
-            InsuranceClaim,
             AILiabilityEventLog,
-        )  # noqa
+            InsuranceClaim,
+            InsurancePolicy,
+        )
     except ImportError:
         pass  # Insurance models may not exist yet
 
@@ -117,31 +108,9 @@ def create_app(config_overrides: dict = None, engine_override: CapsuleEngine = N
     # Initialize other extensions
     limiter.init_app(app)
 
-    # CORS - Production-safe configuration
-    allowed_origins = os.getenv(
-        "CORS_ALLOWED_ORIGINS",
-        "https://uatp.app,https://api.uatp.app,https://dashboard.uatp.app",
-    ).split(",")
-
-    # Add localhost for development only
-    if os.getenv("ENVIRONMENT") == "development":
-        allowed_origins.extend(
-            ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"]
-        )
-
-    cors(
-        app,
-        allow_origin=allowed_origins,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=[
-            "Content-Type",
-            "Authorization",
-            "X-API-Key",
-            "X-Correlation-ID",
-        ],
-        expose_headers=["X-Correlation-ID"],
-        allow_credentials=True,
-    )
+    # CORS is now handled manually in before_request and after_request hooks
+    # to provide better control and avoid middleware conflicts
+    # See the create_session() and close_session() functions below
 
     # Initialize security middleware
     from .security_middleware import SecurityMiddleware
@@ -154,30 +123,31 @@ def create_app(config_overrides: dict = None, engine_override: CapsuleEngine = N
 
     # Import and register blueprints
     from .ai_routes import ai_bp
-    from .chain_routes import chain_bp
-    from .dependencies import get_engine, require_api_key
-    from .health_routes import health_bp
-    from .live_capture_routes import live_capture_bp
-    from .metrics import render_metrics, setup_metrics_hooks
-    from .mobile_routes import mobile_bp
-    from .webauthn_routes import webauthn_bp
-    from .insurance_routes import insurance_bp
-    from .reasoning_api import create_reasoning_blueprint
-    from .mirror_mode_api import create_mirror_mode_api_blueprint
-    from .rights_evolution_api import create_rights_evolution_api_blueprint
     from .bonds_citizenship_api import create_bonds_citizenship_api_blueprint
     from .capsule_routes import capsules_bp
-    from .trust_routes import trust_bp
-    from .governance_routes import governance_bp
-    from .federation_routes import federation_bp
-    from .organization_routes import organization_bp
+    from .chain_routes import chain_bp
+    from .dependencies import get_engine, require_api_key
     from .economics_routes import economics_bp
-    from .user_routes import create_user_blueprint
-    from .platform_routes import create_platform_blueprint
-    from .security_routes import create_security_blueprint
-    from .security_dashboard import create_security_dashboard_blueprint
-    from .spatial_routes import spatial_bp, init_spatial_providers
+    from .federation_routes import federation_bp
+    from .governance_routes import governance_bp
+    from .health_routes import health_bp
+    from .insurance_routes import insurance_bp
+    from .live_capture_routes import live_capture_bp
+    from .metrics import render_metrics, setup_metrics_hooks
+    from .mirror_mode_api import create_mirror_mode_api_blueprint
+    from .mobile_routes import mobile_bp
     from .monitoring_routes import monitoring_bp
+    from .organization_routes import organization_bp
+    from .outcome_routes_quart import outcome_bp
+    from .platform_routes import create_platform_blueprint
+    from .reasoning_api import create_reasoning_blueprint
+    from .rights_evolution_api import create_rights_evolution_api_blueprint
+    from .security_dashboard import create_security_dashboard_blueprint
+    from .security_routes import create_security_blueprint
+    from .spatial_routes import init_spatial_providers, spatial_bp
+    from .trust_routes import trust_bp
+    from .user_routes import create_user_blueprint
+    from .webauthn_routes import webauthn_bp
 
     reasoning_bp = create_reasoning_blueprint(
         engine_getter=get_engine, require_api_key=require_api_key
@@ -236,6 +206,8 @@ def create_app(config_overrides: dict = None, engine_override: CapsuleEngine = N
     app.register_blueprint(economics_bp, url_prefix="/economics")
     app.register_blueprint(monitoring_bp)  # Performance and security monitoring
     app.logger.info("✅ Monitoring routes registered at /api/v1/monitoring")
+    app.register_blueprint(outcome_bp)  # Outcome tracking and learning
+    app.logger.info("✅ Outcome tracking routes registered at /outcomes")
 
     # Register onboarding blueprint with error handling
     if onboarding_bp is not None:
@@ -301,9 +273,9 @@ def create_app(config_overrides: dict = None, engine_override: CapsuleEngine = N
         app.logger.info("Initializing unified security systems...")
         try:
             from ..security.security_manager import (
-                initialize_security_manager,
                 SecurityConfiguration,
                 SecurityLevel,
+                initialize_security_manager,
             )
 
             # Create security configuration
@@ -336,8 +308,9 @@ def create_app(config_overrides: dict = None, engine_override: CapsuleEngine = N
         # Start live conversation monitor background tasks
         app.logger.info("Starting live conversation monitor...")
         try:
-            from ..live_capture.conversation_monitor import get_monitor
             import asyncio
+
+            from ..live_capture.conversation_monitor import get_monitor
 
             # Get the monitor instance (same one used by API routes)
             monitor = get_monitor(
@@ -387,10 +360,78 @@ def create_app(config_overrides: dict = None, engine_override: CapsuleEngine = N
 
     @app.before_request
     async def create_session():
+        # Handle OPTIONS requests immediately
+        from quart import request
+
+        if request.method == "OPTIONS":
+            from quart import make_response
+
+            response = await make_response("", 200)
+            origin = request.headers.get("Origin")
+
+            # Determine allowed origins
+            allowed_origins = os.getenv(
+                "CORS_ALLOWED_ORIGINS",
+                "https://uatp.app,https://api.uatp.app,https://dashboard.uatp.app",
+            ).split(",")
+
+            # Add localhost for development
+            if os.getenv("ENVIRONMENT") == "development":
+                allowed_origins.extend(
+                    [
+                        "http://localhost:3000",
+                        "http://localhost:3001",
+                        "http://127.0.0.1:3000",
+                        "http://127.0.0.1:3001",
+                    ]
+                )
+
+            # Set CORS headers if origin is allowed
+            if origin in allowed_origins:
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Methods"] = (
+                    "GET, POST, PUT, DELETE, OPTIONS"
+                )
+                response.headers["Access-Control-Allow-Headers"] = (
+                    "Content-Type, Authorization, X-API-Key, X-Correlation-ID"
+                )
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+                response.headers["Access-Control-Max-Age"] = "3600"
+
+            return response
+
         g.db_session = db.get_session()
 
     @app.after_request
     async def close_session(response):
+        # Add CORS headers to all responses
+        from quart import request
+
+        origin = request.headers.get("Origin")
+
+        # Determine allowed origins
+        allowed_origins = os.getenv(
+            "CORS_ALLOWED_ORIGINS",
+            "https://uatp.app,https://api.uatp.app,https://dashboard.uatp.app",
+        ).split(",")
+
+        # Add localhost for development
+        if os.getenv("ENVIRONMENT") == "development":
+            allowed_origins.extend(
+                [
+                    "http://localhost:3000",
+                    "http://localhost:3001",
+                    "http://127.0.0.1:3000",
+                    "http://127.0.0.1:3001",
+                ]
+            )
+
+        # Set CORS headers if origin is allowed
+        if origin in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Expose-Headers"] = "X-Correlation-ID"
+
         if hasattr(g, "db_session"):
             await g.db_session.close()
         return response
