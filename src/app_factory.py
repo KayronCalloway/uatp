@@ -16,9 +16,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from prometheus_client import Counter, Histogram, generate_latest
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
+
+# Import Redis-backed rate limiter (replaces in-memory slowapi)
+from .middleware.rate_limiting import (
+    RateLimitMiddleware,
+    RateLimitConfig,
+    create_rate_limiter,
+)
 
 from src.utils.timezone_utils import utc_now
 
@@ -67,25 +71,32 @@ def configure_logging():
 
 
 def create_metrics():
-    """Create Prometheus metrics"""
-    return {
-        "REQUEST_COUNT": Counter(
-            "http_requests_total",
-            "Total HTTP requests",
-            ["method", "endpoint", "status"],
-        ),
-        "REQUEST_DURATION": Histogram(
-            "http_request_duration_seconds", "HTTP request duration"
-        ),
-        "ATTRIBUTION_PROCESSING_TIME": Histogram(
+    """Get Prometheus metrics from monitoring module to prevent duplicates."""
+    from prometheus_client import REGISTRY, Histogram
+
+    # Import metrics from monitoring module (which handles deduplication)
+    from .middleware.monitoring import REQUEST_COUNT, REQUEST_DURATION
+
+    # Create attribution metric if not exists
+    if "attribution_processing_duration_seconds" in REGISTRY._names_to_collectors:
+        attribution_metric = REGISTRY._names_to_collectors[
+            "attribution_processing_duration_seconds"
+        ]
+    else:
+        attribution_metric = Histogram(
             "attribution_processing_duration_seconds", "Attribution processing time"
-        ),
+        )
+
+    return {
+        "REQUEST_COUNT": REQUEST_COUNT,
+        "REQUEST_DURATION": REQUEST_DURATION,
+        "ATTRIBUTION_PROCESSING_TIME": attribution_metric,
     }
 
 
 def create_limiter():
-    """Create rate limiter"""
-    return Limiter(key_func=get_remote_address)
+    """Create rate limiter configuration for Redis-backed rate limiting."""
+    return RateLimitConfig()
 
 
 @asynccontextmanager
@@ -125,7 +136,15 @@ async def lifespan(app: FastAPI):
         logger.info("Initializing live capture conversation monitor...")
         from .live_capture.conversation_monitor import get_monitor
 
-        app.state.conversation_monitor = get_monitor(db_manager=db_manager)
+        app.state.conversation_monitor = get_monitor(db_manager=db)
+
+        # Start monitoring in background
+        import asyncio
+
+        app.state.monitor_task = asyncio.create_task(
+            app.state.conversation_monitor.start_monitoring()
+        )
+
         logger.info(
             f"Live capture enabled with significance threshold: {app.state.conversation_monitor.significance_threshold}"
         )
@@ -152,8 +171,10 @@ async def lifespan(app: FastAPI):
         logger.error("Error during shutdown", error=str(e))
 
 
-def setup_middleware(app: FastAPI, limiter: Limiter, metrics: Dict[str, Any]):
+def setup_middleware(app: FastAPI, limiter: RateLimitConfig, metrics: Dict[str, Any]):
     """Setup application middleware"""
+    logger = structlog.get_logger(__name__)
+
     # CORS - Production-safe configuration
     # Get allowed origins from environment or use secure defaults
     allowed_origins = os.getenv(
@@ -187,9 +208,25 @@ def setup_middleware(app: FastAPI, limiter: Limiter, metrics: Dict[str, Any]):
     allowed_hosts = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
-    # Rate limiting
-    app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    # Redis-backed rate limiting middleware
+    # Uses sliding window algorithm with Redis for distributed rate limiting
+    use_redis = os.getenv("RATE_LIMIT_USE_REDIS", "true").lower() == "true"
+    if use_redis:
+        logger.info("🚀 Using Redis-backed rate limiter (production mode)")
+        app.add_middleware(RateLimitMiddleware, config=limiter)
+    else:
+        logger.warning("⚠️ Using in-memory rate limiter (development mode only)")
+        # Fallback: create in-memory limiter for development
+        from .middleware.rate_limiting import InMemoryRateLimiter
+
+        class InMemoryRateLimitMiddleware(RateLimitMiddleware):
+            def __init__(self, app, config):
+                super().__init__(app, config)
+                self.limiter = InMemoryRateLimiter(config)
+
+        app.add_middleware(InMemoryRateLimitMiddleware, config=limiter)
+
+    app.state.rate_limit_config = limiter
 
     # Authentication and security middleware
     setup_auth_middleware(app)
@@ -199,32 +236,44 @@ def setup_middleware(app: FastAPI, limiter: Limiter, metrics: Dict[str, Any]):
     @app.middleware("http")
     async def metrics_middleware(request: Request, call_next):
         """Collect HTTP metrics and add correlation IDs"""
+        import time as time_module
+
         # Generate or extract correlation ID
         correlation_id = request.headers.get("X-Correlation-ID") or str(uuid.uuid4())
 
         # Add correlation ID to request state for access in route handlers
         request.state.correlation_id = correlation_id
 
-        with metrics["REQUEST_DURATION"].time():
-            try:
-                response = await call_next(request)
+        start_time = time_module.time()
+        try:
+            response = await call_next(request)
 
-                # Add correlation ID to response headers
-                response.headers["X-Correlation-ID"] = correlation_id
+            # Record duration with labels
+            duration = time_module.time() - start_time
+            metrics["REQUEST_DURATION"].labels(
+                method=request.method, endpoint=request.url.path
+            ).observe(duration)
 
-                metrics["REQUEST_COUNT"].labels(
-                    method=request.method,
-                    endpoint=request.url.path,
-                    status=response.status_code,
-                ).inc()
+            # Add correlation ID to response headers
+            response.headers["X-Correlation-ID"] = correlation_id
 
-                return response
+            metrics["REQUEST_COUNT"].labels(
+                method=request.method,
+                endpoint=request.url.path,
+                status_code=response.status_code,
+            ).inc()
 
-            except Exception:
-                metrics["REQUEST_COUNT"].labels(
-                    method=request.method, endpoint=request.url.path, status=500
-                ).inc()
-                raise
+            return response
+
+        except Exception:
+            duration = time_module.time() - start_time
+            metrics["REQUEST_DURATION"].labels(
+                method=request.method, endpoint=request.url.path
+            ).observe(duration)
+            metrics["REQUEST_COUNT"].labels(
+                method=request.method, endpoint=request.url.path, status_code=500
+            ).inc()
+            raise
 
 
 def setup_exception_handlers(app: FastAPI):
@@ -488,8 +537,8 @@ def setup_health_routes(app: FastAPI):
         return generate_latest()
 
 
-def setup_api_routes(app: FastAPI, limiter: Limiter):
-    """Setup API routes"""
+def setup_api_routes(app: FastAPI, rate_config: RateLimitConfig):
+    """Setup API routes. Rate limiting is now handled by middleware."""
     logger = structlog.get_logger(__name__)
 
     @app.get("/")
@@ -516,7 +565,6 @@ def setup_api_routes(app: FastAPI, limiter: Limiter):
         }
 
     @app.post("/api/v1/users/register", tags=["Authentication"])
-    @limiter.limit("5/minute")
     async def register_user(request: Request, user_data: Dict[str, Any]):
         """Register a new user with validation"""
         try:
@@ -540,7 +588,6 @@ def setup_api_routes(app: FastAPI, limiter: Limiter):
             raise HTTPException(status_code=500, detail="Registration failed") from e
 
     @app.get("/api/v1/users/{user_id}", tags=["Authentication"])
-    @limiter.limit("100/minute")
     async def get_user(request: Request, user_id: str):
         """Get user profile"""
         try:
@@ -563,7 +610,6 @@ def setup_api_routes(app: FastAPI, limiter: Limiter):
             raise HTTPException(status_code=500, detail="Failed to get user") from e
 
     @app.post("/api/v1/attribution/track", tags=["Attribution"])
-    @limiter.limit("1000/minute")
     async def track_attribution(request: Request, attribution_data: Dict[str, Any]):
         """Track attribution event"""
         try:
@@ -578,7 +624,6 @@ def setup_api_routes(app: FastAPI, limiter: Limiter):
             ) from e
 
     @app.post("/api/v1/payments/payout", tags=["Economics"])
-    @limiter.limit("10/minute")
     async def request_payout(request: Request, payout_data: Dict[str, Any]):
         """Request payout with real payment processing"""
         try:
@@ -606,7 +651,6 @@ def setup_api_routes(app: FastAPI, limiter: Limiter):
             raise HTTPException(status_code=500, detail="Payout request failed") from e
 
     @app.get("/api/v1/admin/stats", tags=["Monitoring"])
-    @limiter.limit("60/minute")
     async def admin_stats(request: Request):
         """Get admin statistics"""
         try:
@@ -724,6 +768,10 @@ def create_app() -> FastAPI:
                 "name": "Insurance",
                 "description": "Insurance policy and claim management for AI liability",
             },
+            {
+                "name": "Cursor IDE Integration",
+                "description": "Cursor IDE workflow capture and session management",
+            },
         ],
         contact={
             "name": "UATP Development Team",
@@ -788,6 +836,19 @@ def create_app() -> FastAPI:
     from .api.platform_fastapi_router import router as platform_router
 
     app.include_router(platform_router)
+
+    # Include Cursor IDE integration router (converted from Quart)
+    from .api.cursor_fastapi_router import router as cursor_router
+
+    app.include_router(cursor_router)
+
+    # Include feedback and calibration router
+    from .api.feedback_router import router as feedback_router, set_session_factory
+    from .core.database import db
+
+    app.include_router(feedback_router)
+    # Initialize feedback session factory after database is ready
+    set_session_factory(db.session)
 
     # Setup routes
     setup_health_routes(app)
