@@ -9,7 +9,10 @@ from typing import Any, Dict, List, Optional
 
 
 def calculate_capsule_trust_score(
-    reasoning_steps: List, overall_confidence: float, verified: bool = True
+    reasoning_steps: List,
+    overall_confidence: float,
+    verified: bool = True,
+    ai_enrichment: Optional[Dict] = None,
 ) -> float:
     """
     Calculate trust score for an individual capsule (0.0-1.0).
@@ -17,12 +20,13 @@ def calculate_capsule_trust_score(
     Based on:
     - Verification status (40%)
     - Overall confidence (30%)
-    - Reasoning depth/quality (30%)
+    - Reasoning depth/quality (30%) - includes AI enrichment
 
     Args:
-        reasoning_steps: List of reasoning steps
+        reasoning_steps: List of reasoning steps from payload
         overall_confidence: Overall confidence score
         verified: Whether capsule signature is verified
+        ai_enrichment: Optional AI enrichment data with extracted reasoning
 
     Returns:
         Trust score between 0.0 and 1.0
@@ -37,25 +41,47 @@ def calculate_capsule_trust_score(
     trust_score += overall_confidence * 0.3
 
     # Component 3: Reasoning quality (30% weight)
+    # Combines both payload.reasoning_steps AND ai_enrichment.reasoning_steps
     reasoning_quality = 0.0
-    if reasoning_steps:
-        step_count = len(reasoning_steps)
+
+    # Count steps from both sources
+    all_steps = list(reasoning_steps) if reasoning_steps else []
+
+    # Include AI enrichment steps if available
+    enrichment_steps = []
+    if ai_enrichment and isinstance(ai_enrichment, dict):
+        enrichment_steps = ai_enrichment.get("reasoning_steps", [])
+        all_steps.extend(enrichment_steps)
+
+    if all_steps:
+        step_count = len(all_steps)
 
         # More steps = better reasoning (up to a point)
         depth_score = min(1.0, step_count / 10.0)  # Max at 10 steps
 
         # Check for rich metadata in steps
         rich_steps = 0
-        for step in reasoning_steps:
+        for step in all_steps:
             if isinstance(step, dict):
-                # Step is an object with metadata
-                if step.get("confidence") or step.get("measurements"):
+                # Step is rich if it has ANY of these metadata fields
+                has_confidence = step.get("confidence") is not None
+                has_measurements = step.get("measurements") is not None
+                has_evidence = step.get("evidence") is not None
+                has_step_type = step.get("step_type") is not None
+
+                if has_confidence or has_measurements or has_evidence or has_step_type:
                     rich_steps += 1
 
         richness_score = rich_steps / step_count if step_count > 0 else 0
 
         # Reasoning quality is average of depth and richness
         reasoning_quality = (depth_score + richness_score) / 2
+
+    # Bonus for AI enrichment with suggested score
+    if ai_enrichment and ai_enrichment.get("suggested_score"):
+        # Blend in the AI's assessment (small weight)
+        ai_suggested = ai_enrichment.get("suggested_score", 0)
+        reasoning_quality = (reasoning_quality * 0.7) + (ai_suggested * 0.3)
 
     trust_score += reasoning_quality * 0.3
 

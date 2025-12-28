@@ -448,6 +448,19 @@ class RichCaptureEnhancer:
                         ),
                         "enriched_at": datetime.now(timezone.utc).isoformat(),
                     }
+
+                    # RECALCULATE trust_score now that we have AI enrichment
+                    # This fixes the "richness paradox" identified by antigravity
+                    from src.utils.rich_capsule_creator import calculate_capsule_trust_score
+                    updated_trust = calculate_capsule_trust_score(
+                        reasoning_steps=capsule["payload"].get("reasoning_steps", []),
+                        overall_confidence=capsule.get("confidence", 0.7),
+                        verified=True,
+                        ai_enrichment=capsule["payload"]["ai_enrichment"],
+                    )
+                    # Update trust_score in verification
+                    if "verification" in capsule:
+                        capsule["verification"]["trust_score"] = updated_trust
             except Exception:
                 # Don't fail capsule creation if enrichment fails
                 pass
