@@ -14,22 +14,17 @@ Endpoints:
 """
 
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.feedback import (
-    OutcomeInference,
-    OutcomeStatus,
     ReviewPriority,
     ReviewQueueManager,
     get_calibration_manager,
     get_inference_engine,
 )
-
 
 router = APIRouter(prefix="/feedback", tags=["Feedback & Calibration"])
 
@@ -406,11 +401,19 @@ async def get_calibration_metrics():
     manager = get_calibration_manager()
     all_metrics = manager.get_all_metrics()
 
+    def safe_float(val: float) -> float:
+        """Convert inf to a safe JSON value."""
+        import math
+
+        if math.isinf(val):
+            return 999999.0 if val > 0 else -999999.0
+        return val
+
     return {
         domain: CalibrationMetricsResponse(
-            brier_score=metrics.brier_score,
-            log_loss=metrics.log_loss,
-            calibration_error=metrics.calibration_error,
+            brier_score=safe_float(metrics.brier_score),
+            log_loss=safe_float(metrics.log_loss),
+            calibration_error=safe_float(metrics.calibration_error),
             sample_size=metrics.sample_size,
             reliability_diagram=metrics.reliability_diagram,
         )

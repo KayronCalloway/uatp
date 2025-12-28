@@ -15,14 +15,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from prometheus_client import Counter, Histogram, generate_latest
-
-# Import Redis-backed rate limiter (replaces in-memory slowapi)
-from .middleware.rate_limiting import (
-    RateLimitMiddleware,
-    RateLimitConfig,
-    create_rate_limiter,
-)
+from prometheus_client import Histogram, generate_latest
 
 from src.utils.timezone_utils import utc_now
 
@@ -32,6 +25,12 @@ from .auth.auth_routes import router as auth_router
 from .core.database import db
 from .database.connection import get_database_manager
 from .insurance.api import router as insurance_router
+
+# Import Redis-backed rate limiter (replaces in-memory slowapi)
+from .middleware.rate_limiting import (
+    RateLimitConfig,
+    RateLimitMiddleware,
+)
 
 db_manager = get_database_manager()
 from .database.migrations import run_migrations  # noqa: E402
@@ -72,7 +71,7 @@ def configure_logging():
 
 def create_metrics():
     """Get Prometheus metrics from monitoring module to prevent duplicates."""
-    from prometheus_client import REGISTRY, Histogram
+    from prometheus_client import REGISTRY
 
     # Import metrics from monitoring module (which handles deduplication)
     from .middleware.monitoring import REQUEST_COUNT, REQUEST_DURATION
@@ -114,6 +113,11 @@ async def lifespan(app: FastAPI):
         # Initialize SQLAlchemy database (needed for migrations)
         logger.info("Initializing SQLAlchemy database...")
         db.init_app(app)
+
+        # Initialize feedback system with session factory
+        from .api.feedback_router import set_session_factory
+
+        set_session_factory(db.session_factory)
 
         # Initialize asyncpg database manager
         logger.info("Initializing database connection...")
@@ -843,12 +847,12 @@ def create_app() -> FastAPI:
     app.include_router(cursor_router)
 
     # Include feedback and calibration router
-    from .api.feedback_router import router as feedback_router, set_session_factory
-    from .core.database import db
+    from .api.feedback_router import router as feedback_router
 
     app.include_router(feedback_router)
     # Initialize feedback session factory after database is ready
-    set_session_factory(db.session)
+    # Note: session_factory is set during app lifespan, not at router include time
+    # The set_session_factory will be called in lifespan after db.init_app()
 
     # Setup routes
     setup_health_routes(app)
