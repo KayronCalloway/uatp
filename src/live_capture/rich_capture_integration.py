@@ -16,6 +16,14 @@ from src.analysis.critical_path import CriticalPathAnalyzer
 from src.analysis.uncertainty_quantification import UncertaintyQuantifier
 from src.live_capture.court_admissible_enrichment import CourtAdmissibleEnricher
 from src.live_capture.enhanced_context import EnhancedContextExtractor
+
+# Import reasoning extractor for AI enrichment
+try:
+    from src.enrichment.reasoning_extractor import ReasoningExtractor
+
+    _reasoning_extractor = ReasoningExtractor()
+except Exception:
+    _reasoning_extractor = None
 from src.utils.rich_capsule_creator import (
     RichReasoningStep,
     create_rich_reasoning_capsule,
@@ -412,6 +420,37 @@ class RichCaptureEnhancer:
         capsule = CourtAdmissibleEnricher.enrich_capsule_with_court_admissible_data(
             capsule=capsule, session=session, messages=session.messages
         )
+
+        # AI Reasoning Enrichment - extract structured reasoning from conversation
+        if _reasoning_extractor and _reasoning_extractor.enabled:
+            try:
+                # Combine user and assistant messages for enrichment
+                user_content = " ".join(
+                    [m.content for m in session.messages if m.role == "user"]
+                )
+                assistant_content = " ".join(
+                    [m.content for m in session.messages if m.role == "assistant"]
+                )
+
+                # Use local extraction (sync) for efficiency
+                enrichment_result = _reasoning_extractor._extract_local(
+                    user_content, assistant_content, {"session_id": session.session_id}
+                )
+
+                if enrichment_result.get("steps"):
+                    capsule["payload"]["ai_enrichment"] = {
+                        "reasoning_steps": enrichment_result["steps"],
+                        "suggested_score": enrichment_result.get(
+                            "suggested_score", 0.0
+                        ),
+                        "extraction_method": enrichment_result.get(
+                            "extraction_method", "local"
+                        ),
+                        "enriched_at": datetime.now(timezone.utc).isoformat(),
+                    }
+            except Exception:
+                # Don't fail capsule creation if enrichment fails
+                pass
 
         return capsule
 

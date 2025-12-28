@@ -30,6 +30,9 @@ import { RiskAssessmentCard } from '@/components/capsules/RiskAssessmentCard';
 import { AlternativesCard } from '@/components/capsules/AlternativesCard';
 import { PlainLanguageCard } from '@/components/capsules/PlainLanguageCard';
 import { OutcomeCard } from '@/components/capsules/OutcomeCard';
+import { AttributionCard } from '@/components/capsules/AttributionCard';
+import { LineageCard } from '@/components/capsules/LineageCard';
+import { ChainContextCard } from '@/components/capsules/ChainContextCard';
 
 interface CapsuleDetailProps {
   capsuleId: string;
@@ -220,18 +223,17 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                     </span>
                     <span className="text-sm text-blue-700">Overall Confidence</span>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    (capsule.confidence || capsule.payload?.confidence || 0) >= 0.9
-                      ? 'bg-green-100 text-green-700'
-                      : (capsule.confidence || capsule.payload?.confidence || 0) >= 0.7
+                  <div className={`px-3 py-1 rounded-full text-xs font-semibold ${(capsule.confidence || capsule.payload?.confidence || 0) >= 0.9
+                    ? 'bg-green-100 text-green-700'
+                    : (capsule.confidence || capsule.payload?.confidence || 0) >= 0.7
                       ? 'bg-blue-100 text-blue-700'
                       : (capsule.confidence || capsule.payload?.confidence || 0) >= 0.5
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-red-100 text-red-700'
-                  }`}>
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-red-100 text-red-700'
+                    }`}>
                     {(capsule.confidence || capsule.payload?.confidence || 0) >= 0.9 ? 'High' :
-                     (capsule.confidence || capsule.payload?.confidence || 0) >= 0.7 ? 'Good' :
-                     (capsule.confidence || capsule.payload?.confidence || 0) >= 0.5 ? 'Moderate' : 'Low'}
+                      (capsule.confidence || capsule.payload?.confidence || 0) >= 0.7 ? 'Good' :
+                        (capsule.confidence || capsule.payload?.confidence || 0) >= 0.5 ? 'Moderate' : 'Low'}
                   </div>
                 </div>
 
@@ -414,15 +416,13 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
           ) : verificationData ? (
             <>
               {/* Visual Status Indicator */}
-              <div className={`rounded-lg p-6 border-2 ${
-                verificationData.verified
-                  ? 'bg-green-50 border-green-300'
-                  : 'bg-red-50 border-red-300'
-              }`}>
+              <div className={`rounded-lg p-6 border-2 ${verificationData.verified
+                ? 'bg-green-50 border-green-300'
+                : 'bg-red-50 border-red-300'
+                }`}>
                 <div className="flex items-start gap-4">
-                  <div className={`flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center ${
-                    verificationData.verified ? 'bg-green-100' : 'bg-red-100'
-                  }`}>
+                  <div className={`flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center ${verificationData.verified ? 'bg-green-100' : 'bg-red-100'
+                    }`}>
                     {verificationData.verified ? (
                       <CheckCircle className="h-8 w-8 text-green-600" />
                     ) : (
@@ -431,9 +431,8 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className={`text-xl font-bold ${
-                        verificationData.verified ? 'text-green-900' : 'text-red-900'
-                      }`}>
+                      <h3 className={`text-xl font-bold ${verificationData.verified ? 'text-green-900' : 'text-red-900'
+                        }`}>
                         {verificationData.verified ? 'Cryptographically Verified' : 'Verification Failed'}
                       </h3>
                       {verificationData.from_cache && (
@@ -442,9 +441,8 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                         </span>
                       )}
                     </div>
-                    <p className={`text-sm ${
-                      verificationData.verified ? 'text-green-700' : 'text-red-700'
-                    }`}>
+                    <p className={`text-sm ${verificationData.verified ? 'text-green-700' : 'text-red-700'
+                      }`}>
                       {verificationData.verified
                         ? 'This capsule\'s signature and hash have been cryptographically verified. The content has not been tampered with since creation.'
                         : 'This capsule failed cryptographic verification. The signature does not match or the content may have been modified.'}
@@ -479,7 +477,9 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                           <span className="text-xs font-semibold text-gray-600 uppercase">Signature</span>
                         </div>
                         <p className="text-xs font-mono text-gray-900 break-all">
-                          {capsule.signature.slice(0, 32)}...
+                          {typeof capsule.signature === 'string'
+                            ? capsule.signature.slice(0, 32)
+                            : capsule.signature?.proofValue?.slice(0, 32)}...
                         </p>
                       </div>
                     )}
@@ -591,7 +591,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <div className="text-xs text-blue-600 font-medium mb-1">Total Steps</div>
                 <div className="text-2xl font-bold text-blue-900">
-                  {(capsule.payload?.reasoning_steps || capsule.reasoning_trace?.reasoning_steps || []).length}
+                  {(capsule.reasoning || capsule.payload?.reasoning_steps || capsule.reasoning_trace?.reasoning_steps || []).length}
                 </div>
               </div>
 
@@ -601,6 +601,16 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                   <div className="text-xs text-orange-600 font-medium mb-1">Path Strength</div>
                   <div className="text-2xl font-bold text-orange-900">
                     {(capsule.payload.critical_path_analysis.critical_path_strength * 100).toFixed(0)}%
+                  </div>
+                </div>
+              )}
+
+              {/* AI Enrichment Status (New) */}
+              {capsule.reasoning && capsule.reasoning.some(r => r.step_type === 'ai_extracted_reasoning') && (
+                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                  <div className="text-xs text-indigo-600 font-medium mb-1">AI Enrichment</div>
+                  <div className="text-2xl font-bold text-indigo-900">
+                    Active
                   </div>
                 </div>
               )}
@@ -638,38 +648,39 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
 
           <div className="bg-gray-50 p-4 rounded-lg">
             {(capsule.content || capsule.payload?.content) ? (
-              <pre className="text-sm whitespace-pre-wrap">{capsule.content || capsule.payload?.content}</pre>
-            ) : (capsule.payload?.reasoning_steps?.length > 0 || capsule.reasoning_trace?.reasoning_steps?.length > 0) ? (
+              <pre className="text-sm whitespace-pre-wrap">{
+                typeof (capsule.content || capsule.payload?.content) === 'object'
+                  ? JSON.stringify(capsule.content || capsule.payload?.content, null, 2)
+                  : (capsule.content || capsule.payload?.content)
+              }</pre>
+            ) : (capsule.payload?.reasoning_steps?.length > 0 || capsule.reasoning_trace?.reasoning_steps?.length > 0 || capsule.reasoning?.length > 0) ? (
               <div className="space-y-6">
-                {(capsule.payload?.reasoning_steps || capsule.reasoning_trace?.reasoning_steps || []).map((step: any, index: number) => {
+                {(capsule.reasoning || capsule.payload?.reasoning_steps || capsule.reasoning_trace?.reasoning_steps || []).map((step: any, index: number) => {
                   const isCritical = capsule.payload?.critical_path_analysis?.critical_steps?.includes(step.step_id || index + 1);
                   const isBottleneck = capsule.payload?.critical_path_analysis?.bottleneck_steps?.includes(step.step_id || index + 1);
                   const isDecisionPoint = capsule.payload?.critical_path_analysis?.key_decision_points?.includes(step.step_id || index + 1);
                   const hasConfidence = step.confidence !== undefined && step.confidence !== null;
 
                   return (
-                    <div key={index} className={`relative rounded-lg border-2 overflow-hidden ${
-                      isCritical
-                        ? 'border-orange-400 bg-orange-50/30'
-                        : 'border-gray-200 bg-white'
-                    }`}>
-                      {/* Step Header Bar */}
-                      <div className={`px-4 py-3 border-b ${
-                        isCritical ? 'bg-orange-100 border-orange-200' : 'bg-gray-50 border-gray-200'
+                    <div key={index} className={`relative rounded-lg border-2 overflow-hidden ${isCritical
+                      ? 'border-orange-400 bg-orange-50/30'
+                      : 'border-gray-200 bg-white'
                       }`}>
+                      {/* Step Header Bar */}
+                      <div className={`px-4 py-3 border-b ${isCritical ? 'bg-orange-100 border-orange-200' : 'bg-gray-50 border-gray-200'
+                        }`}>
                         <div className="flex items-center justify-between">
                           {/* Left: Step number and type */}
                           <div className="flex items-center gap-3">
-                            <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${
-                              isCritical
-                                ? 'bg-orange-500 text-white'
-                                : 'bg-blue-500 text-white'
-                            }`}>
+                            <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${isCritical
+                              ? 'bg-orange-500 text-white'
+                              : 'bg-blue-500 text-white'
+                              }`}>
                               {step.step_id || index + 1}
                             </div>
                             <div>
                               <div className="text-sm font-semibold text-gray-900">
-                                {step.operation || 'Reasoning Step'}
+                                {step.operation || step.step_type?.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Reasoning Step'}
                               </div>
                               {step.confidence_basis && (
                                 <div className="text-xs text-gray-600 mt-0.5">
@@ -697,12 +708,11 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                               </span>
                             )}
                             {hasConfidence && (
-                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                step.confidence >= 0.9 ? 'bg-green-100 text-green-800' :
+                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${step.confidence >= 0.9 ? 'bg-green-100 text-green-800' :
                                 step.confidence >= 0.7 ? 'bg-blue-100 text-blue-800' :
-                                step.confidence >= 0.5 ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
+                                  step.confidence >= 0.5 ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                }`}>
                                 {(step.confidence * 100).toFixed(0)}%
                               </span>
                             )}
@@ -715,7 +725,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                         {/* Main Reasoning */}
                         <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                           <pre className="text-sm whitespace-pre-wrap text-gray-800 leading-relaxed">
-                            {typeof step === 'string' ? step : step.reasoning}
+                            {typeof step === 'string' ? step : (step.content || step.reasoning)}
                           </pre>
                         </div>
 
@@ -963,6 +973,85 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
         </CardContent>
       </Card>
 
+      {/* AI Enrichment - Extracted Reasoning */}
+      {capsule.payload?.ai_enrichment && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <span className="text-lg">🧠</span>
+              <span>AI Enrichment</span>
+              <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                {capsule.payload.ai_enrichment.extraction_method || 'local'}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Summary Stats */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                <div className="text-xs text-purple-600 font-medium mb-1">Extracted Steps</div>
+                <div className="text-2xl font-bold text-purple-900">
+                  {capsule.payload.ai_enrichment.reasoning_steps?.length || 0}
+                </div>
+              </div>
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                <div className="text-xs text-indigo-600 font-medium mb-1">Suggested Score</div>
+                <div className="text-2xl font-bold text-indigo-900">
+                  {((capsule.payload.ai_enrichment.suggested_score || 0) * 100).toFixed(0)}%
+                </div>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="text-xs text-blue-600 font-medium mb-1">Enriched At</div>
+                <div className="text-sm font-medium text-blue-900">
+                  {capsule.payload.ai_enrichment.enriched_at
+                    ? new Date(capsule.payload.ai_enrichment.enriched_at).toLocaleTimeString()
+                    : 'N/A'}
+                </div>
+              </div>
+            </div>
+
+            {/* Reasoning Steps */}
+            {capsule.payload.ai_enrichment.reasoning_steps?.length > 0 && (
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-gray-700">Extracted Reasoning Steps</div>
+                {capsule.payload.ai_enrichment.reasoning_steps.map((step: any, index: number) => (
+                  <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center justify-center w-6 h-6 bg-purple-500 text-white rounded-full text-xs font-bold">
+                          {step.step_id || index + 1}
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {step.step_type?.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Step'}
+                        </span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        step.confidence >= 0.8 ? 'bg-green-100 text-green-700' :
+                        step.confidence >= 0.6 ? 'bg-blue-100 text-blue-700' :
+                        'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {((step.confidence || 0) * 100).toFixed(0)}% conf
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-700 mb-2">{step.reasoning}</div>
+                    {step.evidence && (
+                      <div className="text-xs text-gray-500">
+                        <span className="font-medium">Evidence:</span> {step.evidence}
+                      </div>
+                    )}
+                    {step.conclusion && (
+                      <div className="text-xs text-gray-500">
+                        <span className="font-medium">Conclusion:</span> {step.conclusion}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Rich Data Components - Court-Admissible Format */}
 
       {/* Data Sources - Provenance Tracking */}
@@ -994,6 +1083,23 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
       {/* Outcome - Ground Truth */}
       {capsule.payload?.outcome && (
         <OutcomeCard outcome={capsule.payload.outcome} />
+      )}
+
+      {/* UATP v7.0 Envelope Features */}
+
+      {/* Attribution - Economic Weights & Contributors */}
+      {capsule.payload?.attribution && (
+        <AttributionCard attribution={capsule.payload.attribution} />
+      )}
+
+      {/* Lineage - Provenance & Transformation History */}
+      {capsule.payload?.lineage && (
+        <LineageCard lineage={capsule.payload.lineage} />
+      )}
+
+      {/* Chain Context - Blockchain Position & Integrity */}
+      {capsule.payload?.chain_context && (
+        <ChainContextCard chainContext={capsule.payload.chain_context} />
       )}
 
       {/* Metadata */}
@@ -1089,7 +1195,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
 
                     {/* Constraints & Risks Grid */}
                     {(capsule.payload.session_metadata.constraints && Object.keys(capsule.payload.session_metadata.constraints).length > 0) ||
-                     (capsule.payload.session_metadata.risks_identified && capsule.payload.session_metadata.risks_identified.length > 0) ? (
+                      (capsule.payload.session_metadata.risks_identified && capsule.payload.session_metadata.risks_identified.length > 0) ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Constraints */}
                         {capsule.payload.session_metadata.constraints && Object.keys(capsule.payload.session_metadata.constraints).length > 0 && (
@@ -1188,22 +1294,22 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                 {Object.entries(capsule.payload).filter(([key]) =>
                   !['reasoning_steps', 'content', 'session_metadata'].includes(key)
                 ).length > 0 && (
-                  <div className="border-t pt-3">
-                    <div className="text-sm font-medium text-gray-700 mb-2">Additional Payload Data:</div>
-                    <div className="space-y-2">
-                      {Object.entries(capsule.payload).filter(([key]) =>
-                        !['reasoning_steps', 'content', 'session_metadata'].includes(key)
-                      ).map(([key, value]) => (
-                        <div key={key} className="text-xs">
-                          <span className="font-medium text-gray-600">{key}:</span>{' '}
-                          <span className="text-gray-800">
-                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                          </span>
-                        </div>
-                      ))}
+                    <div className="border-t pt-3">
+                      <div className="text-sm font-medium text-gray-700 mb-2">Additional Payload Data:</div>
+                      <div className="space-y-2">
+                        {Object.entries(capsule.payload).filter(([key]) =>
+                          !['reasoning_steps', 'content', 'session_metadata'].includes(key)
+                        ).map(([key, value]) => (
+                          <div key={key} className="text-xs">
+                            <span className="font-medium text-gray-600">{key}:</span>{' '}
+                            <span className="text-gray-800">
+                              {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             ) : (capsule.metadata || capsule.payload?.metadata) ? (
               <pre className="text-sm overflow-x-auto">
