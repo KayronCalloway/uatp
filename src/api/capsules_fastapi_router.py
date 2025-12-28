@@ -418,8 +418,22 @@ async def create_capsule(
 async def verify_capsule(
     capsule_id: str, session: AsyncSession = Depends(get_db_session)
 ):
-    """Verify a specific capsule's cryptographic integrity"""
+    """
+    Verify a specific capsule's cryptographic integrity.
+
+    CRITICAL SECURITY FIX: Now performs actual cryptographic verification
+    using CryptoSealer.verify_capsule() instead of trusting metadata flags.
+    """
     try:
+        # Import CryptoSealer for verification
+        try:
+            from src.security.crypto_sealer import CryptoSealer
+
+            crypto_sealer = CryptoSealer()
+        except ImportError:
+            crypto_sealer = None
+            logger.warning("CryptoSealer not available for verification")
+
         query = select(CapsuleModel).where(CapsuleModel.capsule_id == capsule_id)
         result = await session.execute(query)
         capsule = result.scalar_one_or_none()
@@ -427,25 +441,157 @@ async def verify_capsule(
         if not capsule:
             raise HTTPException(status_code=404, detail="Capsule not found")
 
-        # Return the verification data stored in the capsule
-        verification = capsule.verification if capsule.verification else {}
+        # Build full capsule data for verification - MUST match what was signed
+        # The Pydantic model_dump() returns these keys:
+        # capsule_id, capsule_type, reasoning_trace, status, timestamp, verification, version
+        capsule_data = {
+            "capsule_id": capsule.capsule_id,
+            "capsule_type": capsule.capsule_type,
+            "timestamp": capsule.timestamp,
+            "status": capsule.status if hasattr(capsule, "status") else "sealed",
+            "version": getattr(capsule, "version", "7.0"),
+            "verification": capsule.verification
+            if hasattr(capsule, "verification") and capsule.verification
+            else None,
+        }
+        # Add reasoning_trace if it exists (stored in payload for reasoning_trace capsules)
+        if capsule.capsule_type == "reasoning_trace":
+            # Extract reasoning_trace from payload if stored there
+            payload = capsule.payload or {}
+            if "reasoning_trace" in payload:
+                capsule_data["reasoning_trace"] = payload["reasoning_trace"]
+            elif hasattr(capsule, "reasoning_trace") and capsule.reasoning_trace:
+                capsule_data["reasoning_trace"] = capsule.reasoning_trace
+            else:
+                # Construct from payload structure - handle various formats safely
+                trace_data = (
+                    payload.get("trace", {})
+                    if isinstance(payload.get("trace"), dict)
+                    else {}
+                )
+                content_data = (
+                    payload.get("content", {})
+                    if isinstance(payload.get("content"), dict)
+                    else {}
+                )
+                metadata = (
+                    payload.get("metadata", {})
+                    if isinstance(payload.get("metadata"), dict)
+                    else {}
+                )
 
-        # Check if verification has required fields
-        has_verify_key = "hash" in verification or "signature" in verification
-        is_verified = verification.get("verified", False) if verification else False
+                # Try to extract conclusion from nested structure, fall back to simple content string
+                conclusion = "Auto-captured"
+                if isinstance(content_data, dict) and isinstance(
+                    content_data.get("data"), dict
+                ):
+                    reasoning_steps = content_data.get("data", {}).get(
+                        "reasoning_steps", []
+                    )
+                    if reasoning_steps and isinstance(reasoning_steps[0], dict):
+                        conclusion = reasoning_steps[0].get("content", "Auto-captured")
+                elif isinstance(payload.get("content"), str):
+                    conclusion = payload.get("content", "Auto-captured")
+
+                capsule_data["reasoning_trace"] = {
+                    "steps": trace_data.get("reasoning_steps", [])
+                    if isinstance(trace_data, dict)
+                    else [],
+                    "conclusion": conclusion,
+                    "confidence_score": metadata.get("significance_score", 0.8)
+                    if isinstance(metadata, dict)
+                    else 0.8,
+                    "alternatives_considered": [],
+                }
+
+        logger.info(f"🔍 DEBUG Verification data: {capsule_data.get('verification')}")
+
+        payload = capsule.payload or {}
+
+        # CRITICAL: Perform actual cryptographic verification
+        verification_result = {"method": "none", "verified": False, "error": None}
+
+        if crypto_sealer and crypto_sealer.enabled:
+            # Check if capsule has signature (v7.0 stores in root-level verification.signature)
+            verification_data = capsule_data.get("verification", {}) or payload.get(
+                "verification", {}
+            )
+            # Ensure verification_data is a dict before checking for key
+            has_signature = "signature" in payload or (
+                isinstance(verification_data, dict) and "signature" in verification_data
+            )
+
+            if has_signature:
+                try:
+                    # Perform ACTUAL cryptographic verification
+                    is_valid = crypto_sealer.verify_capsule(capsule_data)
+
+                    verification_result = {
+                        "method": "Ed25519Signature2020",
+                        "verified": is_valid,
+                        "error": None
+                        if is_valid
+                        else "Signature verification failed - content may have been tampered",
+                    }
+
+                    logger.info(
+                        f"🔐 Cryptographic verification for {capsule_id}: {'VALID' if is_valid else 'INVALID'}"
+                    )
+
+                except Exception as verify_error:
+                    verification_result = {
+                        "method": "Ed25519Signature2020",
+                        "verified": False,
+                        "error": f"Verification exception: {str(verify_error)}",
+                    }
+                    logger.error(
+                        f"❌ Verification error for {capsule_id}: {verify_error}"
+                    )
+            else:
+                verification_result = {
+                    "method": "none",
+                    "verified": False,
+                    "error": "No cryptographic signature found in capsule",
+                }
+        else:
+            verification_result = {
+                "method": "none",
+                "verified": False,
+                "error": "CryptoSealer not available or disabled",
+            }
+
+        # Extract signature metadata for response (check both root and payload locations)
+        signature_info = payload.get("signature", {})
+        if not signature_info:
+            # Check root-level verification (v7.0 format)
+            verification_data = capsule_data.get("verification", {}) or payload.get(
+                "verification", {}
+            )
+            # Ensure verification_data is a dict before calling .get()
+            if verification_data and isinstance(verification_data, dict):
+                signature_info = {
+                    "signature": verification_data.get("signature"),
+                    "signer": verification_data.get("signer"),
+                    "verify_key": verification_data.get("verify_key"),
+                    "hash": verification_data.get("hash"),
+                }
 
         return {
             "capsule_id": capsule_id,
-            "verified": is_verified,
-            "verification_error": None
-            if is_verified
-            else "No verification data available",
-            "metadata_has_verify_key": has_verify_key,
-            "message": f"Capsule signature {'verified' if is_verified else 'not verified'}",
-            "verification": verification,
+            "verified": verification_result["verified"],
+            "verification_method": verification_result["method"],
+            "verification_error": verification_result["error"],
+            "signature_present": bool(
+                signature_info and signature_info.get("signature")
+            ),
+            "signature_metadata": signature_info if signature_info else None,
+            "message": f"Capsule signature {'VERIFIED' if verification_result['verified'] else 'NOT VERIFIED'}",
+            "status": capsule.status,
+            "timestamp": capsule.timestamp.isoformat() if capsule.timestamp else None,
         }
 
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Verification endpoint error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Verification error: {str(e)}")

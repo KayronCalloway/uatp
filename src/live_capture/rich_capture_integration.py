@@ -57,7 +57,8 @@ class RichCaptureEnhancer:
         if token_count and token_count > 500:
             base_confidence += 0.02
 
-        return min(1.0, max(0.0, base_confidence))
+        # Cap at 0.95 - nothing is 100% certain in AI responses
+        return min(0.95, max(0.05, base_confidence))
 
     @staticmethod
     def identify_uncertainty_sources(
@@ -298,10 +299,17 @@ class RichCaptureEnhancer:
         critical_path_dict = CriticalPathAnalyzer.to_dict(critical_path_analysis)
 
         # Calculate overall confidence (use critical path strength if available)
+        # Uses GEOMETRIC MEAN for sequential reasoning dependencies
         if critical_path_analysis.critical_path_strength:
             overall_confidence = critical_path_analysis.critical_path_strength
         elif rich_steps:
-            overall_confidence = sum(s.confidence for s in rich_steps) / len(rich_steps)
+            # Geometric mean: preserves multiplicative probability relationship
+            import operator
+            from functools import reduce
+
+            confidences = [s.confidence for s in rich_steps]
+            product = reduce(operator.mul, confidences, 1.0)
+            overall_confidence = product ** (1.0 / len(confidences))
         else:
             overall_confidence = 0.5
 
