@@ -1,9 +1,18 @@
-from sqlalchemy import JSON, Column, DateTime, Integer, String, UniqueConstraint
 from pydantic import TypeAdapter
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 
-from src.capsule_schema import AnyCapsule, CapsuleType, CAPSULE_TYPE_MAP
+from src.capsule_schema import AnyCapsule, CapsuleType
 from src.core.database import db
-from src.utils.uatp_envelope import wrap_in_uatp_envelope, is_envelope_format
+from src.utils.uatp_envelope import is_envelope_format, wrap_in_uatp_envelope
 
 
 class CapsuleModel(db.Base):
@@ -25,10 +34,35 @@ class CapsuleModel(db.Base):
     status = Column(String, nullable=False)
     verification = Column(JSON, nullable=False)  # Stores the Verification model
 
+    # --- Versioning Fields for Immutable Capsule Chain ---
+    parent_capsule_id = Column(String, nullable=True)  # Reference to original capsule
+    version_number = Column(Integer, nullable=False, default=1)  # Version in chain
+    is_original = Column(
+        Boolean, nullable=False, default=True
+    )  # True for v1, False for enriched versions
+
     # --- Payload Field ---
     # This field will store the specific payload for each capsule type,
     # e.g., reasoning_trace, economic_transaction, etc.
     payload = Column(JSON, nullable=False)
+
+    # --- Outcome Tracking Fields ---
+    # Track whether the capsule's suggestions/decisions worked out
+    outcome_status = Column(
+        String, nullable=True
+    )  # success | failure | partial | pending | unknown
+    outcome_timestamp = Column(
+        DateTime(timezone=True), nullable=True
+    )  # When outcome was recorded
+    outcome_notes = Column(String, nullable=True)  # Free-form notes about the outcome
+    outcome_metrics = Column(
+        JSON, nullable=True
+    )  # Structured metrics (tests_passed, errors_fixed, etc.)
+    user_feedback_rating = Column(Float, nullable=True)  # 1-5 rating from user
+    user_feedback_text = Column(String, nullable=True)  # User's feedback text
+    follow_up_capsule_ids = Column(
+        JSON, nullable=True
+    )  # List of related follow-up capsule IDs
 
     # Removed polymorphism for simpler, more scalable approach
     # All capsule types use the same model with flexible JSON payload
@@ -38,7 +72,11 @@ class CapsuleModel(db.Base):
     def from_pydantic(cls, pydantic_obj: AnyCapsule) -> "CapsuleModel":
         """Creates a SQLAlchemy model instance from a Pydantic schema."""
         # Extract the payload by finding the field that matches the capsule_type
-        payload_field_name = pydantic_obj.capsule_type.value
+        payload_field_name = (
+            pydantic_obj.capsule_type.value
+            if hasattr(pydantic_obj.capsule_type, "value")
+            else str(pydantic_obj.capsule_type)
+        )
         payload_data = getattr(pydantic_obj, payload_field_name)
 
         # Convert payload to dict
@@ -48,7 +86,10 @@ class CapsuleModel(db.Base):
         if not is_envelope_format(payload_dict):
             # Extract parent capsule ID and agent ID for lineage
             parent_capsules = []
-            if "parent_capsule_id" in payload_dict and payload_dict["parent_capsule_id"]:
+            if (
+                "parent_capsule_id" in payload_dict
+                and payload_dict["parent_capsule_id"]
+            ):
                 parent_capsules = [payload_dict["parent_capsule_id"]]
 
             # Extract agent ID from verification if available
@@ -60,7 +101,9 @@ class CapsuleModel(db.Base):
             payload_dict = wrap_in_uatp_envelope(
                 payload_data=payload_dict,
                 capsule_id=pydantic_obj.capsule_id,
-                capsule_type=pydantic_obj.capsule_type.value,
+                capsule_type=pydantic_obj.capsule_type.value
+                if hasattr(pydantic_obj.capsule_type, "value")
+                else str(pydantic_obj.capsule_type),
                 agent_id=agent_id,
                 parent_capsules=parent_capsules,
             )
@@ -96,10 +139,21 @@ class CapsuleModel(db.Base):
             CapsuleType.CITIZENSHIP: CitizenshipCapsuleModel,
         }
 
-        model_class = model_map[pydantic_obj.capsule_type]
+        # Get capsule_type - handle both enum and string
+        if hasattr(pydantic_obj.capsule_type, "value"):
+            # It's an enum
+            capsule_type_enum = pydantic_obj.capsule_type
+            capsule_type_str = pydantic_obj.capsule_type.value
+        else:
+            # It's a string, convert to enum
+            capsule_type_str = str(pydantic_obj.capsule_type)
+            capsule_type_enum = CapsuleType(capsule_type_str)
+
+        model_class = model_map[capsule_type_enum]
 
         return model_class(
             capsule_id=pydantic_obj.capsule_id,
+            capsule_type=capsule_type_str,
             version=pydantic_obj.version,
             timestamp=pydantic_obj.timestamp,
             status=pydantic_obj.status,
