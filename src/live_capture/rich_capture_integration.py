@@ -2,8 +2,10 @@
 Rich Metadata Integration for Live Capture
 Adds real confidence tracking, measurements, and uncertainty to live sessions
 NOW WITH: Enhanced context extraction, critical path analysis, and confidence explanations
+         + RFC 3161 trusted timestamps and Ed25519 cryptographic signing
 """
 
+import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,6 +18,19 @@ from src.analysis.critical_path import CriticalPathAnalyzer
 from src.analysis.uncertainty_quantification import UncertaintyQuantifier
 from src.live_capture.court_admissible_enrichment import CourtAdmissibleEnricher
 from src.live_capture.enhanced_context import EnhancedContextExtractor
+
+logger = logging.getLogger(__name__)
+
+# Import crypto for Ed25519 signing with RFC 3161 timestamps
+try:
+    from src.security.uatp_crypto_v7 import UATPCryptoV7
+
+    _crypto = UATPCryptoV7(key_dir=".uatp_keys", signer_id="rich_capture_v7")
+    _CRYPTO_AVAILABLE = _crypto.enabled
+except Exception as e:
+    logger.warning(f"Crypto not available for rich capture: {e}")
+    _crypto = None
+    _CRYPTO_AVAILABLE = False
 
 # Import reasoning extractor for AI enrichment
 try:
@@ -371,9 +386,15 @@ class RichCaptureEnhancer:
             reasoning_steps=rich_steps,
             final_answer=f"Conversation completed with {len(session.messages)} messages",
             overall_confidence=round(overall_confidence, 3),
-            model_used=rich_steps[0].attribution_sources[0]
-            if rich_steps
-            else "unknown",
+            model_used=next(
+                (
+                    s.attribution_sources[0]
+                    for s in rich_steps
+                    if s.attribution_sources
+                    and "assistant:" in s.attribution_sources[0]
+                ),
+                rich_steps[0].attribution_sources[0] if rich_steps else "unknown",
+            ),
             created_by=user_id,
             session_metadata={
                 # Original metadata
@@ -451,7 +472,10 @@ class RichCaptureEnhancer:
 
                     # RECALCULATE trust_score now that we have AI enrichment
                     # This fixes the "richness paradox" identified by antigravity
-                    from src.utils.rich_capsule_creator import calculate_capsule_trust_score
+                    from src.utils.rich_capsule_creator import (
+                        calculate_capsule_trust_score,
+                    )
+
                     updated_trust = calculate_capsule_trust_score(
                         reasoning_steps=capsule["payload"].get("reasoning_steps", []),
                         overall_confidence=capsule.get("confidence", 0.7),
@@ -464,6 +488,33 @@ class RichCaptureEnhancer:
             except Exception:
                 # Don't fail capsule creation if enrichment fails
                 pass
+
+        # CRYPTOGRAPHIC SIGNING with RFC 3161 trusted timestamp
+        # This provides insurance-grade proof of:
+        # - WHO signed (Ed25519 key holder)
+        # - WHAT was signed (SHA256 hash)
+        # - WHEN it existed (RFC 3161 from DigiCert)
+        if _CRYPTO_AVAILABLE and _crypto:
+            try:
+                # Sign with auto timestamp mode (tries online TSA, falls back to local)
+                verification = _crypto.sign_capsule(capsule, timestamp_mode="auto")
+                capsule["verification"] = verification
+
+                ts_info = verification.get("timestamp", {})
+                if ts_info.get("trusted"):
+                    logger.info(
+                        f"🔐 Capsule {capsule['capsule_id']} signed with RFC 3161 timestamp "
+                        f"from {ts_info.get('tsa_url', 'TSA')}"
+                    )
+                else:
+                    logger.info(
+                        f"🔐 Capsule {capsule['capsule_id']} signed with Ed25519 "
+                        f"(local timestamp fallback)"
+                    )
+            except Exception as e:
+                logger.warning(f"⚠️ Crypto signing failed, capsule unsigned: {e}")
+        else:
+            logger.debug("Crypto not available, capsule will be unsigned")
 
         return capsule
 
