@@ -580,7 +580,42 @@ class UATPCryptoV7:
         )
         return public_bytes.hex()
 
-    def sign_capsule(self, capsule_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_trusted_timestamp(
+        self, capsule_data: Dict[str, Any], mode: str = "auto"
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get a trusted timestamp for the capsule.
+
+        Args:
+            capsule_data: Capsule data to timestamp
+            mode: "auto" | "online" | "local"
+
+        Returns:
+            Timestamp info dict or None on failure
+        """
+        try:
+            from src.security.timestamp_authority import TimestampAuthority
+
+            tsa = TimestampAuthority(mode=mode)
+            timestamp = tsa.timestamp_capsule(capsule_data)
+
+            if timestamp.get("trusted"):
+                logger.info(f"🕐 Got trusted timestamp from {timestamp.get('tsa_url', 'TSA')}")
+            else:
+                logger.debug("🕐 Using local timestamp (not independently verifiable)")
+
+            return timestamp
+
+        except ImportError:
+            logger.debug("Timestamp authority module not available")
+            return None
+        except Exception as e:
+            logger.warning(f"Could not get timestamp: {e}")
+            return None
+
+    def sign_capsule(
+        self, capsule_data: Dict[str, Any], timestamp_mode: str = "auto"
+    ) -> Dict[str, Any]:
         """
         Sign a capsule and return UATP 7.0 verification object.
 
@@ -588,6 +623,7 @@ class UATPCryptoV7:
 
         Args:
             capsule_data: Complete capsule data (without verification field)
+            timestamp_mode: "auto" | "online" | "local" | "none"
 
         Returns:
             UATP 7.0 verification object:
@@ -597,7 +633,8 @@ class UATPCryptoV7:
                 "hash": "sha256:...",
                 "signature": "ed25519:...",
                 "pq_signature": "dilithium3:..." or None,
-                "merkle_root": "sha256:..."
+                "merkle_root": "sha256:...",
+                "timestamp": {...} or None
             }
         """
         if not self.enabled:
@@ -614,6 +651,11 @@ class UATPCryptoV7:
             # Optional post-quantum signature
             pq_sig = self._sign_dilithium3(capsule_data) if self.enable_pq else None
 
+            # Optional trusted timestamp
+            timestamp = None
+            if timestamp_mode != "none":
+                timestamp = self._get_trusted_timestamp(capsule_data, timestamp_mode)
+
             verification = {
                 "signer": self.signer_id,
                 "verify_key": public_key_hex,
@@ -621,6 +663,7 @@ class UATPCryptoV7:
                 "signature": ed25519_sig,
                 "pq_signature": pq_sig,
                 "merkle_root": merkle_root,
+                "timestamp": timestamp,
             }
 
             logger.debug(
