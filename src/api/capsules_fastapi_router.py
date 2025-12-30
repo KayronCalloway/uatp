@@ -380,12 +380,29 @@ async def create_capsule(
             content_str = json.dumps(capsule_data.get("payload", {}), sort_keys=True)
             capsule_id = hashlib.sha256(content_str.encode()).hexdigest()[:16]
 
+        # CRITICAL: Preserve original timestamp if provided (for signature verification)
+        # If we override the timestamp, the signature hash won't match
+        original_timestamp = capsule_data.get("timestamp")
+        if original_timestamp:
+            if isinstance(original_timestamp, str):
+                # Parse ISO format timestamp
+                try:
+                    timestamp = datetime.fromisoformat(
+                        original_timestamp.replace("Z", "+00:00")
+                    )
+                except ValueError:
+                    timestamp = datetime.now(timezone.utc)
+            else:
+                timestamp = original_timestamp
+        else:
+            timestamp = datetime.now(timezone.utc)
+
         # Create capsule object
         capsule = CapsuleModel(
             capsule_id=capsule_id,
             capsule_type=capsule_data.get("type", "chat"),
             version=capsule_data.get("version", "1.0"),
-            timestamp=datetime.now(timezone.utc),  # Fixed: use timezone-aware datetime
+            timestamp=timestamp,  # Use original timestamp to preserve signature validity
             status="SEALED",
             verification=capsule_data.get(
                 "verification",
