@@ -16,16 +16,112 @@ This module enriches existing capsules to meet:
 - EU AI Act Articles 9, 12, 13
 """
 
+import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
+
+logger = logging.getLogger(__name__)
+
+# Import embedder for historical similarity lookup
+try:
+    from src.embeddings.capsule_embedder import CapsuleEmbedder
+    _embedder = CapsuleEmbedder()
+    _EMBEDDER_AVAILABLE = True
+except Exception as e:
+    logger.debug(f"Embedder not available for historical lookup: {e}")
+    _embedder = None
+    _EMBEDDER_AVAILABLE = False
 
 
 class CourtAdmissibleEnricher:
     """Enriches captured capsules with court-admissible data."""
+
+    @staticmethod
+    def get_historical_accuracy(
+        session_content: str,
+        min_similarity: float = 0.3,
+        limit: int = 10
+    ) -> Tuple[int, Optional[float], List[Dict[str, Any]]]:
+        """
+        Find similar historical capsules and calculate accuracy from outcomes.
+
+        Args:
+            session_content: Text content to find similar capsules for
+            min_similarity: Minimum similarity threshold (0.0-1.0)
+            limit: Maximum similar capsules to consider
+
+        Returns:
+            Tuple of (similar_count, historical_accuracy, similar_capsules_info)
+            - similar_count: Number of similar capsules with outcomes
+            - historical_accuracy: Percentage of successful outcomes (0.0-1.0)
+            - similar_capsules_info: List of similar capsule details
+        """
+        if not _EMBEDDER_AVAILABLE or not _embedder:
+            return 0, None, []
+
+        try:
+            # Find similar capsules using embeddings
+            similar = _embedder.find_similar(
+                session_content,
+                limit=limit,
+                min_similarity=min_similarity
+            )
+
+            if not similar:
+                return 0, None, []
+
+            # Query outcomes for similar capsules
+            import psycopg2
+            conn = psycopg2.connect(
+                host="localhost",
+                database="uatp_capsule_engine",
+                user="uatp_user"
+            )
+
+            similar_with_outcomes = []
+            success_count = 0
+            total_with_outcomes = 0
+
+            with conn.cursor() as cur:
+                for capsule_id, similarity, _ in similar:
+                    cur.execute("""
+                        SELECT outcome_status, outcome_notes,
+                               payload->>'prompt' as prompt
+                        FROM capsules
+                        WHERE capsule_id = %s
+                    """, (capsule_id,))
+                    row = cur.fetchone()
+
+                    if row and row[0]:  # Has outcome
+                        outcome_status, outcome_notes, prompt = row
+                        total_with_outcomes += 1
+                        if outcome_status == "success":
+                            success_count += 1
+
+                        similar_with_outcomes.append({
+                            "capsule_id": capsule_id,
+                            "similarity": round(similarity, 3),
+                            "outcome": outcome_status,
+                            "notes": outcome_notes,
+                            "prompt_preview": (prompt[:50] + "...") if prompt and len(prompt) > 50 else prompt
+                        })
+
+            conn.close()
+
+            # Calculate historical accuracy
+            historical_accuracy = None
+            if total_with_outcomes > 0:
+                historical_accuracy = round(success_count / total_with_outcomes, 3)
+
+            return total_with_outcomes, historical_accuracy, similar_with_outcomes
+
+        except Exception as e:
+            logger.debug(f"Historical accuracy lookup failed: {e}")
+            return 0, None, []
 
     @staticmethod
     def infer_data_sources_from_session(
@@ -129,7 +225,13 @@ class CourtAdmissibleEnricher:
         expected_value = (probability_correct * expected_gain) - (
             probability_wrong * expected_loss
         )
-        value_at_risk_95 = expected_loss * 0.95  # 95th percentile loss
+
+        # VaR 95: 95th percentile of loss distribution
+        # Using parametric VaR with assumption of ~normal loss distribution
+        # VaR = E[Loss] + z_95 * σ, where z_95 ≈ 1.645
+        # For simplicity, estimate σ as proportional to expected_loss * probability_wrong
+        loss_std_dev = expected_loss * probability_wrong * 0.5  # Conservative estimate
+        value_at_risk_95 = (expected_loss * probability_wrong) + (1.645 * loss_std_dev)
 
         # Identify key risk factors
         key_risk_factors = []
@@ -179,9 +281,27 @@ class CourtAdmissibleEnricher:
             }
         )
 
-        # Historical accuracy (placeholder - would be calculated from database)
-        similar_decisions_count = 0  # TODO: Query database for similar sessions
-        historical_accuracy = None  # TODO: Calculate from past outcomes
+        # Historical accuracy from similar capsules (using embeddings + outcomes)
+        session_content = " ".join([
+            getattr(msg, 'content', str(msg)) if hasattr(msg, 'content') else str(msg)
+            for msg in messages[:10]  # Use first 10 messages for similarity
+        ])
+
+        similar_decisions_count, historical_accuracy, similar_capsules = \
+            CourtAdmissibleEnricher.get_historical_accuracy(
+                session_content,
+                min_similarity=0.25,
+                limit=20
+            )
+
+        # Adjust hallucination probability based on historical accuracy
+        if historical_accuracy is not None and similar_decisions_count >= 3:
+            # If we have enough similar data, use it to refine the estimate
+            historical_failure_rate = 1.0 - historical_accuracy
+            # Blend: 50% model estimate, 50% historical data
+            blended_hallucination_prob = (probability_wrong * 0.2 + historical_failure_rate) / 2
+            failure_modes[-1]["probability"] = round(blended_hallucination_prob, 3)
+            failure_modes[-1]["historical_basis"] = f"Based on {similar_decisions_count} similar decisions"
 
         return {
             "probability_correct": round(probability_correct, 3),
@@ -195,6 +315,7 @@ class CourtAdmissibleEnricher:
             "failure_modes": failure_modes,
             "similar_decisions_count": similar_decisions_count,
             "historical_accuracy": historical_accuracy,
+            "similar_capsules": similar_capsules[:5] if similar_capsules else [],  # Top 5 similar
         }
 
     @staticmethod
