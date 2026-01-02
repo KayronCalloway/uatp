@@ -64,6 +64,12 @@ class CapsuleModel(db.Base):
         JSON, nullable=True
     )  # List of related follow-up capsule IDs
 
+    # --- Embedding Fields ---
+    # Vector embeddings for semantic similarity search
+    embedding = Column(JSON, nullable=True)  # TF-IDF or OpenAI embedding vector
+    embedding_model = Column(String(100), nullable=True)  # Model used for embedding
+    embedding_created_at = Column(DateTime(timezone=True), nullable=True)
+
     # Removed polymorphism for simpler, more scalable approach
     # All capsule types use the same model with flexible JSON payload
     __mapper_args__ = {}

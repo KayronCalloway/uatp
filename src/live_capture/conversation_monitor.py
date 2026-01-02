@@ -39,6 +39,19 @@ def get_outcome_engine():
         _outcome_engine = OutcomeInferenceEngine()
     return _outcome_engine
 
+# Calibration integration for recursive learning
+_calibration_manager = None
+def get_calibration_manager():
+    """Get calibration manager for recording outcomes."""
+    global _calibration_manager
+    if _calibration_manager is None:
+        try:
+            from src.feedback.calibration import get_calibration_manager as get_cal
+            _calibration_manager = get_cal()
+        except Exception as e:
+            logger.debug(f"Calibration manager not available: {e}")
+    return _calibration_manager
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -409,6 +422,7 @@ class LiveConversationMonitor:
         logger.info(f"📨 Added message to conversation {session_id}: {role}")
 
         # AUTO-OUTCOME TRACKING: Infer outcome from user follow-ups
+        # This is the RECURSIVE LEARNING loop - outcomes feed back to calibration
         if role == "user" and len(context.messages) >= 2:
             # Check if previous message was from AI
             prev_msg = context.messages[-2]
@@ -419,19 +433,111 @@ class LiveConversationMonitor:
                         ai_response=prev_msg.get("content", ""),
                         follow_up=content
                     )
-                    if result.confidence >= 0.7:  # Only log high-confidence inferences
+
+                    # Store inference result
+                    if not hasattr(context, 'outcome_inference'):
+                        context.outcome_inference = []
+                    context.outcome_inference.append({
+                        "outcome": result.outcome,
+                        "confidence": result.confidence,
+                        "signals": result.signals,
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    })
+
+                    # HIGH CONFIDENCE: Feed to calibration (RECURSIVE LEARNING)
+                    # Lowered from 0.7 to 0.5 to capture more training data
+                    if result.confidence >= 0.5:
                         logger.info(f"🎯 Auto-outcome: {result.outcome} (conf: {result.confidence:.2f}) - {result.signals[:2]}")
-                        # Store inference result for later capsule update
-                        if "outcome_inference" not in context.__dict__:
-                            context.outcome_inference = []
-                        context.outcome_inference.append({
-                            "outcome": result.outcome,
-                            "confidence": result.confidence,
-                            "signals": result.signals,
-                            "timestamp": datetime.now(timezone.utc).isoformat()
-                        })
+
+                        # CALIBRATION UPDATE: This is where the system LEARNS
+                        # Map outcome to numeric value for calibration
+                        outcome_map = {"success": 1.0, "partial": 0.5, "failure": 0.0}
+                        if result.outcome in outcome_map:
+                            cal_manager = get_calibration_manager()
+                            if cal_manager:
+                                # Get predicted confidence from capsule (estimate if not available)
+                                predicted_conf = prev_msg.get("metadata", {}).get("confidence", 0.5)
+                                actual_outcome = outcome_map[result.outcome]
+
+                                # Record for calibration - THIS IS THE LEARNING STEP
+                                cal_manager.record_outcome(
+                                    predicted_confidence=predicted_conf,
+                                    actual_outcome=actual_outcome,
+                                    domain=context.platform,  # Use platform as domain
+                                )
+                                logger.info(f"📈 Calibration updated: predicted={predicted_conf:.2f}, actual={actual_outcome:.2f}, domain={context.platform}")
+
+                                # Track total calibration points for this session
+                                if not hasattr(context, 'calibration_points'):
+                                    context.calibration_points = 0
+                                context.calibration_points += 1
+
+                        # Update latest capsule outcome if we have a capsule
+                        if context.last_capsule_time and self.engine:
+                            try:
+                                # Mark the outcome on the most recent capsule for this session
+                                asyncio.create_task(self._update_capsule_outcome_async(
+                                    session_id=session_id,
+                                    outcome=result.outcome,
+                                    confidence=result.confidence,
+                                    signals=result.signals,
+                                ))
+                            except Exception as e:
+                                logger.debug(f"Capsule outcome update queued: {e}")
+
+                    # LOW CONFIDENCE: Log for potential human review
+                    elif result.confidence >= 0.4:
+                        logger.debug(f"📊 Low-confidence outcome: {result.outcome} (conf: {result.confidence:.2f}) - may need review")
+
                 except Exception as e:
                     logger.debug(f"Outcome inference skipped: {e}")
+
+    async def _update_capsule_outcome_async(
+        self,
+        session_id: str,
+        outcome: str,
+        confidence: float,
+        signals: List[str],
+    ):
+        """
+        Update the most recent capsule for a session with outcome data.
+
+        This is part of the RECURSIVE LEARNING loop:
+        1. AI responds → capsule created
+        2. User follows up → outcome inferred
+        3. Capsule updated with outcome → calibration learns
+        """
+        try:
+            if not self.engine or not self.engine.db_manager:
+                logger.debug("No engine/db_manager for capsule outcome update")
+                return
+
+            # Find the most recent capsule for this session
+            # Update its outcome_status field
+            async with self.engine.db_manager.session() as session:
+                from sqlalchemy import update, desc
+                from src.models.capsule import CapsuleModel
+
+                # Update the most recent capsule matching this session
+                result = await session.execute(
+                    update(CapsuleModel)
+                    .where(CapsuleModel.payload["session_metadata"]["session_id"].astext == session_id)
+                    .values(
+                        outcome_status=outcome,
+                        outcome_timestamp=datetime.now(timezone.utc),
+                        outcome_notes=f"Auto-inferred (conf: {confidence:.2f})",
+                        outcome_metrics={"signals": signals, "inference_confidence": confidence},
+                    )
+                )
+                await session.commit()
+
+                if result.rowcount > 0:
+                    logger.info(f"✅ Updated {result.rowcount} capsule(s) with outcome: {outcome}")
+                else:
+                    logger.debug(f"No capsules found for session {session_id}")
+
+        except Exception as e:
+            logger.warning(f"Failed to update capsule outcome: {e}")
 
     def get_conversation_status(self, session_id: str) -> Optional[Dict]:
         """Get the current status of a conversation."""
@@ -439,6 +545,10 @@ class LiveConversationMonitor:
             return None
 
         context = self.active_conversations[session_id]
+        # Include calibration stats if available
+        calibration_points = getattr(context, 'calibration_points', 0)
+        outcome_inferences = len(getattr(context, 'outcome_inference', []))
+
         return {
             "session_id": session_id,
             "user_id": context.user_id,
@@ -448,6 +558,9 @@ class LiveConversationMonitor:
             "capsules_created": context.capsules_created,
             "last_capsule_time": context.last_capsule_time.isoformat() if context.last_capsule_time else None,
             "last_activity": context.last_activity.isoformat(),
+            # Recursive learning stats
+            "calibration_points": calibration_points,
+            "outcome_inferences": outcome_inferences,
         }
 
 

@@ -176,7 +176,7 @@ class CapsuleEngine:
                 "capsule_id": capsule.capsule_id,
                 "content": getattr(capsule, "reasoning_trace", {}) or str(capsule),
                 "timestamp": capsule.timestamp.isoformat(),
-                "capsule_type": capsule.capsule_type.value,
+                "capsule_type": capsule.capsule_type.value if hasattr(capsule.capsule_type, 'value') else str(capsule.capsule_type),
                 "contributor_id": self.agent_id,
                 "signature": getattr(capsule.verification, "signature", None),
                 "public_key": getattr(capsule.verification, "public_key", None),
@@ -362,7 +362,7 @@ class CapsuleEngine:
         audit_emitter.emit_capsule_created(
             capsule_id=capsule.capsule_id,
             agent_id=self.agent_id,
-            capsule_type=capsule.capsule_type.value,
+            capsule_type=capsule.capsule_type.value if hasattr(capsule.capsule_type, 'value') else str(capsule.capsule_type),
         )
 
         # Trigger probabilistic self-audit in background
@@ -378,6 +378,104 @@ class CapsuleEngine:
 
         logger.info(f"Logged capsule: {capsule.capsule_id}")
         return capsule
+
+    async def store_rich_capsule_async(self, capsule_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Signs and stores a rich capsule dict (from RichCaptureEnhancer) directly.
+
+        This method handles capsules that are already in dict format with full
+        rich metadata, rather than Pydantic objects.
+
+        Args:
+            capsule_data: Rich capsule dictionary from RichCaptureEnhancer
+
+        Returns:
+            The stored capsule data with signature added
+        """
+        # Ensure secrets are loaded from vault
+        await self._ensure_secrets_loaded()
+
+        if not self.signing_key:
+            raise UATPEngineError("UATP_SIGNING_KEY must be set to create capsules.")
+
+        # Extract or generate capsule ID
+        capsule_id = capsule_data.get("capsule_id")
+        if not capsule_id:
+            capsule_id = f"caps_{datetime.now(timezone.utc).strftime('%Y_%m_%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+            capsule_data["capsule_id"] = capsule_id
+
+        # Set verification details
+        verification = capsule_data.get("verification", {})
+        verification["signer"] = self.agent_id
+        verification["verify_key"] = get_verify_key_from_signing_key(self.signing_key)
+
+        # Create hash of capsule content for signing
+        import hashlib
+        import json
+        # Hash the payload content for signature
+        payload_str = json.dumps(capsule_data.get("payload", {}), sort_keys=True, default=str)
+        content_hash = hashlib.sha256(payload_str.encode()).hexdigest()
+        verification["hash"] = content_hash
+
+        # Sign the hash
+        loop = asyncio.get_running_loop()
+        signature = await loop.run_in_executor(
+            None, sign_capsule, content_hash, self.signing_key
+        )
+        verification["signature"] = signature
+        capsule_data["verification"] = verification
+
+        # Ensure required fields
+        if "type" not in capsule_data:
+            capsule_data["type"] = "reasoning_trace"
+        if "version" not in capsule_data:
+            capsule_data["version"] = "7.0"
+        if "timestamp" not in capsule_data:
+            capsule_data["timestamp"] = datetime.now(timezone.utc).isoformat()
+        if "status" not in capsule_data:
+            capsule_data["status"] = "sealed"
+
+        # Store to database
+        async with self.get_db_session() as session:
+            # Check for existing capsule
+            existing_stmt = select(CapsuleModel).where(
+                CapsuleModel.capsule_id == capsule_id
+            )
+            result = await session.execute(existing_stmt)
+            if result.scalars().first():
+                logger.warning(f"Capsule {capsule_id} already exists, skipping")
+                return capsule_data
+
+            # Create model directly from dict
+            capsule_model = CapsuleModel(
+                capsule_id=capsule_id,
+                capsule_type=capsule_data.get("type", "reasoning_trace"),
+                version=capsule_data.get("version", "7.0"),
+                timestamp=datetime.fromisoformat(capsule_data["timestamp"].replace("Z", "+00:00"))
+                    if isinstance(capsule_data["timestamp"], str)
+                    else capsule_data["timestamp"],
+                status=capsule_data.get("status", "sealed"),
+                verification=verification,
+                payload=capsule_data.get("payload", {}),
+                # Embedding fields for semantic search
+                embedding=capsule_data.get("embedding"),
+                embedding_model=capsule_data.get("embedding_model"),
+                embedding_created_at=datetime.fromisoformat(capsule_data["embedding_created_at"].replace("Z", "+00:00"))
+                    if capsule_data.get("embedding_created_at") and isinstance(capsule_data["embedding_created_at"], str)
+                    else capsule_data.get("embedding_created_at"),
+            )
+            session.add(capsule_model)
+            await session.commit()
+
+        # Emit audit event
+        audit_emitter.emit_capsule_created(
+            capsule_id=capsule_id,
+            agent_id=self.agent_id,
+            capsule_type=capsule_data.get("type", "reasoning_trace"),
+        )
+
+        logger.info(f"Stored RICH capsule: {capsule_id}")
+        return capsule_data
 
     async def create_capsule_from_prompt_async(
         self,

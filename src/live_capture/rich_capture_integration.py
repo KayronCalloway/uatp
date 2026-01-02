@@ -39,6 +39,17 @@ try:
     _reasoning_extractor = ReasoningExtractor()
 except Exception:
     _reasoning_extractor = None
+
+# Import embedder for semantic search
+try:
+    from src.embeddings.capsule_embedder import CapsuleEmbedder
+
+    _embedder = CapsuleEmbedder()
+    _EMBEDDER_AVAILABLE = True
+except Exception as e:
+    logger.warning(f"Embedder not available: {e}")
+    _embedder = None
+    _EMBEDDER_AVAILABLE = False
 from src.utils.rich_capsule_creator import (
     RichReasoningStep,
     create_rich_reasoning_capsule,
@@ -489,6 +500,46 @@ class RichCaptureEnhancer:
                 # Don't fail capsule creation if enrichment fails
                 pass
 
+        # LEGIBILITY ANALYSIS - Track how human-interpretable the reasoning is
+        # This is foundational for detecting AI reasoning evolution over time
+        try:
+            from src.analysis.legibility_analyzer import analyze_legibility
+            from src.analysis.legibility_tracker import record_legibility
+
+            # Combine all reasoning content for legibility analysis
+            full_reasoning = " ".join([
+                step.reasoning for step in rich_steps
+                if step.reasoning
+            ])
+
+            legibility_metrics = analyze_legibility(full_reasoning)
+            capsule["payload"]["legibility"] = legibility_metrics.to_dict()
+
+            # Record for historical tracking (singularity early warning)
+            model_used = capsule.get("model_used", session.platform)
+            alert = record_legibility(
+                capsule_id=capsule["capsule_id"],
+                platform=session.platform,
+                model=model_used,
+                legibility_metrics=legibility_metrics.to_dict(),
+            )
+
+            if alert:
+                logger.warning(f"🚨 Legibility alert: {alert.message}")
+                capsule["payload"]["legibility_alert"] = {
+                    "severity": alert.severity,
+                    "message": alert.message,
+                    "baseline": alert.baseline_score,
+                }
+
+            logger.debug(
+                f"📊 Legibility score: {legibility_metrics.score:.2f} "
+                f"(parseable: {legibility_metrics.human_parseable:.2f}, "
+                f"novel: {legibility_metrics.novel_concept_ratio:.2f})"
+            )
+        except Exception as e:
+            logger.debug(f"Legibility analysis skipped: {e}")
+
         # CRYPTOGRAPHIC SIGNING with RFC 3161 trusted timestamp
         # This provides insurance-grade proof of:
         # - WHO signed (Ed25519 key holder)
@@ -515,6 +566,18 @@ class RichCaptureEnhancer:
                 logger.warning(f"⚠️ Crypto signing failed, capsule unsigned: {e}")
         else:
             logger.debug("Crypto not available, capsule will be unsigned")
+
+        # EMBEDDING for semantic similarity search
+        # Generates TF-IDF vector for finding similar capsules
+        if _EMBEDDER_AVAILABLE and _embedder:
+            try:
+                embedding = _embedder.embed_capsule({"payload": capsule.get("payload", {})})
+                capsule["embedding"] = embedding
+                capsule["embedding_model"] = _embedder.model_name
+                capsule["embedding_created_at"] = datetime.now(timezone.utc).isoformat()
+                logger.debug(f"📊 Capsule {capsule['capsule_id']} embedded ({len(embedding)} dims)")
+            except Exception as e:
+                logger.debug(f"Embedding skipped: {e}")
 
         return capsule
 

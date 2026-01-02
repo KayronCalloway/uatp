@@ -119,6 +119,14 @@ async def lifespan(app: FastAPI):
 
         set_session_factory(db.session_factory)
 
+        # Initialize feedback loop for outcome tracking
+        from .feedback import initialize_feedback_loop, initialize_tracker
+
+        logger.info("Initializing feedback loop for outcome tracking...")
+        initialize_tracker(db.session_factory)
+        initialize_feedback_loop(session_factory=db.session_factory)
+        logger.info("Feedback loop initialized - capsules will now track outcomes")
+
         # Initialize asyncpg database manager
         logger.info("Initializing database connection...")
         await db_manager.connect()
@@ -853,6 +861,11 @@ def create_app() -> FastAPI:
     # Initialize feedback session factory after database is ready
     # Note: session_factory is set during app lifespan, not at router include time
     # The set_session_factory will be called in lifespan after db.init_app()
+
+    # Include training data export router
+    from .api.export_router import router as export_router
+
+    app.include_router(export_router)
 
     # Setup routes
     setup_health_routes(app)

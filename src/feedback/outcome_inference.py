@@ -15,6 +15,7 @@ World-class engineering principles:
 """
 
 import re
+import threading
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
@@ -56,11 +57,15 @@ class KeywordPatterns:
 
     Design principle: High precision > high recall
     Better to route to embedding/human than misclassify.
+
+    Safety: All patterns use non-greedy quantifiers with length limits
+    to prevent catastrophic backtracking (ReDoS attacks).
     """
 
     # Strong success signals (high confidence)
+    # Using .{0,50}? instead of .* to prevent ReDoS
     SUCCESS_STRONG = [
-        r"\bthanks?\b.*\b(work|perfect|great|awesome|excellent)\b",
+        r"\bthanks?\b.{0,50}?\b(work|perfect|great|awesome|excellent)\b",
         r"\bthat\s+(work|fix|solve|did\s+it)\b",
         r"\bperfect\b",
         r"\bexactly\s+what\s+i\s+(need|want)\b",
@@ -68,9 +73,9 @@ class KeywordPatterns:
         r"\bgreat\s+(job|work|solution)\b",
         r"\bfixed\s+(it|the|my)\b",
         r"\bproblem\s+solved\b",
-        r"\bcommit(ted|ting)?\b.*\b(change|fix|update)\b",
-        r"\bmerge(d)?\s+(it|this|the\s+pr)\b",
-        r"\bship(ped|ping)?\s+(it|this)\b",
+        r"\bcommit(?:ted|ting)?\b.{0,30}?\b(change|fix|update)\b",
+        r"\bmerge[d]?\s+(it|this|the\s+pr)\b",
+        r"\bship(?:ped|ping)?\s+(it|this)\b",
         r"\blgtm\b",
         r"\bapproved\b",
     ]
@@ -91,45 +96,53 @@ class KeywordPatterns:
 
     # Strong failure signals (high confidence)
     FAILURE_STRONG = [
-        r"\b(doesn't|does\s+not|didn't|did\s+not)\s+work\b",
-        r"\b(still|keeps?)\s+(broken|failing|error)\b",
-        r"\bwrong\s+(answer|output|result)\b",
-        r"\bthat's\s+(not|wrong|incorrect)\b",
+        r"\b(?:doesn't|does\s+not|didn't|did\s+not)\s+work\b",
+        r"\b(?:still|keeps?)\s+(?:broken|failing|error)\b",
+        r"\bwrong\s+(?:answer|output|result)\b",
+        r"\bthat's\s+(?:not|wrong|incorrect)\b",
         r"\bcompletely\s+wrong\b",
         r"\bno,?\s+that's\s+not\b",
         r"\btry\s+again\b",
         r"\bstart\s+over\b",
-        r"\bforget\s+(it|that)\b",
+        r"\bforget\s+(?:it|that)\b",
         r"\bnever\s*mind\b",
         r"\brollback\b",
-        r"\brevert(ed|ing)?\b",
+        r"\brevert(?:ed|ing)?\b",
         r"\bbroken\b",
-        r"\bcrash(es|ed|ing)?\b",
+        r"\bcrash(?:es|ed|ing)?\b",
+        r"\bwasted\s+(?:time|tokens?|effort)\b",
+        r"\bwrong\s+(?:file|database|table|path)\b",
+        r"\bthat's\s+not\s+(?:it|right|correct|what)\b",
+        r"\bstop\s+(?:that|doing|this)\b",
     ]
 
     # Moderate failure signals (medium confidence)
+    # Using .{0,30}? instead of .* to prevent ReDoS
     FAILURE_MODERATE = [
         r"\bnot\s+quite\b",
-        r"\balmost\b.*\bbut\b",
-        r"\bclose\b.*\bbut\b",
+        r"\balmost\b.{0,30}?\bbut\b",
+        r"\bclose\b.{0,30}?\bbut\b",
         r"\berror\b",
-        r"\bfail(ed|ing|s)?\b",
+        r"\bfail(?:ed|ing|s)?\b",
         r"\bissue\b",
         r"\bproblem\b",
         r"\bbug\b",
+        r"\bnot\s+(?:the\s+)?right\b",
+        r"\bwrong\b",
+        r"\bincorrect\b",
     ]
 
     # Partial success signals
     PARTIAL = [
         r"\bpartially\s+work\b",
-        r"\bmostly\s+(work|good|correct)\b",
-        r"\balmost\s+(there|perfect|right)\b",
+        r"\bmostly\s+(?:work|good|correct)\b",
+        r"\balmost\s+(?:there|perfect|right)\b",
         r"\bgood\s+start\b",
         r"\bon\s+the\s+right\s+track\b",
-        r"\bjust\s+(need|one\s+more|missing)\b",
-        r"\bclose\s+(enough|to)\b",
-        r"\bwith\s+one\s+(exception|change|tweak)\b",
-        r"\bminor\s+(issue|fix|change)\b",
+        r"\bjust\s+(?:need|one\s+more|missing)\b",
+        r"\bclose\s+(?:enough|to)\b",
+        r"\bwith\s+one\s+(?:exception|change|tweak)\b",
+        r"\bminor\s+(?:issue|fix|change)\b",
     ]
 
 
@@ -183,6 +196,7 @@ class OutcomeInferenceEngine:
         self.use_embeddings = use_embeddings and EMBEDDINGS_AVAILABLE
         self._embedding_model = None
         self._reference_embeddings = None
+        self._model_lock = threading.Lock()  # Thread safety for lazy loading
 
         # Compile regex patterns for performance
         self._compiled_patterns = {
@@ -202,21 +216,39 @@ class OutcomeInferenceEngine:
         }
 
     def _get_embedding_model(self):
-        """Lazy load embedding model."""
-        if self._embedding_model is None and self.use_embeddings:
-            # Use a small, fast model (~80MB)
-            self._embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+        """
+        Lazy load embedding model with thread safety.
 
-            # Pre-compute reference embeddings
-            self._reference_embeddings = {
-                "success": self._embedding_model.encode(self.SUCCESS_REFERENCES),
-                "failure": self._embedding_model.encode(self.FAILURE_REFERENCES),
-                "partial": self._embedding_model.encode(self.PARTIAL_REFERENCES),
-            }
+        Uses double-checked locking to avoid unnecessary lock acquisition
+        while ensuring thread-safe initialization.
+        """
+        if self._embedding_model is None and self.use_embeddings:
+            with self._model_lock:
+                # Double-check pattern for thread safety
+                if self._embedding_model is None:
+                    # Use a small, fast model (~80MB)
+                    self._embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+                    # Pre-compute reference embeddings
+                    self._reference_embeddings = {
+                        "success": self._embedding_model.encode(self.SUCCESS_REFERENCES),
+                        "failure": self._embedding_model.encode(self.FAILURE_REFERENCES),
+                        "partial": self._embedding_model.encode(self.PARTIAL_REFERENCES),
+                    }
         return self._embedding_model
 
+    # Max input length to prevent regex performance issues
+    MAX_INPUT_LENGTH = 5000
+
     def _match_patterns(self, text: str) -> Dict[str, List[str]]:
-        """Match text against all keyword patterns."""
+        """
+        Match text against all keyword patterns.
+
+        Truncates input to MAX_INPUT_LENGTH for safety.
+        """
+        # Truncate to prevent regex performance issues on very long inputs
+        text = text[: self.MAX_INPUT_LENGTH]
+
         matches = {
             "success_strong": [],
             "success_moderate": [],
@@ -530,16 +562,40 @@ class OutcomeInferenceEngine:
             raw_scores={"positive": positive_score, "negative": negative_score},
         )
 
+    def warmup(self) -> bool:
+        """
+        Pre-load embedding model to avoid cold start latency.
+
+        Call this during app startup to ensure first inference is fast.
+
+        Returns:
+            True if warmup successful, False if embeddings not available.
+        """
+        if not self.use_embeddings:
+            return False
+
+        model = self._get_embedding_model()
+        if model is None:
+            return False
+
+        # Run a warmup inference to fully initialize
+        _ = model.encode(["warmup inference"])
+        return True
+
 
 # Singleton for easy import
 _default_engine: Optional[OutcomeInferenceEngine] = None
+_engine_lock = threading.Lock()
 
 
 def get_inference_engine(use_embeddings: bool = True) -> OutcomeInferenceEngine:
-    """Get or create the default inference engine."""
+    """Get or create the default inference engine (thread-safe)."""
     global _default_engine
     if _default_engine is None:
-        _default_engine = OutcomeInferenceEngine(use_embeddings=use_embeddings)
+        with _engine_lock:
+            # Double-check pattern
+            if _default_engine is None:
+                _default_engine = OutcomeInferenceEngine(use_embeddings=use_embeddings)
     return _default_engine
 
 
