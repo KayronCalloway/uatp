@@ -27,9 +27,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.config import DATABASE_URL
 from ..core.database import db
 from ..models.capsule import CapsuleModel
 from ..utils.timezone_utils import utc_now
+
+# Check if using SQLite (JSONB syntax not supported)
+IS_SQLITE = "sqlite" in DATABASE_URL.lower()
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -71,8 +75,8 @@ async def get_capsule_stats(
         if not demo_mode:
             count_query = count_query.where(~CapsuleModel.capsule_id.like("demo-%"))
 
-        # Apply test data filtering
-        if not include_test:
+        # Apply test data filtering (skip on SQLite - JSONB syntax not supported)
+        if not include_test and not IS_SQLITE:
             try:
                 count_query = count_query.where(
                     text(
@@ -92,8 +96,8 @@ async def get_capsule_stats(
         if not demo_mode:
             type_query = type_query.where(~CapsuleModel.capsule_id.like("demo-%"))
 
-        # Apply test data filtering to type query
-        if not include_test:
+        # Apply test data filtering to type query (skip on SQLite - JSONB syntax not supported)
+        if not include_test and not IS_SQLITE:
             try:
                 type_query = type_query.where(
                     text(
@@ -134,8 +138,8 @@ async def get_capsule_stats(
         if not demo_mode:
             recent_query = recent_query.where(~CapsuleModel.capsule_id.like("demo-%"))
 
-        # Apply test data filtering to recent activity
-        if not include_test:
+        # Apply test data filtering to recent activity (skip on SQLite - JSONB syntax not supported)
+        if not include_test and not IS_SQLITE:
             try:
                 recent_query = recent_query.where(
                     text(
@@ -210,9 +214,9 @@ async def list_capsules(
         if not demo_mode:
             query = query.where(~CapsuleModel.capsule_id.like("demo-%"))
 
-        # Apply environment filtering
+        # Apply environment filtering (skip JSONB on SQLite)
         # If environment is explicitly specified, use that. Otherwise apply include_test logic.
-        if environment:
+        if environment and not IS_SQLITE:
             # Filter by specific environment (overrides include_test)
             try:
                 query = query.where(
@@ -223,7 +227,7 @@ async def list_capsules(
             except:
                 # Fallback if JSON query fails
                 pass
-        elif not include_test:
+        elif not include_test and not IS_SQLITE:
             # Exclude test data by default - check if environment field exists and is not 'test'
             # Using JSON/JSONB query for PostgreSQL (payload->metadata->environment)
             try:
@@ -245,8 +249,8 @@ async def list_capsules(
         if not demo_mode:
             count_query = count_query.where(~CapsuleModel.capsule_id.like("demo-%"))
 
-        # Apply same environment filters to count query
-        if environment:
+        # Apply same environment filters to count query (skip JSONB on SQLite)
+        if environment and not IS_SQLITE:
             try:
                 count_query = count_query.where(
                     text(
@@ -255,7 +259,7 @@ async def list_capsules(
                 )
             except:
                 pass
-        elif not include_test:
+        elif not include_test and not IS_SQLITE:
             try:
                 count_query = count_query.where(
                     text(
@@ -272,19 +276,41 @@ async def list_capsules(
         query = query.order_by(CapsuleModel.timestamp.desc())
         query = query.offset((page - 1) * per_page).limit(per_page)
 
-        # Execute query
+        # Execute ORM query
         result = await session.execute(query)
         capsules = result.scalars().all()
 
-        # Convert to dict
+        logger.info(f"[{correlation_id}] Query returned {len(capsules)} capsules")
+
+        # Convert ORM objects to response format
         capsule_list = []
         for capsule in capsules:
             # Fix timestamp format - replace timezone with Z
-            timestamp_str = capsule.timestamp.isoformat()
-            if "+" in timestamp_str:
-                timestamp_str = timestamp_str.split("+")[0] + "Z"
-            elif not timestamp_str.endswith("Z"):
-                timestamp_str += "Z"
+            timestamp_str = None
+            if capsule.timestamp:
+                timestamp_str = capsule.timestamp.isoformat()
+                if "+" in timestamp_str:
+                    timestamp_str = timestamp_str.split("+")[0] + "Z"
+                elif not timestamp_str.endswith("Z"):
+                    timestamp_str += "Z"
+
+            # Get verification data
+            verification = capsule.verification
+            if isinstance(verification, str):
+                try:
+                    verification = json.loads(verification)
+                except:
+                    verification = {"verified": False, "message": "Invalid JSON"}
+            if not verification:
+                verification = {"verified": False, "message": "No verification data"}
+
+            # Get payload data
+            payload = capsule.payload
+            if isinstance(payload, str):
+                try:
+                    payload = json.loads(payload)
+                except:
+                    payload = {}
 
             capsule_list.append(
                 {
@@ -294,10 +320,8 @@ async def list_capsules(
                     "version": capsule.version,
                     "timestamp": timestamp_str,
                     "status": capsule.status,
-                    "verification": capsule.verification
-                    if capsule.verification
-                    else {"verified": False, "message": "No verification data"},
-                    "payload": capsule.payload,
+                    "verification": verification,
+                    "payload": payload,
                 }
             )
 
@@ -326,38 +350,54 @@ async def get_capsule(capsule_id: str, session: AsyncSession = Depends(get_db_se
     logger.info(f"[{correlation_id}] GET /capsules/{capsule_id}")
 
     try:
+        # Use ORM query
         query = select(CapsuleModel).where(CapsuleModel.capsule_id == capsule_id)
         result = await session.execute(query)
-        capsule = result.scalar_one_or_none()
+        capsule = result.scalars().first()
 
         if not capsule:
             raise HTTPException(status_code=404, detail="Capsule not found")
 
-        # Fix timestamp format - replace timezone with Z
-        timestamp_str = capsule.timestamp.isoformat()
-        if "+" in timestamp_str:
-            timestamp_str = timestamp_str.split("+")[0] + "Z"
-        elif not timestamp_str.endswith("Z"):
-            timestamp_str += "Z"
+        # Fix timestamp format
+        timestamp_str = None
+        if capsule.timestamp:
+            timestamp_str = capsule.timestamp.isoformat()
+            if "+" in timestamp_str:
+                timestamp_str = timestamp_str.split("+")[0] + "Z"
+            elif not timestamp_str.endswith("Z"):
+                timestamp_str += "Z"
 
-        # Ensure verification has data
-        verification = (
-            capsule.verification
-            if capsule.verification
-            else {"verified": False, "message": "No verification data"}
-        )
+        # Get verification data
+        verification = capsule.verification
+        if isinstance(verification, str):
+            try:
+                verification = json.loads(verification)
+            except:
+                verification = {"verified": False, "message": "Invalid JSON"}
+        if not verification:
+            verification = {"verified": False, "message": "No verification data"}
+
+        # Get payload data
+        payload = capsule.payload
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except:
+                payload = {}
+
+        capsule_data = {
+            "id": capsule.capsule_id,
+            "capsule_id": capsule.capsule_id,
+            "type": capsule.capsule_type,
+            "version": capsule.version,
+            "timestamp": timestamp_str,
+            "status": capsule.status,
+            "verification": verification,
+            "payload": payload,
+        }
 
         return {
-            "capsule": {
-                "id": capsule.capsule_id,
-                "capsule_id": capsule.capsule_id,
-                "type": capsule.capsule_type,
-                "version": capsule.version,
-                "timestamp": timestamp_str,
-                "status": capsule.status,
-                "verification": verification,
-                "payload": capsule.payload,
-            },
+            "capsule": capsule_data,
             "verification": verification,
         }
 

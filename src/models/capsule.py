@@ -1,3 +1,20 @@
+"""
+CapsuleModel - SQLAlchemy ORM model for UATP capsules.
+
+Design Decision (2026-01-13):
+    This model uses a single table with a JSON payload column for all capsule types.
+    Type discrimination is handled by the `capsule_type` string column.
+
+    We explicitly DO NOT use SQLAlchemy polymorphism because:
+    1. All capsule types share identical columns
+    2. Type-specific data lives in the JSON `payload` column
+    3. Polymorphism adds complexity without benefit
+    4. Empty subclasses caused async session bugs (see docs/incidents/2026-01-13_ORM_POLYMORPHISM_INCIDENT.md)
+
+    To query by type:
+        session.query(CapsuleModel).filter(CapsuleModel.capsule_type == "reasoning_trace")
+"""
+
 from pydantic import TypeAdapter
 from sqlalchemy import (
     JSON,
@@ -10,12 +27,19 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 
-from src.capsule_schema import AnyCapsule, CapsuleType
+from src.capsule_schema import AnyCapsule
 from src.core.database import db
 from src.utils.uatp_envelope import is_envelope_format, wrap_in_uatp_envelope
 
 
 class CapsuleModel(db.Base):
+    """
+    Single unified model for all UATP capsule types.
+
+    The capsule_type column indicates the type (e.g., "reasoning_trace", "economic_transaction").
+    The payload column contains type-specific data as JSON.
+    """
+
     __tablename__ = "capsules"
     __table_args__ = (
         UniqueConstraint("capsule_id", name="uq_capsule_id"),
@@ -25,7 +49,7 @@ class CapsuleModel(db.Base):
     id = Column(Integer, primary_key=True)
     capsule_id = Column(String, nullable=False)
 
-    # --- Polymorphic Discriminator ---
+    # --- Type Discriminator (NOT polymorphic - just a string column) ---
     capsule_type = Column(String, nullable=False)
 
     # --- Common Fields from BaseCapsule ---
@@ -42,7 +66,7 @@ class CapsuleModel(db.Base):
     )  # True for v1, False for enriched versions
 
     # --- Payload Field ---
-    # This field will store the specific payload for each capsule type,
+    # This field stores ALL type-specific data for each capsule type.
     # e.g., reasoning_trace, economic_transaction, etc.
     payload = Column(JSON, nullable=False)
 
@@ -70,13 +94,20 @@ class CapsuleModel(db.Base):
     embedding_model = Column(String(100), nullable=True)  # Model used for embedding
     embedding_created_at = Column(DateTime(timezone=True), nullable=True)
 
-    # Removed polymorphism for simpler, more scalable approach
-    # All capsule types use the same model with flexible JSON payload
+    # No polymorphism - all capsule types use this single model
     __mapper_args__ = {}
 
     @classmethod
     def from_pydantic(cls, pydantic_obj: AnyCapsule) -> "CapsuleModel":
-        """Creates a SQLAlchemy model instance from a Pydantic schema."""
+        """
+        Creates a CapsuleModel instance from a Pydantic schema.
+
+        Args:
+            pydantic_obj: Any Pydantic capsule schema (ReasoningTraceCapsule, etc.)
+
+        Returns:
+            CapsuleModel instance ready for database insertion
+        """
         # Extract the payload by finding the field that matches the capsule_type
         payload_field_name = (
             pydantic_obj.capsule_type.value
@@ -114,57 +145,22 @@ class CapsuleModel(db.Base):
                 parent_capsules=parent_capsules,
             )
 
-        # Generate model_map dynamically from all available capsule types
-        model_map = {
-            CapsuleType.REASONING_TRACE: ReasoningTraceCapsuleModel,
-            CapsuleType.ECONOMIC_TRANSACTION: EconomicTransactionCapsuleModel,
-            CapsuleType.GOVERNANCE_VOTE: GovernanceVoteCapsuleModel,
-            CapsuleType.ETHICS_TRIGGER: EthicsTriggerCapsuleModel,
-            CapsuleType.POST_QUANTUM_SIGNATURE: PostQuantumSignatureCapsuleModel,
-            CapsuleType.CONSENT: ConsentCapsuleModel,
-            CapsuleType.REMIX: RemixCapsuleModel,
-            CapsuleType.TRUST_RENEWAL: TrustRenewalCapsuleModel,
-            CapsuleType.SIMULATED_MALICE: SimulatedMaliceCapsuleModel,
-            CapsuleType.IMPLICIT_CONSENT: ImplicitConsentCapsuleModel,
-            CapsuleType.TEMPORAL_JUSTICE: TemporalJusticeCapsuleModel,
-            CapsuleType.UNCERTAINTY: UncertaintyCapsuleModel,
-            CapsuleType.CONFLICT_RESOLUTION: ConflictResolutionCapsuleModel,
-            CapsuleType.PERSPECTIVE: PerspectiveCapsuleModel,
-            CapsuleType.FEEDBACK_ASSIMILATION: FeedbackAssimilationCapsuleModel,
-            CapsuleType.KNOWLEDGE_EXPIRY: KnowledgeExpiryCapsuleModel,
-            CapsuleType.EMOTIONAL_LOAD: EmotionalLoadCapsuleModel,
-            CapsuleType.MANIPULATION_ATTEMPT: ManipulationAttemptCapsuleModel,
-            CapsuleType.COMPUTE_FOOTPRINT: ComputeFootprintCapsuleModel,
-            CapsuleType.HAND_OFF: HandOffCapsuleModel,
-            CapsuleType.RETIREMENT: RetirementCapsuleModel,
-            CapsuleType.AUDIT: AuditCapsuleModel,
-            CapsuleType.REFUSAL: RefusalCapsuleModel,
-            CapsuleType.CLONING_RIGHTS: CloningRightsCapsuleModel,
-            CapsuleType.EVOLUTION: EvolutionCapsuleModel,
-            CapsuleType.DIVIDEND_BOND: DividendBondCapsuleModel,
-            CapsuleType.CITIZENSHIP: CitizenshipCapsuleModel,
-        }
+        # Get capsule_type as string
+        capsule_type_str = (
+            pydantic_obj.capsule_type.value
+            if hasattr(pydantic_obj.capsule_type, "value")
+            else str(pydantic_obj.capsule_type)
+        )
 
-        # Get capsule_type - handle both enum and string
-        if hasattr(pydantic_obj.capsule_type, "value"):
-            # It's an enum
-            capsule_type_enum = pydantic_obj.capsule_type
-            capsule_type_str = pydantic_obj.capsule_type.value
-        else:
-            # It's a string, convert to enum
-            capsule_type_str = str(pydantic_obj.capsule_type)
-            capsule_type_enum = CapsuleType(capsule_type_str)
-
-        model_class = model_map[capsule_type_enum]
-
-        return model_class(
+        # Always return CapsuleModel - no subclass selection needed
+        return cls(
             capsule_id=pydantic_obj.capsule_id,
             capsule_type=capsule_type_str,
             version=pydantic_obj.version,
             timestamp=pydantic_obj.timestamp,
             status=pydantic_obj.status,
             verification=pydantic_obj.verification.model_dump(),
-            payload=payload_dict,  # Now contains the wrapped envelope
+            payload=payload_dict,
         )
 
     def to_pydantic(self) -> AnyCapsule:
@@ -193,122 +189,10 @@ class CapsuleModel(db.Base):
             adapter = TypeAdapter(AnyCapsule)
             return adapter.validate_python(full_data)
 
-
-# --- Concrete Models for Single-Table Inheritance ---
-
-
-class ReasoningTraceCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.REASONING_TRACE.value}
+    def __repr__(self) -> str:
+        return f"<CapsuleModel(id={self.id}, capsule_id='{self.capsule_id}', type='{self.capsule_type}')>"
 
 
-class EconomicTransactionCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.ECONOMIC_TRANSACTION.value}
-
-
-class GovernanceVoteCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.GOVERNANCE_VOTE.value}
-
-
-class EthicsTriggerCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.ETHICS_TRIGGER.value}
-
-
-class PostQuantumSignatureCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.POST_QUANTUM_SIGNATURE.value}
-
-
-# --- UATP 7.0 Advanced Capsule Models ---
-
-
-class ConsentCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.CONSENT.value}
-
-
-class RemixCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.REMIX.value}
-
-
-class TrustRenewalCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.TRUST_RENEWAL.value}
-
-
-class SimulatedMaliceCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.SIMULATED_MALICE.value}
-
-
-class ImplicitConsentCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.IMPLICIT_CONSENT.value}
-
-
-class TemporalJusticeCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.TEMPORAL_JUSTICE.value}
-
-
-class UncertaintyCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.UNCERTAINTY.value}
-
-
-class ConflictResolutionCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.CONFLICT_RESOLUTION.value}
-
-
-class PerspectiveCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.PERSPECTIVE.value}
-
-
-class FeedbackAssimilationCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.FEEDBACK_ASSIMILATION.value}
-
-
-class KnowledgeExpiryCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.KNOWLEDGE_EXPIRY.value}
-
-
-class EmotionalLoadCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.EMOTIONAL_LOAD.value}
-
-
-class ManipulationAttemptCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.MANIPULATION_ATTEMPT.value}
-
-
-class ComputeFootprintCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.COMPUTE_FOOTPRINT.value}
-
-
-class HandOffCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.HAND_OFF.value}
-
-
-class RetirementCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.RETIREMENT.value}
-
-
-# --- Mirror Mode Capsule Models ---
-
-
-class AuditCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.AUDIT.value}
-
-
-class RefusalCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.REFUSAL.value}
-
-
-# --- Rights & Evolution Capsule Models ---
-
-
-class CloningRightsCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.CLONING_RIGHTS.value}
-
-
-class EvolutionCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.EVOLUTION.value}
-
-
-class DividendBondCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.DIVIDEND_BOND.value}
-
-
-class CitizenshipCapsuleModel(CapsuleModel):
-    __mapper_args__ = {"polymorphic_identity": CapsuleType.CITIZENSHIP.value}
+# NOTE: All 26 subclasses (ReasoningTraceCapsuleModel, EconomicTransactionCapsuleModel, etc.)
+# were removed on 2026-01-13. They added no value - just empty classes with polymorphic_identity.
+# See docs/incidents/2026-01-13_ORM_POLYMORPHISM_INCIDENT.md for details.
