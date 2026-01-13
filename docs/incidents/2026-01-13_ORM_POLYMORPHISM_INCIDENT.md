@@ -289,13 +289,94 @@ While I attempted to re-enable polymorphism (currently in the code), it doesn't 
 
 ---
 
+## Related Issues Discovered (2026-01-13 ~04:30 UTC)
+
+### Issue: Stats Count Discrepancy (93 vs 120)
+
+**Symptom:** `/capsules/stats` endpoint reported 93 capsules, but database had 120 non-demo capsules.
+
+**Root Cause:** 27 rows had NULL values in the `id` column (auto-increment primary key). The stats query uses `COUNT(CapsuleModel.id)` which only counts non-NULL values.
+
+**Investigation:**
+```sql
+-- This revealed the discrepancy
+SELECT COUNT(DISTINCT id) as distinct_id, COUNT(*) as total FROM capsules WHERE capsule_id NOT LIKE 'demo-%';
+-- Result: 93 | 120
+
+-- Found 27 rows with NULL id
+SELECT COUNT(*) FROM capsules WHERE id IS NULL;
+-- Result: 27
+```
+
+**Fix Applied:**
+```sql
+-- Backup first
+cp uatp_dev.db uatp_dev.db.bak
+
+-- Assign IDs to NULL rows
+UPDATE capsules SET id = (SELECT COALESCE(MAX(id), 0) + 1 FROM capsules) + rowid WHERE id IS NULL;
+```
+
+**Prevention:** The NULL IDs were caused by capsule inserts that didn't go through SQLAlchemy ORM properly. Future inserts should use ORM or ensure ID assignment.
+
+### Issue: Frontend "Verification Data Not Available"
+
+**Symptom:** Capsule detail page showed "Verification Data Not Available" even though capsules had signatures.
+
+**Root Cause:** Frontend webpack cache corruption causing `TypeError: __webpack_modules__[moduleId] is not a function` errors.
+
+**Fix Applied:**
+```bash
+cd frontend
+rm -rf .next
+npm run build
+# Restart dev server
+```
+
+**Note:** The verify endpoint (`/capsules/{id}/verify`) was working correctly - the issue was purely frontend-side.
+
+---
+
+## Quick Reference for Future Debugging
+
+### Check capsule counts match
+```bash
+# Database count (non-demo)
+sqlite3 uatp_dev.db "SELECT COUNT(*) FROM capsules WHERE capsule_id NOT LIKE 'demo-%'"
+
+# API count
+curl -s "http://localhost:8000/capsules/stats" | python3 -c "import sys, json; print(json.load(sys.stdin)['total_capsules'])"
+
+# If mismatch, check for NULL IDs
+sqlite3 uatp_dev.db "SELECT COUNT(*) FROM capsules WHERE id IS NULL"
+```
+
+### Verify signing is working
+```bash
+# Check recent capsules have signatures
+sqlite3 uatp_dev.db "SELECT capsule_id, json_extract(verification, '$.signature') IS NOT NULL as has_sig FROM capsules ORDER BY timestamp DESC LIMIT 3"
+```
+
+### Test verify endpoint
+```bash
+curl -s "http://localhost:8000/capsules/{CAPSULE_ID}/verify" | python3 -m json.tool
+```
+
+### Frontend webpack issues
+```bash
+cd frontend && rm -rf .next && npm run build
+```
+
+---
+
 ## Changelog
 
 - **2026-01-13 ~01:45 UTC** - Initial incident report created
 - **2026-01-13 ~02:30 UTC** - Added git archaeology findings, updated recommendations
 - **2026-01-13 ~03:00 UTC** - Applied proper fix, added tests and monitoring
+- **2026-01-13 ~04:30 UTC** - Fixed NULL ID issue (27 rows), rebuilt frontend to fix webpack cache
 
 ---
 
-*Report generated during incident response. Last updated: 2026-01-13 ~03:00 UTC*
+*Report generated during incident response. Last updated: 2026-01-13 ~04:30 UTC*
 *Status: RESOLVED*
