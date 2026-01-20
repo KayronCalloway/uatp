@@ -19,7 +19,7 @@ load_dotenv()
 # Add project to path
 sys.path.insert(0, os.path.dirname(__file__))
 
-from src.live_capture.claude_code_capture import ClaudeCodeCapture
+from src.live_capture.claude_code_capture import ClaudeCodeCapture  # noqa: E402
 
 
 async def capture_rich_session():
@@ -32,7 +32,7 @@ async def capture_rich_session():
     if not sys.stdin.isatty():
         try:
             user_message = sys.stdin.read().strip()
-        except:
+        except Exception:
             pass
 
     # Get or create persistent session
@@ -44,7 +44,6 @@ async def capture_rich_session():
             with open(session_file) as f:
                 session_data = json.load(f)
                 session_id = session_data.get("session_id")
-                message_count = session_data.get("message_count", 0)
         else:
             # Start new session
             session_id = await capture.start_session(user_id="kay")
@@ -86,25 +85,76 @@ async def capture_rich_session():
         except Exception as e:
             print(f"❌ Failed to capture user message: {e}")
 
-    # Try to capture recent assistant response from conversation history
-    # (This would require Claude Code API access - for now we'll note the limitation)
+    # Capture recent assistant responses from Claude Code conversation transcript
     try:
-        # Attempt to read from Claude Code's conversation cache if available
-        # This is a placeholder for future integration
-        assistant_response = None  # Would fetch from Claude Code session
+        # Find the conversation transcript file
+        # Convert current working directory to Claude project format
+        import os
 
-        if assistant_response:
-            await capture.capture_message(
-                session_id=session_id,
-                role="assistant",
-                content=assistant_response,
-                token_count=len(assistant_response.split()) * 1.3,
-                model_info="claude-sonnet-4.5",
-            )
-            session_data["message_count"] += 1
+        cwd = os.getcwd()
+        project_name = cwd.replace("/", "-")
+        if project_name.startswith("-"):
+            project_name = project_name  # Keep leading dash
+        project_dir = Path.home() / ".claude" / "projects" / project_name
+        transcript_files = sorted(
+            project_dir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True
+        )
 
-    except Exception:
-        pass  # Assistant capture is optional for now
+        if transcript_files:
+            transcript_file = transcript_files[0]  # Most recent
+
+            # Read last N lines to find recent assistant responses
+            with open(transcript_file) as f:
+                lines = f.readlines()
+
+            # Get assistant responses from last 20 lines
+            recent_assistant_responses = []
+            for line in lines[-20:]:
+                try:
+                    entry = json.loads(line)
+                    if entry.get("type") == "assistant":
+                        content = entry.get("message", {}).get("content", [])
+                        # Extract text content from the message
+                        text_parts = []
+                        if isinstance(content, list):
+                            for part in content:
+                                if isinstance(part, dict):
+                                    if part.get("type") == "text":
+                                        text_parts.append(part.get("text", ""))
+                                elif isinstance(part, str):
+                                    text_parts.append(part)
+                        elif isinstance(content, str):
+                            text_parts.append(content)
+
+                        if text_parts:
+                            combined_text = " ".join(text_parts)
+                            if len(combined_text) > 50:  # Skip very short responses
+                                recent_assistant_responses.append(combined_text)
+                except (json.JSONDecodeError, KeyError, TypeError):
+                    continue
+
+            # Capture the most recent assistant response if not already captured
+            if recent_assistant_responses:
+                assistant_response = recent_assistant_responses[-1]
+
+                # Only capture if it's new (check against last captured)
+                last_captured = session_data.get("last_assistant_response", "")[:100]
+                if assistant_response[:100] != last_captured:
+                    await capture.capture_message(
+                        session_id=session_id,
+                        role="assistant",
+                        content=assistant_response[:10000],  # Limit size
+                        token_count=int(len(assistant_response.split()) * 1.3),
+                        model_info="claude-opus-4-5",
+                    )
+                    session_data["message_count"] += 1
+                    session_data["last_assistant_response"] = assistant_response[:100]
+                    print(
+                        f"✅ Captured assistant response ({len(assistant_response)} chars)"
+                    )
+
+    except Exception as e:
+        print(f"⚠️ Assistant capture skipped: {e}")
 
     # Every 10 messages, create a checkpoint capsule
     if (

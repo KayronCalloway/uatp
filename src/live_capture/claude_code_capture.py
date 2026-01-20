@@ -24,7 +24,7 @@ load_dotenv()
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.live_capture.rich_capture_integration import RichCaptureEnhancer
+from src.live_capture.rich_capture_integration import RichCaptureEnhancer  # noqa: E402
 
 # Configure logging
 logging.basicConfig(
@@ -252,6 +252,78 @@ class ClaudeCodeCapture:
 
         return session_id
 
+    async def load_session_from_db(
+        self, session_id: str
+    ) -> Optional[ConversationSession]:
+        """Load a session and its messages from the database."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+
+            # Load session metadata
+            cursor.execute(
+                """
+                SELECT user_id, platform, start_time, end_time, significance_score,
+                       total_tokens, topics, capsule_created
+                FROM capture_sessions WHERE session_id = ?
+                """,
+                (session_id,),
+            )
+            row = cursor.fetchone()
+
+            if not row:
+                conn.close()
+                return None
+
+            session = ConversationSession(
+                session_id=session_id,
+                user_id=row[0],
+                platform=row[1],
+                start_time=datetime.fromisoformat(row[2])
+                if row[2]
+                else datetime.now(timezone.utc),
+                end_time=datetime.fromisoformat(row[3]) if row[3] else None,
+                significance_score=row[4] or 0.0,
+                total_tokens=row[5] or 0,
+                topics=json.loads(row[6]) if row[6] else [],
+                capsule_created=bool(row[7]),
+            )
+
+            # Load messages
+            cursor.execute(
+                """
+                SELECT message_id, role, content, timestamp, token_count, model_info
+                FROM capture_messages
+                WHERE session_id = ?
+                ORDER BY timestamp ASC
+                """,
+                (session_id,),
+            )
+
+            for msg_row in cursor.fetchall():
+                message = ConversationMessage(
+                    message_id=msg_row[0],
+                    session_id=session_id,
+                    role=msg_row[1],
+                    content=msg_row[2],
+                    timestamp=datetime.fromisoformat(msg_row[3])
+                    if msg_row[3]
+                    else datetime.now(timezone.utc),
+                    token_count=msg_row[4],
+                    model_info=msg_row[5],
+                )
+                session.messages.append(message)
+
+            conn.close()
+            logger.info(
+                f"📥 Loaded session {session_id} from DB with {len(session.messages)} messages"
+            )
+            return session
+
+        except Exception as e:
+            logger.error(f"❌ Failed to load session from DB: {e}")
+            return None
+
     async def capture_message(
         self,
         session_id: str,
@@ -262,8 +334,18 @@ class ClaudeCodeCapture:
     ) -> str:
         """Capture a single message in the conversation."""
         if session_id not in self.active_sessions:
-            logger.warning(f"⚠️ Session {session_id} not found, creating new session")
-            session_id = await self.start_session()
+            # Try to load from database first
+            loaded_session = await self.load_session_from_db(session_id)
+            if loaded_session:
+                self.active_sessions[session_id] = loaded_session
+                logger.info(
+                    f"📥 Resumed session {session_id} with {len(loaded_session.messages)} existing messages"
+                )
+            else:
+                logger.warning(
+                    f"⚠️ Session {session_id} not found, creating new session"
+                )
+                session_id = await self.start_session()
 
         session = self.active_sessions[session_id]
         message_id = (
@@ -315,8 +397,18 @@ class ClaudeCodeCapture:
     async def end_session(self, session_id: str) -> Optional[ConversationSession]:
         """End a conversation session and calculate final metrics."""
         if session_id not in self.active_sessions:
-            logger.warning(f"⚠️ Session {session_id} not found")
-            return None
+            # Try to load from database
+            loaded_session = await self.load_session_from_db(session_id)
+            if loaded_session:
+                self.active_sessions[session_id] = loaded_session
+                logger.info(
+                    f"📥 Loaded session {session_id} from DB for ending with {len(loaded_session.messages)} messages"
+                )
+            else:
+                logger.warning(
+                    f"⚠️ Session {session_id} not found in memory or database"
+                )
+                return None
 
         session = self.active_sessions[session_id]
         session.end_time = datetime.now(timezone.utc)
@@ -357,10 +449,12 @@ class ClaudeCodeCapture:
 
     async def should_create_capsule(self, session: ConversationSession) -> bool:
         """Determine if a session warrants capsule creation."""
-        # Minimum thresholds
+        # Minimum thresholds for capsule creation
+        # Note: These are intentionally low to capture more conversations
+        # The quality filtering happens via quality_assessment grades
         min_messages = 3
-        min_significance = 0.3
-        min_duration_minutes = 2
+        min_significance = 0.05  # Low threshold - quality grades filter later
+        min_duration_minutes = 0  # Duration not required for hook-based capture
 
         # Check message count
         if len(session.messages) < min_messages:
@@ -437,12 +531,49 @@ class ClaudeCodeCapture:
                     f"✨ Created RICH capsule {capsule_id} with per-step metadata"
                 )
 
+            elif "sqlite" in DATABASE_URL:
+                # SQLite storage (development mode)
+                import aiosqlite
+
+                # Extract path from DATABASE_URL
+                # Format: sqlite+aiosqlite:////path/to/db or sqlite:///path/to/db
+                db_path = DATABASE_URL.split("///")[-1]
+
+                async with aiosqlite.connect(db_path) as conn:
+                    # Get next id (SQLite SERIAL doesn't auto-increment)
+                    cursor = await conn.execute(
+                        "SELECT COALESCE(MAX(id), 0) + 1 FROM capsules"
+                    )
+                    next_id = (await cursor.fetchone())[0]
+
+                    await conn.execute(
+                        """
+                        INSERT INTO capsules (id, capsule_id, capsule_type, version, timestamp, status, verification, payload)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            next_id,
+                            capsule_data["capsule_id"],
+                            capsule_data["type"],
+                            capsule_data["version"],
+                            capsule_data["timestamp"],
+                            capsule_data["status"],
+                            json.dumps(capsule_data["verification"]),
+                            json.dumps(capsule_data["payload"]),
+                        ),
+                    )
+                    await conn.commit()
+
+                capsule_id = capsule_data["capsule_id"]
+                logger.info(
+                    f"✨ Created RICH capsule {capsule_id} in SQLite (id={next_id})"
+                )
+
             else:
-                # Fallback: Use simple direct PostgreSQL insert even without asyncpg
-                # This shouldn't happen in production but provides safety
+                # Fallback: Unknown database type
                 capsule_id = capsule_data["capsule_id"]
                 logger.warning(
-                    "⚠️ DATABASE_URL not set, capsule data prepared but not persisted"
+                    f"⚠️ Unknown DATABASE_URL format, capsule data prepared but not persisted: {DATABASE_URL[:50]}"
                 )
                 logger.info(f"Capsule would be: {capsule_id}")
 
