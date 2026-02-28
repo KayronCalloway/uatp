@@ -415,13 +415,16 @@ async def list_capsules(
 @router.get("/{capsule_id}")
 async def get_capsule(
     capsule_id: str,
-    current_user: Dict = Depends(get_current_user),
+    request: Request,
     session: AsyncSession = Depends(get_db_session),
 ):
-    """Get a specific capsule by ID (users can only access their own capsules)"""
+    """Get a specific capsule by ID (public: legacy capsules, auth: user's own capsules)"""
     correlation_id = get_correlation_id()
-    user_is_admin = is_admin_user(current_user)
-    user_id = current_user.get("user_id")
+
+    # Optional auth
+    current_user = get_current_user_optional(request)
+    user_is_admin = is_admin_user(current_user) if current_user else False
+    user_id = current_user.get("user_id") if current_user else None
 
     logger.info(f"[{correlation_id}] GET /capsules/{capsule_id} by user {user_id}")
 
@@ -434,14 +437,13 @@ async def get_capsule(
         if not capsule:
             raise HTTPException(status_code=404, detail="Capsule not found")
 
-        # Verify ownership: non-admin users can only access their own capsules
-        # Legacy capsules (owner_id=NULL) are only accessible to admins
-        if not user_is_admin:
-            if capsule.owner_id is None:
-                raise HTTPException(
-                    status_code=403, detail="Access denied: legacy capsule"
-                )
-            if str(capsule.owner_id) != user_id:
+        # Verify ownership:
+        # - Unauthenticated users can access legacy capsules (owner_id=NULL)
+        # - Authenticated non-admin users can only access their own capsules
+        # - Admins can access all capsules
+        if current_user and not user_is_admin and user_id:
+            # Authenticated non-admin user
+            if capsule.owner_id is not None and str(capsule.owner_id) != user_id:
                 raise HTTPException(status_code=403, detail="Access denied")
 
         # Fix timestamp format
