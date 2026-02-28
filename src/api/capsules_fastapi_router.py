@@ -23,12 +23,13 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.auth_middleware import (
     get_current_user,
+    get_current_user_optional,
     is_admin_user,
     require_admin,
 )
@@ -60,6 +61,7 @@ async def get_db_session():
 
 @router.get("/stats")
 async def get_capsule_stats(
+    request: Request,
     demo_mode: bool = Query(
         False,
         description="Include demo capsules (default: exclude demo capsules with 'demo-' prefix)",
@@ -67,14 +69,16 @@ async def get_capsule_stats(
     include_test: bool = Query(
         False, description="Include test data in results (default: exclude)"
     ),
-    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
-    """Get comprehensive capsule statistics from database (user sees own capsules only)"""
+    """Get comprehensive capsule statistics from database (public: aggregate stats, auth: user-specific)"""
     try:
-        # Determine if user is admin
-        user_is_admin = is_admin_user(current_user)
-        user_id = current_user.get("user_id")
+        # Optional auth - works for both authenticated and unauthenticated users
+        current_user = get_current_user_optional(request)
+
+        # Determine if user is admin (unauthenticated users are not admins)
+        user_is_admin = is_admin_user(current_user) if current_user else False
+        user_id = current_user.get("user_id") if current_user else None
 
         # Build base query with demo filtering
         base_query = select(CapsuleModel)
@@ -86,8 +90,9 @@ async def get_capsule_stats(
         if not demo_mode:
             count_query = count_query.where(~CapsuleModel.capsule_id.like("demo-%"))
 
-        # Non-admin users only see their own capsules
-        if not user_is_admin:
+        # Non-admin authenticated users only see their own capsules
+        # Unauthenticated users and admins see aggregate stats for all capsules
+        if current_user and not user_is_admin and user_id:
             count_query = count_query.where(CapsuleModel.owner_id == user_id)
 
         # Apply test data filtering (skip on SQLite - JSONB syntax not supported)
@@ -110,8 +115,8 @@ async def get_capsule_stats(
         ).group_by(CapsuleModel.capsule_type)
         if not demo_mode:
             type_query = type_query.where(~CapsuleModel.capsule_id.like("demo-%"))
-        # Non-admin users only see their own capsules
-        if not user_is_admin:
+        # Non-admin authenticated users only see their own capsules
+        if current_user and not user_is_admin and user_id:
             type_query = type_query.where(CapsuleModel.owner_id == user_id)
 
         # Apply test data filtering to type query (skip on SQLite - JSONB syntax not supported)
@@ -155,8 +160,8 @@ async def get_capsule_stats(
         )
         if not demo_mode:
             recent_query = recent_query.where(~CapsuleModel.capsule_id.like("demo-%"))
-        # Non-admin users only see their own capsules
-        if not user_is_admin:
+        # Non-admin authenticated users only see their own capsules
+        if current_user and not user_is_admin and user_id:
             recent_query = recent_query.where(CapsuleModel.owner_id == user_id)
 
         # Apply test data filtering to recent activity (skip on SQLite - JSONB syntax not supported)
