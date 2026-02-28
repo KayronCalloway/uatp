@@ -54,7 +54,7 @@ def wrap_in_uatp_envelope(
 
     # Add v7 envelope metadata (won't overwrite existing fields)
     envelope["_envelope"] = {
-        "version": "7.0",
+        "version": "7.1",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "capsule_type": capsule_type,
     }
@@ -87,7 +87,7 @@ def wrap_in_uatp_envelope(
             {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "operation": "envelope_wrapping",
-                "version": "7.0"
+                "version": "7.1"
             }
         ],
         "generation": len(parent_capsules) + 1 if parent_capsules else 1

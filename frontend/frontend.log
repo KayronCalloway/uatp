@@ -2,705 +2,80 @@
 > frontend@0.1.0 dev
 > next dev
 
-   ▲ Next.js 15.4.1
+   ▲ Next.js 15.4.8
    - Local:        http://localhost:3000
    - Network:      http://192.168.1.218:3000
    - Environments: .env.local, .env.development
 
  ✓ Starting...
- ✓ Ready in 903ms
- ○ Compiling /_not-found ...
-Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+ ✓ Ready in 913ms
+ ○ Compiling / ...
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
   npx update-browserslist-db@latest
   Why you should do it regularly: https://github.com/browserslist/update-db#readme
- ✓ Compiled /_not-found in 2.1s (878 modules)
- ⚠ Fast Refresh had to perform a full reload due to a runtime error.
- GET /_next/static/webpack/e6ed120e9ff71ef0.webpack.hot-update.json 404 in 2265ms
- ⚠ Fast Refresh had to perform a full reload due to a runtime error.
- ✓ Compiled / in 287ms (1007 modules)
- GET / 200 in 223ms
- GET / 200 in 31ms
- GET / 200 in 22ms
- GET / 200 in 38ms
- GET / 200 in 37ms
- ✓ Compiled in 172ms (1016 modules)
- GET / 200 in 45ms
- ✓ Compiled in 166ms (1016 modules)
- GET / 200 in 23ms
- ✓ Compiled in 197ms (1016 modules)
- GET / 200 in 22ms
- ✓ Compiled in 51ms (419 modules)
- GET / 200 in 40ms
- ✓ Compiled in 136ms (1016 modules)
- GET / 200 in 24ms
- ✓ Compiled in 79ms (419 modules)
- GET / 200 in 30ms
- ✓ Compiled in 201ms (1016 modules)
- GET / 200 in 51ms
- ✓ Compiled in 125ms (1016 modules)
- GET / 200 in 35ms
- ✓ Compiled in 260ms (1018 modules)
- GET / 200 in 35ms
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- GET / 500 in 1056ms
- GET / 500 in 4ms
- ○ Compiling /_error ...
- GET / 500 in 6ms
- GET / 500 in 3ms
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- GET / 500 in 130ms
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- GET / 500 in 260ms
- GET / 500 in 4ms
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- GET / 500 in 123ms
- GET / 500 in 3ms
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- GET / 500 in 115ms
- GET / 500 in 3ms
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:6:1
-Module not found: Can't resolve '@/components/ui/label'
-  4 | import { Button } from "@/components/ui/button"
-  5 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-> 6 | import { Label } from "@/components/ui/label"
-    | ^
-  7 | import { Textarea } from "@/components/ui/textarea"
-  8 | import { Input } from "@/components/ui/input"
-  9 | import { Slider } from "@/components/ui/slider"
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- GET / 500 in 5ms
- ⨯ ./src/components/capsules/outcome-recorder.tsx:10:1
-Module not found: Can't resolve '@/components/ui/select'
-   8 | import { Input } from "@/components/ui/input"
-   9 | import { Slider } from "@/components/ui/slider"
-> 10 | import {
-     | ^
-  11 |   Select,
-  12 |   SelectContent,
-  13 |   SelectItem,
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ⨯ ./src/components/capsules/outcome-recorder.tsx:10:1
-Module not found: Can't resolve '@/components/ui/select'
-   8 | import { Input } from "@/components/ui/input"
-   9 | import { Slider } from "@/components/ui/slider"
-> 10 | import {
-     | ^
-  11 |   Select,
-  12 |   SelectContent,
-  13 |   SelectItem,
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/components/capsules/capsule-detail.tsx
-./src/components/capsules/capsule-explorer.tsx
-./src/components/app/main-app.tsx
-./src/app/page.tsx
- ✓ Compiled /_error in 428ms (2397 modules)
- ⚠ Fast Refresh had to perform a full reload due to a runtime error.
- ⨯ [Error: ENOENT: no such file or directory, open '/Users/kay/uatp-capsule-engine/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/Users/kay/uatp-capsule-engine/frontend/.next/routes-manifest.json',
-  page: '/'
-}
- ⨯ [Error: ENOENT: no such file or directory, open '/Users/kay/uatp-capsule-engine/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/Users/kay/uatp-capsule-engine/frontend/.next/routes-manifest.json'
-}
-[Error: ENOENT: no such file or directory, open '/Users/kay/uatp-capsule-engine/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/Users/kay/uatp-capsule-engine/frontend/.next/routes-manifest.json',
-  page: '/'
-}
- ⨯ [Error: ENOENT: no such file or directory, open '/Users/kay/uatp-capsule-engine/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/Users/kay/uatp-capsule-engine/frontend/.next/routes-manifest.json'
-}
-[Error: ENOENT: no such file or directory, open '/Users/kay/uatp-capsule-engine/frontend/.next/fallback-build-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/Users/kay/uatp-capsule-engine/frontend/.next/fallback-build-manifest.json'
-}
- GET / 500 in 1139ms
- GET / 500 in 439ms
- ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
-  digest: '3284351732'
-}
-[TypeError: __webpack_modules__[moduleId] is not a function]
- ⨯ [TypeError: __webpack_modules__[moduleId] is not a function]
- ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
-  page: '/'
-}
- GET / 500 in 516ms
- ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
-  digest: '3284351732'
-}
-[TypeError: __webpack_modules__[moduleId] is not a function]
- ⨯ [TypeError: __webpack_modules__[moduleId] is not a function]
- ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
-  page: '/'
-}
- GET / 500 in 532ms
- ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
-  digest: '3284351732'
-}
-[TypeError: __webpack_modules__[moduleId] is not a function]
- ⨯ [TypeError: __webpack_modules__[moduleId] is not a function]
- ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
-  page: '/'
-}
- GET / 500 in 552ms
- ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
-  digest: '3284351732'
-}
-[TypeError: __webpack_modules__[moduleId] is not a function]
- ⨯ [TypeError: __webpack_modules__[moduleId] is not a function]
- ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
-  page: '/'
-}
- GET / 500 in 560ms
+ ✓ Compiled / in 1238ms (2147 modules)
+ GET / 200 in 1520ms
+ ✓ Compiled in 269ms (988 modules)
+ GET / 200 in 49ms
+ GET / 200 in 67ms
+ ✓ Compiled in 207ms (2133 modules)
+ ✓ Compiled in 136ms (2133 modules)
+ ✓ Compiled in 72ms (988 modules)
+ GET / 200 in 47ms
+ ✓ Compiled in 104ms (988 modules)
+ GET / 200 in 13ms
+ ✓ Compiled in 159ms (2133 modules)
+ GET / 200 in 175ms
+ GET / 200 in 4ms
+ ✓ Compiled in 118ms (988 modules)
+ GET / 200 in 14ms
+ GET / 200 in 188ms
+ ○ Compiling /ml-dashboard ...
+ ✓ Compiled /ml-dashboard in 763ms (2312 modules)
+ GET /ml-dashboard 200 in 996ms
+ ✓ Compiled in 414ms (2326 modules)
+ GET /ml-dashboard 200 in 53ms
+ ✓ Compiled in 208ms (2326 modules)
+ GET /ml-dashboard 200 in 51ms
+ GET / 200 in 231ms
+ GET / 200 in 34ms
+ GET /ml-dashboard 200 in 5ms
+ ✓ Compiled /analytics/outcomes in 175ms (2335 modules)
+ GET /analytics/outcomes 200 in 228ms
+ ✓ Compiled /analytics in 466ms (2344 modules)
+ GET /analytics 200 in 527ms
+ ✓ Compiled /analytics/patterns in 219ms (2367 modules)
+ GET /analytics/patterns 200 in 257ms
+ GET /analytics/outcomes 200 in 10ms
+ ✓ Compiled /_not-found in 169ms (2372 modules)
+ GET /analytics/calibration 404 in 202ms
+ GET /analytics/calibration 404 in 67ms
+ GET /analytics/causal 404 in 9ms
+ GET /analytics/causal 404 in 29ms
+ GET /ml-dashboard 200 in 11ms
+ ✓ Compiled in 228ms (2367 modules)
+ ✓ Compiled in 461ms (2379 modules)
+ ✓ Compiled in 183ms (2365 modules)
+ GET /ml-dashboard 200 in 212ms
+ GET / 200 in 16ms
+ GET /analytics/outcomes 200 in 10ms
+ GET /analytics 200 in 9ms
+ GET /analytics/patterns 200 in 9ms
+ ✓ Compiled /_not-found in 219ms (2370 modules)
+ GET /analytics/calibration 404 in 276ms
+ GET /analytics/calibration 404 in 57ms
+ GET /analytics/calibration 404 in 18ms
+ GET /analytics 200 in 13ms
+ GET /analytics/causal 404 in 3ms
+ GET /analytics/causal 404 in 12ms
+ GET /apple-touch-icon-precomposed.png 404 in 75ms
+ GET /apple-touch-icon.png 404 in 74ms
+ ✓ Compiled /favicon.ico in 312ms (1322 modules)
+ GET /favicon.ico 200 in 760ms
+ GET / 200 in 761ms
+ GET /favicon.ico 200 in 2ms
+ GET /favicon.ico 200 in 637ms
+ GET /apple-touch-icon.png 404 in 708ms
+ GET /apple-touch-icon-precomposed.png 404 in 714ms
+ GET / 200 in 753ms
+ GET /favicon.ico 200 in 2ms

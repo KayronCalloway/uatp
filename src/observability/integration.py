@@ -41,7 +41,7 @@ class UATPObservability:
     def initialize(
         self,
         service_name: str = "uatp-capsule-engine",
-        service_version: str = "7.0.0",
+        service_version: str = "7.1.0",
         deployment_environment: Optional[str] = None,
         enable_tracing: bool = True,
         enable_metrics: bool = True,

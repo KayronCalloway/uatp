@@ -157,7 +157,7 @@ class BaseCapsule(BaseModel):
     )
 
     capsule_id: str = Field(pattern=r"^caps_[0-9]{4}_[0-9]{2}_[0-9]{2}_[a-f0-9]{16}$")
-    version: str = Field("7.0", pattern=r"^7\.0$")
+    version: str = Field("7.0", pattern=r"^7\.[01]$")
     timestamp: UTCDateTime
     capsule_type: CapsuleType
     status: CapsuleStatus

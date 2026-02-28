@@ -629,7 +629,7 @@ async def verify_capsule(
             "capsule_type": capsule.capsule_type,
             "timestamp": capsule.timestamp,
             "status": capsule.status if hasattr(capsule, "status") else "sealed",
-            "version": getattr(capsule, "version", "7.0"),
+            "version": getattr(capsule, "version", "7.1"),
             "verification": capsule.verification
             if hasattr(capsule, "verification") and capsule.verification
             else None,

@@ -52,7 +52,7 @@ async def mobile_health():
                 "background_sync": True,
                 "version": "1.0.0",
             },
-            server_version="UATP-7.0",
+            server_version="UATP-7.1",
             min_client_version="1.0.0",
         )
     )

@@ -53,7 +53,7 @@ class UATPTracing:
     def initialize(
         self,
         service_name: str = "uatp-capsule-engine",
-        service_version: str = "7.0.0",
+        service_version: str = "7.1.0",
         deployment_environment: str = "production",
         otlp_endpoint: str = "http://uatp-otel-collector:4317",
         jaeger_endpoint: str = "http://jaeger-collector:14268/api/traces",
@@ -140,7 +140,7 @@ class UATPTracing:
             headers["Authorization"] = f"Bearer {api_key}"
 
         # Add custom headers
-        headers.update({"uatp-service": "capsule-engine", "uatp-version": "7.0.0"})
+        headers.update({"uatp-service": "capsule-engine", "uatp-version": "7.1.0"})
 
         return headers
 

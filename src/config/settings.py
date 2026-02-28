@@ -49,8 +49,8 @@ class Settings:
     API_KEYS: Dict[str, Any] = {}
 
     # Capsule settings
-    DEFAULT_CAPSULE_VERSION: str = "7.0"
-    SUPPORTED_CAPSULE_VERSIONS: Set[str] = {"6.0", "7.0"}
+    DEFAULT_CAPSULE_VERSION: str = "7.1"
+    SUPPORTED_CAPSULE_VERSIONS: Set[str] = {"6.0", "7.0", "7.1"}
 
     # Logging settings
     LOG_LEVEL: str = "INFO"

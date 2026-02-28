@@ -208,7 +208,7 @@ def create_rich_reasoning_capsule(
     capsule = {
         "capsule_id": capsule_id,
         "type": "reasoning_trace",
-        "version": "7.0",
+        "version": "7.1",
         "timestamp": timestamp,
         "status": "sealed",
         "verification": {
@@ -277,7 +277,7 @@ def create_rich_economic_capsule(
     capsule = {
         "capsule_id": capsule_id,
         "type": "economic_transaction",
-        "version": "7.0",
+        "version": "7.1",
         "timestamp": timestamp,
         "status": "sealed",
         "verification": {

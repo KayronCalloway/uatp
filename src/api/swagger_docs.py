@@ -11,7 +11,7 @@ def create_swagger_docs(app):
     # Create API with metadata
     api = Api(
         app,
-        version="7.0",
+        version="7.1",
         title="UATP Capsule Engine API",
         description="API for creating and managing UATP 7.0 capsules",
         doc="/docs",

@@ -429,7 +429,7 @@ class CapsuleEngine:
         if "type" not in capsule_data:
             capsule_data["type"] = "reasoning_trace"
         if "version" not in capsule_data:
-            capsule_data["version"] = "7.0"
+            capsule_data["version"] = "7.1"
         if "timestamp" not in capsule_data:
             capsule_data["timestamp"] = datetime.now(timezone.utc).isoformat()
         if "status" not in capsule_data:
@@ -450,7 +450,7 @@ class CapsuleEngine:
             capsule_model = CapsuleModel(
                 capsule_id=capsule_id,
                 capsule_type=capsule_data.get("type", "reasoning_trace"),
-                version=capsule_data.get("version", "7.0"),
+                version=capsule_data.get("version", "7.1"),
                 timestamp=datetime.fromisoformat(capsule_data["timestamp"].replace("Z", "+00:00"))
                     if isinstance(capsule_data["timestamp"], str)
                     else capsule_data["timestamp"],

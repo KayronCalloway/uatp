@@ -177,7 +177,7 @@ class UATPLogging:
     def initialize(
         self,
         service_name: str = "uatp-capsule-engine",
-        service_version: str = "7.0.0",
+        service_version: str = "7.1.0",
         deployment_environment: str = "production",
         log_level: str = "INFO",
         otlp_endpoint: Optional[str] = "http://uatp-otel-collector:4318",
@@ -267,7 +267,7 @@ class UATPLogging:
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
 
-        headers.update({"uatp-service": "capsule-engine", "uatp-version": "7.0.0"})
+        headers.update({"uatp-service": "capsule-engine", "uatp-version": "7.1.0"})
 
         return headers
 

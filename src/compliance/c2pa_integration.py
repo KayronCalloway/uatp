@@ -548,7 +548,7 @@ class C2PAIntegration:
                 "forensic_capability": credentials.watermark_metadata is not None,
             },
             "generated_timestamp": datetime.now(timezone.utc).isoformat(),
-            "compliance_version": "C2PA_2.0_UATP_7.0",
+            "compliance_version": "C2PA_2.0_UATP_7.1",
         }
 
 

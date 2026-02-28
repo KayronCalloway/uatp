@@ -590,7 +590,7 @@ def create_and_sign_reasoning_capsule(
         reasoning_trace=payload,
         status=CapsuleStatus.SEALED,  # Use a valid status: DRAFT, SEALED, VERIFIED, ARCHIVED
         verification=verification,
-        version="7.0",
+        version="7.1",
     )
 
     # Hash and sign the capsule

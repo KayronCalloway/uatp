@@ -302,7 +302,7 @@ class UATPSettings(BaseSettings):
 
     # Application
     app_name: str = Field(default="UATP Capsule Engine")
-    app_version: str = Field(default="7.0.0")
+    app_version: str = Field(default="7.1.0")
     environment: Environment = Field(default=Environment.DEVELOPMENT)
     debug: bool = Field(default=False)
 
@@ -316,8 +316,8 @@ class UATPSettings(BaseSettings):
     max_file_size_mb: int = Field(default=100, ge=1, le=1000)
 
     # Capsule Configuration
-    default_capsule_version: str = Field(default="7.0")
-    supported_capsule_versions: Set[str] = Field(default={"6.0", "7.0"})
+    default_capsule_version: str = Field(default="7.1")
+    supported_capsule_versions: Set[str] = Field(default={"6.0", "7.0", "7.1"})
     max_capsule_chain_length: int = Field(default=10000, ge=100, le=1000000)
 
     # Feature Flags
@@ -368,8 +368,8 @@ class UATPSettings(BaseSettings):
             return self.auth.cors_allowed_origins + [
                 "http://localhost:3000",
                 "http://localhost:8080",
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:8080",
+                "http://127.1.0.1:3000",
+                "http://127.1.0.1:8080",
             ]
         return self.auth.cors_allowed_origins
 

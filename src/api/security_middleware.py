@@ -466,7 +466,7 @@ class SecurityMiddleware:
 
         # UATP-specific security headers
         response.headers["X-UATP-Security-Level"] = self.config["security_level"].value
-        response.headers["X-UATP-Security-Version"] = "7.0"
+        response.headers["X-UATP-Security-Version"] = "7.1"
 
         # Add security context info (if debug mode)
         if current_app.debug and hasattr(g, "security_context"):
