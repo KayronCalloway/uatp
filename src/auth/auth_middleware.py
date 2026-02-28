@@ -196,9 +196,9 @@ async def authentication_middleware(request: Request, call_next):
         "/",
     ]
 
-    # Skip authentication for capsules API (read-only public access for now)
-    if request.url.path.startswith("/api/v1/capsules"):
-        return await call_next(request)
+    # NOTE: Capsules API auth bypass removed (2026-02-27)
+    # Capsules now require authentication for user-scoped isolation
+    # Legacy/system capsules (owner_id = NULL) are admin-only
 
     if request.url.path in skip_paths:
         return await call_next(request)
@@ -248,9 +248,9 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers[
-        "Strict-Transport-Security"
-    ] = "max-age=31536000; includeSubDomains"
+    response.headers["Strict-Transport-Security"] = (
+        "max-age=31536000; includeSubDomains"
+    )
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
 

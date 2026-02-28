@@ -22,10 +22,14 @@ from sqlalchemy import (
     Column,
     DateTime,
     Float,
+    ForeignKey,
     Integer,
     String,
+    Text,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
 from src.capsule_schema import AnyCapsule
 from src.core.database import db
@@ -49,6 +53,14 @@ class CapsuleModel(db.Base):
     id = Column(Integer, primary_key=True)
     capsule_id = Column(String, nullable=False)
 
+    # --- Ownership Fields ---
+    # owner_id enables user-scoped capsule isolation
+    # NULL owner_id indicates legacy/system capsules (visible to admin only)
+    owner_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True
+    )
+    owner = relationship("UserModel", back_populates="capsules")
+
     # --- Type Discriminator (NOT polymorphic - just a string column) ---
     capsule_type = Column(String, nullable=False)
 
@@ -69,6 +81,12 @@ class CapsuleModel(db.Base):
     # This field stores ALL type-specific data for each capsule type.
     # e.g., reasoning_trace, economic_transaction, etc.
     payload = Column(JSON, nullable=False)
+
+    # --- Encrypted Payload Fields ---
+    # For client-side encryption: payload is encrypted before storage
+    # encrypted_payload stores Base64 ciphertext, encryption_metadata stores {iv, algorithm}
+    encrypted_payload = Column(Text, nullable=True)  # Base64 ciphertext
+    encryption_metadata = Column(JSON, nullable=True)  # {iv, algorithm, key_id}
 
     # --- Outcome Tracking Fields ---
     # Track whether the capsule's suggestions/decisions worked out

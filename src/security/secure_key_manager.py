@@ -5,21 +5,15 @@ Implements cryptographically secure key management with proper key derivation,
 secure memory handling, and automated key rotation.
 """
 
+import ctypes
 import hashlib
 import logging
-import os
 import secrets
 import threading
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Dict, Optional, Tuple
-
-import ctypes
-from nacl.encoding import HexEncoder
-from nacl.signing import SigningKey
-from nacl.utils import random
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -146,7 +140,11 @@ class SecureKeyDerivation:
 
         # HKDF Extract
         prk = hashlib.pbkdf2_hmac(
-            "sha256", master_key, salt, 100000, 32  # 100k iterations
+            "sha256",
+            master_key,
+            salt,
+            100000,
+            32,  # 100k iterations
         )
 
         # HKDF Expand
@@ -349,6 +347,39 @@ class SecureKeyManager:
                 }
             return status
 
+    def derive_user_encryption_key(self, user_id: str) -> bytes:
+        """
+        Derive a user-specific AES-256 key for payload encryption.
+
+        This enables client-side encryption where each user gets a unique key
+        derived from the master key. Users can only decrypt their own capsules.
+
+        Args:
+            user_id: The unique user identifier (UUID string)
+
+        Returns:
+            32-byte AES-256 key derived specifically for this user
+        """
+        with self._lock:
+            try:
+                # Read master key
+                master_key = self._master_key_memory.read(32)
+                if not master_key:
+                    raise RuntimeError("Failed to read master key")
+
+                # Derive user-specific key using HKDF
+                purpose = f"user_enc_{user_id}"
+                user_key = SecureKeyDerivation.derive_key_from_master(
+                    master_key, purpose, KeyType.SYMMETRIC_ENCRYPTION
+                )
+
+                logger.debug(f"Derived encryption key for user {user_id[:8]}...")
+                return user_key
+
+            except Exception as e:
+                logger.error(f"Failed to derive user encryption key: {e}")
+                raise RuntimeError(f"Key derivation failed: {e}")
+
     def rotate_all_keys(self) -> Dict[str, bool]:
         """Rotate all keys that need rotation."""
         results = {}
@@ -379,7 +410,6 @@ def create_secure_key_manager(master_key: Optional[bytes] = None) -> SecureKeyMa
 
 # Example usage and testing
 if __name__ == "__main__":
-    import asyncio
 
     def test_secure_key_manager():
         """Test the secure key manager."""

@@ -27,11 +27,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..auth.auth_middleware import (
+    get_current_user,
+    is_admin_user,
+    require_admin,
+)
 from ..core.config import DATABASE_URL
 from ..core.database import db
 from ..models.capsule import CapsuleModel
 from ..utils.timezone_utils import utc_now
-from ..utils.uatp_envelope import wrap_in_uatp_envelope, is_envelope_format
+from ..utils.uatp_envelope import is_envelope_format, wrap_in_uatp_envelope
 
 # Check if using SQLite (JSONB syntax not supported)
 IS_SQLITE = "sqlite" in DATABASE_URL.lower()
@@ -62,10 +67,15 @@ async def get_capsule_stats(
     include_test: bool = Query(
         False, description="Include test data in results (default: exclude)"
     ),
+    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
-    """Get comprehensive capsule statistics from database"""
+    """Get comprehensive capsule statistics from database (user sees own capsules only)"""
     try:
+        # Determine if user is admin
+        user_is_admin = is_admin_user(current_user)
+        user_id = current_user.get("user_id")
+
         # Build base query with demo filtering
         base_query = select(CapsuleModel)
         if not demo_mode:
@@ -75,6 +85,10 @@ async def get_capsule_stats(
         count_query = select(func.count(CapsuleModel.id))
         if not demo_mode:
             count_query = count_query.where(~CapsuleModel.capsule_id.like("demo-%"))
+
+        # Non-admin users only see their own capsules
+        if not user_is_admin:
+            count_query = count_query.where(CapsuleModel.owner_id == user_id)
 
         # Apply test data filtering (skip on SQLite - JSONB syntax not supported)
         if not include_test and not IS_SQLITE:
@@ -96,6 +110,9 @@ async def get_capsule_stats(
         ).group_by(CapsuleModel.capsule_type)
         if not demo_mode:
             type_query = type_query.where(~CapsuleModel.capsule_id.like("demo-%"))
+        # Non-admin users only see their own capsules
+        if not user_is_admin:
+            type_query = type_query.where(CapsuleModel.owner_id == user_id)
 
         # Apply test data filtering to type query (skip on SQLite - JSONB syntax not supported)
         if not include_test and not IS_SQLITE:
@@ -138,6 +155,9 @@ async def get_capsule_stats(
         )
         if not demo_mode:
             recent_query = recent_query.where(~CapsuleModel.capsule_id.like("demo-%"))
+        # Non-admin users only see their own capsules
+        if not user_is_admin:
+            recent_query = recent_query.where(CapsuleModel.owner_id == user_id)
 
         # Apply test data filtering to recent activity (skip on SQLite - JSONB syntax not supported)
         if not include_test and not IS_SQLITE:
@@ -194,18 +214,27 @@ async def list_capsules(
         False,
         description="Include demo capsules (default: exclude demo capsules with 'demo-' prefix)",
     ),
+    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
-    """List capsules with pagination and filtering"""
+    """List capsules with pagination and filtering (user sees own capsules only)"""
     correlation_id = get_correlation_id()
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
+
     logger.info(
         f"[{correlation_id}] GET /capsules - page={page}, per_page={per_page}, "
-        f"type={type}, environment={environment}, include_test={include_test}, demo_mode={demo_mode}"
+        f"type={type}, environment={environment}, include_test={include_test}, demo_mode={demo_mode}, "
+        f"user_id={user_id}, is_admin={user_is_admin}"
     )
 
     try:
         # Build query
         query = select(CapsuleModel)
+
+        # Non-admin users only see their own capsules
+        if not user_is_admin:
+            query = query.where(CapsuleModel.owner_id == user_id)
 
         # Apply type filter
         if type:
@@ -243,6 +272,11 @@ async def list_capsules(
 
         # Get total count
         count_query = select(func.count(CapsuleModel.id))
+
+        # Non-admin users only see their own capsules
+        if not user_is_admin:
+            count_query = count_query.where(CapsuleModel.owner_id == user_id)
+
         if type:
             count_query = count_query.where(CapsuleModel.capsule_type == type)
 
@@ -284,7 +318,9 @@ async def list_capsules(
         # Debug: check which rows have None objects
         none_count = sum(1 for row in all_rows if row[0] is None)
         if none_count > 0:
-            logger.warning(f"[{correlation_id}] {none_count} rows returned None ORM objects - possible NULL primary keys")
+            logger.warning(
+                f"[{correlation_id}] {none_count} rows returned None ORM objects - possible NULL primary keys"
+            )
         capsules = [row[0] for row in all_rows if row[0] is not None]
 
         logger.info(f"[{correlation_id}] Query returned {len(capsules)} capsules")
@@ -321,13 +357,19 @@ async def list_capsules(
 
             # Wrap in UATP 7.0 envelope if not already wrapped
             if payload and not is_envelope_format(payload):
-                agent_id = verification.get("signer", "claude-code") if isinstance(verification, dict) else "claude-code"
+                agent_id = (
+                    verification.get("signer", "claude-code")
+                    if isinstance(verification, dict)
+                    else "claude-code"
+                )
                 payload = wrap_in_uatp_envelope(
                     payload_data=payload,
                     capsule_id=capsule.capsule_id,
                     capsule_type=capsule.capsule_type,
                     agent_id=agent_id,
-                    parent_capsules=[capsule.parent_capsule_id] if capsule.parent_capsule_id else None,
+                    parent_capsules=[capsule.parent_capsule_id]
+                    if capsule.parent_capsule_id
+                    else None,
                 )
 
             capsule_list.append(
@@ -362,10 +404,17 @@ async def list_capsules(
 
 
 @router.get("/{capsule_id}")
-async def get_capsule(capsule_id: str, session: AsyncSession = Depends(get_db_session)):
-    """Get a specific capsule by ID"""
+async def get_capsule(
+    capsule_id: str,
+    current_user: Dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+):
+    """Get a specific capsule by ID (users can only access their own capsules)"""
     correlation_id = get_correlation_id()
-    logger.info(f"[{correlation_id}] GET /capsules/{capsule_id}")
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
+
+    logger.info(f"[{correlation_id}] GET /capsules/{capsule_id} by user {user_id}")
 
     try:
         # Use ORM query
@@ -375,6 +424,16 @@ async def get_capsule(capsule_id: str, session: AsyncSession = Depends(get_db_se
 
         if not capsule:
             raise HTTPException(status_code=404, detail="Capsule not found")
+
+        # Verify ownership: non-admin users can only access their own capsules
+        # Legacy capsules (owner_id=NULL) are only accessible to admins
+        if not user_is_admin:
+            if capsule.owner_id is None:
+                raise HTTPException(
+                    status_code=403, detail="Access denied: legacy capsule"
+                )
+            if str(capsule.owner_id) != user_id:
+                raise HTTPException(status_code=403, detail="Access denied")
 
         # Fix timestamp format
         timestamp_str = None
@@ -405,13 +464,19 @@ async def get_capsule(capsule_id: str, session: AsyncSession = Depends(get_db_se
 
         # Wrap in UATP 7.0 envelope if not already wrapped
         if payload and not is_envelope_format(payload):
-            agent_id = verification.get("signer", "claude-code") if isinstance(verification, dict) else "claude-code"
+            agent_id = (
+                verification.get("signer", "claude-code")
+                if isinstance(verification, dict)
+                else "claude-code"
+            )
             payload = wrap_in_uatp_envelope(
                 payload_data=payload,
                 capsule_id=capsule.capsule_id,
                 capsule_type=capsule.capsule_type,
                 agent_id=agent_id,
-                parent_capsules=[capsule.parent_capsule_id] if capsule.parent_capsule_id else None,
+                parent_capsules=[capsule.parent_capsule_id]
+                if capsule.parent_capsule_id
+                else None,
             )
 
         capsule_data = {
@@ -438,9 +503,13 @@ async def get_capsule(capsule_id: str, session: AsyncSession = Depends(get_db_se
 
 @router.post("")
 async def create_capsule(
-    capsule_data: Dict[str, Any], session: AsyncSession = Depends(get_db_session)
+    capsule_data: Dict[str, Any],
+    current_user: Dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
 ):
-    """Create a new capsule"""
+    """Create a new capsule (assigned to the authenticated user)"""
+    user_id = current_user.get("user_id")
+
     try:
         # Generate capsule ID if not provided
         capsule_id = capsule_data.get("capsule_id")
@@ -466,9 +535,10 @@ async def create_capsule(
         else:
             timestamp = datetime.now(timezone.utc)
 
-        # Create capsule object
+        # Create capsule object with owner_id from authenticated user
         capsule = CapsuleModel(
             capsule_id=capsule_id,
+            owner_id=user_id,  # Assign to authenticated user for isolation
             capsule_type=capsule_data.get("type", "chat"),
             version=capsule_data.get("version", "1.0"),
             timestamp=timestamp,  # Use original timestamp to preserve signature validity
@@ -481,6 +551,9 @@ async def create_capsule(
                 },
             ),
             payload=capsule_data.get("payload", {}),
+            # Support encrypted payloads from client
+            encrypted_payload=capsule_data.get("encrypted_payload"),
+            encryption_metadata=capsule_data.get("encryption_metadata"),
         )
 
         session.add(capsule)
@@ -501,14 +574,21 @@ async def create_capsule(
 
 @router.get("/{capsule_id}/verify")
 async def verify_capsule(
-    capsule_id: str, session: AsyncSession = Depends(get_db_session)
+    capsule_id: str,
+    current_user: Dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
 ):
     """
     Verify a specific capsule's cryptographic integrity.
 
     CRITICAL SECURITY FIX: Now performs actual cryptographic verification
     using CryptoSealer.verify_capsule() instead of trusting metadata flags.
+
+    Users can only verify capsules they own (privacy-first model).
     """
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
+
     try:
         # Import CryptoSealer for verification
         try:
@@ -525,6 +605,15 @@ async def verify_capsule(
 
         if not capsule:
             raise HTTPException(status_code=404, detail="Capsule not found")
+
+        # Verify ownership: non-admin users can only verify their own capsules
+        if not user_is_admin:
+            if capsule.owner_id is None:
+                raise HTTPException(
+                    status_code=403, detail="Access denied: legacy capsule"
+                )
+            if str(capsule.owner_id) != user_id:
+                raise HTTPException(status_code=403, detail="Access denied")
 
         # Build full capsule data for verification - MUST match what was signed
         # The Pydantic model_dump() returns these keys:
@@ -702,6 +791,7 @@ async def record_capsule_outcome(
     metrics: Optional[str] = Query(
         None, description="JSON string of structured metrics"
     ),
+    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
     """
@@ -712,7 +802,12 @@ async def record_capsule_outcome(
     - Confidence calibration
     - Model improvement
     - Identifying failure patterns
+
+    Users can only record outcomes for their own capsules.
     """
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
+
     try:
         # Validate outcome status
         valid_statuses = {"success", "failure", "partial", "pending", "unknown"}
@@ -729,6 +824,15 @@ async def record_capsule_outcome(
 
         if not capsule:
             raise HTTPException(status_code=404, detail="Capsule not found")
+
+        # Verify ownership
+        if not user_is_admin:
+            if capsule.owner_id is None:
+                raise HTTPException(
+                    status_code=403, detail="Access denied: legacy capsule"
+                )
+            if str(capsule.owner_id) != user_id:
+                raise HTTPException(status_code=403, detail="Access denied")
 
         # Parse metrics if provided
         parsed_metrics = None
@@ -772,9 +876,14 @@ async def record_capsule_outcome(
 
 @router.get("/{capsule_id}/outcome")
 async def get_capsule_outcome(
-    capsule_id: str, session: AsyncSession = Depends(get_db_session)
+    capsule_id: str,
+    current_user: Dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
 ):
-    """Get the recorded outcome for a specific capsule."""
+    """Get the recorded outcome for a specific capsule (users see own capsules only)."""
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
+
     try:
         query = select(CapsuleModel).where(CapsuleModel.capsule_id == capsule_id)
         result = await session.execute(query)
@@ -782,6 +891,15 @@ async def get_capsule_outcome(
 
         if not capsule:
             raise HTTPException(status_code=404, detail="Capsule not found")
+
+        # Verify ownership
+        if not user_is_admin:
+            if capsule.owner_id is None:
+                raise HTTPException(
+                    status_code=403, detail="Access denied: legacy capsule"
+                )
+            if str(capsule.owner_id) != user_id:
+                raise HTTPException(status_code=403, detail="Access denied")
 
         return {
             "capsule_id": capsule_id,
@@ -806,21 +924,28 @@ async def get_capsule_outcome(
 
 @router.get("/outcomes/stats")
 async def get_outcome_statistics(
+    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
     """
-    Get aggregate statistics on capsule outcomes.
+    Get aggregate statistics on capsule outcomes (user sees own capsule stats only).
 
     Useful for:
     - Tracking overall system accuracy
     - Identifying areas needing improvement
     - Confidence calibration analysis
     """
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
+
     try:
         # Count by outcome status
         status_query = select(
             CapsuleModel.outcome_status, func.count(CapsuleModel.id)
         ).group_by(CapsuleModel.outcome_status)
+        # Non-admin users only see their own capsule stats
+        if not user_is_admin:
+            status_query = status_query.where(CapsuleModel.owner_id == user_id)
         status_result = await session.execute(status_query)
         status_counts = {
             status or "untracked": count for status, count in status_result.fetchall()
@@ -830,6 +955,8 @@ async def get_outcome_statistics(
         rating_query = select(func.avg(CapsuleModel.user_feedback_rating)).where(
             CapsuleModel.user_feedback_rating.isnot(None)
         )
+        if not user_is_admin:
+            rating_query = rating_query.where(CapsuleModel.owner_id == user_id)
         rating_result = await session.execute(rating_query)
         avg_rating = rating_result.scalar()
 
@@ -837,6 +964,10 @@ async def get_outcome_statistics(
         feedback_count_query = select(func.count(CapsuleModel.id)).where(
             CapsuleModel.user_feedback_text.isnot(None)
         )
+        if not user_is_admin:
+            feedback_count_query = feedback_count_query.where(
+                CapsuleModel.owner_id == user_id
+            )
         feedback_result = await session.execute(feedback_count_query)
         feedback_count = feedback_result.scalar() or 0
 
@@ -872,13 +1003,17 @@ async def get_outcome_statistics(
 async def link_followup_capsule(
     capsule_id: str,
     followup_capsule_id: str = Query(..., description="ID of the follow-up capsule"),
+    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
     """
     Link a follow-up capsule to an original capsule.
 
     This tracks conversation chains and related decisions.
+    Users can only link their own capsules.
     """
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
     try:
         # Find the original capsule
         query = select(CapsuleModel).where(CapsuleModel.capsule_id == capsule_id)
@@ -887,6 +1022,15 @@ async def link_followup_capsule(
 
         if not capsule:
             raise HTTPException(status_code=404, detail="Original capsule not found")
+
+        # Verify ownership of original capsule
+        if not user_is_admin:
+            if capsule.owner_id is None:
+                raise HTTPException(
+                    status_code=403, detail="Access denied: legacy capsule"
+                )
+            if str(capsule.owner_id) != user_id:
+                raise HTTPException(status_code=403, detail="Access denied")
 
         # Verify follow-up capsule exists
         followup_query = select(CapsuleModel).where(
@@ -897,6 +1041,18 @@ async def link_followup_capsule(
 
         if not followup:
             raise HTTPException(status_code=404, detail="Follow-up capsule not found")
+
+        # Verify ownership of follow-up capsule (must also own it)
+        if not user_is_admin:
+            if followup.owner_id is None:
+                raise HTTPException(
+                    status_code=403, detail="Access denied: legacy follow-up capsule"
+                )
+            if str(followup.owner_id) != user_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Access denied: cannot link capsule you don't own",
+                )
 
         # Add to follow-up list
         current_followups = capsule.follow_up_capsule_ids or []
@@ -918,4 +1074,98 @@ async def link_followup_capsule(
         logger.error(f"Link followup error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Failed to link follow-up: {str(e)}"
+        )
+
+
+# ============================================================================
+# ADMIN METADATA-ONLY ENDPOINT
+# ============================================================================
+
+
+@router.get("/admin/stats")
+async def admin_capsule_stats(
+    admin: Dict = Depends(require_admin),
+    session: AsyncSession = Depends(get_db_session),
+):
+    """
+    Admin-only endpoint: aggregate capsule statistics without payloads.
+
+    Returns metadata only (counts, types, timestamps) - NO sensitive payloads.
+    This supports the privacy model where admins see metadata but not content.
+    """
+    try:
+        # Total capsules
+        total_query = select(func.count(CapsuleModel.id))
+        total_result = await session.execute(total_query)
+        total = total_result.scalar() or 0
+
+        # Count by type
+        type_query = select(
+            CapsuleModel.capsule_type, func.count(CapsuleModel.id)
+        ).group_by(CapsuleModel.capsule_type)
+        type_result = await session.execute(type_query)
+        by_type = {row[0]: row[1] for row in type_result.fetchall()}
+
+        # Count by owner (shows user distribution without exposing data)
+        owner_query = select(
+            CapsuleModel.owner_id, func.count(CapsuleModel.id)
+        ).group_by(CapsuleModel.owner_id)
+        owner_result = await session.execute(owner_query)
+        by_owner_raw = {
+            str(row[0]) if row[0] else "legacy": row[1]
+            for row in owner_result.fetchall()
+        }
+
+        # Summary by owner (don't expose UUIDs)
+        owner_count = len([k for k in by_owner_raw.keys() if k != "legacy"])
+        legacy_count = by_owner_raw.get("legacy", 0)
+
+        # Count by outcome status
+        outcome_query = select(
+            CapsuleModel.outcome_status, func.count(CapsuleModel.id)
+        ).group_by(CapsuleModel.outcome_status)
+        outcome_result = await session.execute(outcome_query)
+        by_outcome = {
+            (row[0] or "untracked"): row[1] for row in outcome_result.fetchall()
+        }
+
+        # Recent activity (last 24h, last 7d, last 30d)
+        now = utc_now()
+        recent_24h_query = select(func.count(CapsuleModel.id)).where(
+            CapsuleModel.timestamp
+            >= now.replace(hour=0, minute=0, second=0, microsecond=0)
+        )
+        recent_24h_result = await session.execute(recent_24h_query)
+        recent_24h = recent_24h_result.scalar() or 0
+
+        # Count encrypted capsules
+        encrypted_query = select(func.count(CapsuleModel.id)).where(
+            CapsuleModel.encrypted_payload.isnot(None)
+        )
+        encrypted_result = await session.execute(encrypted_query)
+        encrypted_count = encrypted_result.scalar() or 0
+
+        return {
+            "total_capsules": total,
+            "by_type": by_type,
+            "by_outcome": by_outcome,
+            "ownership": {
+                "total_owners": owner_count,
+                "legacy_capsules": legacy_count,
+                "user_owned": total - legacy_count,
+            },
+            "encryption": {
+                "encrypted_capsules": encrypted_count,
+                "unencrypted_capsules": total - encrypted_count,
+            },
+            "recent_activity": {
+                "last_24h": recent_24h,
+            },
+            "message": "Admin statistics (metadata only, no payloads)",
+        }
+
+    except Exception as e:
+        logger.error(f"Admin stats error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get admin stats: {str(e)}"
         )

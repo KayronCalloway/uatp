@@ -876,6 +876,11 @@ def create_app() -> FastAPI:
 
     app.include_router(ml_dashboard_router)
 
+    # Include user encryption keys router
+    from .api.user_keys_router import router as user_keys_router
+
+    app.include_router(user_keys_router)
+
     # Setup routes
     setup_health_routes(app)
     setup_api_routes(app, limiter)

@@ -34,6 +34,7 @@ import {
 
 export class UATCapsuleEngineClient {
   private client: AxiosInstance;
+  private authToken: string | null = null;
 
   constructor(baseURL: string = process.env.NEXT_PUBLIC_UATP_API_URL || 'http://localhost:8000', apiKey: string = process.env.NEXT_PUBLIC_UATP_API_KEY || 'test-api-key') {
     this.client = axios.create({
@@ -69,6 +70,30 @@ export class UATCapsuleEngineClient {
 
   removeApiKey() {
     delete this.client.defaults.headers['X-API-Key'];
+  }
+
+  /**
+   * Set JWT auth token for authenticated requests
+   * Required for capsule operations under user-scoped isolation
+   */
+  setAuthToken(token: string) {
+    this.authToken = token;
+    this.client.defaults.headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  /**
+   * Remove auth token
+   */
+  removeAuthToken() {
+    this.authToken = null;
+    delete this.client.defaults.headers['Authorization'];
+  }
+
+  /**
+   * Check if client has auth token set
+   */
+  hasAuthToken(): boolean {
+    return this.authToken !== null;
   }
 
   // Core endpoints
@@ -592,6 +617,104 @@ export class UATCapsuleEngineClient {
     });
     return response.data;
   }
+
+  // User Encryption Keys endpoints
+  async getMyEncryptionKey(): Promise<{
+    key: string;
+    algorithm: string;
+    key_id: string;
+    usage: { encrypt: string; decrypt: string };
+  }> {
+    const response = await this.client.get('/user-keys/my-encryption-key');
+    return response.data;
+  }
+
+  async getKeyInfo(): Promise<{
+    key_id: string;
+    algorithm: string;
+    key_derivation: string;
+    key_size_bits: number;
+    iv_size_bits: number;
+    tag_size_bits: number;
+  }> {
+    const response = await this.client.get('/user-keys/key-info');
+    return response.data;
+  }
+
+  // Encrypted capsule creation
+  async createEncryptedCapsule(capsuleData: {
+    type: string;
+    encrypted_payload: string;
+    encryption_metadata: {
+      iv: string;
+      algorithm: string;
+      key_id?: string;
+    };
+    payload?: Record<string, any>; // Optional minimal metadata
+    verification?: any;
+  }): Promise<any> {
+    const response = await this.client.post('/capsules', capsuleData);
+    return response.data;
+  }
+
+  // User-scoped export endpoints
+  async exportMyCapsules(format: 'json' | 'jsonl' = 'json', includePayloads: boolean = true): Promise<any> {
+    const response = await this.client.get('/export/my-capsules', {
+      params: { format, include_payloads: includePayloads }
+    });
+    return response.data;
+  }
+
+  async getVerificationBundle(capsuleId: string): Promise<{
+    capsule_id: string;
+    capsule_type: string;
+    version: string;
+    timestamp: string;
+    status: string;
+    verification: {
+      signature: string;
+      verify_key: string;
+      signer: string;
+      hash: string;
+      algorithm: string;
+    };
+    encryption: {
+      is_encrypted: boolean;
+      metadata: any;
+    };
+    bundle_generated_at: string;
+    instructions: {
+      verify: string;
+      hash_algorithm: string;
+      signature_algorithm: string;
+    };
+  }> {
+    const response = await this.client.get(`/export/verification-bundle/${capsuleId}`);
+    return response.data;
+  }
+
+  // Admin endpoints
+  async getAdminCapsuleStats(): Promise<{
+    total_capsules: number;
+    by_type: Record<string, number>;
+    by_outcome: Record<string, number>;
+    ownership: {
+      total_owners: number;
+      legacy_capsules: number;
+      user_owned: number;
+    };
+    encryption: {
+      encrypted_capsules: number;
+      unencrypted_capsules: number;
+    };
+    recent_activity: {
+      last_24h: number;
+    };
+    message: string;
+  }> {
+    const response = await this.client.get('/capsules/admin/stats');
+    return response.data;
+  }
 }
 
 // Default client instance
@@ -700,6 +823,23 @@ export const api = {
   createReasoningCapsule: (request: any) => apiClient.createReasoningCapsule(request),
   createGenericCapsule: (capsuleData: any) => apiClient.createGenericCapsule(capsuleData),
   createCapsuleFromConversation: (sessionId: string, conversationData?: any) => apiClient.createCapsuleFromConversation(sessionId, conversationData),
+
+  // Authentication
+  setAuthToken: (token: string) => apiClient.setAuthToken(token),
+  removeAuthToken: () => apiClient.removeAuthToken(),
+  hasAuthToken: () => apiClient.hasAuthToken(),
+
+  // User Encryption Keys
+  getMyEncryptionKey: () => apiClient.getMyEncryptionKey(),
+  getKeyInfo: () => apiClient.getKeyInfo(),
+  createEncryptedCapsule: (capsuleData: any) => apiClient.createEncryptedCapsule(capsuleData),
+
+  // User-scoped Export
+  exportMyCapsules: (format?: 'json' | 'jsonl', includePayloads?: boolean) => apiClient.exportMyCapsules(format, includePayloads),
+  getVerificationBundle: (capsuleId: string) => apiClient.getVerificationBundle(capsuleId),
+
+  // Admin
+  getAdminCapsuleStats: () => apiClient.getAdminCapsuleStats(),
 };
 
 export default apiClient;

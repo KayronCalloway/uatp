@@ -33,6 +33,7 @@ class UserModel(db.Base):
     policies = relationship(
         "InsurancePolicy", back_populates="user", cascade="all, delete-orphan"
     )
+    capsules = relationship("CapsuleModel", back_populates="owner")
 
     # Attribution settings
     attribution_enabled = Column(Boolean, default=True)
