@@ -17,8 +17,10 @@ import {
   ArrowLeft,
   Shield,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Lock
 } from 'lucide-react';
+import { isEncrypted } from '@/lib/capsule-encryption';
 import { formatDate, truncateText, getCapsuleTypeColor } from '@/lib/utils';
 import { ListCapsulesQuery, AnyCapsule, CapsuleSearchParams } from '@/types/api';
 import { useDemoMode } from '@/contexts/demo-mode-context';
@@ -379,6 +381,7 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
                 const isHighRisk = riskProb !== undefined && riskProb < 0.6;
                 const qualityGrade = capsule.payload?.quality_assessment?.quality_grade;
                 const plainSummary = capsule.payload?.plain_language_summary?.decision;
+                const capsuleIsEncrypted = isEncrypted(capsule);
 
                 return (
                   <div
@@ -412,6 +415,12 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
                             <Badge variant="outline" className="h-5 text-xs flex items-center gap-1 bg-orange-50 text-orange-700 border-orange-200">
                               <AlertTriangle className="h-3 w-3" />
                               {Math.round((riskProb || 0) * 100)}%
+                            </Badge>
+                          )}
+                          {capsuleIsEncrypted && (
+                            <Badge variant="outline" className="h-5 text-xs flex items-center gap-1 bg-purple-50 text-purple-700 border-purple-200">
+                              <Lock className="h-3 w-3" />
+                              E2E
                             </Badge>
                           )}
 

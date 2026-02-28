@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   ArrowLeft,
   Shield,
@@ -18,8 +19,12 @@ import {
   AlertCircle,
   Copy,
   RefreshCw,
-  CheckSquare
+  CheckSquare,
+  Lock,
+  Unlock
 } from 'lucide-react';
+import { useCapsuleEncryption } from '@/hooks/use-capsule-encryption';
+import { isEncrypted } from '@/lib/capsule-encryption';
 import { formatDate, getCapsuleTypeColor, truncateText } from '@/lib/utils';
 import { AnyCapsule, GetCapsuleQuery } from '@/types/api';
 import { OutcomeRecorder } from './outcome-recorder';
@@ -45,6 +50,16 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
   const [showRawData, setShowRawData] = useState(false);
   const [showOutcomeRecorder, setShowOutcomeRecorder] = useState(false);
   const [showQualityModal, setShowQualityModal] = useState(false);
+  const [decryptedPayload, setDecryptedPayload] = useState<any>(null);
+  const [decryptionError, setDecryptionError] = useState<string | null>(null);
+  const [isDecrypting, setIsDecrypting] = useState(false);
+
+  // Encryption hook for decrypting payloads
+  const {
+    isReady: encryptionReady,
+    decryptPayload,
+    isEncrypted: checkEncrypted,
+  } = useCapsuleEncryption();
 
   const queryParams: GetCapsuleQuery = {
     include_raw: includeRaw,
@@ -62,8 +77,64 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
     enabled: !!capsuleId,
   });
 
-  const capsule = data?.capsule;
+  const rawCapsule = data?.capsule;
   const rawData = data?.raw_data;
+
+  // Check if capsule has encrypted payload
+  const capsuleIsEncrypted = useMemo(() => {
+    if (!rawCapsule) return false;
+    return isEncrypted(rawCapsule);
+  }, [rawCapsule]);
+
+  // Decrypt payload if encrypted
+  useEffect(() => {
+    async function decrypt() {
+      if (!rawCapsule || !capsuleIsEncrypted || !encryptionReady) {
+        setDecryptedPayload(null);
+        return;
+      }
+
+      setIsDecrypting(true);
+      setDecryptionError(null);
+
+      try {
+        const decrypted = await decryptPayload(
+          rawCapsule.encrypted_payload,
+          rawCapsule.encryption_metadata
+        );
+        setDecryptedPayload(decrypted);
+      } catch (err) {
+        console.error('Failed to decrypt capsule payload:', err);
+        setDecryptionError(
+          err instanceof Error ? err.message : 'Failed to decrypt payload'
+        );
+      } finally {
+        setIsDecrypting(false);
+      }
+    }
+
+    decrypt();
+  }, [rawCapsule, capsuleIsEncrypted, encryptionReady, decryptPayload]);
+
+  // Merge decrypted payload with capsule data
+  const capsule = useMemo(() => {
+    if (!rawCapsule) return null;
+
+    // If not encrypted, return as-is
+    if (!capsuleIsEncrypted) return rawCapsule;
+
+    // If decryption succeeded, merge decrypted payload
+    if (decryptedPayload) {
+      return {
+        ...rawCapsule,
+        payload: decryptedPayload,
+        _decrypted: true,
+      };
+    }
+
+    // If still decrypting or failed, return raw capsule
+    return rawCapsule;
+  }, [rawCapsule, capsuleIsEncrypted, decryptedPayload]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -121,6 +192,41 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                 <CardTitle className="flex items-center space-x-2">
                   <Database className="h-5 w-5" />
                   <span>Capsule Details</span>
+                  {/* Encryption Status Badge */}
+                  {capsuleIsEncrypted && (
+                    <Badge
+                      variant="outline"
+                      className={`ml-2 ${
+                        decryptedPayload
+                          ? 'bg-green-50 text-green-700 border-green-200'
+                          : decryptionError
+                          ? 'bg-red-50 text-red-700 border-red-200'
+                          : 'bg-blue-50 text-blue-700 border-blue-200'
+                      }`}
+                    >
+                      {decryptedPayload ? (
+                        <>
+                          <Unlock className="h-3 w-3 mr-1" />
+                          Decrypted
+                        </>
+                      ) : decryptionError ? (
+                        <>
+                          <Lock className="h-3 w-3 mr-1" />
+                          Locked
+                        </>
+                      ) : isDecrypting ? (
+                        <>
+                          <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                          Decrypting
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="h-3 w-3 mr-1" />
+                          Encrypted
+                        </>
+                      )}
+                    </Badge>
+                  )}
                 </CardTitle>
                 <p className="text-sm text-gray-500 mt-1">
                   {truncateText(capsule.capsule_id || capsule.id, 40)}
@@ -384,6 +490,46 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Encryption Warning/Info */}
+      {capsuleIsEncrypted && decryptionError && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Lock className="h-5 w-5 text-red-600 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-semibold text-red-900">
+                  Unable to Decrypt Payload
+                </h4>
+                <p className="text-sm text-red-700 mt-1">
+                  {decryptionError}
+                </p>
+                <p className="text-xs text-red-600 mt-2">
+                  This capsule's payload is encrypted. You need the correct encryption key to view its contents.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {capsuleIsEncrypted && !decryptionError && !encryptionReady && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Lock className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-semibold text-blue-900">
+                  Encrypted Capsule
+                </h4>
+                <p className="text-sm text-blue-700 mt-1">
+                  Please log in to decrypt and view this capsule's payload.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Conversation Content - Show actual Q&A first */}
       {capsule.payload && (

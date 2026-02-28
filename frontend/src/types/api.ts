@@ -321,6 +321,13 @@ export interface ChainContext {
   consensus_method: string;
 }
 
+// Encryption metadata for client-side encrypted payloads
+export interface EncryptionMetadata {
+  iv: string;
+  algorithm: string;
+  key_id?: string;
+}
+
 export interface AnyCapsule {
   id: string;
   capsule_id: string;
@@ -329,6 +336,11 @@ export interface AnyCapsule {
   metadata: Record<string, any>;
   timestamp: string;
   agent_id: string;
+  // Owner ID for user-scoped isolation (null = legacy/system capsule)
+  owner_id?: string | null;
+  // Encrypted payload fields
+  encrypted_payload?: string;
+  encryption_metadata?: EncryptionMetadata;
   payload?: {
     task?: string;
     decision?: string;
