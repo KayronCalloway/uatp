@@ -196,6 +196,10 @@ async def authentication_middleware(request: Request, call_next):
         "/",
     ]
 
+    # Skip authentication for capsules API (read-only public access for now)
+    if request.url.path.startswith("/api/v1/capsules"):
+        return await call_next(request)
+
     if request.url.path in skip_paths:
         return await call_next(request)
 

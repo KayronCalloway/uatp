@@ -14,7 +14,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from capsules.specialized_capsules import EconomicCapsule
+from src.capsules.specialized_capsules import EconomicCapsule
 from src.utils.timezone_utils import utc_now
 
 # from engine.specialized_engine import SpecializedCapsuleEngine  # Not needed for demo

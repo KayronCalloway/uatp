@@ -33,6 +33,7 @@ import { OutcomeCard } from '@/components/capsules/OutcomeCard';
 import { AttributionCard } from '@/components/capsules/AttributionCard';
 import { LineageCard } from '@/components/capsules/LineageCard';
 import { ChainContextCard } from '@/components/capsules/ChainContextCard';
+import { ConversationCard } from '@/components/capsules/ConversationCard';
 
 interface CapsuleDetailProps {
   capsuleId: string;
@@ -383,6 +384,11 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Conversation Content - Show actual Q&A first */}
+      {capsule.payload && (
+        <ConversationCard payload={capsule.payload} />
+      )}
 
       {/* Verification Status */}
       <Card>

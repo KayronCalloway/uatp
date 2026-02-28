@@ -49,101 +49,61 @@ def wrap_in_uatp_envelope(
             significance_score = payload_data["metadata"].get("significance_score", 0.0)
 
     # Build the standardized envelope
-    envelope = {
-        # Content - The actual capsule data
-        "content": {
-            "capsule_type": capsule_type,
-            "data": payload_data,
-            "format": "json",
-            "encoding": "utf-8"
-        },
+    # Start with original payload data for backwards compatibility
+    envelope = dict(payload_data) if isinstance(payload_data, dict) else {}
 
-        # Metadata - Creation and context information
-        "metadata": {
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "created_by": agent_id or "unknown",
-            "capsule_id": capsule_id,
-            "platform": "uatp-7.0",
-            "session_id": session_id or "default",
-            "significance_score": significance_score,
-            "envelope_version": "7.0"
-        },
-
-        # Trace - Reasoning and decision tracking
-        "trace": {
-            "reasoning_steps": [],
-            "decision_points": [],
-            "confidence_levels": {},
-            "extracted_from_payload": True
-        },
-
-        # Attribution - Contribution tracking
-        "attribution": {
-            "contributors": [
-                {
-                    "agent_id": agent_id or "unknown",
-                    "role": "creator",
-                    "weight": 1.0,
-                    "timestamp": datetime.now(timezone.utc).isoformat()
-                }
-            ],
-            "weights": {
-                agent_id or "unknown": 1.0
-            },
-            "compensation_rules": {
-                "distribution_model": "equal",
-                "minimum_contribution_threshold": 0.01
-            },
-            "upstream_capsules": parent_capsules or []
-        },
-
-        # Lineage - Derivation and transformation history
-        "lineage": {
-            "parent_capsules": parent_capsules or [],
-            "derivation_method": "direct_creation",
-            "transformation_log": [
-                {
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "operation": "envelope_wrapping",
-                    "version": "7.0"
-                }
-            ],
-            "generation": len(parent_capsules) + 1 if parent_capsules else 1
-        },
-
-        # Chain Context - Blockchain/chain information
-        "chain_context": {
-            "chain_id": chain_id or f"chain-{capsule_id[:8]}",
-            "position": chain_position or 0,
-            "previous_hash": previous_hash or "genesis",
-            "merkle_root": None,  # To be computed during sealing
-            "consensus_method": "proof-of-attribution"
-        }
+    # Add v7 envelope metadata (won't overwrite existing fields)
+    envelope["_envelope"] = {
+        "version": "7.0",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "capsule_type": capsule_type,
     }
 
-    # Enhanced trace extraction from payload if available
+    # Attribution - Contribution tracking
+    envelope["attribution"] = {
+        "contributors": [
+            {
+                "agent_id": agent_id or "unknown",
+                "role": "creator",
+                "weight": 1.0,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        ],
+        "weights": {
+            agent_id or "unknown": 1.0
+        },
+        "compensation_rules": {
+            "distribution_model": "equal",
+            "minimum_contribution_threshold": 0.01
+        },
+        "upstream_capsules": parent_capsules or []
+    }
+
+    # Lineage - Derivation and transformation history
+    envelope["lineage"] = {
+        "parent_capsules": parent_capsules or [],
+        "derivation_method": "direct_creation",
+        "transformation_log": [
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "operation": "envelope_wrapping",
+                "version": "7.0"
+            }
+        ],
+        "generation": len(parent_capsules) + 1 if parent_capsules else 1
+    }
+
+    # Chain Context - Blockchain/chain information
+    envelope["chain_context"] = {
+        "chain_id": chain_id or f"chain-{capsule_id[:8]}",
+        "position": chain_position or 0,
+        "previous_hash": previous_hash or "genesis",
+        "merkle_root": None,  # To be computed during sealing
+        "consensus_method": "proof-of-attribution"
+    }
+
+    # Extract parent_capsule_id for lineage if present
     if isinstance(payload_data, dict):
-        # Extract reasoning steps if present
-        if "steps" in payload_data and isinstance(payload_data["steps"], list):
-            envelope["trace"]["reasoning_steps"] = [
-                {
-                    "step": i,
-                    "content": step.get("content", ""),
-                    "step_type": step.get("step_type", "unknown"),
-                    "metadata": step.get("metadata", {})
-                }
-                for i, step in enumerate(payload_data["steps"])
-            ]
-
-        # Extract reasoning_steps field if present
-        if "reasoning_steps" in payload_data and isinstance(payload_data["reasoning_steps"], list):
-            envelope["trace"]["reasoning_steps"] = payload_data["reasoning_steps"]
-
-        # Extract confidence if present
-        if "confidence" in payload_data:
-            envelope["trace"]["confidence_levels"]["overall"] = payload_data["confidence"]
-
-        # Extract parent_capsule_id for lineage
         if "parent_capsule_id" in payload_data and payload_data["parent_capsule_id"]:
             parent_id = payload_data["parent_capsule_id"]
             if parent_id not in envelope["lineage"]["parent_capsules"]:
@@ -182,5 +142,9 @@ def is_envelope_format(payload: Dict[str, Any]) -> bool:
     Returns:
         True if payload has envelope structure, False otherwise
     """
-    required_fields = {"content", "metadata", "trace", "attribution", "lineage", "chain_context"}
-    return all(field in payload for field in required_fields)
+    # Check for v7 envelope marker or v7 fields
+    if "_envelope" in payload:
+        return True
+    # Also check for the v7 specific fields
+    v7_fields = {"attribution", "lineage", "chain_context"}
+    return all(field in payload for field in v7_fields)

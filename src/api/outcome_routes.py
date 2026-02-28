@@ -69,6 +69,7 @@ async def get_outcomes_for_capsule(
 
     result = await session.execute(query)
     outcomes = result.scalars().all()
+    outcomes = [o for o in outcomes if o is not None]  # Filter None values
 
     return OutcomeListResponse(
         outcomes=[OutcomeResponse.model_validate(o) for o in outcomes],
@@ -102,6 +103,7 @@ async def get_pending_outcomes(
 
     result = await session.execute(query)
     capsules = result.scalars().all()
+    capsules = [c for c in capsules if c is not None]  # Filter None values
 
     return {
         "pending_capsules": [
@@ -140,6 +142,7 @@ async def get_calibration_data(
 
     result = await session.execute(query)
     calibration_data = result.scalars().all()
+    calibration_data = [cd for cd in calibration_data if cd is not None]  # Filter None values
 
     return [
         CalibrationDataResponse(
@@ -302,6 +305,7 @@ async def get_reasoning_patterns(
 
     result = await session.execute(query)
     patterns = result.scalars().all()
+    patterns = [p for p in patterns if p is not None]  # Filter None values
 
     return ReasoningPatternListResponse(
         patterns=[ReasoningPatternResponse.model_validate(p) for p in patterns],

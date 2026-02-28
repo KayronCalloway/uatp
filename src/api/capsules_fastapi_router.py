@@ -31,6 +31,7 @@ from ..core.config import DATABASE_URL
 from ..core.database import db
 from ..models.capsule import CapsuleModel
 from ..utils.timezone_utils import utc_now
+from ..utils.uatp_envelope import wrap_in_uatp_envelope, is_envelope_format
 
 # Check if using SQLite (JSONB syntax not supported)
 IS_SQLITE = "sqlite" in DATABASE_URL.lower()
@@ -278,7 +279,13 @@ async def list_capsules(
 
         # Execute ORM query
         result = await session.execute(query)
-        capsules = result.scalars().all()
+        all_rows = result.all()
+        logger.info(f"[{correlation_id}] Raw result rows: {len(all_rows)}")
+        # Debug: check which rows have None objects
+        none_count = sum(1 for row in all_rows if row[0] is None)
+        if none_count > 0:
+            logger.warning(f"[{correlation_id}] {none_count} rows returned None ORM objects - possible NULL primary keys")
+        capsules = [row[0] for row in all_rows if row[0] is not None]
 
         logger.info(f"[{correlation_id}] Query returned {len(capsules)} capsules")
 
@@ -311,6 +318,17 @@ async def list_capsules(
                     payload = json.loads(payload)
                 except:
                     payload = {}
+
+            # Wrap in UATP 7.0 envelope if not already wrapped
+            if payload and not is_envelope_format(payload):
+                agent_id = verification.get("signer", "claude-code") if isinstance(verification, dict) else "claude-code"
+                payload = wrap_in_uatp_envelope(
+                    payload_data=payload,
+                    capsule_id=capsule.capsule_id,
+                    capsule_type=capsule.capsule_type,
+                    agent_id=agent_id,
+                    parent_capsules=[capsule.parent_capsule_id] if capsule.parent_capsule_id else None,
+                )
 
             capsule_list.append(
                 {
@@ -384,6 +402,17 @@ async def get_capsule(capsule_id: str, session: AsyncSession = Depends(get_db_se
                 payload = json.loads(payload)
             except:
                 payload = {}
+
+        # Wrap in UATP 7.0 envelope if not already wrapped
+        if payload and not is_envelope_format(payload):
+            agent_id = verification.get("signer", "claude-code") if isinstance(verification, dict) else "claude-code"
+            payload = wrap_in_uatp_envelope(
+                payload_data=payload,
+                capsule_id=capsule.capsule_id,
+                capsule_type=capsule.capsule_type,
+                agent_id=agent_id,
+                parent_capsules=[capsule.parent_capsule_id] if capsule.parent_capsule_id else None,
+            )
 
         capsule_data = {
             "id": capsule.capsule_id,

@@ -223,11 +223,17 @@ async def export_training_data(
         result = await session.execute(query)
         capsules = result.scalars().all()
 
+        # Filter out None values (ORM edge case with async sessions)
+        capsules = [c for c in capsules if c is not None]
+
         # Convert to training format
         training_data = []
         skipped = 0
 
         for capsule in capsules:
+            if capsule.payload is None:
+                skipped += 1
+                continue
             payload = capsule.payload
             if isinstance(payload, str):
                 payload = json.loads(payload)
@@ -318,8 +324,13 @@ async def export_outcomes(
         result = await session.execute(query)
         capsules = result.scalars().all()
 
+        # Filter out None values (ORM edge case with async sessions)
+        capsules = [c for c in capsules if c is not None]
+
         outcomes = []
         for capsule in capsules:
+            if capsule.payload is None:
+                continue
             payload = capsule.payload
             if isinstance(payload, str):
                 payload = json.loads(payload)

@@ -97,6 +97,8 @@ class RichReasoningStep:
         reasoning: str,
         confidence: float,
         operation: str = "reasoning",
+        role: str = "assistant",  # 'user' or 'assistant' - clear distinction
+        step_type: str = None,     # Descriptive type: user_question, assistant_answer, etc.
         uncertainty_sources: Optional[List[str]] = None,
         confidence_basis: Optional[str] = None,
         measurements: Optional[Dict[str, Any]] = None,
@@ -108,6 +110,17 @@ class RichReasoningStep:
         self.reasoning = reasoning
         self.confidence = confidence
         self.operation = operation
+        self.role = role  # Clear role indicator
+
+        # Derive step_type from role and operation if not provided
+        if step_type is None:
+            if role == "user":
+                self.step_type = "user_question" if "?" in reasoning else "user_request"
+            else:
+                self.step_type = f"assistant_{operation}"
+        else:
+            self.step_type = step_type
+
         self.uncertainty_sources = uncertainty_sources or []
         self.confidence_basis = confidence_basis
         self.measurements = measurements or {}
@@ -120,6 +133,8 @@ class RichReasoningStep:
         """Convert to dictionary for JSON serialization."""
         data = {
             "step_id": self.step,
+            "role": self.role,           # Clear user vs assistant indicator
+            "step_type": self.step_type, # Descriptive type for UI display
             "reasoning": self.reasoning,
             "confidence": self.confidence,
             "operation": self.operation,

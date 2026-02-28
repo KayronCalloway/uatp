@@ -9,7 +9,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from constellations.service import service as constellations_service
+from src.constellations.service import service as constellations_service
 
 router = APIRouter(tags=["Constellations"])
 

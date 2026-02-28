@@ -19,6 +19,92 @@ export interface ListCapsulesQuery {
   demo_mode?: boolean;  // Filter demo capsules (default: false to show only live data)
 }
 
+// World-class search interface for comprehensive capsule filtering
+export interface CapsuleSearchParams {
+  // Text search
+  query?: string;                  // Full-text search across content
+
+  // Basic filters
+  type?: string;                   // Capsule type filter
+  agent_id?: string;               // Agent/signer filter
+
+  // Date range
+  date_from?: string;              // ISO date string
+  date_to?: string;                // ISO date string
+  date_preset?: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'all';
+
+  // Quality filters (from QualityAssessor backfill)
+  quality_grade?: 'A' | 'B' | 'C' | 'D' | 'F' | string[];
+  quality_min?: number;            // 0-1 score threshold
+
+  // Risk filters (from risk_assessment)
+  risk_level?: 'low' | 'medium' | 'high' | 'critical';
+  probability_correct_min?: number;
+  probability_correct_max?: number;
+
+  // Verification filters
+  signature_valid?: boolean;
+  timestamp_trusted?: boolean;     // RFC 3161 vs local_clock
+  has_signature?: boolean;
+
+  // Outcome filters (from outcome tracking)
+  outcome_status?: 'success' | 'failure' | 'partial' | 'pending' | 'unknown' | 'untracked';
+  has_outcome?: boolean;
+
+  // Lineage filters (UATP v7.0 envelope)
+  has_parents?: boolean;
+  generation?: number;
+  chain_id?: string;
+
+  // Content filters
+  has_reasoning_chain?: boolean;
+  has_alternatives?: boolean;
+  has_data_sources?: boolean;
+  has_plain_language?: boolean;
+
+  // Pagination & sorting
+  page?: number;
+  per_page?: number;
+  sort_by?: 'timestamp' | 'quality_score' | 'risk_score' | 'type' | 'agent_id';
+  sort_order?: 'asc' | 'desc';
+}
+
+// Search preset for quick access to common queries
+export interface SearchPreset {
+  id: string;
+  name: string;
+  description: string;
+  icon?: string;
+  params: CapsuleSearchParams;
+  category: 'quality' | 'verification' | 'risk' | 'time' | 'content' | 'custom';
+}
+
+// Search result with highlights
+export interface CapsuleSearchResult {
+  capsule: AnyCapsule;
+  relevance_score?: number;
+  highlights?: {
+    field: string;
+    snippet: string;
+  }[];
+  matched_filters?: string[];
+}
+
+export interface CapsuleSearchResponse {
+  results: CapsuleSearchResult[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+  facets?: {
+    types: Record<string, number>;
+    quality_grades: Record<string, number>;
+    agents: Record<string, number>;
+    outcome_statuses: Record<string, number>;
+  };
+  applied_filters: string[];
+}
+
 export interface GetCapsuleQuery {
   include_raw?: boolean;
 }
@@ -193,6 +279,48 @@ export interface Outcome {
   notes?: string;
 }
 
+// UATP v7.0 Envelope Types
+export interface Contributor {
+  agent_id: string;
+  role: string;
+  weight: number;
+  timestamp: string;
+}
+
+export interface CompensationRules {
+  distribution_model: string;
+  minimum_contribution_threshold: number;
+}
+
+export interface Attribution {
+  contributors: Contributor[];
+  weights: Record<string, number>;
+  upstream_capsules: string[];
+  compensation_rules: CompensationRules;
+}
+
+export interface TransformationLogEntry {
+  timestamp: string;
+  operation: string;
+  version?: string;
+  description?: string;
+}
+
+export interface Lineage {
+  generation: number;
+  parent_capsules: string[];
+  derivation_method: string;
+  transformation_log: TransformationLogEntry[];
+}
+
+export interface ChainContext {
+  chain_id: string;
+  position: number;
+  previous_hash: string;
+  merkle_root: string | null;
+  consensus_method: string;
+}
+
 export interface AnyCapsule {
   id: string;
   capsule_id: string;
@@ -210,6 +338,10 @@ export interface AnyCapsule {
     alternatives_considered?: Alternative[];
     plain_language_summary?: PlainLanguageSummary;
     outcome?: Outcome;
+    // UATP v7.0 Envelope Fields
+    attribution?: Attribution;
+    lineage?: Lineage;
+    chain_context?: ChainContext;
     [key: string]: any;
   };
   [key: string]: any;

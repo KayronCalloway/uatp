@@ -387,11 +387,95 @@ class CourtAdmissibleEnricher:
         return alternatives
 
     @staticmethod
+    def extract_key_recommendation(messages: List[Any]) -> Tuple[str, str, List[str]]:
+        """
+        Extract the actual key recommendation/decision from assistant messages.
+
+        Returns:
+            Tuple of (decision_text, specific_why, key_points)
+        """
+        # Collect all assistant messages
+        assistant_msgs = [m for m in messages if m.role == "assistant"]
+        user_msgs = [m for m in messages if m.role == "user"]
+
+        if not assistant_msgs:
+            return "No recommendation provided", "No assistant response captured", []
+
+        # Find the most substantive assistant message (longest, most detailed)
+        best_msg = max(assistant_msgs, key=lambda m: len(m.content))
+        decision_text = best_msg.content
+
+        # Truncate if too long but keep more context (up to 1000 chars)
+        if len(decision_text) > 1000:
+            # Try to find a natural break point
+            break_points = ['. ', '.\n', '\n\n', '! ', '? ']
+            truncated = decision_text[:1000]
+            for bp in break_points:
+                last_break = truncated.rfind(bp)
+                if last_break > 500:  # Keep at least 500 chars
+                    truncated = truncated[:last_break + 1]
+                    break
+            decision_text = truncated + "..."
+
+        # Extract specific "why" from the content
+        why_indicators = [
+            "because", "since", "due to", "as a result", "therefore",
+            "this is because", "the reason", "in order to", "to ensure"
+        ]
+
+        specific_why_parts = []
+        content_lower = best_msg.content.lower()
+        for indicator in why_indicators:
+            idx = content_lower.find(indicator)
+            if idx != -1:
+                # Extract the sentence containing the indicator
+                start = max(0, content_lower.rfind('.', 0, idx) + 1)
+                end = content_lower.find('.', idx)
+                if end == -1:
+                    end = min(idx + 200, len(content_lower))
+                sentence = best_msg.content[start:end].strip()
+                if len(sentence) > 20 and sentence not in specific_why_parts:
+                    specific_why_parts.append(sentence)
+
+        # If no explicit "why" found, extract key action items
+        if not specific_why_parts:
+            # Look for recommendation patterns
+            rec_patterns = ["should", "recommend", "suggest", "need to", "must", "will"]
+            for pattern in rec_patterns:
+                idx = content_lower.find(pattern)
+                if idx != -1:
+                    start = max(0, content_lower.rfind('.', 0, idx) + 1)
+                    end = content_lower.find('.', idx)
+                    if end == -1:
+                        end = min(idx + 150, len(content_lower))
+                    sentence = best_msg.content[start:end].strip()
+                    if len(sentence) > 20 and sentence not in specific_why_parts:
+                        specific_why_parts.append(sentence)
+
+        specific_why = " | ".join(specific_why_parts[:3]) if specific_why_parts else \
+            f"Based on analysis of the user's request: {user_msgs[-1].content[:100] if user_msgs else 'unknown'}"
+
+        # Extract key points (bullet-like items)
+        key_points = []
+        lines = best_msg.content.split('\n')
+        for line in lines:
+            line = line.strip()
+            # Look for numbered or bulleted items
+            if line and (line[0].isdigit() or line.startswith('-') or line.startswith('*') or line.startswith('•')):
+                # Clean up the line
+                cleaned = line.lstrip('0123456789.-*• ').strip()
+                if 10 < len(cleaned) < 200:
+                    key_points.append(cleaned)
+
+        return decision_text, specific_why, key_points[:5]
+
+    @staticmethod
     def generate_plain_language_summary(
         session: Any, messages: List[Any], task_description: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Generate EU AI Act Article 13 compliant plain language summary.
+        NOW: Extracts ACTUAL decision content, not generic templates.
 
         Args:
             session: Conversation session
@@ -401,41 +485,37 @@ class CourtAdmissibleEnricher:
         Returns:
             PlainLanguageSummary dictionary
         """
-        # Extract decision from last assistant message
-        last_assistant_msg = None
-        for msg in reversed(messages):
-            if msg.role == "assistant":
-                last_assistant_msg = msg
-                break
+        # Extract the ACTUAL decision and reasoning
+        decision, specific_why, extracted_points = \
+            CourtAdmissibleEnricher.extract_key_recommendation(messages)
 
-        decision = (
-            last_assistant_msg.content[:200]
-            if last_assistant_msg
-            else "Conversation completed"
-        )
+        # Get the user's original question for context
+        user_questions = [m.content for m in messages if m.role == "user"]
+        original_question = user_questions[0][:200] if user_questions else "Unknown request"
 
-        # Generate "why" explanation
-        message_count = len(messages)
-        why = (
-            f"This decision was made based on analysis of {message_count} conversation turns "
-            f"across {session.platform}. The AI analyzed your requirements and provided "
-            f"recommendations based on best practices and technical constraints."
-        )
+        # Build specific key factors from extracted content
+        key_factors = []
 
-        # Key factors
-        key_factors = [
-            f"Analyzed {message_count} messages to understand requirements",
-            "Applied coding best practices and industry standards",
-            "Considered technical constraints and feasibility",
-        ]
+        # Add the original question
+        key_factors.append(f"User asked: \"{original_question}\"")
 
+        # Add extracted key points
+        for point in extracted_points[:3]:
+            key_factors.append(f"Recommended: {point}")
+
+        # Add context if available
         if session.topics:
-            key_factors.append(f"Focused on: {', '.join(session.topics[:3])}")
+            key_factors.append(f"Context: {', '.join(session.topics[:3])}")
 
-        # What if different
+        # If no extracted points, fall back to generic but indicate the gap
+        if not extracted_points:
+            key_factors.append("Note: Detailed reasoning steps not fully captured")
+
+        # What if different - make it specific to this conversation
         what_if_different = (
-            "Different requirements, constraints, or technical context could lead to "
-            "different recommendations. The AI adapts to your specific situation."
+            f"This recommendation is specific to your situation. "
+            f"Different requirements or constraints (e.g., different tech stack, "
+            f"different scale, different team expertise) could lead to different recommendations."
         )
 
         # Your rights
@@ -455,7 +535,8 @@ class CourtAdmissibleEnricher:
 
         return {
             "decision": decision,
-            "why": why,
+            "why": specific_why,
+            "original_question": original_question,
             "key_factors": key_factors,
             "what_if_different": what_if_different,
             "your_rights": your_rights,
