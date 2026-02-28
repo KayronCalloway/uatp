@@ -97,7 +97,26 @@ export async function updateCalibration() {
 // ============================================================================
 
 export async function getOutcomeStats(): Promise<OutcomeStats> {
-  return fetchAPI<OutcomeStats>('/outcomes/stats');
+  // Try ML dashboard endpoint first (has richer data), fall back to capsules endpoint
+  try {
+    const mlData = await fetchAPI<any>('/ml/outcomes/stats');
+    // Transform ML dashboard format to expected OutcomeStats format
+    return {
+      total_outcomes: mlData.total_with_outcomes || 0,
+      average_quality_score: mlData.success_rate || 0,
+      total_patterns_discovered: 0,
+      outcomes_by_validation_method: mlData.by_status || {},
+    };
+  } catch {
+    // Fall back to capsules endpoint
+    const data = await fetchAPI<any>('/capsules/outcomes/stats');
+    return {
+      total_outcomes: data.total_tracked || 0,
+      average_quality_score: (data.success_rate_percent || 0) / 100,
+      total_patterns_discovered: 0,
+      outcomes_by_validation_method: data.outcome_counts || {},
+    };
+  }
 }
 
 export async function getOutcomesForCapsule(capsuleId: string) {
@@ -105,9 +124,20 @@ export async function getOutcomesForCapsule(capsuleId: string) {
 }
 
 export async function getPendingOutcomes(limit: number = 50) {
-  return fetchAPI<{ pending_capsules: any[]; total: number }>(
-    `/outcomes/pending?limit=${limit}`
-  );
+  // Use capsules endpoint with outcome_status filter
+  try {
+    const data = await fetchAPI<any>(`/capsules?outcome_status=pending&limit=${limit}`);
+    return {
+      pending_capsules: data.capsules || [],
+      total: data.total || 0,
+    };
+  } catch {
+    // Return empty if endpoint not available
+    return {
+      pending_capsules: [],
+      total: 0,
+    };
+  }
 }
 
 export async function createOutcome(outcome: {
@@ -230,6 +260,91 @@ export async function getAnalyticsSummary() {
   }>('/api/analytics/summary');
 }
 
+// ============================================================================
+// ML Dashboard
+// ============================================================================
+
+export interface MLDashboardData {
+  calibration: {
+    status: string;
+    global_metrics?: {
+      sample_size: number;
+      brier_score: number;
+      calibration_error: number;
+      log_loss?: number;
+      reliability_diagram?: Record<string, number>;
+    };
+    domains?: Record<string, any>;
+    reliability_data: Array<{
+      predicted: number;
+      actual: number;
+      bucket: string;
+    }>;
+    recommendations: string[];
+    drift_alerts: string[];
+    error?: string;
+  };
+  outcomes: {
+    status: string;
+    total_with_outcomes: number;
+    by_status: Record<string, number>;
+    by_status_data: Array<{
+      status: string;
+      count: number;
+      color: string;
+    }>;
+    pending_count: number;
+    success_rate?: number;
+    error?: string;
+  };
+  historical_accuracy: {
+    status: string;
+    total_capsules: number;
+    capsules_with_outcomes: number;
+    capsules_with_embeddings: number;
+    outcome_distribution: Record<string, number>;
+    similarity_threshold: number;
+    max_similar_capsules: number;
+    min_sample_size: number;
+    historical_weight: number;
+    error?: string;
+  };
+  learning_loop: {
+    status: string;
+    components: Record<string, boolean>;
+    healthy_count: number;
+    total_components: number;
+    description: string;
+  };
+}
+
+export async function getMLDashboard(): Promise<MLDashboardData> {
+  return fetchAPI<MLDashboardData>('/ml/dashboard');
+}
+
+export async function getCalibrationTable(): Promise<{ table: string; format: string; error?: string }> {
+  return fetchAPI('/ml/calibration/table');
+}
+
+export async function getRecentOutcomes(limit: number = 10) {
+  return fetchAPI<{ outcomes: any[]; total: number; error?: string }>(
+    `/ml/outcomes/recent?limit=${limit}`
+  );
+}
+
+export async function testCalibration(confidence: number) {
+  return fetchAPI<{
+    raw_confidence: number;
+    calibrated_confidence: number;
+    adjustment: number;
+    calibration_status: string;
+    sample_size: number;
+    error?: string;
+  }>(`/ml/calibration/test?confidence=${confidence}`, {
+    method: 'POST',
+  });
+}
+
 export const analyticsAPI = {
   // Quality
   getQualityAssessment,
@@ -262,4 +377,10 @@ export const analyticsAPI = {
 
   // Summary
   getAnalyticsSummary,
+
+  // ML Dashboard
+  getMLDashboard,
+  getCalibrationTable,
+  getRecentOutcomes,
+  testCalibration,
 };

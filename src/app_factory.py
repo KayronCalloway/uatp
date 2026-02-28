@@ -120,20 +120,23 @@ async def lifespan(app: FastAPI):
         set_session_factory(db.session_factory)
 
         # Initialize feedback loop for outcome tracking
-        from .feedback import initialize_feedback_loop, initialize_tracker
+        # NOTE: initialize_feedback_loop was never committed - commenting out
+        from .feedback import initialize_tracker
 
         logger.info("Initializing feedback loop for outcome tracking...")
         initialize_tracker(db.session_factory)
-        initialize_feedback_loop(session_factory=db.session_factory)
+        # initialize_feedback_loop(session_factory=db.session_factory)
         logger.info("Feedback loop initialized - capsules will now track outcomes")
 
-        # Initialize asyncpg database manager
+        # Initialize asyncpg database manager (PostgreSQL - optional in development)
         logger.info("Initializing database connection...")
-        await db_manager.connect()
-
-        # Run migrations
-        logger.info("Running database migrations...")
-        await run_migrations()
+        try:
+            await db_manager.connect()
+            # Run migrations
+            logger.info("Running database migrations...")
+            await run_migrations()
+        except Exception as e:
+            logger.warning(f"PostgreSQL not available (using SQLite): {e}")
 
         # Initialize services
         logger.info("Initializing services...")
@@ -850,9 +853,9 @@ def create_app() -> FastAPI:
     app.include_router(platform_router)
 
     # Include Cursor IDE integration router (converted from Quart)
-    from .api.cursor_fastapi_router import router as cursor_router
-
-    app.include_router(cursor_router)
+    # NOTE: cursor_fastapi_router was never committed - using cursor_routes instead
+    # from .api.cursor_fastapi_router import router as cursor_router
+    # app.include_router(cursor_router)
 
     # Include feedback and calibration router
     from .api.feedback_router import router as feedback_router
@@ -866,6 +869,11 @@ def create_app() -> FastAPI:
     from .api.export_router import router as export_router
 
     app.include_router(export_router)
+
+    # Include ML dashboard router
+    from .api.ml_dashboard_router import router as ml_dashboard_router
+
+    app.include_router(ml_dashboard_router)
 
     # Setup routes
     setup_health_routes(app)

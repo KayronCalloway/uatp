@@ -168,3 +168,36 @@ export function useAnalyticsSummary() {
     queryFn: analyticsAPI.getAnalyticsSummary,
   });
 }
+
+// ============================================================================
+// ML Dashboard
+// ============================================================================
+
+export function useMLDashboard() {
+  return useQuery({
+    queryKey: ['ml-dashboard'],
+    queryFn: analyticsAPI.getMLDashboard,
+  });
+}
+
+export function useCalibrationTable() {
+  return useQuery({
+    queryKey: ['calibration-table'],
+    queryFn: analyticsAPI.getCalibrationTable,
+  });
+}
+
+export function useRecentOutcomes(limit: number = 10) {
+  return useQuery({
+    queryKey: ['recent-outcomes', limit],
+    queryFn: () => analyticsAPI.getRecentOutcomes(limit),
+  });
+}
+
+export function useTestCalibration(confidence: number | null) {
+  return useQuery({
+    queryKey: ['test-calibration', confidence],
+    queryFn: () => analyticsAPI.testCalibration(confidence!),
+    enabled: confidence !== null && confidence >= 0 && confidence <= 1,
+  });
+}

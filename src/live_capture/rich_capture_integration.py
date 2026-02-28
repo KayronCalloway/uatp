@@ -15,9 +15,15 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.analysis.confidence_explainer import ConfidenceExplainer
 from src.analysis.critical_path import CriticalPathAnalyzer
+from src.analysis.quality_assessment import QualityAssessor
 from src.analysis.uncertainty_quantification import UncertaintyQuantifier
 from src.live_capture.court_admissible_enrichment import CourtAdmissibleEnricher
 from src.live_capture.enhanced_context import EnhancedContextExtractor
+from src.live_capture.environment_capture import capture_environment_context
+from src.live_capture.outcome_integration import register_capsule_for_tracking
+from src.live_capture.tool_calls_capture import capture_tool_calls
+from src.ml.calibration_integration import calibrate_capsule_confidence
+from src.ml.historical_accuracy import get_historical_accuracy_engine
 
 logger = logging.getLogger(__name__)
 
@@ -277,14 +283,21 @@ class RichCaptureEnhancer:
             confidence_explanation.factor_breakdown or "measured characteristics"
         )
 
-        # Truncate content if too long
-        display_content = content[:500] + "..." if len(content) > 500 else content
+        # Keep MORE content for assistant messages (the actual decision/recommendation)
+        # User messages can be truncated more aggressively
+        if role == "assistant":
+            # Keep up to 2000 chars for assistant responses - this is THE DECISION
+            display_content = content[:2000] + "..." if len(content) > 2000 else content
+        else:
+            # User messages - keep up to 500 chars
+            display_content = content[:500] + "..." if len(content) > 500 else content
 
         return RichReasoningStep(
             step=step_number,
             reasoning=display_content,
             confidence=confidence,
             operation=operation,
+            role=role,  # NEW: Pass the role for clear user vs assistant distinction
             uncertainty_sources=uncertainty_sources if uncertainty_sources else None,
             confidence_basis=confidence_basis,
             measurements=measurements if measurements else None,
@@ -507,10 +520,9 @@ class RichCaptureEnhancer:
             from src.analysis.legibility_tracker import record_legibility
 
             # Combine all reasoning content for legibility analysis
-            full_reasoning = " ".join([
-                step.reasoning for step in rich_steps
-                if step.reasoning
-            ])
+            full_reasoning = " ".join(
+                [step.reasoning for step in rich_steps if step.reasoning]
+            )
 
             legibility_metrics = analyze_legibility(full_reasoning)
             capsule["payload"]["legibility"] = legibility_metrics.to_dict()
@@ -539,6 +551,69 @@ class RichCaptureEnhancer:
             )
         except Exception as e:
             logger.debug(f"Legibility analysis skipped: {e}")
+
+        # QUALITY ASSESSMENT - Multi-dimensional reasoning quality scoring
+        # Evaluates: completeness, coherence, evidence, logic, bias, clarity
+        try:
+            quality_assessment = QualityAssessor.assess_capsule(capsule)
+            capsule["payload"]["quality_assessment"] = {
+                "overall_quality": round(quality_assessment.overall_quality, 3),
+                "quality_grade": quality_assessment.quality_grade,
+                "dimensions": {
+                    dim: {
+                        "score": round(score.score, 3),
+                        "issues": score.issues,
+                        "suggestions": score.suggestions[:2],  # Top 2 suggestions
+                    }
+                    for dim, score in quality_assessment.dimension_scores.items()
+                },
+                "strengths": quality_assessment.strengths,
+                "weaknesses": quality_assessment.weaknesses,
+                "improvement_priority": [
+                    {"dimension": dim, "impact": round(impact, 3)}
+                    for dim, impact in quality_assessment.improvement_priority[:3]
+                ],
+                "assessed_at": datetime.now(timezone.utc).isoformat(),
+            }
+            logger.info(
+                f"📊 Quality assessment: Grade {quality_assessment.quality_grade} "
+                f"({quality_assessment.overall_quality:.2f})"
+            )
+        except Exception as e:
+            logger.debug(f"Quality assessment skipped: {e}")
+
+        # ENVIRONMENT CONTEXT CAPTURE (Gap 4)
+        # Captures git state, platform info, and working directory
+        try:
+            environment_context = capture_environment_context()
+            capsule["payload"]["environment"] = environment_context
+            logger.info(
+                f"🌍 Environment captured: git={environment_context.get('git', {}).get('branch', 'N/A')}, "
+                f"commit={environment_context.get('git', {}).get('commit', 'N/A')}"
+            )
+        except Exception as e:
+            logger.debug(f"Environment capture skipped: {e}")
+
+        # TOOL CALLS CAPTURE (Gap 3)
+        # Captures tool operations from the Claude Code transcript
+        try:
+            # Don't filter by session_start - capture all recent tool calls
+            # The transcript contains the current session's tool calls
+            tool_calls_data = capture_tool_calls(
+                session_start=None,  # Capture all available tool calls
+                max_calls=100,  # Reasonable limit
+            )
+            if tool_calls_data.get("tool_calls"):
+                capsule["payload"]["tool_calls"] = tool_calls_data["tool_calls"]
+                capsule["payload"]["tool_calls_summary"] = tool_calls_data["summary"]
+                logger.info(
+                    f"🔧 Tool calls captured: {tool_calls_data['summary']['total_calls']} calls, "
+                    f"tools: {list(tool_calls_data['summary'].get('by_tool', {}).keys())}"
+                )
+            else:
+                logger.debug("No tool calls found in transcript")
+        except Exception as e:
+            logger.debug(f"Tool calls capture skipped: {e}")
 
         # CRYPTOGRAPHIC SIGNING with RFC 3161 trusted timestamp
         # This provides insurance-grade proof of:
@@ -571,13 +646,115 @@ class RichCaptureEnhancer:
         # Generates TF-IDF vector for finding similar capsules
         if _EMBEDDER_AVAILABLE and _embedder:
             try:
-                embedding = _embedder.embed_capsule({"payload": capsule.get("payload", {})})
+                embedding = _embedder.embed_capsule(
+                    {"payload": capsule.get("payload", {})}
+                )
                 capsule["embedding"] = embedding
                 capsule["embedding_model"] = _embedder.model_name
                 capsule["embedding_created_at"] = datetime.now(timezone.utc).isoformat()
-                logger.debug(f"📊 Capsule {capsule['capsule_id']} embedded ({len(embedding)} dims)")
+                logger.debug(
+                    f"📊 Capsule {capsule['capsule_id']} embedded ({len(embedding)} dims)"
+                )
+
+                # HISTORICAL ACCURACY LEARNING (Gap 2)
+                # Uses embedding to find similar past capsules and learn from outcomes
+                try:
+                    historical_engine = get_historical_accuracy_engine()
+                    historical_result = historical_engine.analyze_for_capsule(
+                        query_embedding=embedding,
+                        model_confidence=overall_confidence,
+                        capsule_id=capsule["capsule_id"],
+                    )
+
+                    # Store historical accuracy analysis
+                    capsule["payload"]["historical_accuracy"] = (
+                        historical_result.to_dict()
+                    )
+
+                    # Update confidence if we have enough historical data
+                    if historical_result.sample_size >= 3:
+                        # Store both original and adjusted confidence
+                        capsule["payload"]["confidence_original"] = overall_confidence
+                        capsule["payload"]["confidence"] = (
+                            historical_result.adjusted_confidence
+                        )
+
+                        logger.info(
+                            f"📈 Historical accuracy: {historical_result.sample_size} similar capsules, "
+                            f"accuracy={historical_result.historical_accuracy:.0%}, "
+                            f"confidence adjusted {overall_confidence:.0%} -> {historical_result.adjusted_confidence:.0%}"
+                        )
+                    else:
+                        logger.debug(
+                            f"📊 Historical accuracy: {historical_result.sample_size} similar capsules "
+                            f"(need 3+ for confidence adjustment)"
+                        )
+                except Exception as e:
+                    logger.debug(f"Historical accuracy analysis skipped: {e}")
+
+                # CALIBRATION FEEDBACK (Gap 5)
+                # Apply calibration based on historical prediction accuracy
+                try:
+                    current_confidence = capsule["payload"].get(
+                        "confidence", overall_confidence
+                    )
+                    topics = session.topics if hasattr(session, "topics") else []
+
+                    (
+                        calibrated_confidence,
+                        calibration_info,
+                    ) = calibrate_capsule_confidence(
+                        raw_confidence=current_confidence,
+                        topics=topics,
+                    )
+
+                    if calibration_info.get("calibration") == "applied":
+                        # Store calibration info
+                        capsule["payload"]["calibration"] = calibration_info
+                        capsule["payload"]["confidence_pre_calibration"] = (
+                            current_confidence
+                        )
+                        capsule["payload"]["confidence"] = calibrated_confidence
+
+                        logger.info(
+                            f"📏 Calibration applied: {current_confidence:.0%} -> {calibrated_confidence:.0%} "
+                            f"(adjustment: {calibration_info.get('adjustment', 0):+.1%})"
+                        )
+                    else:
+                        # Not enough data for calibration
+                        capsule["payload"]["calibration"] = calibration_info
+                        logger.debug(
+                            f"Calibration: {calibration_info.get('calibration', 'unknown')}"
+                        )
+                except Exception as e:
+                    logger.debug(f"Calibration skipped: {e}")
+
             except Exception as e:
                 logger.debug(f"Embedding skipped: {e}")
+
+        # OUTCOME TRACKING REGISTRATION (Gap 1)
+        # Register this capsule for outcome tracking
+        # When a follow-up message comes in, we'll infer whether the recommendation worked
+        try:
+            # Get the assistant's response for tracking
+            assistant_responses = [
+                step.reasoning for step in rich_steps if step.role == "assistant"
+            ]
+            if assistant_responses:
+                response_text = assistant_responses[-1]  # Last assistant response
+                topics = session.topics if hasattr(session, "topics") else []
+
+                register_capsule_for_tracking(
+                    capsule_id=capsule["capsule_id"],
+                    response_text=response_text,
+                    confidence=capsule["payload"].get("confidence", overall_confidence),
+                    topics=topics,
+                )
+                logger.debug(
+                    f"📋 Capsule {capsule['capsule_id']} registered for outcome tracking"
+                )
+        except Exception as e:
+            logger.debug(f"Outcome tracking registration skipped: {e}")
 
         return capsule
 

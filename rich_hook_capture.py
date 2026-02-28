@@ -19,7 +19,8 @@ load_dotenv()
 # Add project to path
 sys.path.insert(0, os.path.dirname(__file__))
 
-from src.live_capture.claude_code_capture import ClaudeCodeCapture  # noqa: E402
+from src.live_capture.claude_code_capture import ClaudeCodeCapture
+from src.live_capture.outcome_integration import process_user_message_for_outcome
 
 
 async def capture_rich_session():
@@ -44,6 +45,7 @@ async def capture_rich_session():
             with open(session_file) as f:
                 session_data = json.load(f)
                 session_id = session_data.get("session_id")
+                _ = session_data.get("message_count", 0)  # Used for logging
         else:
             # Start new session
             session_id = await capture.start_session(user_id="kay")
@@ -81,6 +83,18 @@ async def capture_rich_session():
             print(f"✅ Captured user message (session: {session_id[:8]}...)")
             print(f"   Message #{session_data['message_count']}")
             print(f"   Tokens: ~{int(estimated_tokens)}")
+
+            # OUTCOME TRACKING (Gap 1)
+            # Check if this message indicates an outcome for a previous capsule
+            try:
+                outcome_result = process_user_message_for_outcome(user_message)
+                if outcome_result and outcome_result.get("updated_capsule"):
+                    print(
+                        f"   📊 Outcome inferred: {outcome_result['status']} "
+                        f"(confidence: {outcome_result['confidence']:.0%})"
+                    )
+            except Exception:
+                pass  # Outcome tracking is optional, don't fail capture
 
         except Exception as e:
             print(f"❌ Failed to capture user message: {e}")
@@ -130,7 +144,7 @@ async def capture_rich_session():
                             combined_text = " ".join(text_parts)
                             if len(combined_text) > 50:  # Skip very short responses
                                 recent_assistant_responses.append(combined_text)
-                except (json.JSONDecodeError, KeyError, TypeError):
+                except Exception:
                     continue
 
             # Capture the most recent assistant response if not already captured
