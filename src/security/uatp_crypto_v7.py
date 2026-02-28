@@ -550,11 +550,25 @@ class UATPCryptoV7:
             if pq_signature.startswith("ml-dsa-65:"):
                 algo_name = "ML-DSA-65"
                 signature_hex = pq_signature.split(":", 1)[1]
+                public_key = self.ml_dsa_65_public
             elif pq_signature.startswith("dilithium3:"):
-                # Legacy Dilithium3 signature - still verify with Dilithium3
+                # Legacy Dilithium3 signature - need legacy public key
                 algo_name = "Dilithium3"
                 signature_hex = pq_signature.split(":", 1)[1]
                 logger.debug("Verifying legacy Dilithium3 signature")
+
+                # Load legacy Dilithium3 public key if available
+                legacy_pub_path = self.key_dir / "dilithium3_public.bin"
+                if legacy_pub_path.exists():
+                    with open(legacy_pub_path, "rb") as f:
+                        public_key = f.read()
+                    logger.debug("Using legacy Dilithium3 public key for verification")
+                else:
+                    return (
+                        False,
+                        "Cannot verify Dilithium3 signature - legacy public key not found. "
+                        "The signing key may have been rotated to ML-DSA-65.",
+                    )
             else:
                 return (
                     False,
@@ -571,14 +585,9 @@ class UATPCryptoV7:
 
             signature_bytes = bytes.fromhex(signature_hex)
 
-            # Verify using liboqs
-            # Note: For ML-DSA-65 we use our current key, for Dilithium3 we'd need
-            # the legacy key (not supported for now - just use ML-DSA-65 for verification)
+            # Verify using liboqs with the correct public key for the algorithm
             with oqs.Signature(algo_name) as sig:
-                # Load our public key for verification
-                is_valid = sig.verify(
-                    hash_bytes, signature_bytes, self.ml_dsa_65_public
-                )
+                is_valid = sig.verify(hash_bytes, signature_bytes, public_key)
 
                 if is_valid:
                     return True, f"{algo_name} signature valid"
