@@ -204,6 +204,7 @@ async def get_capsule_stats(
 
 @router.get("")
 async def list_capsules(
+    request: Request,
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100),
     type: Optional[str] = None,
@@ -219,13 +220,15 @@ async def list_capsules(
         False,
         description="Include demo capsules (default: exclude demo capsules with 'demo-' prefix)",
     ),
-    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
-    """List capsules with pagination and filtering (user sees own capsules only)"""
+    """List capsules with pagination and filtering (public: all capsules, auth: user-specific)"""
     correlation_id = get_correlation_id()
-    user_is_admin = is_admin_user(current_user)
-    user_id = current_user.get("user_id")
+
+    # Optional auth - works for both authenticated and unauthenticated users
+    current_user = get_current_user_optional(request)
+    user_is_admin = is_admin_user(current_user) if current_user else False
+    user_id = current_user.get("user_id") if current_user else None
 
     logger.info(
         f"[{correlation_id}] GET /capsules - page={page}, per_page={per_page}, "
@@ -237,8 +240,9 @@ async def list_capsules(
         # Build query
         query = select(CapsuleModel)
 
-        # Non-admin users only see their own capsules
-        if not user_is_admin:
+        # Non-admin authenticated users only see their own capsules
+        # Unauthenticated users and admins see all capsules
+        if current_user and not user_is_admin and user_id:
             query = query.where(CapsuleModel.owner_id == user_id)
 
         # Apply type filter
@@ -278,8 +282,8 @@ async def list_capsules(
         # Get total count
         count_query = select(func.count(CapsuleModel.id))
 
-        # Non-admin users only see their own capsules
-        if not user_is_admin:
+        # Non-admin authenticated users only see their own capsules
+        if current_user and not user_is_admin and user_id:
             count_query = count_query.where(CapsuleModel.owner_id == user_id)
 
         if type:
