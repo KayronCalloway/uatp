@@ -58,6 +58,7 @@ toml==0.10.2
 # Async utilities
 anyio==3.7.1
 aiofiles==24.1.0
+aiosqlite==0.20.0
 
 # JSON handling - Updated
 orjson==3.10.14

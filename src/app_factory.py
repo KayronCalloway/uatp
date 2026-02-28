@@ -119,14 +119,15 @@ async def lifespan(app: FastAPI):
 
         set_session_factory(db.session_factory)
 
-        # Initialize feedback loop for outcome tracking
-        # NOTE: initialize_feedback_loop was never committed - commenting out
-        from .feedback import initialize_tracker
+        # Initialize feedback loop for outcome tracking (non-critical)
+        try:
+            from .feedback import initialize_tracker
 
-        logger.info("Initializing feedback loop for outcome tracking...")
-        initialize_tracker(db.session_factory)
-        # initialize_feedback_loop(session_factory=db.session_factory)
-        logger.info("Feedback loop initialized - capsules will now track outcomes")
+            logger.info("Initializing feedback loop for outcome tracking...")
+            initialize_tracker(db.session_factory)
+            logger.info("Feedback loop initialized - capsules will now track outcomes")
+        except Exception as e:
+            logger.warning(f"Feedback system not available (non-critical): {e}")
 
         # Initialize asyncpg database manager (PostgreSQL - optional in development)
         logger.info("Initializing database connection...")
