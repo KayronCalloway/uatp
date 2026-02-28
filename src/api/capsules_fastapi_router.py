@@ -485,11 +485,10 @@ async def create_capsule(
 
         session.add(capsule)
         await session.commit()
-        await session.refresh(capsule)
 
         return {
             "success": True,
-            "capsule_id": capsule.capsule_id,
+            "capsule_id": capsule_id,
             "message": "Capsule created successfully",
         }
 
