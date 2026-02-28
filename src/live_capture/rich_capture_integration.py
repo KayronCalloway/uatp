@@ -27,14 +27,14 @@ from src.ml.historical_accuracy import get_historical_accuracy_engine
 
 logger = logging.getLogger(__name__)
 
-# Import crypto for Ed25519 signing with RFC 3161 timestamps + Dilithium3 post-quantum
+# Import crypto for Ed25519 signing with RFC 3161 timestamps + ML-DSA-65 post-quantum
 try:
     from src.security.uatp_crypto_v7 import UATPCryptoV7
 
     _crypto = UATPCryptoV7(
         key_dir=".uatp_keys",
         signer_id="rich_capture_v7",
-        enable_pq=True,  # Enable Dilithium3 post-quantum signatures
+        enable_pq=True,  # Enable ML-DSA-65 (FIPS 204) post-quantum signatures
     )
     _CRYPTO_AVAILABLE = _crypto.enabled
 except Exception as e:

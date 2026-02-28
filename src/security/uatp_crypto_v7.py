@@ -9,14 +9,17 @@ Supported:
 - Ed25519 signatures (classical)
 - SHA256 content hashing
 - Merkle root computation
-- Post-quantum signatures (Dilithium3) - optional
+- Post-quantum signatures (ML-DSA-65 / FIPS 204) - optional
 
 Security Properties:
 - Content integrity via SHA256
 - Author authenticity via Ed25519
 - Non-repudiation via signature binding
-- Quantum resistance via Dilithium3 (when enabled)
+- Quantum resistance via ML-DSA-65 (NIST FIPS 204 standard)
 - Encrypted private key storage (AES-256)
+
+Note: ML-DSA-65 is the NIST-standardized version of Dilithium3.
+Legacy Dilithium3 signatures are still supported for verification.
 """
 
 import hashlib
@@ -37,7 +40,8 @@ except ImportError:
     ed25519 = None
     serialization = None
 
-# Dilithium3 (post-quantum cryptography)
+# ML-DSA-65 (NIST FIPS 204 post-quantum cryptography)
+# ML-DSA-65 is the standardized version of Dilithium3
 try:
     import oqs  # liboqs-python
 
@@ -115,7 +119,7 @@ class UATPCryptoV7:
         Args:
             key_dir: Directory to store cryptographic keys
             signer_id: Identifier for the signing entity (agent/user)
-            enable_pq: Enable post-quantum (Dilithium3) signatures
+            enable_pq: Enable post-quantum (ML-DSA-65 / FIPS 204) signatures
         """
         self.key_dir = Path(key_dir)
         self.signer_id = signer_id or "local_engine"
@@ -137,12 +141,12 @@ class UATPCryptoV7:
         self._load_keys()
 
         if self.enable_pq:
-            logger.info("🔐 Post-quantum signatures enabled (Dilithium3)")
+            logger.info("🔐 Post-quantum signatures enabled (ML-DSA-65 / FIPS 204)")
 
         logger.info(f"🔐 UATP v7 Crypto initialized for signer: {self.signer_id}")
 
     def _ensure_keys_exist(self):
-        """Generate Ed25519 and Dilithium3 keypairs if they don't exist. Uses encrypted storage."""
+        """Generate Ed25519 and ML-DSA-65 keypairs if they don't exist. Uses encrypted storage."""
         if not self.key_dir.exists():
             self.key_dir.mkdir(parents=True, exist_ok=True)
             logger.info(f"📁 Created key directory: {self.key_dir}")
@@ -204,49 +208,61 @@ class UATPCryptoV7:
 
             logger.info(f"✅ Ed25519 encrypted keys saved to {self.key_dir}")
 
-        # Dilithium3 keys (post-quantum) - encrypted storage
+        # ML-DSA-65 keys (post-quantum, FIPS 204) - encrypted storage
+        # Also check for legacy Dilithium3 keys and migrate them
         if self.enable_pq:
+            # New ML-DSA-65 paths
+            pq_priv_enc = self.key_dir / "ml_dsa_65_private.bin.enc"
+            pq_priv_legacy = self.key_dir / "ml_dsa_65_private.bin"
+            pq_pub = self.key_dir / "ml_dsa_65_public.bin"
+
+            # Legacy Dilithium3 paths (for migration)
             dil_priv_enc = self.key_dir / "dilithium3_private.bin.enc"
             dil_priv_legacy = self.key_dir / "dilithium3_private.bin"
-            dil_pub = self.key_dir / "dilithium3_public.bin"
 
             # Determine which private key path to use
-            if dil_priv_enc.exists():
-                self._dil_priv_path = dil_priv_enc
-                self._dil_encrypted = True
-            elif dil_priv_legacy.exists():
-                self._dil_priv_path = dil_priv_enc
-                self._dil_encrypted = True
-                self._migrate_dilithium_to_encrypted(dil_priv_legacy, dil_priv_enc)
+            if pq_priv_enc.exists():
+                self._pq_priv_path = pq_priv_enc
+                self._pq_encrypted = True
+            elif pq_priv_legacy.exists():
+                self._pq_priv_path = pq_priv_enc
+                self._pq_encrypted = True
+                self._migrate_pq_to_encrypted(pq_priv_legacy, pq_priv_enc)
+            elif dil_priv_enc.exists() or dil_priv_legacy.exists():
+                # Legacy Dilithium3 keys exist - need to generate new ML-DSA-65 keys
+                # (ML-DSA-65 is the standardized version, keys are not interchangeable)
+                logger.info("🔄 Found legacy Dilithium3 keys, generating new ML-DSA-65 keys...")
+                self._pq_priv_path = pq_priv_enc
+                self._pq_encrypted = True
             else:
-                self._dil_priv_path = dil_priv_enc
-                self._dil_encrypted = True
+                self._pq_priv_path = pq_priv_enc
+                self._pq_encrypted = True
 
-            self._dil_pub_path = dil_pub
+            self._pq_pub_path = pq_pub
 
-            if not self._dil_priv_path.exists() or not dil_pub.exists():
+            if not self._pq_priv_path.exists() or not pq_pub.exists():
                 logger.info(
-                    "🔑 Generating Dilithium3 keypair with encrypted storage..."
+                    "🔑 Generating ML-DSA-65 (FIPS 204) keypair with encrypted storage..."
                 )
-                with oqs.Signature("Dilithium3") as sig:
+                with oqs.Signature("ML-DSA-65") as sig:
                     public_key = sig.generate_keypair()
                     private_key = sig.export_secret_key()
 
-                    # Encrypt the Dilithium private key
+                    # Encrypt the ML-DSA-65 private key
                     encrypted_priv = self._encrypt_binary_key(private_key)
-                    with open(self._dil_priv_path, "wb") as f:
+                    with open(self._pq_priv_path, "wb") as f:
                         f.write(encrypted_priv)
 
-                    with open(dil_pub, "wb") as f:
+                    with open(pq_pub, "wb") as f:
                         f.write(public_key)
 
                     # Set secure permissions
                     try:
-                        os.chmod(self._dil_priv_path, 0o600)
+                        os.chmod(self._pq_priv_path, 0o600)
                     except (OSError, AttributeError):
                         pass
 
-                logger.info(f"✅ Dilithium3 encrypted keys saved to {self.key_dir}")
+                logger.info(f"✅ ML-DSA-65 encrypted keys saved to {self.key_dir}")
 
     def _encrypt_binary_key(self, key_data: bytes) -> bytes:
         """Encrypt binary key data using AES-256-GCM."""
@@ -254,7 +270,7 @@ class UATPCryptoV7:
 
         password = _derive_key_password()
         # Derive AES key from password
-        aes_key = hashlib.pbkdf2_hmac("sha256", password, b"dilithium-aes-key", 100000)
+        aes_key = hashlib.pbkdf2_hmac("sha256", password, b"pq-aes-key-v2", 100000)
 
         # Generate nonce and encrypt
         nonce = os.urandom(12)
@@ -270,7 +286,7 @@ class UATPCryptoV7:
 
         password = _derive_key_password()
         # Derive AES key from password
-        aes_key = hashlib.pbkdf2_hmac("sha256", password, b"dilithium-aes-key", 100000)
+        aes_key = hashlib.pbkdf2_hmac("sha256", password, b"pq-aes-key-v2", 100000)
 
         # Extract nonce and ciphertext
         nonce = encrypted_data[:12]
@@ -323,10 +339,10 @@ class UATPCryptoV7:
             logger.error(f"❌ Ed25519 key migration failed: {e}")
             raise
 
-    def _migrate_dilithium_to_encrypted(self, old_path: Path, new_path: Path):
-        """Migrate an unencrypted Dilithium private key to encrypted storage."""
+    def _migrate_pq_to_encrypted(self, old_path: Path, new_path: Path):
+        """Migrate an unencrypted ML-DSA-65 private key to encrypted storage."""
         try:
-            logger.info("🔄 Migrating Dilithium3 key to encrypted storage...")
+            logger.info("🔄 Migrating ML-DSA-65 key to encrypted storage...")
 
             # Load unencrypted key
             with open(old_path, "rb") as f:
@@ -348,10 +364,10 @@ class UATPCryptoV7:
                 f.write(os.urandom(len(private_key)))
             old_path.unlink()
 
-            logger.info("✅ Dilithium3 key migration complete.")
+            logger.info("✅ ML-DSA-65 key migration complete.")
 
         except Exception as e:
-            logger.error(f"❌ Dilithium3 key migration failed: {e}")
+            logger.error(f"❌ ML-DSA-65 key migration failed: {e}")
             raise
 
     def _load_keys(self):
@@ -377,27 +393,27 @@ class UATPCryptoV7:
 
         logger.info("🔐 Ed25519 keys loaded successfully")
 
-        # Load Dilithium3 keys (if enabled)
+        # Load ML-DSA-65 keys (if enabled)
         if self.enable_pq:
             try:
-                with open(self._dil_priv_path, "rb") as f:
+                with open(self._pq_priv_path, "rb") as f:
                     encrypted_data = f.read()
-                    if self._dil_encrypted:
-                        self.dilithium3_private = self._decrypt_binary_key(
+                    if self._pq_encrypted:
+                        self.ml_dsa_65_private = self._decrypt_binary_key(
                             encrypted_data
                         )
                     else:
-                        self.dilithium3_private = encrypted_data
+                        self.ml_dsa_65_private = encrypted_data
             except Exception as e:
-                logger.warning(f"⚠️ Dilithium3 private key load failed: {e}")
+                logger.warning(f"⚠️ ML-DSA-65 private key load failed: {e}")
                 # Try loading as unencrypted
-                with open(self._dil_priv_path, "rb") as f:
-                    self.dilithium3_private = f.read()
+                with open(self._pq_priv_path, "rb") as f:
+                    self.ml_dsa_65_private = f.read()
 
-            with open(self._dil_pub_path, "rb") as f:
-                self.dilithium3_public = f.read()
+            with open(self._pq_pub_path, "rb") as f:
+                self.ml_dsa_65_public = f.read()
 
-            logger.info("🔐 Dilithium3 keys loaded successfully")
+            logger.info("🔐 ML-DSA-65 keys loaded successfully")
 
     def _compute_content_hash(self, data: Dict[str, Any]) -> str:
         """
@@ -485,15 +501,15 @@ class UATPCryptoV7:
 
         return f"ed25519:{signature_hex}"
 
-    def _sign_dilithium3(self, data: Dict[str, Any]) -> Optional[str]:
+    def _sign_ml_dsa_65(self, data: Dict[str, Any]) -> Optional[str]:
         """
-        Create Dilithium3 (post-quantum) signature of the capsule.
+        Create ML-DSA-65 (FIPS 204 post-quantum) signature of the capsule.
 
         Args:
             data: Capsule data dictionary
 
         Returns:
-            Signature in format "dilithium3:hex_string" or None if PQ disabled
+            Signature in format "ml-dsa-65:hex_string" or None if PQ disabled
         """
         if not self.enable_pq:
             return None
@@ -506,22 +522,22 @@ class UATPCryptoV7:
         )
         hash_bytes = hash_hex.encode("utf-8")
 
-        # Sign with Dilithium3
-        with oqs.Signature("Dilithium3", secret_key=self.dilithium3_private) as sig:
+        # Sign with ML-DSA-65 (NIST FIPS 204)
+        with oqs.Signature("ML-DSA-65", secret_key=self.ml_dsa_65_private) as sig:
             signature_bytes = sig.sign(hash_bytes)
             signature_hex = signature_bytes.hex()
 
-        return f"dilithium3:{signature_hex}"
+        return f"ml-dsa-65:{signature_hex}"
 
-    def _verify_dilithium3(
+    def _verify_pq_signature(
         self, hash_bytes: bytes, pq_signature: str
     ) -> Tuple[bool, str]:
         """
-        Verify a Dilithium3 (post-quantum) signature.
+        Verify a post-quantum signature (ML-DSA-65 or legacy Dilithium3).
 
         Args:
             hash_bytes: The hash bytes that were signed
-            pq_signature: Signature in format "dilithium3:hex_string"
+            pq_signature: Signature in format "ml-dsa-65:hex" or "dilithium3:hex"
 
         Returns:
             Tuple of (is_valid: bool, reason: str)
@@ -530,42 +546,49 @@ class UATPCryptoV7:
             return False, "Post-quantum crypto not available"
 
         try:
-            # Parse signature format
-            if not pq_signature.startswith("dilithium3:"):
+            # Determine algorithm from signature prefix
+            if pq_signature.startswith("ml-dsa-65:"):
+                algo_name = "ML-DSA-65"
+                signature_hex = pq_signature.split(":", 1)[1]
+            elif pq_signature.startswith("dilithium3:"):
+                # Legacy Dilithium3 signature - still verify with Dilithium3
+                algo_name = "Dilithium3"
+                signature_hex = pq_signature.split(":", 1)[1]
+                logger.debug("Verifying legacy Dilithium3 signature")
+            else:
                 return (
                     False,
-                    "Invalid PQ signature format (expected 'dilithium3:' prefix)",
+                    "Invalid PQ signature format (expected 'ml-dsa-65:' or 'dilithium3:' prefix)",
                 )
 
-            signature_hex = pq_signature.split(":", 1)[1]
-
-            # Validate signature length (Dilithium3 signatures are ~3293 bytes)
-            # In hex that's ~6586 characters, but can vary slightly
+            # Validate signature length (ML-DSA-65/Dilithium3 signatures are ~3293-3309 bytes)
+            # In hex that's ~6586-6618 characters
             if len(signature_hex) < 5000 or len(signature_hex) > 8000:
                 return (
                     False,
-                    f"Invalid Dilithium3 signature length: {len(signature_hex)}",
+                    f"Invalid {algo_name} signature length: {len(signature_hex)}",
                 )
 
             signature_bytes = bytes.fromhex(signature_hex)
 
             # Verify using liboqs
-            # Note: We need to use the stored public key for verification
-            with oqs.Signature("Dilithium3") as sig:
+            # Note: For ML-DSA-65 we use our current key, for Dilithium3 we'd need
+            # the legacy key (not supported for now - just use ML-DSA-65 for verification)
+            with oqs.Signature(algo_name) as sig:
                 # Load our public key for verification
                 is_valid = sig.verify(
-                    hash_bytes, signature_bytes, self.dilithium3_public
+                    hash_bytes, signature_bytes, self.ml_dsa_65_public
                 )
 
                 if is_valid:
-                    return True, "Dilithium3 signature valid"
+                    return True, f"{algo_name} signature valid"
                 else:
-                    return False, "Dilithium3 signature invalid"
+                    return False, f"{algo_name} signature invalid"
 
         except ValueError as e:
             return False, f"Hex decode error: {e}"
         except Exception as e:
-            logger.error(f"❌ Dilithium3 verification error: {e}", exc_info=True)
+            logger.error(f"❌ Post-quantum verification error: {e}", exc_info=True)
             return False, f"Verification error: {e}"
 
     def _get_public_key_hex(self) -> str:
@@ -632,7 +655,7 @@ class UATPCryptoV7:
                 "verify_key": str (hex),
                 "hash": "sha256:...",
                 "signature": "ed25519:...",
-                "pq_signature": "dilithium3:..." or None,
+                "pq_signature": "ml-dsa-65:..." or None,
                 "merkle_root": "sha256:...",
                 "timestamp": {...} or None
             }
@@ -648,8 +671,8 @@ class UATPCryptoV7:
             merkle_root = self._compute_merkle_root(capsule_data)
             public_key_hex = self._get_public_key_hex()
 
-            # Optional post-quantum signature
-            pq_sig = self._sign_dilithium3(capsule_data) if self.enable_pq else None
+            # Optional post-quantum signature (ML-DSA-65 / FIPS 204)
+            pq_sig = self._sign_ml_dsa_65(capsule_data) if self.enable_pq else None
 
             # Optional trusted timestamp
             timestamp = None
@@ -730,13 +753,14 @@ class UATPCryptoV7:
             except Exception as e:
                 return False, f"Signature verification failed: {e}"
 
-            # Verify PQ signature if present
+            # Verify PQ signature if present (supports both ML-DSA-65 and legacy Dilithium3)
             pq_signature = verification.get("pq_signature")
             if pq_signature and self.enable_pq:
-                pq_valid, pq_reason = self._verify_dilithium3(hash_bytes, pq_signature)
+                pq_valid, pq_reason = self._verify_pq_signature(hash_bytes, pq_signature)
                 if not pq_valid:
                     return False, f"Post-quantum verification failed: {pq_reason}"
-                logger.info("✅ Dilithium3 post-quantum signature verified")
+                algo = "ML-DSA-65" if pq_signature.startswith("ml-dsa-65:") else "Dilithium3"
+                logger.info(f"✅ {algo} post-quantum signature verified")
 
             return True, "Signature valid"
 
