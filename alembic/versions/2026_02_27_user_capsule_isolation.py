@@ -5,7 +5,7 @@ User-Scoped Capsule Isolation Migration
 Adds owner_id and encrypted_payload columns for privacy-first capsule isolation.
 
 Revision ID: 2026_02_27_user_capsule_isolation
-Revises: (previous revision)
+Revises: 202510061545
 Create Date: 2026-02-27
 """
 
@@ -16,7 +16,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "2026_02_27_user_capsule_isolation"
-down_revision = None  # Update this to your latest revision
+down_revision = "202510061545"  # Previous: Create insurance tables
 branch_labels = None
 depends_on = None
 
