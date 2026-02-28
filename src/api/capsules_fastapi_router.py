@@ -586,19 +586,20 @@ async def create_capsule(
 @router.get("/{capsule_id}/verify")
 async def verify_capsule(
     capsule_id: str,
-    current_user: Dict = Depends(get_current_user),
+    request: Request,
     session: AsyncSession = Depends(get_db_session),
 ):
     """
-    Verify a specific capsule's cryptographic integrity.
+    Verify a specific capsule's cryptographic integrity (public endpoint).
 
     CRITICAL SECURITY FIX: Now performs actual cryptographic verification
     using CryptoSealer.verify_capsule() instead of trusting metadata flags.
 
-    Users can only verify capsules they own (privacy-first model).
+    Verification is public - anyone can verify a capsule's integrity.
     """
-    user_is_admin = is_admin_user(current_user)
-    user_id = current_user.get("user_id")
+    # Optional auth (verification is public but we log who verifies)
+    current_user = get_current_user_optional(request)
+    user_id = current_user.get("user_id") if current_user else None
 
     try:
         # Import CryptoSealer for verification
@@ -617,14 +618,8 @@ async def verify_capsule(
         if not capsule:
             raise HTTPException(status_code=404, detail="Capsule not found")
 
-        # Verify ownership: non-admin users can only verify their own capsules
-        if not user_is_admin:
-            if capsule.owner_id is None:
-                raise HTTPException(
-                    status_code=403, detail="Access denied: legacy capsule"
-                )
-            if str(capsule.owner_id) != user_id:
-                raise HTTPException(status_code=403, detail="Access denied")
+        # Verification is public - anyone can verify cryptographic integrity
+        # (This is by design: verification proves authenticity without exposing payload)
 
         # Build full capsule data for verification - MUST match what was signed
         # The Pydantic model_dump() returns these keys:
