@@ -13,7 +13,8 @@
 | 07 | `07_UATP_Complete_Vision.md` | v7.0 | Dec 2025 | Full vision document |
 | 08 | `08_UATP_7.0_White_Paper.pdf` | v7.0 | July 15, 2025 | v7.0 formal white paper |
 | 09 | `09_UATP_7.0_One_Pager.pdf` | v7.0 | July 15, 2025 | Executive summary |
-| 10 | `10_UATP_7.1_Production_Release.md` | **v7.1** | **Feb 2026** | **Current production release** |
+| 10 | `10_UATP_7.1_Production_Release.md` | v7.1 | Feb 2026 | Production release |
+| 11 | `11_UATP_7.2_Specification.md` | **v7.2** | **Mar 2026** | **Edge-Native Provenance (draft)** |
 
 ---
 
@@ -60,6 +61,17 @@
 - Historical accuracy tracking
 - Court-admissible enrichment
 - Complete environment & tool call capture
+
+### v7.2 Specification (March 2026) - DRAFT
+**"Edge-Native Provenance for the Agentic Era"**
+
+- Training Provenance: Full model lifecycle tracking
+- Agentic Workflow Chains: DAG-based multi-step lineage
+- Hardware Attestation: Cryptographic proof of execution environment
+- Edge-Native Capsules: <1KB format, offline-signable
+- Model Registry Protocol: Content-addressed versioning
+
+Driven by: ANE on-device training, Qwen 3.5 open-source frontier models, EU AI Act
 
 ---
 
