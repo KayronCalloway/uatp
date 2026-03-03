@@ -38,14 +38,34 @@ class RateLimitConfig:
         self.window_size = int(os.getenv("RATE_LIMIT_WINDOW_SIZE", "60"))
         self.cleanup_interval = int(os.getenv("RATE_LIMIT_CLEANUP_INTERVAL", "300"))
 
-        # Endpoint-specific limits
+        # Endpoint-specific limits (requests per minute)
         self.endpoint_limits = {
-            "/auth/login": 5,  # 5 requests per minute
-            "/auth/register": 3,  # 3 requests per minute
-            "/auth/refresh": 10,  # 10 requests per minute
+            # Auth endpoints - strict limits to prevent brute force
+            "/auth/login": 5,
+            "/auth/register": 3,
+            "/auth/refresh": 10,
+            # Legacy endpoints
             "/api/agents/create": 10,
             "/api/citizenship/apply": 5,
             "/api/bonds/create": 20,
+            # UATP 7.2 Workflow Chain endpoints
+            "/workflows": 30,  # List/create workflows
+            "/workflows/stats": 60,  # Stats can be called frequently
+            # UATP 7.2 Model Registry endpoints
+            "/models": 30,
+            "/models/register": 10,  # Model registration is expensive
+            "/models/stats": 60,
+            "/models/training-sessions": 20,
+            # UATP 7.2 Edge Sync endpoints
+            "/edge/sync": 20,  # Sync operations
+            "/edge/register": 5,  # Device registration
+            # UATP 7.2 Attestation endpoints
+            "/attestation/challenge": 10,  # Challenge generation
+            "/attestation/verify": 10,  # Attestation verification
+            # Capsule endpoints
+            "/capsules": 60,  # Read operations
+            "/capsules/create": 30,  # Create operations
+            "/capsules/verify": 30,  # Verification
         }
 
         # User type limits

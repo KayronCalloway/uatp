@@ -38,14 +38,23 @@ logger = logging.getLogger(__name__)
 class WorkflowChainService:
     """Service for UATP 7.2 agentic workflow chains."""
 
-    def __init__(self, session_factory=None):
+    # SECURITY: Maximum steps per workflow to prevent unbounded growth
+    MAX_STEPS_PER_WORKFLOW = 10000
+    DEFAULT_MAX_STEPS = 1000
+
+    def __init__(self, session_factory=None, max_steps: int = None):
         """
         Initialize the workflow chain service.
 
         Args:
             session_factory: SQLAlchemy session factory for database access
+            max_steps: Maximum steps allowed per workflow (default: 1000)
         """
         self.session_factory = session_factory
+        self.max_steps = min(
+            max_steps or self.DEFAULT_MAX_STEPS,
+            self.MAX_STEPS_PER_WORKFLOW
+        )
 
     async def create_workflow(
         self,
@@ -175,6 +184,17 @@ class WorkflowChainService:
                     "error": f"Workflow {workflow_capsule_id} is not active",
                 }
 
+            # SECURITY: Enforce maximum steps limit to prevent unbounded growth
+            if workflow.step_count >= self.max_steps:
+                logger.warning(
+                    f"Workflow {workflow_capsule_id} has reached max steps limit ({self.max_steps})"
+                )
+                return {
+                    "success": False,
+                    "error": f"Workflow has reached maximum step limit ({self.max_steps}). "
+                    "Complete this workflow and create a new one to continue.",
+                }
+
             # Validate step_type
             valid_types = {
                 "plan",
@@ -192,7 +212,22 @@ class WorkflowChainService:
                     "error": f"Invalid step_type. Must be one of: {valid_types}",
                 }
 
-            # Get current step index
+            # SECURITY: Use SELECT FOR UPDATE to prevent race conditions on step index
+            # This ensures atomic read-modify-write for step_count
+            from sqlalchemy import update
+            from sqlalchemy.orm import with_for_update
+
+            # Re-fetch with row lock to prevent concurrent step additions
+            locked_result = await session.execute(
+                select(WorkflowCapsuleModel)
+                .where(WorkflowCapsuleModel.workflow_capsule_id == workflow_capsule_id)
+                .with_for_update()
+            )
+            workflow = locked_result.scalar_one_or_none()
+            if not workflow:
+                return {"success": False, "error": "Workflow disappeared during locking"}
+
+            # Get current step index (now protected by row lock)
             step_index = workflow.step_count
 
             # Validate depends_on_steps

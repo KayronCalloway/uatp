@@ -18,12 +18,149 @@ import hashlib
 import logging
 import secrets
 import uuid
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+
+class ChallengeStore(ABC):
+    """Abstract interface for attestation challenge storage."""
+
+    @abstractmethod
+    def store(self, challenge: "AttestationChallenge") -> None:
+        """Store a challenge."""
+        pass
+
+    @abstractmethod
+    def get(self, challenge_id: str) -> Optional["AttestationChallenge"]:
+        """Get a challenge by ID."""
+        pass
+
+    @abstractmethod
+    def delete(self, challenge_id: str) -> bool:
+        """Delete a challenge. Returns True if existed."""
+        pass
+
+    @abstractmethod
+    def cleanup_expired(self) -> int:
+        """Remove expired challenges. Returns count removed."""
+        pass
+
+
+class InMemoryChallengeStore(ChallengeStore):
+    """In-memory challenge store for development/testing only."""
+
+    def __init__(self):
+        self._challenges: Dict[str, "AttestationChallenge"] = {}
+        logger.warning(
+            "Using in-memory challenge store - data will be lost on restart. "
+            "Use RedisChallengeStore or DatabaseChallengeStore in production."
+        )
+
+    def store(self, challenge: "AttestationChallenge") -> None:
+        self._challenges[challenge.challenge_id] = challenge
+
+    def get(self, challenge_id: str) -> Optional["AttestationChallenge"]:
+        return self._challenges.get(challenge_id)
+
+    def delete(self, challenge_id: str) -> bool:
+        if challenge_id in self._challenges:
+            del self._challenges[challenge_id]
+            return True
+        return False
+
+    def cleanup_expired(self) -> int:
+        now = datetime.now(timezone.utc)
+        expired = [
+            cid for cid, c in self._challenges.items()
+            if now > c.expires_at
+        ]
+        for cid in expired:
+            del self._challenges[cid]
+        return len(expired)
+
+
+class CacheChallengeStore(ChallengeStore):
+    """
+    Cache-backed challenge store using Redis or similar.
+
+    Challenges are stored with TTL matching their expiration time.
+    This ensures challenges survive server restarts.
+    """
+
+    def __init__(self, cache_client=None, key_prefix: str = "uatp:attestation:challenge:"):
+        """
+        Initialize cache-backed store.
+
+        Args:
+            cache_client: Redis client or compatible cache with get/set/delete/setex
+            key_prefix: Prefix for cache keys
+        """
+        self._cache = cache_client
+        self._key_prefix = key_prefix
+        if not cache_client:
+            logger.warning("No cache client provided, falling back to in-memory store")
+            self._fallback = InMemoryChallengeStore()
+        else:
+            self._fallback = None
+
+    def _key(self, challenge_id: str) -> str:
+        return f"{self._key_prefix}{challenge_id}"
+
+    def store(self, challenge: "AttestationChallenge") -> None:
+        if self._fallback:
+            return self._fallback.store(challenge)
+
+        import json
+        ttl_seconds = int((challenge.expires_at - datetime.now(timezone.utc)).total_seconds())
+        if ttl_seconds > 0:
+            data = json.dumps({
+                "challenge_id": challenge.challenge_id,
+                "nonce": challenge.nonce,
+                "attestation_type": challenge.attestation_type.value,
+                "device_id": challenge.device_id,
+                "created_at": challenge.created_at.isoformat(),
+                "expires_at": challenge.expires_at.isoformat(),
+            })
+            self._cache.setex(self._key(challenge.challenge_id), ttl_seconds, data)
+
+    def get(self, challenge_id: str) -> Optional["AttestationChallenge"]:
+        if self._fallback:
+            return self._fallback.get(challenge_id)
+
+        import json
+        data = self._cache.get(self._key(challenge_id))
+        if not data:
+            return None
+
+        try:
+            obj = json.loads(data)
+            return AttestationChallenge(
+                challenge_id=obj["challenge_id"],
+                nonce=obj["nonce"],
+                attestation_type=AttestationType(obj["attestation_type"]),
+                device_id=obj.get("device_id"),
+                created_at=datetime.fromisoformat(obj["created_at"]),
+                expires_at=datetime.fromisoformat(obj["expires_at"]),
+            )
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            logger.error(f"Failed to deserialize challenge: {e}")
+            return None
+
+    def delete(self, challenge_id: str) -> bool:
+        if self._fallback:
+            return self._fallback.delete(challenge_id)
+        return bool(self._cache.delete(self._key(challenge_id)))
+
+    def cleanup_expired(self) -> int:
+        # Redis TTL handles expiration automatically
+        if self._fallback:
+            return self._fallback.cleanup_expired()
+        return 0
 
 
 class AttestationType(str, Enum):
@@ -80,10 +217,25 @@ class HardwareAttestationService:
     attestations, and verifying attestation data across platforms.
     """
 
-    def __init__(self):
-        """Initialize the hardware attestation service."""
-        self.active_challenges: Dict[str, AttestationChallenge] = {}
+    def __init__(self, challenge_store: Optional[ChallengeStore] = None):
+        """
+        Initialize the hardware attestation service.
+
+        Args:
+            challenge_store: Storage backend for challenges. If None, uses
+                             in-memory store (not recommended for production).
+        """
+        self._challenge_store = challenge_store or InMemoryChallengeStore()
         self.challenge_timeout_seconds = 300  # 5 minutes
+
+    # Legacy property for backwards compatibility
+    @property
+    def active_challenges(self) -> Dict[str, AttestationChallenge]:
+        """Deprecated: Use challenge_store directly."""
+        logger.warning("active_challenges property is deprecated")
+        if isinstance(self._challenge_store, InMemoryChallengeStore):
+            return self._challenge_store._challenges
+        return {}
 
     def generate_challenge(
         self,
@@ -120,7 +272,7 @@ class HardwareAttestationService:
             device_id_hint=device_id_hint,
         )
 
-        self.active_challenges[challenge_id] = challenge
+        self._challenge_store.store(challenge)
 
         logger.info(
             f"Generated attestation challenge {challenge_id} for {attestation_type.value}"
@@ -148,7 +300,7 @@ class HardwareAttestationService:
             AttestationResult with verification status
         """
         # Validate challenge exists and hasn't expired
-        challenge = self.active_challenges.get(challenge_id)
+        challenge = self._challenge_store.get(challenge_id)
         if not challenge:
             return AttestationResult(
                 verified=False,
@@ -160,7 +312,7 @@ class HardwareAttestationService:
 
         now = datetime.now(timezone.utc)
         if now > challenge.expires_at:
-            del self.active_challenges[challenge_id]
+            self._challenge_store.delete(challenge_id)
             return AttestationResult(
                 verified=False,
                 attestation_type=challenge.attestation_type,
@@ -170,7 +322,7 @@ class HardwareAttestationService:
             )
 
         # Remove used challenge (single-use)
-        del self.active_challenges[challenge_id]
+        self._challenge_store.delete(challenge_id)
 
         # Dispatch to platform-specific verifier
         try:
