@@ -6,16 +6,15 @@ Production-grade rate limiting with Redis backend, sliding window algorithm,
 and configurable limits per user, IP, and endpoint.
 """
 
-import time
-import logging
-import hashlib
-from typing import Dict, Optional, Tuple, Any
-from datetime import datetime, timezone, timedelta
-from fastapi import Request, Response, HTTPException
-from starlette.middleware.base import BaseHTTPMiddleware
-import redis.asyncio as redis
 import json
+import logging
 import os
+import time
+from typing import Any, Dict, Optional, Tuple
+
+import redis.asyncio as redis
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +55,9 @@ class RateLimitConfig:
             "/models/register": 10,  # Model registration is expensive
             "/models/stats": 60,
             "/models/training-sessions": 20,
+            # SECURITY: Strict limits on artifact/license creation to prevent abuse
+            "/models/artifacts": 20,  # Artifact upload rate
+            "/models/license": 10,  # License attachment rate
             # UATP 7.2 Edge Sync endpoints
             "/edge/sync": 20,  # Sync operations
             "/edge/register": 5,  # Device registration
@@ -103,7 +105,9 @@ class SlidingWindowRateLimiter:
                 await self.redis_client.ping()
                 logger.info("Rate limiter Redis connection established")
             except Exception as e:
-                logger.warning(f"Redis not available for rate limiting (allowing all requests): {e}")
+                logger.warning(
+                    f"Redis not available for rate limiting (allowing all requests): {e}"
+                )
                 self.redis_client = None  # Mark as unavailable
 
     async def is_allowed(

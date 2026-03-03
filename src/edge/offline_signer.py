@@ -7,9 +7,8 @@ Provides offline signing capabilities for edge devices:
 - Signature queuing for batch verification
 """
 
-import hashlib
 import struct
-import time
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
@@ -358,12 +357,12 @@ class OfflineSigner:
     def _generate_signature_id(self, capsule_id: bytes, signature: bytes) -> str:
         """Generate unique signature ID.
 
-        Uses 128 bits (32 hex chars) to prevent collision attacks.
-        Previous 96-bit IDs were collision-prone.
+        Uses UUID4 for cryptographically secure random IDs.
+        UUID4 provides 122 bits of randomness, avoiding time-based collisions.
         """
-        combined = capsule_id + signature + str(time.time()).encode()
-        # SECURITY: Use 32 hex chars (128 bits) instead of 24 (96 bits)
-        return f"sig_{hashlib.sha256(combined).hexdigest()[:32]}"
+        # SECURITY: Use UUID4 instead of time-based hash for robust uniqueness
+        # UUID4 is cryptographically random and avoids timing-based collisions
+        return f"sig_{uuid.uuid4().hex}"
 
 
 class OfflineSignerRegistry:

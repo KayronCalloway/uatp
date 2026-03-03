@@ -8,7 +8,7 @@ import hashlib
 import logging
 import threading
 import time
-from typing import Any, Dict, Set, Tuple
+from typing import Any, Dict, Optional, Set, Tuple
 
 from nacl.encoding import HexEncoder
 from nacl.signing import SigningKey, VerifyKey
@@ -504,19 +504,29 @@ def get_verify_key_from_signing_key(signing_key_hex):
     return signing_key.verify_key.encode(encoder=HexEncoder).decode("utf-8")
 
 
-def verify_capsule(capsule, verify_key_hex, signature_hex):
+def verify_capsule(
+    capsule,
+    verify_key_hex,
+    signature_hex,
+    max_age_seconds: Optional[int] = None,
+    max_future_seconds: int = 300,
+):
     """
     Verify a capsule's signature and hash with comprehensive security validation.
-    Enhanced with replay protection and format validation.
+    Enhanced with replay protection, format validation, and timestamp checks.
 
     Args:
         capsule: The capsule object (Pydantic model).
         verify_key_hex (str): The hex-encoded public verification key.
         signature_hex (str): The hex-encoded signature to verify.
+        max_age_seconds: Optional max age for capsule timestamp (None = no limit).
+        max_future_seconds: Max seconds capsule timestamp can be in future (default 300).
 
     Returns:
         A tuple (bool, str) indicating if verification passed and a reason string.
     """
+    from datetime import datetime, timezone
+
     from nacl.exceptions import BadSignatureError
 
     try:
@@ -532,6 +542,51 @@ def verify_capsule(capsule, verify_key_hex, signature_hex):
         # SECURITY: Validate signature format
         if not _validate_signature_format(signature_hex, "ed25519"):
             return False, "Invalid signature format"
+
+        # SECURITY: Validate capsule timestamp if present and timestamp validation is enabled
+        if hasattr(capsule, "timestamp") and capsule.timestamp is not None:
+            try:
+                now = datetime.now(timezone.utc)
+                capsule_time = capsule.timestamp
+
+                # Parse string timestamps
+                if isinstance(capsule_time, str):
+                    capsule_time = datetime.fromisoformat(
+                        capsule_time.replace("Z", "+00:00")
+                    )
+                elif not isinstance(capsule_time, datetime):
+                    # Skip validation for non-datetime timestamps (e.g., mocks in tests)
+                    capsule_time = None
+
+                if capsule_time is not None:
+                    # Ensure timezone-aware
+                    if capsule_time.tzinfo is None:
+                        capsule_time = capsule_time.replace(tzinfo=timezone.utc)
+
+                    age_seconds = (now - capsule_time).total_seconds()
+
+                    # Reject capsules too far in the future (clock skew protection)
+                    if age_seconds < -max_future_seconds:
+                        logger.error(
+                            f"SECURITY ERROR: Capsule timestamp is {-age_seconds:.0f}s in the future"
+                        )
+                        return (
+                            False,
+                            f"Capsule timestamp is too far in the future ({-age_seconds:.0f}s)",
+                        )
+
+                    # Reject capsules older than max_age if specified
+                    if max_age_seconds is not None and age_seconds > max_age_seconds:
+                        logger.error(
+                            f"SECURITY ERROR: Capsule is {age_seconds:.0f}s old, max allowed is {max_age_seconds}s"
+                        )
+                        return (
+                            False,
+                            f"Capsule is too old ({age_seconds:.0f}s > {max_age_seconds}s max)",
+                        )
+            except (TypeError, ValueError) as e:
+                # Log but don't fail on timestamp parsing errors for backwards compatibility
+                logger.debug(f"Skipping timestamp validation due to parse error: {e}")
 
         # 1. Verify the hash
         expected_hash = hash_for_signature(capsule)

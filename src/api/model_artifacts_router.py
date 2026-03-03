@@ -282,7 +282,8 @@ async def attach_license(
     license_id = f"lic_{hashlib.sha256(f'{model_id}_{request.license_type}_{time.time()}'.encode()).hexdigest()[:32]}"
 
     # Parse dates
-    effective = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc)
+    effective = now
     if request.effective_date:
         effective = datetime.fromisoformat(
             request.effective_date.replace("Z", "+00:00")
@@ -293,6 +294,25 @@ async def attach_license(
         expiration = datetime.fromisoformat(
             request.expiration_date.replace("Z", "+00:00")
         )
+
+    # SECURITY: Validate date ordering to prevent invalid license states
+    if effective > now:
+        raise HTTPException(
+            status_code=400,
+            detail="effective_date cannot be in the future",
+        )
+
+    if expiration:
+        if expiration <= effective:
+            raise HTTPException(
+                status_code=400,
+                detail="expiration_date must be after effective_date",
+            )
+        if expiration <= now:
+            raise HTTPException(
+                status_code=400,
+                detail="expiration_date must be in the future for new licenses",
+            )
 
     logger.info(
         f"Attached license {license_id} to model {model_id}: {request.license_type}"

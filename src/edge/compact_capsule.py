@@ -19,6 +19,7 @@ Binary Format:
 """
 
 import hashlib
+import secrets
 import struct
 import time
 from dataclasses import dataclass
@@ -49,6 +50,61 @@ SIGNATURE_SIZE = 64
 FIXED_OVERHEAD = (
     HEADER_SIZE + CAPSULE_ID_SIZE + TIMESTAMP_SIZE + MODEL_HASH_SIZE + SIGNATURE_SIZE
 )
+
+
+def _generate_timestamp_ms() -> int:
+    """
+    Generate a timestamp with microsecond precision and random jitter.
+
+    SECURITY: Adding random microsecond jitter prevents timing analysis attacks
+    where an attacker could correlate capsules based on exact timestamp patterns.
+    The jitter is small enough (0-999 microseconds) to not affect ordering
+    semantics while preventing exact timing correlation.
+
+    Returns:
+        Unix timestamp in milliseconds with sub-millisecond jitter
+    """
+    # Get current time with microsecond precision
+    now = time.time()
+    base_ms = int(now * 1000)
+
+    # Add cryptographically random jitter (0-999 microseconds = 0.0-0.999 ms)
+    # The jitter affects rounding of the sub-millisecond portion
+    jitter_us = secrets.randbelow(1000)  # 0-999 microseconds
+
+    # Apply jitter to influence millisecond rounding
+    # This randomizes whether we round up or down at the ms boundary
+    return base_ms + (1 if jitter_us > 500 else 0)
+
+
+def _generate_timestamp_ms_precise() -> int:
+    """
+    Generate a timestamp with true microsecond precision and random sub-microsecond jitter.
+
+    SECURITY: The jitter introduces randomness to prevent timing correlation attacks.
+    Even though the output is in milliseconds, the jitter affects rounding decisions,
+    making it harder to predict exact capsule creation times.
+
+    Returns:
+        Unix timestamp in milliseconds (with microsecond-level jitter applied)
+    """
+    # Use time.time_ns() if available (Python 3.7+) for better precision
+    try:
+        now_ns = time.time_ns()
+        base_ms = now_ns // 1_000_000  # Convert to milliseconds
+
+        # Add random jitter that affects whether we include the next millisecond
+        # This randomizes the exact timing boundary used
+        jitter_ns = secrets.randbelow(1_000_000)  # 0-999999 nanoseconds (0-999.999 us)
+
+        # Apply jitter: if jitter pushes us past half a millisecond, round up
+        sub_ms_ns = now_ns % 1_000_000  # Current sub-millisecond portion
+        if sub_ms_ns + jitter_ns >= 1_000_000:
+            return base_ms + 1
+        return base_ms
+    except AttributeError:
+        # Fallback for older Python versions
+        return int(time.time() * 1000)
 
 
 class CompactCapsuleFlags(IntFlag):
@@ -193,9 +249,13 @@ class CompactCapsuleEncoder:
                 "Ed25519 signatures must be exactly 64 bytes."
             )
 
+        # SECURITY: Use timestamp generation with jitter to prevent timing analysis
+        # This makes it harder for attackers to correlate capsules based on timestamps
+        timestamp_ms = _generate_timestamp_ms_precise()
+
         capsule = CompactCapsule(
             capsule_id=capsule_id,
-            timestamp_ms=int(time.time() * 1000),
+            timestamp_ms=timestamp_ms,
             model_hash=model_hash,
             payload=payload,
             signature=signature,

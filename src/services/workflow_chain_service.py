@@ -10,6 +10,7 @@ This service handles:
 """
 
 import logging
+import re
 import threading
 import time
 import uuid
@@ -36,6 +37,53 @@ from src.utils.attribution_aggregator import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# SECURITY: Placeholder signature patterns that must be rejected when sealing
+PLACEHOLDER_SIGNATURES = {
+    "ed25519:" + "0" * 128,  # All-zero Ed25519 signature
+    "0" * 128,  # Raw all-zero signature
+    "ed25519:" + "f" * 128,  # All-f signature (another common placeholder)
+}
+
+
+def is_placeholder_signature(signature: Optional[str]) -> bool:
+    """
+    Check if a signature is a placeholder that should be rejected.
+
+    SECURITY: Placeholder signatures indicate the capsule was never properly
+    signed. Accepting such capsules would bypass cryptographic verification.
+
+    Args:
+        signature: The signature string to check
+
+    Returns:
+        True if the signature is a placeholder or invalid
+    """
+    if not signature:
+        return True
+
+    # Check against known placeholder patterns
+    if signature in PLACEHOLDER_SIGNATURES:
+        return True
+
+    # Check if it's a valid Ed25519 signature format
+    if signature.startswith("ed25519:"):
+        sig_hex = signature[8:]  # Remove "ed25519:" prefix
+        # Ed25519 signatures are 64 bytes = 128 hex characters
+        if len(sig_hex) != 128:
+            return True
+        # Check if it's all the same character (obvious placeholder)
+        if len(set(sig_hex)) == 1:
+            return True
+    else:
+        # Raw signature - should be 128 hex characters
+        if len(signature) != 128:
+            return True
+        if len(set(signature)) == 1:
+            return True
+
+    return False
 
 
 class StepRateLimiter:
@@ -104,7 +152,9 @@ class StepRateLimiter:
             ]
 
             current_count = len(self._user_steps[user_id])
-            oldest = min(self._user_steps[user_id]) if self._user_steps[user_id] else now
+            oldest = (
+                min(self._user_steps[user_id]) if self._user_steps[user_id] else now
+            )
 
             return {
                 "user_id": user_id,
@@ -112,7 +162,9 @@ class StepRateLimiter:
                 "max_steps_per_window": self.max_steps_per_window,
                 "remaining": max(0, self.max_steps_per_window - current_count),
                 "window_seconds": self.window_seconds,
-                "window_resets_in": int(oldest + self.window_seconds - now) if current_count > 0 else 0,
+                "window_resets_in": int(oldest + self.window_seconds - now)
+                if current_count > 0
+                else 0,
             }
 
 
@@ -127,6 +179,14 @@ class WorkflowChainService:
     MAX_STEPS_PER_WORKFLOW = 10000
     DEFAULT_MAX_STEPS = 1000
 
+    # SECURITY: Workflow name constraints
+    MIN_WORKFLOW_NAME_LENGTH = 1
+    MAX_WORKFLOW_NAME_LENGTH = 255
+    # Characters allowed in workflow names (alphanumeric, spaces, common punctuation)
+    WORKFLOW_NAME_PATTERN = re.compile(
+        r'^[\w\s\-_.,:;!?\'"()\[\]{}@#$%&*+=<>/\\|~`]+$', re.UNICODE
+    )
+
     def __init__(self, session_factory=None, max_steps: int = None):
         """
         Initialize the workflow chain service.
@@ -137,8 +197,7 @@ class WorkflowChainService:
         """
         self.session_factory = session_factory
         self.max_steps = min(
-            max_steps or self.DEFAULT_MAX_STEPS,
-            self.MAX_STEPS_PER_WORKFLOW
+            max_steps or self.DEFAULT_MAX_STEPS, self.MAX_STEPS_PER_WORKFLOW
         )
 
     async def create_workflow(
@@ -163,6 +222,32 @@ class WorkflowChainService:
             Dict with workflow creation result
         """
         try:
+            # SECURITY: Validate workflow_name length and characters
+            if not workflow_name:
+                return {
+                    "success": False,
+                    "error": "workflow_name is required",
+                }
+
+            workflow_name = workflow_name.strip()
+            if len(workflow_name) < self.MIN_WORKFLOW_NAME_LENGTH:
+                return {
+                    "success": False,
+                    "error": f"workflow_name too short (minimum {self.MIN_WORKFLOW_NAME_LENGTH} characters)",
+                }
+
+            if len(workflow_name) > self.MAX_WORKFLOW_NAME_LENGTH:
+                return {
+                    "success": False,
+                    "error": f"workflow_name too long (maximum {self.MAX_WORKFLOW_NAME_LENGTH} characters)",
+                }
+
+            if not self.WORKFLOW_NAME_PATTERN.match(workflow_name):
+                return {
+                    "success": False,
+                    "error": "workflow_name contains invalid characters",
+                }
+
             # Validate workflow_type
             valid_types = {"linear", "branching", "iterative", "parallel"}
             if workflow_type not in valid_types:
@@ -259,7 +344,6 @@ class WorkflowChainService:
             # SECURITY: Use SELECT FOR UPDATE immediately to prevent TOCTOU race conditions
             # The lock must be acquired BEFORE any status/ownership checks to ensure
             # consistent state throughout the operation
-            from sqlalchemy import update
 
             locked_result = await session.execute(
                 select(WorkflowCapsuleModel)
@@ -572,6 +656,31 @@ class WorkflowChainService:
 
             # Get all steps
             steps = await self.get_workflow_steps(workflow_capsule_id, session)
+
+            # SECURITY: Verify all steps have valid (non-placeholder) signatures
+            # before sealing the workflow
+            steps_with_placeholder_sigs = []
+            for step in steps:
+                payload = step.get("payload", {})
+                # Check if step has verification data with signature
+                verification = payload.get("verification", {})
+                if isinstance(verification, dict):
+                    sig = verification.get("signature")
+                    if is_placeholder_signature(sig):
+                        steps_with_placeholder_sigs.append(step.get("step_index", "?"))
+
+            if steps_with_placeholder_sigs:
+                logger.warning(
+                    f"Workflow {workflow_capsule_id} has steps with placeholder signatures: "
+                    f"{steps_with_placeholder_sigs}"
+                )
+                return {
+                    "success": False,
+                    "error": f"Cannot seal workflow: steps {steps_with_placeholder_sigs} have "
+                    f"placeholder signatures. All steps must be properly signed before "
+                    f"workflow completion.",
+                    "steps_requiring_signature": steps_with_placeholder_sigs,
+                }
 
             # Build DAG definition
             step_data_for_dag = [

@@ -41,6 +41,17 @@ class ChallengeStore(ABC):
         pass
 
     @abstractmethod
+    def get_and_delete(self, challenge_id: str) -> Optional["AttestationChallenge"]:
+        """
+        Atomically get and delete a challenge.
+
+        SECURITY: This is the preferred method for challenge consumption
+        as it prevents race conditions where the same challenge could be
+        used by multiple concurrent requests.
+        """
+        pass
+
+    @abstractmethod
     def delete(self, challenge_id: str) -> bool:
         """Delete a challenge. Returns True if existed."""
         pass
@@ -55,33 +66,52 @@ class InMemoryChallengeStore(ChallengeStore):
     """In-memory challenge store for development/testing only."""
 
     def __init__(self):
+        import threading
+
         self._challenges: Dict[str, "AttestationChallenge"] = {}
+        # SECURITY: Lock ensures atomic get-and-delete operations to prevent
+        # race conditions where the same challenge could be used twice
+        self._lock = threading.Lock()
         logger.warning(
             "Using in-memory challenge store - data will be lost on restart. "
             "Use RedisChallengeStore or DatabaseChallengeStore in production."
         )
 
     def store(self, challenge: "AttestationChallenge") -> None:
-        self._challenges[challenge.challenge_id] = challenge
+        with self._lock:
+            self._challenges[challenge.challenge_id] = challenge
 
     def get(self, challenge_id: str) -> Optional["AttestationChallenge"]:
-        return self._challenges.get(challenge_id)
+        with self._lock:
+            return self._challenges.get(challenge_id)
+
+    def get_and_delete(self, challenge_id: str) -> Optional["AttestationChallenge"]:
+        """
+        Atomically get and delete a challenge.
+
+        SECURITY: This prevents race conditions where the same challenge
+        could be retrieved and used by multiple concurrent requests.
+        """
+        with self._lock:
+            challenge = self._challenges.get(challenge_id)
+            if challenge:
+                del self._challenges[challenge_id]
+            return challenge
 
     def delete(self, challenge_id: str) -> bool:
-        if challenge_id in self._challenges:
-            del self._challenges[challenge_id]
-            return True
-        return False
+        with self._lock:
+            if challenge_id in self._challenges:
+                del self._challenges[challenge_id]
+                return True
+            return False
 
     def cleanup_expired(self) -> int:
         now = datetime.now(timezone.utc)
-        expired = [
-            cid for cid, c in self._challenges.items()
-            if now > c.expires_at
-        ]
-        for cid in expired:
-            del self._challenges[cid]
-        return len(expired)
+        with self._lock:
+            expired = [cid for cid, c in self._challenges.items() if now > c.expires_at]
+            for cid in expired:
+                del self._challenges[cid]
+            return len(expired)
 
 
 class CacheChallengeStore(ChallengeStore):
@@ -92,7 +122,9 @@ class CacheChallengeStore(ChallengeStore):
     This ensures challenges survive server restarts.
     """
 
-    def __init__(self, cache_client=None, key_prefix: str = "uatp:attestation:challenge:"):
+    def __init__(
+        self, cache_client=None, key_prefix: str = "uatp:attestation:challenge:"
+    ):
         """
         Initialize cache-backed store.
 
@@ -116,16 +148,21 @@ class CacheChallengeStore(ChallengeStore):
             return self._fallback.store(challenge)
 
         import json
-        ttl_seconds = int((challenge.expires_at - datetime.now(timezone.utc)).total_seconds())
+
+        ttl_seconds = int(
+            (challenge.expires_at - datetime.now(timezone.utc)).total_seconds()
+        )
         if ttl_seconds > 0:
-            data = json.dumps({
-                "challenge_id": challenge.challenge_id,
-                "nonce": challenge.nonce,
-                "attestation_type": challenge.attestation_type.value,
-                "device_id": challenge.device_id,
-                "created_at": challenge.created_at.isoformat(),
-                "expires_at": challenge.expires_at.isoformat(),
-            })
+            data = json.dumps(
+                {
+                    "challenge_id": challenge.challenge_id,
+                    "nonce": challenge.nonce,
+                    "attestation_type": challenge.attestation_type.value,
+                    "device_id": challenge.device_id,
+                    "created_at": challenge.created_at.isoformat(),
+                    "expires_at": challenge.expires_at.isoformat(),
+                }
+            )
             self._cache.setex(self._key(challenge.challenge_id), ttl_seconds, data)
 
     def get(self, challenge_id: str) -> Optional["AttestationChallenge"]:
@@ -133,21 +170,103 @@ class CacheChallengeStore(ChallengeStore):
             return self._fallback.get(challenge_id)
 
         import json
+
         data = self._cache.get(self._key(challenge_id))
         if not data:
             return None
 
         try:
             obj = json.loads(data)
+
+            # SECURITY: Validate required fields exist before accessing
+            required_fields = [
+                "challenge_id",
+                "nonce",
+                "attestation_type",
+                "created_at",
+                "expires_at",
+            ]
+            missing = [f for f in required_fields if f not in obj]
+            if missing:
+                logger.error(f"Challenge deserialization missing fields: {missing}")
+                return None
+
+            # SECURITY: Validate field types
+            if not isinstance(obj["challenge_id"], str) or not isinstance(
+                obj["nonce"], str
+            ):
+                logger.error("Challenge deserialization: invalid field types")
+                return None
+
             return AttestationChallenge(
                 challenge_id=obj["challenge_id"],
                 nonce=obj["nonce"],
                 attestation_type=AttestationType(obj["attestation_type"]),
-                device_id=obj.get("device_id"),
+                device_id_hint=obj.get("device_id"),
                 created_at=datetime.fromisoformat(obj["created_at"]),
                 expires_at=datetime.fromisoformat(obj["expires_at"]),
             )
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
+        except (json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
+            logger.error(f"Failed to deserialize challenge: {e}")
+            return None
+
+    def get_and_delete(self, challenge_id: str) -> Optional["AttestationChallenge"]:
+        """
+        Atomically get and delete a challenge using Redis GETDEL.
+
+        SECURITY: Redis GETDEL is atomic, preventing race conditions where
+        the same challenge could be consumed by multiple concurrent requests.
+        """
+        if self._fallback:
+            return self._fallback.get_and_delete(challenge_id)
+
+        import json
+
+        key = self._key(challenge_id)
+
+        # Use GETDEL for atomic get-and-delete (Redis 6.2+)
+        # Fall back to GET + DELETE for older Redis versions
+        try:
+            data = self._cache.getdel(key)
+        except AttributeError:
+            # Redis client doesn't support GETDEL, use non-atomic fallback
+            data = self._cache.get(key)
+            if data:
+                self._cache.delete(key)
+
+        if not data:
+            return None
+
+        try:
+            obj = json.loads(data)
+
+            required_fields = [
+                "challenge_id",
+                "nonce",
+                "attestation_type",
+                "created_at",
+                "expires_at",
+            ]
+            missing = [f for f in required_fields if f not in obj]
+            if missing:
+                logger.error(f"Challenge deserialization missing fields: {missing}")
+                return None
+
+            if not isinstance(obj["challenge_id"], str) or not isinstance(
+                obj["nonce"], str
+            ):
+                logger.error("Challenge deserialization: invalid field types")
+                return None
+
+            return AttestationChallenge(
+                challenge_id=obj["challenge_id"],
+                nonce=obj["nonce"],
+                attestation_type=AttestationType(obj["attestation_type"]),
+                device_id_hint=obj.get("device_id"),
+                created_at=datetime.fromisoformat(obj["created_at"]),
+                expires_at=datetime.fromisoformat(obj["expires_at"]),
+            )
+        except (json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
             logger.error(f"Failed to deserialize challenge: {e}")
             return None
 
@@ -299,8 +418,9 @@ class HardwareAttestationService:
         Returns:
             AttestationResult with verification status
         """
-        # Validate challenge exists and hasn't expired
-        challenge = self._challenge_store.get(challenge_id)
+        # SECURITY: Use atomic get_and_delete to prevent race conditions
+        # where the same challenge could be consumed by multiple requests
+        challenge = self._challenge_store.get_and_delete(challenge_id)
         if not challenge:
             return AttestationResult(
                 verified=False,
@@ -312,7 +432,7 @@ class HardwareAttestationService:
 
         now = datetime.now(timezone.utc)
         if now > challenge.expires_at:
-            self._challenge_store.delete(challenge_id)
+            # Challenge already deleted by get_and_delete, just return expired
             return AttestationResult(
                 verified=False,
                 attestation_type=challenge.attestation_type,
@@ -321,8 +441,7 @@ class HardwareAttestationService:
                 error="Challenge expired",
             )
 
-        # Remove used challenge (single-use)
-        self._challenge_store.delete(challenge_id)
+        # Challenge already deleted by get_and_delete (single-use)
 
         # Dispatch to platform-specific verifier
         try:
@@ -551,7 +670,39 @@ class HardwareAttestationService:
         Verify simulated attestation for testing.
 
         This always succeeds if the attestation data contains the nonce.
+
+        WARNING: Simulated attestation provides NO security guarantees.
+        It should NEVER be used in production environments.
         """
+        import os
+
+        # SECURITY: Emit prominent warning about simulated attestation
+        # Check environment to determine severity
+        env = os.getenv("ENVIRONMENT", "development").lower()
+        is_production = env in ("production", "prod", "live")
+
+        if is_production:
+            # CRITICAL: In production, simulated attestation is a security risk
+            logger.critical(
+                "SECURITY ALERT: Simulated attestation used in PRODUCTION environment! "
+                "This provides NO security guarantees and should be disabled. "
+                "Configure a real attestation type (apple_secure_enclave, android_tee, "
+                "nvidia_cc, or intel_sgx) for production use."
+            )
+            # In production, we could optionally reject simulated attestation entirely:
+            # return AttestationResult(
+            #     verified=False,
+            #     attestation_type=AttestationType.SIMULATED,
+            #     device_id_hash="",
+            #     timestamp=datetime.now(timezone.utc),
+            #     error="Simulated attestation is disabled in production",
+            # )
+        else:
+            logger.warning(
+                "Using SIMULATED attestation - this provides NO security guarantees. "
+                "Ensure this is disabled before deploying to production."
+            )
+
         device_id_hash = hashlib.sha256(attestation_data).hexdigest()
 
         # Check if nonce is in attestation data
@@ -563,7 +714,8 @@ class HardwareAttestationService:
             attestation_type=AttestationType.SIMULATED,
             device_id_hash=device_id_hash,
             timestamp=datetime.now(timezone.utc),
-            measurements=measurements or {"simulated": "true"},
+            measurements=measurements
+            or {"simulated": "true", "warning": "NO_SECURITY_GUARANTEE"},
             certificate_chain=certificate_chain,
             attestation_data=base64.b64encode(attestation_data).decode(),
         )

@@ -221,7 +221,12 @@ async def get_model(
     Get model details by ID.
 
     Returns full model metadata including provenance information.
-    Public endpoint - model metadata is not private.
+
+    SECURITY NOTE: This endpoint is intentionally public (no authentication required).
+    Model metadata including provenance information is designed to be publicly
+    accessible for transparency and reproducibility. This is consistent with
+    UATP 7.2 design principles where model identity and lineage are public,
+    while access to model weights/artifacts may be restricted separately.
     """
     model = await model_registry_service.get_model(model_id, session)
 

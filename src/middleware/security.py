@@ -6,17 +6,17 @@ Production-grade security middleware including CORS, security headers,
 input validation, and attack prevention.
 """
 
-import re
 import logging
+import os
+import re
 import time
-import hashlib
-from typing import List, Dict, Optional, Set, Any
+from typing import Any, Dict, List, Optional, Set
 from urllib.parse import urlparse
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware as StarletteCORSMiddleware
 from starlette.responses import JSONResponse
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -434,6 +434,209 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             logger.error(f"File upload validation error: {e}")
             return {"valid": False, "error": "Invalid file upload"}
+
+
+class CSRFProtectionMiddleware(BaseHTTPMiddleware):
+    """
+    CSRF Protection Middleware.
+
+    Provides Cross-Site Request Forgery protection using:
+    - Double Submit Cookie pattern
+    - Origin/Referer validation
+    - SameSite cookie attribute
+
+    SECURITY NOTE: This middleware should be used in conjunction with
+    authentication to protect state-changing operations.
+    """
+
+    def __init__(
+        self,
+        app,
+        cookie_name: str = "csrf_token",
+        header_name: str = "X-CSRF-Token",
+        safe_methods: Optional[Set[str]] = None,
+        exempt_paths: Optional[Set[str]] = None,
+        allowed_origins: Optional[List[str]] = None,
+    ):
+        super().__init__(app)
+        self.cookie_name = cookie_name
+        self.header_name = header_name
+        self.safe_methods = safe_methods or {"GET", "HEAD", "OPTIONS", "TRACE"}
+        self.exempt_paths = exempt_paths or {
+            "/health",
+            "/metrics",
+            "/docs",
+            "/openapi.json",
+            "/auth/login",  # Login needs to work without CSRF token initially
+            "/auth/register",
+        }
+        self.allowed_origins = set(allowed_origins) if allowed_origins else None
+        self._token_length = 32  # 256 bits
+
+        logger.info("CSRF protection middleware initialized")
+
+    async def dispatch(self, request: Request, call_next):
+        """Apply CSRF protection."""
+        # Skip CSRF check for safe methods
+        if request.method in self.safe_methods:
+            response = await call_next(request)
+            # Ensure CSRF cookie is set for subsequent requests
+            self._ensure_csrf_cookie(request, response)
+            return response
+
+        # Skip CSRF check for exempt paths
+        if request.url.path in self.exempt_paths:
+            response = await call_next(request)
+            self._ensure_csrf_cookie(request, response)
+            return response
+
+        # Skip CSRF check for API requests with Authorization header
+        # (API clients use tokens, not cookies, so CSRF doesn't apply)
+        if request.headers.get("Authorization"):
+            return await call_next(request)
+
+        # Validate Origin/Referer header
+        origin_valid = self._validate_origin(request)
+        if not origin_valid:
+            logger.warning(
+                f"CSRF: Invalid origin/referer for {request.method} {request.url.path}"
+            )
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "error": "CSRF validation failed",
+                    "message": "Invalid origin",
+                    "code": "CSRF_ORIGIN_MISMATCH",
+                },
+            )
+
+        # Validate CSRF token (Double Submit Cookie pattern)
+        token_valid = self._validate_csrf_token(request)
+        if not token_valid:
+            logger.warning(
+                f"CSRF: Token validation failed for {request.method} {request.url.path}"
+            )
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "error": "CSRF validation failed",
+                    "message": "Invalid or missing CSRF token",
+                    "code": "CSRF_TOKEN_INVALID",
+                },
+            )
+
+        response = await call_next(request)
+        return response
+
+    def _validate_origin(self, request: Request) -> bool:
+        """
+        Validate Origin or Referer header.
+
+        SECURITY: This prevents cross-origin form submissions.
+        """
+        origin = request.headers.get("Origin")
+        referer = request.headers.get("Referer")
+
+        # Get the request host
+        request_host = request.url.netloc
+
+        # Check Origin header first (more reliable)
+        if origin:
+            try:
+                origin_parsed = urlparse(origin)
+                origin_host = origin_parsed.netloc
+
+                # If allowed_origins is configured, check against it
+                if self.allowed_origins:
+                    return origin_host in self.allowed_origins
+
+                # Otherwise, require same origin
+                return origin_host == request_host
+            except Exception:
+                return False
+
+        # Fall back to Referer header
+        if referer:
+            try:
+                referer_parsed = urlparse(referer)
+                referer_host = referer_parsed.netloc
+
+                if self.allowed_origins:
+                    return referer_host in self.allowed_origins
+
+                return referer_host == request_host
+            except Exception:
+                return False
+
+        # No Origin or Referer header - likely a direct API call
+        # Reject for form-based requests (unless CORS preflight passed)
+        content_type = request.headers.get("Content-Type", "")
+        if "application/x-www-form-urlencoded" in content_type:
+            return False
+        if "multipart/form-data" in content_type:
+            return False
+
+        # Allow JSON API requests without Origin (they have other protections)
+        return True
+
+    def _validate_csrf_token(self, request: Request) -> bool:
+        """
+        Validate CSRF token using Double Submit Cookie pattern.
+
+        SECURITY: The token in the header/form must match the token in the cookie.
+        Since the attacker cannot read the cookie value due to same-origin policy,
+        they cannot include the correct token in the header.
+        """
+        # Get token from cookie
+        cookie_token = request.cookies.get(self.cookie_name)
+        if not cookie_token:
+            # No cookie = no session started yet, might be first request
+            # Strict mode: reject. Lenient mode: allow with warning
+            return False
+
+        # Get token from header
+        header_token = request.headers.get(self.header_name)
+
+        # Also check form data for non-AJAX submissions
+        # (This would require reading the body, which is complex in middleware)
+        # For now, require the header for state-changing requests
+
+        if not header_token:
+            return False
+
+        # SECURITY: Use constant-time comparison to prevent timing attacks
+        import hmac
+
+        return hmac.compare_digest(cookie_token, header_token)
+
+    def _ensure_csrf_cookie(self, request: Request, response: Response) -> None:
+        """Ensure CSRF cookie is set in response."""
+        import secrets
+
+        # Check if cookie already exists
+        existing_token = request.cookies.get(self.cookie_name)
+        if existing_token:
+            return
+
+        # Generate new token
+        token = secrets.token_hex(self._token_length)
+
+        # Set cookie with security attributes
+        response.set_cookie(
+            key=self.cookie_name,
+            value=token,
+            httponly=False,  # Must be readable by JavaScript
+            secure=request.url.scheme == "https",
+            samesite="strict",  # Prevent cross-site requests
+            max_age=86400,  # 24 hours
+            path="/",
+        )
+
+    def generate_token(self) -> str:
+        """Generate a new CSRF token for embedding in forms."""
+        import secrets
+
+        return secrets.token_hex(self._token_length)
 
 
 class IPWhitelistMiddleware(BaseHTTPMiddleware):
