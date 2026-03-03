@@ -17,7 +17,22 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, BinaryIO, Dict, Optional, Union
 
+# Try to import aiofiles for async I/O
+try:
+    import aiofiles
+    import aiofiles.os
+
+    AIOFILES_AVAILABLE = True
+except ImportError:
+    AIOFILES_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
+
+if not AIOFILES_AVAILABLE:
+    logger.warning(
+        "aiofiles not available - using blocking file I/O. "
+        "Install aiofiles for better async performance: pip install aiofiles"
+    )
 
 
 class StorageBackend(str, Enum):
@@ -164,7 +179,13 @@ class LocalStorageProvider(StorageProvider):
                 f"Content hash mismatch: expected {content_hash}, got {actual_hash}"
             )
 
-        path.write_bytes(content)
+        # Use async file I/O if available
+        if AIOFILES_AVAILABLE:
+            async with aiofiles.open(path, "wb") as f:
+                await f.write(content)
+        else:
+            path.write_bytes(content)
+
         size_bytes = len(content)
 
         # Write metadata if provided
@@ -172,7 +193,11 @@ class LocalStorageProvider(StorageProvider):
             import json
 
             meta_path = Path(str(path) + self._metadata_suffix)
-            meta_path.write_text(json.dumps(metadata))
+            if AIOFILES_AVAILABLE:
+                async with aiofiles.open(meta_path, "w") as f:
+                    await f.write(json.dumps(metadata))
+            else:
+                meta_path.write_text(json.dumps(metadata))
 
         logger.info(f"Stored artifact {content_hash[:16]}... ({size_bytes} bytes)")
 
@@ -198,7 +223,13 @@ class LocalStorageProvider(StorageProvider):
                 error=f"Content not found: {content_hash}",
             )
 
-        data = path.read_bytes()
+        # Use async file I/O if available
+        if AIOFILES_AVAILABLE:
+            async with aiofiles.open(path, "rb") as f:
+                data = await f.read()
+        else:
+            data = path.read_bytes()
+
         size_bytes = len(data)
 
         # Verify integrity
@@ -228,9 +259,15 @@ class LocalStorageProvider(StorageProvider):
         meta_path = Path(str(path) + self._metadata_suffix)
 
         if path.exists():
-            path.unlink()
-            if meta_path.exists():
-                meta_path.unlink()
+            # Use async file operations if available
+            if AIOFILES_AVAILABLE:
+                await aiofiles.os.remove(path)
+                if meta_path.exists():
+                    await aiofiles.os.remove(meta_path)
+            else:
+                path.unlink()
+                if meta_path.exists():
+                    meta_path.unlink()
             logger.info(f"Deleted artifact {content_hash[:16]}...")
             return True
         return False
@@ -241,7 +278,11 @@ class LocalStorageProvider(StorageProvider):
 
         meta_path = Path(str(self._get_path(content_hash)) + self._metadata_suffix)
         if meta_path.exists():
-            return json.loads(meta_path.read_text())
+            if AIOFILES_AVAILABLE:
+                async with aiofiles.open(meta_path, "r") as f:
+                    return json.loads(await f.read())
+            else:
+                return json.loads(meta_path.read_text())
         return None
 
 

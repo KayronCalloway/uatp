@@ -6,9 +6,9 @@ Enhanced with comprehensive security validation and replay protection.
 
 import hashlib
 import logging
-import time
 import threading
-from typing import Dict, Set, Tuple, Optional
+import time
+from typing import Any, Dict, Set, Tuple
 
 from nacl.encoding import HexEncoder
 from nacl.signing import SigningKey, VerifyKey
@@ -22,9 +22,14 @@ _signature_context_cache: Dict[
 _signature_cache_lock = threading.RLock()
 _max_cache_size = 10000
 _cache_cleanup_interval = 3600  # 1 hour
+_cache_entry_ttl = 86400  # 24 hours - entries expire after this time
 
-# Legacy cache for compatibility - now used for re-verification allowance
-_signature_cache: Set[str] = set()
+# LRU cache with timestamps: fingerprint -> (timestamp, access_count)
+# Using OrderedDict for LRU semantics
+from collections import OrderedDict
+
+_signature_cache: OrderedDict[str, Tuple[float, int]] = OrderedDict()
+_last_cache_cleanup = time.time()
 
 
 def _generate_signature_fingerprint(
@@ -35,33 +40,90 @@ def _generate_signature_fingerprint(
     return hashlib.sha256(combined.encode()).hexdigest()
 
 
+def _evict_expired_cache_entries() -> int:
+    """
+    Evict expired cache entries based on TTL.
+    Called periodically during cache operations.
+
+    Returns:
+        Number of entries evicted
+    """
+    global _last_cache_cleanup
+
+    now = time.time()
+
+    # Only run cleanup every cleanup_interval seconds
+    if now - _last_cache_cleanup < _cache_cleanup_interval:
+        return 0
+
+    _last_cache_cleanup = now
+    evicted = 0
+
+    # Remove entries older than TTL
+    expired_keys = []
+    for fingerprint, (timestamp, _) in _signature_cache.items():
+        if now - timestamp > _cache_entry_ttl:
+            expired_keys.append(fingerprint)
+
+    for key in expired_keys:
+        del _signature_cache[key]
+        evicted += 1
+
+    if evicted > 0:
+        logger.debug(f"Evicted {evicted} expired entries from replay cache")
+
+    return evicted
+
+
 def _check_replay_protection(hash_str: str, signature: str, public_key: str) -> bool:
     """
     Check if this signature has been used with DIFFERENT content (replay attack protection).
     Allows re-verification of the same hash+signature+key combination.
+
+    Uses LRU eviction with time-based expiration:
+    - Entries expire after _cache_entry_ttl seconds (24 hours default)
+    - LRU eviction when cache exceeds _max_cache_size
+    - Recently accessed entries are moved to end (most recent)
 
     Returns:
         True if signature is valid for this content
         False if signature is being replayed for different content
     """
     fingerprint = _generate_signature_fingerprint(hash_str, signature, public_key)
+    now = time.time()
 
     with _signature_cache_lock:
+        # Periodic cleanup of expired entries
+        _evict_expired_cache_entries()
+
         if fingerprint in _signature_cache:
-            # Same hash+signature+key = legitimate re-verification, allow it
-            logger.debug(
-                f"Re-verification of known signature {fingerprint[:16]}... (allowed)"
-            )
-            return True
+            # Check if entry has expired
+            timestamp, access_count = _signature_cache[fingerprint]
+            if now - timestamp > _cache_entry_ttl:
+                # Entry expired, remove it and treat as new
+                del _signature_cache[fingerprint]
+                logger.debug(f"Expired cache entry for {fingerprint[:16]}...")
+            else:
+                # Same hash+signature+key = legitimate re-verification, allow it
+                # Move to end (most recently used) for LRU semantics
+                _signature_cache.move_to_end(fingerprint)
+                _signature_cache[fingerprint] = (timestamp, access_count + 1)
+                logger.debug(
+                    f"Re-verification of known signature {fingerprint[:16]}... (allowed)"
+                )
+                return True
 
         # Add to cache for future re-verification allowance
-        _signature_cache.add(fingerprint)
+        _signature_cache[fingerprint] = (now, 1)
 
-        # Cleanup cache if too large
-        if len(_signature_cache) > _max_cache_size:
-            # Remove oldest entries (simplified - in production use LRU cache)
-            excess = len(_signature_cache) - (_max_cache_size // 2)
-            _signature_cache.difference_update(list(_signature_cache)[:excess])
+        # LRU eviction if cache is too large
+        while len(_signature_cache) > _max_cache_size:
+            # Remove oldest (first) entry - LRU eviction
+            oldest_key, (oldest_time, _) = next(iter(_signature_cache.items()))
+            del _signature_cache[oldest_key]
+            logger.debug(
+                f"LRU evicted cache entry {oldest_key[:16]}... (age: {now - oldest_time:.0f}s)"
+            )
 
         return True
 
@@ -241,21 +303,24 @@ def generate_post_quantum_keypair():
     """
     Generate a post-quantum cryptography keypair using Dilithium.
     Returns tuple of (private_key_hex, public_key_hex)
+
+    Raises:
+        RuntimeError: If post-quantum cryptography libraries are not available.
     """
     from src.crypto.post_quantum import pq_crypto
 
-    try:
-        # Use real post-quantum crypto implementation
-        dilithium_keypair = pq_crypto.generate_dilithium_keypair()
-        private_key = dilithium_keypair.private_key.hex()
-        public_key = dilithium_keypair.public_key.hex()
-        return private_key, public_key
-    except Exception:
-        # Fallback - generate Ed25519 keys with PQ prefix for compatibility
-        signing_key = SigningKey.generate()
-        private_key = signing_key.encode(encoder=HexEncoder).decode("utf-8")
-        public_key = signing_key.verify_key.encode(encoder=HexEncoder).decode("utf-8")
-        return private_key, public_key
+    if not pq_crypto.dilithium_available:
+        raise RuntimeError(
+            "SECURITY ERROR: Post-quantum cryptography is not available. "
+            "Cannot generate fake Dilithium keypairs. Install liboqs-python or pqcrypto "
+            "library for real post-quantum security."
+        )
+
+    # Use real post-quantum crypto implementation
+    dilithium_keypair = pq_crypto.generate_dilithium_keypair()
+    private_key = dilithium_keypair.private_key.hex()
+    public_key = dilithium_keypair.public_key.hex()
+    return private_key, public_key
 
 
 def sign_post_quantum(hash_str, pq_private_key_hex):
@@ -272,6 +337,7 @@ def sign_post_quantum(hash_str, pq_private_key_hex):
         RuntimeError: If post-quantum cryptography is not available.
     """
     import logging
+
     from src.crypto.post_quantum import pq_crypto
 
     logger = logging.getLogger(__name__)
@@ -332,6 +398,7 @@ def verify_post_quantum(hash_str, pq_public_key_hex, pq_signature_hex):
         RuntimeError: If post-quantum cryptography is not available.
     """
     import logging
+
     from src.crypto.post_quantum import pq_crypto
 
     logger = logging.getLogger(__name__)
@@ -533,10 +600,33 @@ def get_verification_cache_status() -> Dict[str, int]:
         }
 
 
-def get_signature_cache_stats() -> Dict[str, int]:
-    """Get statistics about the signature cache."""
+def get_signature_cache_stats() -> Dict[str, Any]:
+    """Get statistics about the signature cache including TTL and LRU info."""
     with _signature_cache_lock:
-        return {"cache_size": len(_signature_cache), "max_cache_size": _max_cache_size}
+        now = time.time()
+        stats = {
+            "cache_size": len(_signature_cache),
+            "max_cache_size": _max_cache_size,
+            "entry_ttl_seconds": _cache_entry_ttl,
+            "cleanup_interval_seconds": _cache_cleanup_interval,
+        }
+
+        if _signature_cache:
+            # Get oldest and newest entry ages
+            oldest_key, (oldest_time, _) = next(iter(_signature_cache.items()))
+            newest_key, (newest_time, _) = next(reversed(_signature_cache.items()))
+            stats["oldest_entry_age_seconds"] = int(now - oldest_time)
+            stats["newest_entry_age_seconds"] = int(now - newest_time)
+
+            # Count expired entries (not yet evicted)
+            expired_count = sum(
+                1
+                for _, (ts, _) in _signature_cache.items()
+                if now - ts > _cache_entry_ttl
+            )
+            stats["expired_pending_eviction"] = expired_count
+
+        return stats
 
 
 def enhanced_verify_hybrid_signature(

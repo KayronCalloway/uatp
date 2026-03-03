@@ -324,7 +324,8 @@ class ConstitutionalFramework:
         self, proposal_id: str, proposal: Dict[str, Any]
     ) -> str:
         """Initiate judicial review process for constitutional proposal."""
-        review_id = f"judicial_review_{hashlib.sha256(f'{proposal_id}_{datetime.now().isoformat()}'.encode()).hexdigest()[:12]}"
+        # SECURITY: Use 32 hex chars (128 bits) to prevent collision attacks
+        review_id = f"judicial_review_{hashlib.sha256(f'{proposal_id}_{datetime.now().isoformat()}'.encode()).hexdigest()[:32]}"
 
         self.judicial_reviews[review_id] = {
             "review_id": review_id,
@@ -463,9 +464,10 @@ class ConstitutionalFramework:
     ):
         """Record constitutional violation for monitoring."""
         violation = {
+            # SECURITY: Use 32 hex chars (128 bits) to prevent collision attacks
             "violation_id": hashlib.sha256(
                 f"{proposal.get('proposal_id', 'unknown')}_{datetime.now().isoformat()}".encode()
-            ).hexdigest()[:12],
+            ).hexdigest()[:32],
             "proposal_id": proposal.get("proposal_id"),
             "proposal_title": proposal.get("title"),
             "violated_principles": violated_principles,
