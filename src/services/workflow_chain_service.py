@@ -10,9 +10,12 @@ This service handles:
 """
 
 import logging
+import threading
+import time
 import uuid
+from collections import defaultdict
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,6 +36,88 @@ from src.utils.attribution_aggregator import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class StepRateLimiter:
+    """
+    Per-user rate limiter for workflow step creation.
+
+    Prevents DoS attacks by limiting how many steps a user can create
+    within a time window.
+    """
+
+    def __init__(
+        self,
+        max_steps_per_window: int = 100,
+        window_seconds: int = 3600,  # 1 hour
+    ):
+        """
+        Initialize the rate limiter.
+
+        Args:
+            max_steps_per_window: Maximum steps allowed per user per window
+            window_seconds: Time window in seconds
+        """
+        self.max_steps_per_window = max_steps_per_window
+        self.window_seconds = window_seconds
+        self._user_steps: Dict[str, List[float]] = defaultdict(list)
+        self._lock = threading.RLock()
+
+    def check_and_record(self, user_id: str) -> Tuple[bool, int]:
+        """
+        Check if user can create a step and record the attempt.
+
+        Args:
+            user_id: User identifier
+
+        Returns:
+            Tuple of (allowed: bool, remaining: int)
+        """
+        now = time.time()
+        cutoff = now - self.window_seconds
+
+        with self._lock:
+            # Remove expired entries
+            self._user_steps[user_id] = [
+                t for t in self._user_steps[user_id] if t > cutoff
+            ]
+
+            current_count = len(self._user_steps[user_id])
+            remaining = max(0, self.max_steps_per_window - current_count)
+
+            if current_count >= self.max_steps_per_window:
+                return False, 0
+
+            # Record this step
+            self._user_steps[user_id].append(now)
+            return True, remaining - 1
+
+    def get_user_stats(self, user_id: str) -> Dict[str, Any]:
+        """Get rate limit stats for a user."""
+        now = time.time()
+        cutoff = now - self.window_seconds
+
+        with self._lock:
+            # Clean up expired entries
+            self._user_steps[user_id] = [
+                t for t in self._user_steps[user_id] if t > cutoff
+            ]
+
+            current_count = len(self._user_steps[user_id])
+            oldest = min(self._user_steps[user_id]) if self._user_steps[user_id] else now
+
+            return {
+                "user_id": user_id,
+                "steps_in_window": current_count,
+                "max_steps_per_window": self.max_steps_per_window,
+                "remaining": max(0, self.max_steps_per_window - current_count),
+                "window_seconds": self.window_seconds,
+                "window_resets_in": int(oldest + self.window_seconds - now) if current_count > 0 else 0,
+            }
+
+
+# Global rate limiter instance
+_step_rate_limiter = StepRateLimiter()
 
 
 class WorkflowChainService:
@@ -153,14 +238,35 @@ class WorkflowChainService:
         Returns:
             Dict with step creation result
         """
-        try:
-            # Validate workflow exists and is active
-            workflow_result = await session.execute(
-                select(WorkflowCapsuleModel).where(
-                    WorkflowCapsuleModel.workflow_capsule_id == workflow_capsule_id
+        # SECURITY: Per-user rate limiting to prevent DoS via unbounded step creation
+        if owner_id:
+            allowed, remaining = _step_rate_limiter.check_and_record(owner_id)
+            if not allowed:
+                stats = _step_rate_limiter.get_user_stats(owner_id)
+                logger.warning(
+                    f"Rate limit exceeded for user {owner_id}: "
+                    f"{stats['steps_in_window']}/{stats['max_steps_per_window']} steps in window"
                 )
+                return {
+                    "success": False,
+                    "error": f"Rate limit exceeded: maximum {stats['max_steps_per_window']} "
+                    f"steps per {stats['window_seconds']} seconds. "
+                    f"Try again in {stats['window_resets_in']} seconds.",
+                    "rate_limit": stats,
+                }
+
+        try:
+            # SECURITY: Use SELECT FOR UPDATE immediately to prevent TOCTOU race conditions
+            # The lock must be acquired BEFORE any status/ownership checks to ensure
+            # consistent state throughout the operation
+            from sqlalchemy import update
+
+            locked_result = await session.execute(
+                select(WorkflowCapsuleModel)
+                .where(WorkflowCapsuleModel.workflow_capsule_id == workflow_capsule_id)
+                .with_for_update()
             )
-            workflow = workflow_result.scalar_one_or_none()
+            workflow = locked_result.scalar_one_or_none()
 
             if not workflow:
                 return {
@@ -169,6 +275,7 @@ class WorkflowChainService:
                 }
 
             # SECURITY: Verify caller owns the workflow before allowing step addition
+            # Now protected by row lock - no TOCTOU possible
             if workflow.owner_id and owner_id and workflow.owner_id != owner_id:
                 logger.warning(
                     f"Unauthorized add_step attempt: user {owner_id} tried to modify workflow owned by {workflow.owner_id}"
@@ -178,6 +285,7 @@ class WorkflowChainService:
                     "error": "Unauthorized: you do not own this workflow",
                 }
 
+            # Status check now protected by row lock
             if workflow.status != WorkflowStatus.ACTIVE.value:
                 return {
                     "success": False,
@@ -185,6 +293,7 @@ class WorkflowChainService:
                 }
 
             # SECURITY: Enforce maximum steps limit to prevent unbounded growth
+            # Now protected by row lock - no race condition on step_count
             if workflow.step_count >= self.max_steps:
                 logger.warning(
                     f"Workflow {workflow_capsule_id} has reached max steps limit ({self.max_steps})"
@@ -211,21 +320,6 @@ class WorkflowChainService:
                     "success": False,
                     "error": f"Invalid step_type. Must be one of: {valid_types}",
                 }
-
-            # SECURITY: Use SELECT FOR UPDATE to prevent race conditions on step index
-            # This ensures atomic read-modify-write for step_count
-            from sqlalchemy import update
-            from sqlalchemy.orm import with_for_update
-
-            # Re-fetch with row lock to prevent concurrent step additions
-            locked_result = await session.execute(
-                select(WorkflowCapsuleModel)
-                .where(WorkflowCapsuleModel.workflow_capsule_id == workflow_capsule_id)
-                .with_for_update()
-            )
-            workflow = locked_result.scalar_one_or_none()
-            if not workflow:
-                return {"success": False, "error": "Workflow disappeared during locking"}
 
             # Get current step index (now protected by row lock)
             step_index = workflow.step_count

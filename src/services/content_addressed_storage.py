@@ -154,7 +154,20 @@ class LocalStorageProvider(StorageProvider):
         content_hash = content_hash.lower()
 
         # Use first 4 chars as directory structure
-        return self.base_path / content_hash[:2] / content_hash[2:4] / content_hash
+        result_path = self.base_path / content_hash[:2] / content_hash[2:4] / content_hash
+
+        # SECURITY: Defense-in-depth - verify resolved path is within base_path
+        # This catches any edge cases where path construction might escape base_path
+        resolved_path = result_path.resolve()
+        resolved_base = self.base_path.resolve()
+        try:
+            resolved_path.relative_to(resolved_base)
+        except ValueError:
+            raise ValueError(
+                f"Security violation: path {resolved_path} escapes base directory"
+            )
+
+        return result_path
 
     async def store(
         self,

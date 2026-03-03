@@ -344,19 +344,23 @@ class EdgeSyncService:
             RegisteredDevice if authenticated, None otherwise
         """
         device = self._state_store.get_device(device_id)
-        if not device:
-            logger.warning(f"Authentication failed: device {device_id} not found")
-            return None
 
-        # Verify device is active
-        if device.status != DeviceStatus.ACTIVE:
-            logger.warning(f"Authentication failed: device {device_id} is {device.status}")
-            return None
-
-        # Verify secret using constant-time comparison
+        # SECURITY: Use constant-time comparison for all checks to prevent timing attacks
+        # that could leak device existence or status information
         secret_hash = hashlib.sha256(device_secret.encode()).hexdigest()
-        if not hmac.compare_digest(secret_hash, device.device_secret_hash):
-            logger.warning(f"Authentication failed: invalid secret for device {device_id}")
+
+        # Create a dummy hash for comparison when device doesn't exist
+        # This ensures constant-time behavior regardless of device existence
+        dummy_hash = hashlib.sha256(b"dummy_nonexistent_device").hexdigest()
+        compare_hash = device.device_secret_hash if device else dummy_hash
+
+        # Always perform the comparison to prevent timing attacks
+        secret_valid = hmac.compare_digest(secret_hash, compare_hash)
+
+        # Check all conditions - use generic log message to prevent information leakage
+        if not device or device.status != DeviceStatus.ACTIVE or not secret_valid:
+            # SECURITY: Don't log device_id to prevent timing attacks on device existence
+            logger.warning("Device authentication failed")
             return None
 
         # Update last seen
