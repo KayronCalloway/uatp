@@ -553,6 +553,7 @@ class WorkflowChainService:
                 "step_type": s.step_type,
                 "depends_on_steps": s.depends_on_steps,
                 "payload": s.payload,
+                "verification": s.verification,  # Include verification for signature checks
                 "timestamp": s.timestamp.isoformat() if s.timestamp else None,
             }
             for s in steps
@@ -661,9 +662,10 @@ class WorkflowChainService:
             # before sealing the workflow
             steps_with_placeholder_sigs = []
             for step in steps:
-                payload = step.get("payload", {})
-                # Check if step has verification data with signature
-                verification = payload.get("verification", {})
+                # Check verification field on step (not inside payload)
+                # Steps are created with verification={"signature": None, "hash": None}
+                # and must be signed before workflow completion
+                verification = step.get("verification", {})
                 if isinstance(verification, dict):
                     sig = verification.get("signature")
                     if is_placeholder_signature(sig):

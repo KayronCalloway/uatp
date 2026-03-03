@@ -225,14 +225,27 @@ class CacheChallengeStore(ChallengeStore):
         key = self._key(challenge_id)
 
         # Use GETDEL for atomic get-and-delete (Redis 6.2+)
-        # Fall back to GET + DELETE for older Redis versions
+        # Fall back to WATCH/MULTI/EXEC transaction for older Redis versions
         try:
             data = self._cache.getdel(key)
         except AttributeError:
-            # Redis client doesn't support GETDEL, use non-atomic fallback
-            data = self._cache.get(key)
-            if data:
-                self._cache.delete(key)
+            # SECURITY: Redis client doesn't support GETDEL, use atomic transaction
+            # WATCH ensures the key hasn't changed between GET and DELETE
+            # If another client modifies the key, the transaction aborts
+            pipe = self._cache.pipeline(True)  # True enables WATCH
+            try:
+                pipe.watch(key)
+                data = pipe.get(key)
+                if data:
+                    pipe.multi()
+                    pipe.delete(key)
+                    pipe.execute()
+                else:
+                    pipe.unwatch()
+            except Exception:
+                # Transaction failed (key was modified) - challenge already consumed
+                pipe.unwatch()
+                data = None
 
         if not data:
             return None

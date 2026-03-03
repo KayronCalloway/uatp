@@ -15,6 +15,17 @@ import logging
 import secrets
 import time
 from abc import ABC, abstractmethod
+
+# SECURITY: Use argon2 for device secret hashing (not SHA-256)
+# argon2 is memory-hard and designed for password/secret hashing
+try:
+    from argon2 import PasswordHasher
+    from argon2.exceptions import VerifyMismatchError, InvalidHash
+    ARGON2_AVAILABLE = True
+    _password_hasher = PasswordHasher()
+except ImportError:
+    ARGON2_AVAILABLE = False
+    _password_hasher = None
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -112,6 +123,11 @@ class SyncStateStore(ABC):
         pass
 
     @abstractmethod
+    def update_device_secret_hash(self, device_id: str, new_hash: str) -> None:
+        """Update device secret hash (for argon2 rehashing)."""
+        pass
+
+    @abstractmethod
     def get_checkpoint(self, device_id: str) -> Optional["SyncCheckpoint"]:
         """Get checkpoint for device."""
         pass
@@ -158,6 +174,10 @@ class InMemorySyncStateStore(SyncStateStore):
     def update_device_last_seen(self, device_id: str) -> None:
         if device_id in self._devices:
             self._devices[device_id].last_seen_at = datetime.now(timezone.utc)
+
+    def update_device_secret_hash(self, device_id: str, new_hash: str) -> None:
+        if device_id in self._devices:
+            self._devices[device_id].device_secret_hash = new_hash
 
     def get_checkpoint(self, device_id: str) -> Optional["SyncCheckpoint"]:
         return self._checkpoints.get(device_id)
@@ -313,7 +333,17 @@ class EdgeSyncService:
         """
         # Generate a secure device secret
         device_secret = secrets.token_hex(32)
-        secret_hash = hashlib.sha256(device_secret.encode()).hexdigest()
+
+        # SECURITY: Use argon2 for secret hashing (memory-hard, designed for secrets)
+        # Falls back to SHA-256 only if argon2 is unavailable (not recommended for production)
+        if ARGON2_AVAILABLE:
+            secret_hash = _password_hasher.hash(device_secret)
+        else:
+            logger.warning(
+                "argon2 not available - using SHA-256 for device secret. "
+                "Install argon2-cffi for production use."
+            )
+            secret_hash = hashlib.sha256(device_secret.encode()).hexdigest()
 
         device = RegisteredDevice(
             device_id=device_id,
@@ -345,17 +375,46 @@ class EdgeSyncService:
         """
         device = self._state_store.get_device(device_id)
 
-        # SECURITY: Use constant-time comparison for all checks to prevent timing attacks
-        # that could leak device existence or status information
-        secret_hash = hashlib.sha256(device_secret.encode()).hexdigest()
+        # SECURITY: Verify device secret using argon2 (preferred) or SHA-256 (fallback)
+        # argon2 is inherently constant-time and resistant to timing attacks
+        secret_valid = False
 
-        # Create a dummy hash for comparison when device doesn't exist
-        # This ensures constant-time behavior regardless of device existence
-        dummy_hash = hashlib.sha256(b"dummy_nonexistent_device").hexdigest()
-        compare_hash = device.device_secret_hash if device else dummy_hash
+        if device:
+            stored_hash = device.device_secret_hash
 
-        # Always perform the comparison to prevent timing attacks
-        secret_valid = hmac.compare_digest(secret_hash, compare_hash)
+            if ARGON2_AVAILABLE and stored_hash.startswith("$argon2"):
+                # Argon2 hash format - use argon2 verification
+                try:
+                    _password_hasher.verify(stored_hash, device_secret)
+                    secret_valid = True
+
+                    # Check if hash needs rehashing (params updated)
+                    if _password_hasher.check_needs_rehash(stored_hash):
+                        new_hash = _password_hasher.hash(device_secret)
+                        self._state_store.update_device_secret_hash(device_id, new_hash)
+                except (VerifyMismatchError, InvalidHash):
+                    secret_valid = False
+            else:
+                # Legacy SHA-256 hash - use constant-time comparison
+                # SECURITY: Migrate to argon2 when device re-registers
+                secret_hash = hashlib.sha256(device_secret.encode()).hexdigest()
+                secret_valid = hmac.compare_digest(secret_hash, stored_hash)
+        else:
+            # SECURITY: Perform dummy verification to prevent timing attacks
+            # that could leak device existence information
+            if ARGON2_AVAILABLE:
+                try:
+                    # Use a pre-computed dummy hash for constant-time behavior
+                    dummy_hash = "$argon2id$v=19$m=65536,t=3,p=4$dummy$dummy"
+                    _password_hasher.verify(dummy_hash, device_secret)
+                except (VerifyMismatchError, InvalidHash):
+                    pass
+            else:
+                dummy_hash = hashlib.sha256(b"dummy_nonexistent_device").hexdigest()
+                hmac.compare_digest(
+                    hashlib.sha256(device_secret.encode()).hexdigest(),
+                    dummy_hash
+                )
 
         # Check all conditions - use generic log message to prevent information leakage
         if not device or device.status != DeviceStatus.ACTIVE or not secret_valid:
