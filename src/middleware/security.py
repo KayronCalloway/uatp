@@ -469,6 +469,8 @@ class CSRFProtectionMiddleware(BaseHTTPMiddleware):
             "/openapi.json",
             "/auth/login",  # Login needs to work without CSRF token initially
             "/auth/register",
+            "/chain",  # Chain sealing API uses API key authentication
+            "/capsules",  # Capsule API uses API key authentication
         }
         self.allowed_origins = set(allowed_origins) if allowed_origins else None
         self._token_length = 32  # 256 bits
@@ -484,8 +486,8 @@ class CSRFProtectionMiddleware(BaseHTTPMiddleware):
             self._ensure_csrf_cookie(request, response)
             return response
 
-        # Skip CSRF check for exempt paths
-        if request.url.path in self.exempt_paths:
+        # Skip CSRF check for exempt paths (using prefix matching)
+        if any(request.url.path.startswith(p) for p in self.exempt_paths):
             response = await call_next(request)
             self._ensure_csrf_cookie(request, response)
             return response
