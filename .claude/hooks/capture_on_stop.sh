@@ -1,6 +1,7 @@
 #!/bin/bash
 # Claude Code Stop Hook - Captures assistant response after generation
-# This hook fires AFTER Claude finishes responding, receiving the full response
+# This hook fires AFTER Claude finishes responding
+# Input includes transcript_path - we read the last assistant message from there
 
 UATP_API="${UATP_API_URL:-http://localhost:8000}"
 LOG_FILE="/Users/kay/uatp-capsule-engine/hook_capture.log"
@@ -10,16 +11,27 @@ DEBUG_LOG="/tmp/hook_debug.log"
 # Log hook invocation
 echo "[$(date)] Stop hook invoked" >> "$DEBUG_LOG"
 
-# Read JSON input from stdin (includes last_assistant_message)
+# Read JSON input from stdin
 INPUT_JSON=$(cat)
 echo "[$(date)] Stop hook input: ${INPUT_JSON:0:300}..." >> "$DEBUG_LOG"
 
-# Extract assistant message from JSON
-ASSISTANT_MESSAGE=$(echo "$INPUT_JSON" | jq -r '.last_assistant_message // empty' 2>/dev/null)
+# Extract transcript path from JSON
+TRANSCRIPT_PATH=$(echo "$INPUT_JSON" | jq -r '.transcript_path // empty' 2>/dev/null)
 
-# Exit if no assistant message
+if [ -z "$TRANSCRIPT_PATH" ] || [ ! -f "$TRANSCRIPT_PATH" ]; then
+    echo "[$(date)] Stop hook: No transcript path or file not found" >> "$DEBUG_LOG"
+    exit 0
+fi
+
+# Read last assistant message from transcript (last 50 lines, find most recent assistant entry)
+ASSISTANT_MESSAGE=$(tail -50 "$TRANSCRIPT_PATH" 2>/dev/null | \
+    grep '"type":"assistant"' | \
+    tail -1 | \
+    jq -r '.message.content | if type == "array" then [.[] | select(.type == "text") | .text] | join(" ") else . end' 2>/dev/null)
+
+# Exit if no assistant message found
 if [ -z "$ASSISTANT_MESSAGE" ]; then
-    echo "[$(date)] Stop hook: No assistant message" >> "$DEBUG_LOG"
+    echo "[$(date)] Stop hook: No assistant message in transcript" >> "$DEBUG_LOG"
     exit 0
 fi
 
@@ -30,7 +42,7 @@ if [ "$MSG_LENGTH" -lt 50 ]; then
     exit 0
 fi
 
-echo "[$(date)] Stop hook: Capturing assistant response ($MSG_LENGTH chars)" >> "$DEBUG_LOG"
+echo "[$(date)] Stop hook: Found assistant response ($MSG_LENGTH chars)" >> "$DEBUG_LOG"
 
 # Get session ID (same as UserPromptSubmit hook)
 SESSION_ID=""
@@ -43,7 +55,7 @@ if [ -z "$SESSION_ID" ]; then
     echo "{\"session_id\": \"$SESSION_ID\", \"started\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > "$SESSION_FILE"
 fi
 
-# Truncate very long responses for the API
+# Truncate very long responses for the API (15KB limit)
 TRUNCATED_MESSAGE="${ASSISTANT_MESSAGE:0:15000}"
 
 # Create JSON payload for assistant message
@@ -52,6 +64,7 @@ PAYLOAD=$(jq -n \
     --arg uid "${USER:-unknown}" \
     --arg msg "$TRUNCATED_MESSAGE" \
     --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --argjson len "$MSG_LENGTH" \
     '{
         session_id: $sid,
         user_id: $uid,
@@ -61,7 +74,7 @@ PAYLOAD=$(jq -n \
         metadata: {
             capture_method: "stop_hook",
             timestamp: $ts,
-            original_length: ($msg | length)
+            original_length: $len
         }
     }')
 
