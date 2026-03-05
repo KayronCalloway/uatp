@@ -16,12 +16,106 @@ This module enriches existing capsules to meet:
 - EU AI Act Articles 9, 12, 13
 """
 
+import asyncio
 import logging
+import os
 import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+# LLM summarization support
+try:
+    import anthropic
+
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
+    anthropic = None
+
+logger = logging.getLogger(__name__)
+
+# Config: Enable LLM summarization (can be toggled via env var)
+USE_LLM_SUMMARIZATION = os.getenv("UATP_LLM_SUMMARIZATION", "true").lower() == "true"
+
+
+def summarize_decision_with_llm_sync(
+    messages: List[Any], user_question: str
+) -> Optional[Dict[str, str]]:
+    """
+    Use Claude Haiku to generate a proper decision summary (sync version).
+
+    Returns:
+        Dict with 'decision' and 'why' keys, or None if failed
+    """
+    if not ANTHROPIC_AVAILABLE or not USE_LLM_SUMMARIZATION:
+        return None
+
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        return None
+
+    # Build conversation context
+    conversation_text = []
+    for msg in messages[-10:]:  # Last 10 messages for context
+        role = getattr(msg, "role", "unknown")
+        content = getattr(msg, "content", str(msg))[:1000]
+        conversation_text.append(f"{role.upper()}: {content}")
+
+    conversation_str = "\n\n".join(conversation_text)
+
+    prompt = f"""Analyze this AI conversation and extract a clear decision summary.
+
+CONVERSATION:
+{conversation_str}
+
+USER'S ORIGINAL QUESTION: {user_question[:500]}
+
+Respond in this exact JSON format (no markdown, no code blocks):
+{{"decision": "One sentence describing what action/recommendation was made", "why": "One sentence explaining the reasoning behind this decision"}}
+
+Rules:
+- Be specific and concrete, not generic
+- "decision" should state WHAT was done/recommended
+- "why" should state WHY this approach was chosen
+- Keep each field under 150 characters
+- No markdown formatting"""
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=256,
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        # Parse response
+        import json
+
+        response_text = response.content[0].text.strip()
+        # Clean up any markdown that might have slipped through
+        response_text = response_text.replace("```json", "").replace("```", "").strip()
+        result = json.loads(response_text)
+
+        logger.info(f"LLM summarization succeeded: {result.get('decision', '')[:50]}...")
+        return {
+            "decision": result.get("decision", "")[:200],
+            "why": result.get("why", "")[:200],
+        }
+
+    except Exception as e:
+        logger.warning(f"LLM summarization failed: {e}")
+        return None
+
+
+async def summarize_decision_with_llm(
+    messages: List[Any], user_question: str
+) -> Optional[Dict[str, str]]:
+    """
+    Async version - wraps sync for now.
+    """
+    return summarize_decision_with_llm_sync(messages, user_question)
 
 
 def strip_markdown(text: str) -> str:
@@ -542,12 +636,12 @@ class CourtAdmissibleEnricher:
         return decision_text, specific_why, key_points[:5]
 
     @staticmethod
-    def generate_plain_language_summary(
+    async def generate_plain_language_summary_async(
         session: Any, messages: List[Any], task_description: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Generate EU AI Act Article 13 compliant plain language summary.
-        NOW: Extracts ACTUAL decision content, not generic templates.
+        Uses LLM summarization for accurate decision/rationale extraction.
 
         Args:
             session: Conversation session
@@ -557,16 +651,87 @@ class CourtAdmissibleEnricher:
         Returns:
             PlainLanguageSummary dictionary
         """
-        # Extract the ACTUAL decision and reasoning
-        decision, specific_why, extracted_points = (
-            CourtAdmissibleEnricher.extract_key_recommendation(messages)
-        )
-
         # Get the user's original question for context
         user_questions = [m.content for m in messages if m.role == "user"]
         original_question = (
             user_questions[0][:200] if user_questions else "Unknown request"
         )
+
+        # Try LLM summarization first (best quality)
+        llm_summary = await summarize_decision_with_llm(messages, original_question)
+
+        if llm_summary and llm_summary.get("decision"):
+            decision = llm_summary["decision"]
+            specific_why = llm_summary["why"]
+            extracted_points = []
+        else:
+            # Fallback to heuristic extraction
+            decision, specific_why, extracted_points = (
+                CourtAdmissibleEnricher.extract_key_recommendation(messages)
+            )
+
+        # Build key factors
+        key_factors = [f'User asked: "{original_question}"']
+        for point in extracted_points[:3]:
+            key_factors.append(f"Recommended: {point}")
+        if session.topics:
+            key_factors.append(f"Context: {', '.join(session.topics[:3])}")
+
+        # Standard fields
+        what_if_different = (
+            "This recommendation is specific to your situation. "
+            "Different requirements or constraints could lead to different recommendations."
+        )
+        your_rights = (
+            "You have the right to: (1) Request human review of this decision, "
+            "(2) Provide additional context to refine the output, "
+            "(3) Contest any recommendation you believe is incorrect, "
+            "(4) Access all data used in this decision-making process."
+        )
+        how_to_appeal = (
+            "To request review: Contact your system administrator or the UATP platform "
+            "operator. Provide the capsule ID and explain your concerns."
+        )
+
+        return {
+            "decision": decision,
+            "why": specific_why,
+            "original_question": original_question,
+            "key_factors": key_factors,
+            "what_if_different": what_if_different,
+            "your_rights": your_rights,
+            "how_to_appeal": how_to_appeal,
+            "summarization_method": "llm" if llm_summary else "heuristic",
+        }
+
+    @staticmethod
+    def generate_plain_language_summary(
+        session: Any, messages: List[Any], task_description: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate plain language summary with LLM when available.
+        Falls back to heuristic method if LLM fails.
+        """
+        # Get the user's original question for context
+        user_questions = [m.content for m in messages if m.role == "user"]
+        original_question = (
+            user_questions[0][:200] if user_questions else "Unknown request"
+        )
+
+        # Try LLM summarization first (best quality)
+        llm_summary = summarize_decision_with_llm_sync(messages, original_question)
+        summarization_method = "heuristic"
+
+        if llm_summary and llm_summary.get("decision"):
+            decision = llm_summary["decision"]
+            specific_why = llm_summary["why"]
+            extracted_points = []
+            summarization_method = "llm"
+        else:
+            # Fallback to heuristic extraction
+            decision, specific_why, extracted_points = (
+                CourtAdmissibleEnricher.extract_key_recommendation(messages)
+            )
 
         # Build specific key factors from extracted content
         key_factors = []
@@ -616,6 +781,7 @@ class CourtAdmissibleEnricher:
             "what_if_different": what_if_different,
             "your_rights": your_rights,
             "how_to_appeal": how_to_appeal,
+            "summarization_method": summarization_method,
         }
 
     @classmethod
@@ -661,7 +827,7 @@ class CourtAdmissibleEnricher:
         alternatives = cls.extract_alternatives_from_messages(messages)
         capsule["payload"]["alternatives_considered"] = alternatives
 
-        # Generate plain language summary
+        # Generate plain language summary (sync/heuristic version)
         task_description = (
             capsule.get("payload", {}).get("task") or session.topics[0]
             if session.topics
@@ -684,6 +850,75 @@ class CourtAdmissibleEnricher:
             "insurance_ready": True,
             "eu_ai_act_article_13": True,
         }
+
+        return capsule
+
+    @classmethod
+    async def enrich_capsule_with_court_admissible_data_async(
+        cls, capsule: Dict[str, Any], session: Any, messages: List[Any]
+    ) -> Dict[str, Any]:
+        """
+        Async version - uses LLM for better decision/rationale extraction.
+
+        Args:
+            capsule: Existing capsule dictionary
+            session: Conversation session
+            messages: List of conversation messages
+
+        Returns:
+            Enriched capsule with court-admissible data and LLM-powered summary
+        """
+        # Get existing confidence
+        overall_confidence = capsule.get("confidence", 0.8)
+
+        # Add data sources
+        data_sources = cls.infer_data_sources_from_session(session, messages)
+
+        # Add data sources to reasoning_chain steps
+        if "payload" in capsule and "reasoning_chain" in capsule["payload"]:
+            for i, step in enumerate(capsule["payload"]["reasoning_chain"]):
+                if i == 0:
+                    step["data_sources"] = data_sources[:2]
+                elif i == len(capsule["payload"]["reasoning_chain"]) - 1:
+                    if len(data_sources) > 2:
+                        step["data_sources"] = data_sources[2:]
+
+        # Calculate risk assessment
+        risk_assessment = cls.calculate_risk_assessment_from_session(
+            session, messages, overall_confidence
+        )
+        capsule["payload"]["risk_assessment"] = risk_assessment
+
+        # Extract alternatives
+        alternatives = cls.extract_alternatives_from_messages(messages)
+        capsule["payload"]["alternatives_considered"] = alternatives
+
+        # Generate plain language summary with LLM
+        task_description = (
+            capsule.get("payload", {}).get("task") or session.topics[0]
+            if session.topics
+            else None
+        )
+        plain_language = await cls.generate_plain_language_summary_async(
+            session, messages, task_description
+        )
+        capsule["payload"]["plain_language_summary"] = plain_language
+
+        # Add metadata flag
+        if "metadata" not in capsule:
+            capsule["metadata"] = {}
+        capsule["metadata"]["data_richness"] = "court_admissible"
+        capsule["metadata"]["enrichment_timestamp"] = datetime.now(
+            timezone.utc
+        ).isoformat()
+        capsule["metadata"]["compliance"] = {
+            "daubert_standard": True,
+            "insurance_ready": True,
+            "eu_ai_act_article_13": True,
+        }
+        capsule["metadata"]["summarization_method"] = plain_language.get(
+            "summarization_method", "unknown"
+        )
 
         return capsule
 
