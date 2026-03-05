@@ -113,7 +113,7 @@ class MerkleTreeBuilder:
         root = tree.root_formatted
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._leaves: List[str] = []
 
     @staticmethod
@@ -333,7 +333,7 @@ class ChainMerkleManager:
     - Chain integrity verification
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._builder = MerkleTreeBuilder()
         self._current_tree: Optional[MerkleTree] = None
         self._capsule_indices: Dict[str, int] = {}  # capsule_id -> leaf_index
@@ -353,9 +353,10 @@ class ChainMerkleManager:
         self._capsule_indices[capsule_id] = leaf_index
 
         # Rebuild tree (could be optimized for incremental updates)
-        self._current_tree = self._builder.build()
+        tree = self._builder.build()
+        self._current_tree = tree
 
-        return self._current_tree.root_formatted
+        return tree.root_formatted
 
     def get_current_root(self) -> str:
         """Get the current Merkle root."""

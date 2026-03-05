@@ -219,12 +219,12 @@ class MerkleAuditLog:
             f"Merkle audit log initialized: {log_id} ({len(self._entries)} entries)"
         )
 
-    def _ensure_directories(self):
+    def _ensure_directories(self) -> None:
         """Create required directory structure."""
         for subdir in ["entries", "tree_heads", "checkpoints"]:
             (self.log_dir / subdir).mkdir(parents=True, exist_ok=True)
 
-    def _load_state(self):
+    def _load_state(self) -> None:
         """Load log state from disk."""
         state_file = self.log_dir / "tree_state.json"
         if state_file.exists():
@@ -240,7 +240,7 @@ class MerkleAuditLog:
                         self._entries.append(entry)
                         self._leaf_hashes.append(bytes.fromhex(entry.leaf_hash))
 
-    def _save_state(self):
+    def _save_state(self) -> None:
         """Save log state to disk."""
         state = {
             "log_id": self.log_id,
@@ -253,7 +253,7 @@ class MerkleAuditLog:
         with open(state_file, "w") as f:
             json.dump(state, f, indent=2)
 
-    def _save_entry(self, entry: LogEntry):
+    def _save_entry(self, entry: LogEntry) -> None:
         """Save individual entry to disk."""
         entry_file = self.log_dir / "entries" / f"{entry.index:010d}.json"
         with open(entry_file, "w") as f:
@@ -316,7 +316,7 @@ class MerkleAuditLog:
             logger.debug(f"Appended entry {entry.index}: {entry_type}")
             return entry
 
-    def _invalidate_cache(self, leaf_index: int):
+    def _invalidate_cache(self, leaf_index: int) -> None:
         """Invalidate cached nodes affected by a new leaf."""
         # For simplicity, clear all cached nodes
         # A more sophisticated implementation would only clear affected paths
@@ -390,19 +390,21 @@ class MerkleAuditLog:
             return self._entries[index]
         return None
 
-    def _compute_inclusion_proof(self, leaf_index: int, tree_size: int) -> List[bytes]:
+    def _compute_inclusion_proof(
+        self, leaf_index: int, tree_size: int
+    ) -> List[Tuple[bytes, bool]]:
         """
         Compute the inclusion proof path using standard bottom-up approach.
 
         Returns list of (sibling_hash, is_left) tuples encoded as proof elements.
         """
-        proof = []
+        proof: List[Tuple[bytes, bool]] = []
 
         if tree_size <= 1:
             return proof
 
         # Build proof bottom-up using the path from leaf to root
-        def audit_path(index: int, start: int, end: int):
+        def audit_path(index: int, start: int, end: int) -> None:
             """Recursively compute audit path."""
             width = end - start
             if width == 1:
@@ -426,8 +428,8 @@ class MerkleAuditLog:
         # Reverse so proof goes from leaf to root
         proof.reverse()
 
-        # Return just the hashes with position encoded
-        return [(h, is_left) for h, is_left in proof]
+        # Return the hashes with position encoded
+        return proof
 
     def _largest_power_of_2_less_than(self, n: int) -> int:
         """Find largest power of 2 less than n."""
@@ -560,13 +562,13 @@ class MerkleAuditLog:
 
     def _compute_consistency_proof(self, size1: int, size2: int) -> List[bytes]:
         """Compute consistency proof between two tree sizes."""
-        proof = []
+        proof: List[bytes] = []
 
         if size1 == size2:
             return proof
 
         # Subproof algorithm from RFC 6962
-        def subproof(m: int, start: int, end: int, complete: bool):
+        def subproof(m: int, start: int, end: int, complete: bool) -> None:
             n = end - start
             if m == n:
                 if not complete:
@@ -726,7 +728,7 @@ class MerkleAuditLog:
 
     def get_statistics(self) -> Dict[str, Any]:
         """Get log statistics."""
-        entry_types = {}
+        entry_types: Dict[str, int] = {}
         for entry in self._entries:
             entry_types[entry.entry_type] = entry_types.get(entry.entry_type, 0) + 1
 

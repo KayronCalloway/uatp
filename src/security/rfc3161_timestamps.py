@@ -40,7 +40,7 @@ try:
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
-    requests = None
+    requests = None  # type: ignore[assignment]
 
 # Optional: rfc3161ng for proper ASN.1 handling
 try:
@@ -49,7 +49,7 @@ try:
     RFC3161_AVAILABLE = True
 except ImportError:
     RFC3161_AVAILABLE = False
-    rfc3161ng = None
+    rfc3161ng = None  # type: ignore[assignment]
 
 
 @dataclass
@@ -157,7 +157,7 @@ class RFC3161Timestamper:
     def _create_request_rfc3161ng(self, data_hash: bytes, hash_algo: str) -> bytes:
         """Create request using rfc3161ng library."""
         # Create timestamp request
-        req = rfc3161ng.make_timestamp_request(
+        req: bytes = rfc3161ng.make_timestamp_request(
             data=data_hash,
             hashname=hash_algo,
         )
@@ -276,7 +276,7 @@ class RFC3161Timestamper:
         if RFC3161_AVAILABLE:
             try:
                 # Use rfc3161ng to parse
-                tst = rfc3161ng.get_timestamp(response_bytes)
+                tst: datetime = rfc3161ng.get_timestamp(response_bytes)
                 return tst
             except Exception as e:
                 logger.warning(f"Failed to parse timestamp with rfc3161ng: {e}")
@@ -347,7 +347,7 @@ class RFC3161Timestamper:
             "Timestamp verified (hash match only - install rfc3161ng for full verification)",
         )
 
-    def _cache_token(self, token: TimestampToken):
+    def _cache_token(self, token: TimestampToken) -> None:
         """Cache a timestamp token to disk."""
         if not self.cache_dir:
             return

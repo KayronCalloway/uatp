@@ -72,6 +72,7 @@ class TimestampAuthority:
         """Check if asn1crypto is available for RFC 3161."""
         try:
             import asn1crypto  # noqa: F401
+
             return True
         except ImportError:
             return False
@@ -81,20 +82,25 @@ class TimestampAuthority:
         from asn1crypto import algos, core, tsp
 
         # Create message imprint
-        message_imprint = tsp.MessageImprint({
-            "hash_algorithm": algos.DigestAlgorithm({"algorithm": "sha256"}),
-            "hashed_message": data_hash,
-        })
+        message_imprint = tsp.MessageImprint(
+            {
+                "hash_algorithm": algos.DigestAlgorithm({"algorithm": "sha256"}),
+                "hashed_message": data_hash,
+            }
+        )
 
         # Create timestamp request
-        ts_request = tsp.TimeStampReq({
-            "version": 1,
-            "message_imprint": message_imprint,
-            "cert_req": True,  # Request TSA certificate in response
-            "nonce": core.Integer(int.from_bytes(os.urandom(8), "big")),
-        })
+        ts_request = tsp.TimeStampReq(
+            {
+                "version": 1,
+                "message_imprint": message_imprint,
+                "cert_req": True,  # Request TSA certificate in response
+                "nonce": core.Integer(int.from_bytes(os.urandom(8), "big")),
+            }
+        )
 
-        return ts_request.dump()
+        result: bytes = ts_request.dump()
+        return result
 
     def _request_rfc3161(self, data_hash: bytes) -> Optional[bytes]:
         """
@@ -140,7 +146,8 @@ class TimestampAuthority:
                 logger.warning("TSA response missing timestamp token")
                 return None
 
-            return token.dump()
+            token_bytes: bytes = token.dump()
+            return token_bytes
 
         except requests.exceptions.RequestException as e:
             logger.warning(f"TSA request failed: {e}")
@@ -184,6 +191,7 @@ class TimestampAuthority:
             # Parse timestamp from token for convenience
             try:
                 from asn1crypto import cms
+
                 content_info = cms.ContentInfo.load(token)
                 signed_data = content_info["content"]
                 encap_content = signed_data["encap_content_info"]["content"]
@@ -274,7 +282,11 @@ class TimestampAuthority:
             if time_str:
                 try:
                     ts_time = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
-                    return True, ts_time, "Local timestamp (not independently verifiable)"
+                    return (
+                        True,
+                        ts_time,
+                        "Local timestamp (not independently verifiable)",
+                    )
                 except ValueError:
                     pass
             return False, None, "Invalid local timestamp format"

@@ -193,12 +193,12 @@ class KeyRotationManager:
 
         logger.info(f"Key rotation manager initialized: {self.key_dir}")
 
-    def _ensure_directories(self):
+    def _ensure_directories(self) -> None:
         """Create required directory structure."""
         for subdir in ["active", "archived", "revoked", "pending"]:
             (self.key_dir / subdir).mkdir(parents=True, exist_ok=True)
 
-    def _load_metadata(self):
+    def _load_metadata(self) -> None:
         """Load key metadata from disk."""
         if self.metadata_file.exists():
             with open(self.metadata_file) as f:
@@ -211,7 +211,7 @@ class KeyRotationManager:
         else:
             self.keys = {}
 
-    def _save_metadata(self):
+    def _save_metadata(self) -> None:
         """Save key metadata to disk."""
         data = {
             "keys": {k: v.to_dict() for k, v in self.keys.items()},
@@ -394,7 +394,7 @@ class KeyRotationManager:
         aes_key = hashlib.pbkdf2_hmac("sha256", password, b"rotation-aes-key", 100000)
         nonce = os.urandom(12)
         aesgcm = AESGCM(aes_key)
-        ciphertext = aesgcm.encrypt(nonce, key_data, None)
+        ciphertext: bytes = aesgcm.encrypt(nonce, key_data, None)
         return nonce + ciphertext
 
     def _decrypt_key(self, encrypted_data: bytes) -> bytes:
@@ -406,7 +406,8 @@ class KeyRotationManager:
         nonce = encrypted_data[:12]
         ciphertext = encrypted_data[12:]
         aesgcm = AESGCM(aes_key)
-        return aesgcm.decrypt(nonce, ciphertext, None)
+        plaintext: bytes = aesgcm.decrypt(nonce, ciphertext, None)
+        return plaintext
 
     def activate_key(self, key_id: str) -> bool:
         """
@@ -509,7 +510,7 @@ class KeyRotationManager:
         logger.warning(f"REVOKED key {key_id}: {reason}")
         return True
 
-    def _move_key_files(self, key_id: str, from_dir: str, to_dir: str):
+    def _move_key_files(self, key_id: str, from_dir: str, to_dir: str) -> None:
         """Move key files between directories."""
         from_path = self.key_dir / from_dir
         to_path = self.key_dir / to_dir
@@ -520,7 +521,7 @@ class KeyRotationManager:
             if src.exists():
                 shutil.move(str(src), str(dst))
 
-    def _cleanup_old_keys(self):
+    def _cleanup_old_keys(self) -> None:
         """Remove old archived keys beyond retention limit."""
         archived_keys = [
             k for k in self.keys.values() if k.status == KeyStatus.ARCHIVED

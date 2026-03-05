@@ -28,7 +28,11 @@ import logging
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
+if TYPE_CHECKING:
+    from src.security.key_rotation import KeyRotationManager
+    from src.security.merkle_audit_log import MerkleAuditLog
 
 # Ed25519 (classical cryptography)
 try:
@@ -166,7 +170,7 @@ class UATPCryptoV7:
 
         logger.info(f"🔐 UATP v7 Crypto initialized for signer: {self.signer_id}")
 
-    def _ensure_keys_exist(self):
+    def _ensure_keys_exist(self) -> None:
         """Generate Ed25519 and ML-DSA-65 keypairs if they don't exist. Uses encrypted storage."""
         if not self.key_dir.exists():
             self.key_dir.mkdir(parents=True, exist_ok=True)
@@ -298,7 +302,7 @@ class UATPCryptoV7:
         # Generate nonce and encrypt
         nonce = os.urandom(12)
         aesgcm = AESGCM(aes_key)
-        ciphertext = aesgcm.encrypt(nonce, key_data, None)
+        ciphertext: bytes = aesgcm.encrypt(nonce, key_data, None)
 
         # Return nonce + ciphertext
         return nonce + ciphertext
@@ -317,9 +321,10 @@ class UATPCryptoV7:
 
         # Decrypt
         aesgcm = AESGCM(aes_key)
-        return aesgcm.decrypt(nonce, ciphertext, None)
+        plaintext: bytes = aesgcm.decrypt(nonce, ciphertext, None)
+        return plaintext
 
-    def _migrate_ed25519_to_encrypted(self, old_path: Path, new_path: Path):
+    def _migrate_ed25519_to_encrypted(self, old_path: Path, new_path: Path) -> None:
         """Migrate an unencrypted Ed25519 private key to encrypted storage."""
         try:
             logger.info("🔄 Migrating Ed25519 key to encrypted storage...")
@@ -362,7 +367,7 @@ class UATPCryptoV7:
             logger.error(f"❌ Ed25519 key migration failed: {e}")
             raise
 
-    def _migrate_pq_to_encrypted(self, old_path: Path, new_path: Path):
+    def _migrate_pq_to_encrypted(self, old_path: Path, new_path: Path) -> None:
         """Migrate an unencrypted ML-DSA-65 private key to encrypted storage."""
         try:
             logger.info("🔄 Migrating ML-DSA-65 key to encrypted storage...")
@@ -393,7 +398,7 @@ class UATPCryptoV7:
             logger.error(f"❌ ML-DSA-65 key migration failed: {e}")
             raise
 
-    def _load_keys(self):
+    def _load_keys(self) -> None:
         """Load cryptographic keys from disk. Supports both encrypted and legacy keys."""
         # Load Ed25519 keys
         password = _derive_key_password() if self._ed25519_encrypted else None
@@ -438,7 +443,7 @@ class UATPCryptoV7:
 
             logger.info("🔐 ML-DSA-65 keys loaded successfully")
 
-    def _verify_key_permissions(self):
+    def _verify_key_permissions(self) -> None:
         """
         Verify that private key files have secure permissions.
 
@@ -686,7 +691,7 @@ class UATPCryptoV7:
         Returns:
             Public key as hex string
         """
-        public_bytes = self.ed25519_public.public_bytes(
+        public_bytes: bytes = self.ed25519_public.public_bytes(
             encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw
         )
         return public_bytes.hex()
@@ -1026,41 +1031,44 @@ class UATPCryptoV7:
         """
         is_production = os.getenv("UATP_ENV") == "production"
 
-        status = {
+        # Build algorithms dict with explicit types
+        signing_algos: List[str] = ["Ed25519"]
+        if self.enable_pq:
+            signing_algos.append("ML-DSA-65 (FIPS 204)")
+
+        recommendations: List[str] = []
+        warnings: List[str] = []
+
+        # Add recommendations
+        if not self.enable_pq:
+            recommendations.append(
+                "Enable post-quantum signatures with enable_pq=True for quantum resistance"
+            )
+
+        if not is_production and not os.getenv("UATP_KEY_PASSWORD"):
+            warnings.append(
+                "Using derived key password. Set UATP_KEY_PASSWORD for production."
+            )
+
+        if is_production and not self.enable_pq:
+            warnings.append(
+                "Production mode without post-quantum crypto is not recommended"
+            )
+
+        return {
             "environment": "production" if is_production else "development",
             "ed25519_available": ED25519_AVAILABLE,
             "pq_available": PQ_AVAILABLE,
             "pq_enabled": self.enable_pq,
             "hybrid_capable": ED25519_AVAILABLE and self.enable_pq,
             "algorithms": {
-                "signing": ["Ed25519"],
+                "signing": signing_algos,
                 "hashing": ["SHA-256"],
                 "encryption": ["AES-256-GCM"],
             },
-            "recommendations": [],
-            "warnings": [],
+            "recommendations": recommendations,
+            "warnings": warnings,
         }
-
-        if self.enable_pq:
-            status["algorithms"]["signing"].append("ML-DSA-65 (FIPS 204)")
-
-        # Add recommendations
-        if not self.enable_pq:
-            status["recommendations"].append(
-                "Enable post-quantum signatures with enable_pq=True for quantum resistance"
-            )
-
-        if not is_production and not os.getenv("UATP_KEY_PASSWORD"):
-            status["warnings"].append(
-                "Using derived key password. Set UATP_KEY_PASSWORD for production."
-            )
-
-        if is_production and not self.enable_pq:
-            status["warnings"].append(
-                "Production mode without post-quantum crypto is not recommended"
-            )
-
-        return status
 
     # --- RFC 3161 Timestamps ---
 
@@ -1104,7 +1112,7 @@ class UATPCryptoV7:
 
     # --- Key Rotation ---
 
-    def get_key_rotation_manager(self):
+    def get_key_rotation_manager(self) -> "KeyRotationManager":
         """
         Get the key rotation manager for this crypto instance.
 
@@ -1183,7 +1191,7 @@ class UATPCryptoV7:
 
     # --- Merkle Audit Log ---
 
-    def get_audit_log(self, log_id: str = "default"):
+    def get_audit_log(self, log_id: str = "default") -> "MerkleAuditLog":
         """
         Get or create a Merkle audit log.
 
@@ -1196,7 +1204,7 @@ class UATPCryptoV7:
         from src.security.merkle_audit_log import MerkleAuditLog
 
         if not hasattr(self, "_audit_logs"):
-            self._audit_logs = {}
+            self._audit_logs: Dict[str, MerkleAuditLog] = {}
 
         if log_id not in self._audit_logs:
             log_dir = self.key_dir / "audit_logs" / log_id
