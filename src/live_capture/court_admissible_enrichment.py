@@ -17,10 +17,38 @@ This module enriches existing capsules to meet:
 """
 
 import logging
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+
+def strip_markdown(text: str) -> str:
+    """Strip markdown formatting from text for plain language display."""
+    if not text:
+        return text
+
+    # Remove code blocks (```...```)
+    text = re.sub(r'```[\s\S]*?```', '', text)
+    # Remove inline code (`...`)
+    text = re.sub(r'`([^`]+)`', r'\1', text)
+    # Remove bold (**...**)
+    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+    # Remove italic (*...*)
+    text = re.sub(r'\*([^*]+)\*', r'\1', text)
+    # Remove headers (# ...)
+    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
+    # Remove link syntax [text](url)
+    text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
+    # Remove horizontal rules
+    text = re.sub(r'^[-*_]{3,}\s*$', '', text, flags=re.MULTILINE)
+    # Clean up multiple newlines
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    # Clean up multiple spaces
+    text = re.sub(r' {2,}', ' ', text)
+
+    return text.strip()
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
@@ -403,16 +431,18 @@ class CourtAdmissibleEnricher:
 
         # Find the most substantive assistant message (longest, most detailed)
         best_msg = max(assistant_msgs, key=lambda m: len(m.content))
-        decision_text = best_msg.content
 
-        # Truncate if too long but keep more context (up to 1000 chars)
-        if len(decision_text) > 1000:
+        # Strip markdown for clean plain language display
+        decision_text = strip_markdown(best_msg.content)
+
+        # Truncate if too long but keep more context (up to 500 chars for cleaner summary)
+        if len(decision_text) > 500:
             # Try to find a natural break point
             break_points = ['. ', '.\n', '\n\n', '! ', '? ']
-            truncated = decision_text[:1000]
+            truncated = decision_text[:500]
             for bp in break_points:
                 last_break = truncated.rfind(bp)
-                if last_break > 500:  # Keep at least 500 chars
+                if last_break > 200:  # Keep at least 200 chars
                     truncated = truncated[:last_break + 1]
                     break
             decision_text = truncated + "..."
