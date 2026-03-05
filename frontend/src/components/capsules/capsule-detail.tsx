@@ -1244,9 +1244,12 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
         <AttributionCard attribution={capsule.payload.attribution} />
       )}
 
-      {/* Lineage - Provenance & Transformation History */}
-      {capsule.payload?.lineage && (
-        <LineageCard lineage={capsule.payload.lineage} />
+      {/* Lineage - Provenance & Transformation History (with live ancestor/descendant fetching) */}
+      {(capsule.payload?.lineage || capsule.capsule_id || capsule.id) && (
+        <LineageCard
+          lineage={capsule.payload?.lineage}
+          capsuleId={capsule.capsule_id || capsule.id}
+        />
       )}
 
       {/* Chain Context - Blockchain Position & Integrity */}
