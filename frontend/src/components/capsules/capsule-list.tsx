@@ -70,7 +70,9 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
       console.log('Capsules: Fetching real capsule data...');
       return api.getCapsules(queryParams);
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 30, // 30 seconds
+    refetchInterval: 1000 * 30, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: false, // Only refresh when tab is active
     enabled: true, // Always enabled, but uses mock in demo mode
   });
 
