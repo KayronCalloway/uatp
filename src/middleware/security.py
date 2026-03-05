@@ -471,6 +471,7 @@ class CSRFProtectionMiddleware(BaseHTTPMiddleware):
             "/auth/register",
             "/chain",  # Chain sealing API uses API key authentication
             "/capsules",  # Capsule API uses API key authentication
+            "/live",  # Live capture API used by Claude Code hooks
         }
         self.allowed_origins = set(allowed_origins) if allowed_origins else None
         self._token_length = 32  # 256 bits
