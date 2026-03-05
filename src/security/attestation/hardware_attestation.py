@@ -303,6 +303,7 @@ class AttestationType(str, Enum):
     NVIDIA_CC = "nvidia_cc"
     INTEL_SGX = "intel_sgx"
     ARM_TRUSTZONE = "arm_trustzone"
+    APPLE_NEURAL_ENGINE = "apple_neural_engine"  # UATP 7.3 ANE attestation
     SIMULATED = "simulated"  # For testing
 
 
@@ -472,6 +473,10 @@ class HardwareAttestationService:
                 )
             elif challenge.attestation_type == AttestationType.INTEL_SGX:
                 result = self._verify_intel_sgx_attestation(
+                    challenge, attestation_data, certificate_chain, measurements
+                )
+            elif challenge.attestation_type == AttestationType.APPLE_NEURAL_ENGINE:
+                result = self._verify_ane_attestation(
                     challenge, attestation_data, certificate_chain, measurements
                 )
             elif challenge.attestation_type == AttestationType.SIMULATED:
@@ -670,6 +675,87 @@ class HardwareAttestationService:
             certificate_chain=certificate_chain,
             attestation_data=base64.b64encode(attestation_data).decode(),
             error="Stub attestation: not implemented. Production requires Intel Attestation Service.",
+        )
+
+    def _verify_ane_attestation(
+        self,
+        challenge: AttestationChallenge,
+        attestation_data: bytes,
+        certificate_chain: List[str],
+        measurements: Optional[Dict[str, str]],
+    ) -> AttestationResult:
+        """
+        Verify Apple Neural Engine attestation for UATP 7.3 ANE training provenance.
+
+        NOTE: This is a stub implementation. Real verification requires:
+        1. Apple Device Check or custom ANE attestation protocol
+        2. Verification of ANE availability on device
+        3. Nonce verification in attestation blob
+        4. Validation of private API usage declarations
+
+        ANE-specific measurements include:
+        - chip_identifier: Apple chip (M1, M2, M3, M4, A17, etc.)
+        - ane_version: ANE hardware version
+        - ane_tops: Theoretical TOPS capability
+        - private_apis: List of private APIs being used (_ANEClient, _ANECompiler)
+        """
+        logger.warning(
+            "Apple Neural Engine verification is stubbed - "
+            "production use requires custom ANE attestation protocol"
+        )
+
+        device_id_hash = hashlib.sha256(attestation_data).hexdigest()
+
+        # Check if nonce is present in attestation data
+        nonce_bytes = challenge.nonce.encode()
+        nonce_present = nonce_bytes in attestation_data
+
+        # For ANE attestation, we also validate ANE-specific measurements
+        ane_measurements = measurements or {}
+        has_chip_info = "chip_identifier" in ane_measurements
+        has_ane_version = "ane_version" in ane_measurements or "ane_available" in ane_measurements
+
+        # Default ANE measurements if not provided
+        default_measurements = {
+            "chip_identifier": ane_measurements.get("chip_identifier", "unknown"),
+            "ane_version": ane_measurements.get("ane_version", "unknown"),
+            "ane_available": ane_measurements.get("ane_available", "true"),
+            "ane_tops": ane_measurements.get("ane_tops", "unknown"),
+            "private_apis_declared": ane_measurements.get("private_apis_declared", ""),
+            "dmca_1201f_claim": ane_measurements.get("dmca_1201f_claim", "false"),
+        }
+
+        if not nonce_present:
+            logger.error(
+                "Apple Neural Engine attestation failed: nonce not found in attestation data. "
+                "This is a stub implementation - production requires custom ANE attestation."
+            )
+            return AttestationResult(
+                verified=False,
+                attestation_type=AttestationType.APPLE_NEURAL_ENGINE,
+                device_id_hash=device_id_hash,
+                timestamp=datetime.now(timezone.utc),
+                measurements=default_measurements,
+                certificate_chain=certificate_chain,
+                attestation_data=base64.b64encode(attestation_data).decode(),
+                error="Stub attestation: nonce verification failed. Production requires ANE attestation protocol.",
+            )
+
+        # Log if ANE-specific info is present
+        if has_chip_info and has_ane_version:
+            logger.info(
+                f"ANE attestation includes chip info: {ane_measurements.get('chip_identifier')}, "
+                f"ANE version: {ane_measurements.get('ane_version')}"
+            )
+
+        return AttestationResult(
+            verified=nonce_present,
+            attestation_type=AttestationType.APPLE_NEURAL_ENGINE,
+            device_id_hash=device_id_hash,
+            timestamp=datetime.now(timezone.utc),
+            measurements=default_measurements,
+            certificate_chain=certificate_chain,
+            attestation_data=base64.b64encode(attestation_data).decode(),
         )
 
     def _verify_simulated_attestation(

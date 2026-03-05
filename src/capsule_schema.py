@@ -57,6 +57,38 @@ class CapsuleType(str, Enum):
     AKC = "akc"
     AKC_CLUSTER = "akc_cluster"
 
+    # UATP 7.2 Training Provenance capsule types
+    TRAINING_PROVENANCE = "training_provenance"
+    MODEL_REGISTRATION = "model_registration"
+
+    # UATP 7.2 Agentic Workflow capsule types
+    WORKFLOW_STEP = "workflow_step"
+    WORKFLOW_COMPLETE = "workflow_complete"
+
+    # UATP 7.2 Hardware Attestation capsule type
+    HARDWARE_ATTESTATION = "hardware_attestation"
+
+    # UATP 7.2 Edge-Native capsule type
+    EDGE_SYNC = "edge_sync"
+
+    # UATP 7.2 Model Registry Protocol capsule types
+    MODEL_LICENSE = "model_license"
+    MODEL_ARTIFACT = "model_artifact"
+
+    # UATP 7.3 ANE Training Provenance capsule types
+    KERNEL_EXECUTION = "kernel_execution"
+    HARDWARE_PROFILE = "hardware_profile"
+    COMPILE_ARTIFACT = "compile_artifact"
+    TRAINING_TELEMETRY = "training_telemetry"
+    ANE_TRAINING_SESSION = "ane_training_session"
+
+    # UATP 7.4 Agent Execution Traces capsule types
+    AGENT_SESSION = "agent_session"
+    TOOL_CALL = "tool_call"
+    ACTION_TRACE = "action_trace"
+    DECISION_POINT = "decision_point"
+    ENVIRONMENT_SNAPSHOT = "environment_snapshot"
+
     # -- Helper dunder for legacy unit tests --
     @classmethod
     def __len__(cls):  # pragma: no cover
@@ -76,6 +108,27 @@ class CapsuleType(str, Enum):
             cls.CITIZENSHIP,
             cls.AKC,
             cls.AKC_CLUSTER,
+            # UATP 7.2 types (excluded from legacy count)
+            cls.TRAINING_PROVENANCE,
+            cls.MODEL_REGISTRATION,
+            cls.WORKFLOW_STEP,
+            cls.WORKFLOW_COMPLETE,
+            cls.HARDWARE_ATTESTATION,
+            cls.EDGE_SYNC,
+            cls.MODEL_LICENSE,
+            cls.MODEL_ARTIFACT,
+            # UATP 7.3 types (excluded from legacy count)
+            cls.KERNEL_EXECUTION,
+            cls.HARDWARE_PROFILE,
+            cls.COMPILE_ARTIFACT,
+            cls.TRAINING_TELEMETRY,
+            cls.ANE_TRAINING_SESSION,
+            # UATP 7.4 types (excluded from legacy count)
+            cls.AGENT_SESSION,
+            cls.TOOL_CALL,
+            cls.ACTION_TRACE,
+            cls.DECISION_POINT,
+            cls.ENVIRONMENT_SNAPSHOT,
         }
         return len([m for m in cls.__members__.values() if m not in advanced_extras])
 
@@ -157,7 +210,7 @@ class BaseCapsule(BaseModel):
     )
 
     capsule_id: str = Field(pattern=r"^caps_[0-9]{4}_[0-9]{2}_[0-9]{2}_[a-f0-9]{16}$")
-    version: str = Field("7.0", pattern=r"^7\.[01]$")
+    version: str = Field("7.0", pattern=r"^7\.[01234]$")
     timestamp: UTCDateTime
     capsule_type: CapsuleType
     status: CapsuleStatus
@@ -664,6 +717,713 @@ class RetirementPayload(BaseModel):
     effective_date: UTCDateTime
 
 
+# --- UATP 7.2 Training Provenance Payloads ---
+
+
+class DatasetReference(BaseModel):
+    """Reference to a training dataset with provenance."""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    dataset_id: str = Field(description="Unique dataset identifier")
+    dataset_name: str = Field(description="Human-readable dataset name")
+    version: str = Field(description="Dataset version")
+    source_url: Optional[str] = Field(None, description="Dataset source URL")
+    license: Optional[str] = Field(None, description="Dataset license")
+    content_hash: Optional[str] = Field(None, description="SHA-256 hash of dataset")
+    record_count: Optional[int] = Field(None, ge=0, description="Number of records")
+    attribution: Optional[Dict[str, Any]] = Field(
+        None, description="Attribution metadata"
+    )
+
+
+class TrainingProvenancePayload(BaseModel):
+    """Payload for training session provenance tracking."""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    session_id: str = Field(description="Unique training session identifier")
+    model_id: str = Field(description="Model being trained")
+    session_type: str = Field(
+        description="Type: pre_training, fine_tuning, rlhf, dpo, sft, adapter"
+    )
+    dataset_refs: List[DatasetReference] = Field(
+        description="References to training datasets"
+    )
+    hyperparameters: Optional[Dict[str, Any]] = Field(
+        None, description="Training hyperparameters"
+    )
+    compute_resources: Optional[Dict[str, Any]] = Field(
+        None, description="GPU/TPU configuration"
+    )
+    started_at: UTCDateTime = Field(description="Session start time")
+    completed_at: Optional[UTCDateTime] = Field(None, description="Session end time")
+    metrics: Optional[Dict[str, Any]] = Field(
+        None, description="Training metrics and evaluation results"
+    )
+    status: str = Field(
+        default="completed",
+        description="Status: pending, running, completed, failed",
+    )
+
+
+class ModelRegistrationPayload(BaseModel):
+    """Payload for model registration with provenance."""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    model_id: str = Field(description="Unique model identifier")
+    model_hash: str = Field(description="SHA-256 hash of model weights")
+    model_type: str = Field(description="Type: base, fine_tune, adapter, merged")
+    version: str = Field(description="Model version string")
+    name: Optional[str] = Field(None, description="Human-readable model name")
+    description: Optional[str] = Field(None, description="Model description")
+    base_model_id: Optional[str] = Field(
+        None, description="Parent model ID for lineage"
+    )
+    training_config: Optional[Dict[str, Any]] = Field(
+        None, description="Training configuration"
+    )
+    dataset_provenance: Optional[List[DatasetReference]] = Field(
+        None, description="Datasets used in training"
+    )
+    license_info: Optional[Dict[str, Any]] = Field(
+        None, description="License information"
+    )
+    capabilities: Optional[List[str]] = Field(
+        None, description="Declared model capabilities"
+    )
+    safety_evaluations: Optional[Dict[str, Any]] = Field(
+        None, description="Safety benchmark results"
+    )
+
+
+# --- UATP 7.2 Agentic Workflow Payloads ---
+
+
+class WorkflowStepPayload(BaseModel):
+    """Payload for individual workflow step capsules."""
+
+    workflow_capsule_id: str = Field(description="Parent workflow capsule ID")
+    step_index: int = Field(ge=0, description="Step position in workflow")
+    step_type: str = Field(
+        description="Type: plan, tool_call, inference, output, human_input, verification"
+    )
+    step_name: Optional[str] = Field(None, description="Human-readable step name")
+    input_data: Optional[Dict[str, Any]] = Field(None, description="Step input")
+    output_data: Optional[Dict[str, Any]] = Field(None, description="Step output")
+    depends_on_steps: Optional[List[int]] = Field(
+        None, description="Indices of dependency steps"
+    )
+    tool_name: Optional[str] = Field(None, description="Tool used (if tool_call)")
+    model_id: Optional[str] = Field(None, description="Model used (if inference)")
+    execution_time_ms: Optional[int] = Field(
+        None, ge=0, description="Step execution time"
+    )
+    confidence: Optional[float] = Field(None, ge=0, le=1, description="Step confidence")
+
+
+class WorkflowCompletePayload(BaseModel):
+    """Payload for workflow completion and sealing."""
+
+    workflow_capsule_id: str = Field(description="Workflow capsule ID")
+    workflow_name: str = Field(description="Workflow name")
+    workflow_type: str = Field(
+        description="Type: linear, branching, iterative, parallel"
+    )
+    total_steps: int = Field(ge=1, description="Total number of steps")
+    step_capsule_ids: List[str] = Field(description="Ordered list of step capsule IDs")
+    aggregated_attribution: Optional[Dict[str, Any]] = Field(
+        None, description="Combined attribution from all steps"
+    )
+    dag_definition: Optional[Dict[str, Any]] = Field(
+        None, description="DAG structure definition"
+    )
+    started_at: UTCDateTime = Field(description="Workflow start time")
+    completed_at: UTCDateTime = Field(description="Workflow completion time")
+    final_output: Optional[Dict[str, Any]] = Field(
+        None, description="Final workflow output"
+    )
+    status: str = Field(
+        default="completed",
+        description="Status: completed, failed, cancelled",
+    )
+
+
+# --- UATP 7.2 Hardware Attestation Payloads ---
+
+
+class HardwareAttestationPayload(BaseModel):
+    """Payload for hardware attestation from Secure Enclave, TEE, or Confidential Computing."""
+
+    attestation_type: str = Field(
+        description="Type: apple_secure_enclave, android_tee, nvidia_cc, intel_sgx, arm_trustzone"
+    )
+    device_id_hash: str = Field(description="SHA-256 hash of device identifier")
+    attestation_timestamp: UTCDateTime = Field(description="When attestation was created")
+    attestation_data: str = Field(description="Base64-encoded attestation blob")
+    certificate_chain: List[str] = Field(
+        description="PEM-encoded certificate chain"
+    )
+    nonce: str = Field(description="Challenge nonce used")
+    measurements: Dict[str, str] = Field(
+        description="Platform measurements (PCRs, etc.)"
+    )
+    verified: bool = Field(default=False, description="Whether attestation was verified")
+    verification_timestamp: Optional[UTCDateTime] = Field(
+        None, description="When verification occurred"
+    )
+
+
+# --- UATP 7.2 Edge-Native Payloads ---
+
+
+class EdgeSyncPayload(BaseModel):
+    """Payload for edge device capsule synchronization."""
+
+    edge_device_id: str = Field(description="Edge device identifier")
+    sync_direction: str = Field(description="Direction: edge_to_cloud, cloud_to_edge")
+    capsule_ids: List[str] = Field(description="Capsule IDs being synced")
+    sync_timestamp: UTCDateTime = Field(description="Sync operation timestamp")
+    offline_duration_seconds: Optional[int] = Field(
+        None, ge=0, description="How long device was offline"
+    )
+    pending_count: int = Field(default=0, ge=0, description="Remaining capsules to sync")
+    sync_status: str = Field(
+        default="completed",
+        description="Status: completed, partial, failed",
+    )
+    compression_used: bool = Field(default=False, description="Whether CBOR was used")
+
+
+# --- UATP 7.2 Model Registry Protocol Payloads ---
+
+
+class ModelLicensePayload(BaseModel):
+    """Payload for model license attachment and verification."""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    license_id: str = Field(description="Unique license identifier")
+    model_id: str = Field(description="Model this license applies to")
+    license_type: str = Field(
+        description="Type: apache2, mit, proprietary, research_only, commercial"
+    )
+    permissions: Dict[str, bool] = Field(
+        description="Granted permissions (use, modify, distribute, commercial)"
+    )
+    restrictions: Dict[str, bool] = Field(
+        description="Restrictions (attribution_required, share_alike, no_derivatives)"
+    )
+    effective_date: UTCDateTime = Field(description="License effective date")
+    expiration_date: Optional[UTCDateTime] = Field(
+        None, description="License expiration (None = perpetual)"
+    )
+    licensor: str = Field(description="Entity granting the license")
+    terms_hash: Optional[str] = Field(
+        None, description="SHA-256 of full license terms"
+    )
+
+
+class ModelArtifactPayload(BaseModel):
+    """Payload for model artifact registration with content addressing."""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    artifact_id: str = Field(description="Unique artifact identifier")
+    model_id: str = Field(description="Model this artifact belongs to")
+    artifact_type: str = Field(
+        description="Type: weights, config, tokenizer, adapter, checkpoint"
+    )
+    content_hash: str = Field(description="SHA-256 hash of artifact content")
+    size_bytes: int = Field(ge=0, description="Artifact size in bytes")
+    storage_uri: str = Field(description="URI where artifact is stored")
+    format: Optional[str] = Field(
+        None, description="Format: safetensors, pytorch, onnx, gguf"
+    )
+    compression: Optional[str] = Field(
+        None, description="Compression: none, gzip, zstd"
+    )
+    created_at: UTCDateTime = Field(description="Artifact creation timestamp")
+
+
+# --- UATP 7.3 ANE Training Provenance Payloads ---
+
+
+class HybridComputeAttribution(BaseModel):
+    """Attribution for hybrid ANE/CPU compute operations."""
+
+    compute_unit: str = Field(
+        description="Compute unit: ane, cpu, gpu, or hybrid"
+    )
+    ane_percentage: float = Field(
+        ge=0, le=100, description="Percentage of compute on ANE"
+    )
+    cpu_percentage: float = Field(
+        ge=0, le=100, description="Percentage of compute on CPU"
+    )
+    gpu_percentage: float = Field(
+        ge=0, le=100, default=0.0, description="Percentage of compute on GPU"
+    )
+    dispatch_reason: Optional[str] = Field(
+        None, description="Reason for compute unit selection"
+    )
+
+
+class MILFusionOptimization(BaseModel):
+    """MIL (Machine Learning Intermediate Language) fusion optimization record."""
+
+    fusion_name: str = Field(description="Name of the fusion optimization applied")
+    source_ops: List[str] = Field(description="Original operations that were fused")
+    target_op: str = Field(description="Resulting fused operation")
+    speedup_factor: Optional[float] = Field(
+        None, ge=1.0, description="Measured speedup from fusion"
+    )
+    memory_reduction_bytes: Optional[int] = Field(
+        None, ge=0, description="Memory savings from fusion"
+    )
+
+
+class KernelExecutionPayload(BaseModel):
+    """Payload for per-kernel dispatch tracking on ANE, Metal GPU, or MLX.
+
+    Kernel types by accelerator:
+    - ANE: kFwdAttn, kFwdFFN, kFFNBwd, kSdpaBwd1, kSdpaBwd2, kQKVb
+    - Metal: metal_gemm, metal_conv2d, metal_attention, metal_layernorm
+    - MLX: mlx_matmul, mlx_attention, mlx_rope, mlx_rms_norm, mlx_cross_entropy
+    - MPS: mps_matmul, mps_conv2d, mps_lstm, mps_transformer
+    """
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    session_id: str = Field(description="Training session ID")
+    accelerator_type: str = Field(
+        default="ane",
+        description="Accelerator: ane, metal, mlx, mps, cpu"
+    )
+    kernel_type: str = Field(
+        description="Kernel type (e.g., kFwdAttn for ANE, mlx_matmul for MLX)"
+    )
+    step_index: int = Field(ge=0, description="Training step index")
+    dispatch_index: int = Field(ge=0, description="Dispatch index within step")
+    execution_time_us: int = Field(ge=0, description="Execution time in microseconds")
+    # Memory format
+    iosurface_format: Optional[str] = Field(
+        None, description="IOSurface format e.g. [1,C,1,S] (ANE)"
+    )
+    metal_buffer_mode: Optional[str] = Field(
+        None, description="Metal buffer storage mode: shared, private, managed"
+    )
+    # Tensor shapes
+    input_shape: Optional[List[int]] = Field(
+        None, description="Input tensor shape"
+    )
+    output_shape: Optional[List[int]] = Field(
+        None, description="Output tensor shape"
+    )
+    # Compute attribution
+    compute_attribution: Optional[HybridComputeAttribution] = Field(
+        None, description="Hybrid compute attribution"
+    )
+    # Program/shader references
+    ane_program_hash: Optional[str] = Field(
+        None, description="Hash of compiled ANE program"
+    )
+    metal_shader_hash: Optional[str] = Field(
+        None, description="Hash of Metal shader library"
+    )
+    mlx_graph_hash: Optional[str] = Field(
+        None, description="Hash of compiled MLX graph"
+    )
+
+
+class HardwareProfilePayload(BaseModel):
+    """Payload for device hardware capabilities including ANE, GPU, and Metal."""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    device_class: str = Field(description="Device class: mac, iphone, ipad")
+    chip_identifier: str = Field(description="Chip identifier: M1, M2, M3, M4, A17, etc.")
+    chip_variant: Optional[str] = Field(
+        None, description="Chip variant: Pro, Max, Ultra"
+    )
+    # ANE capabilities
+    ane_available: bool = Field(description="Whether ANE is available")
+    ane_version: Optional[str] = Field(None, description="ANE version string")
+    ane_tops: Optional[float] = Field(
+        None, ge=0, description="ANE performance in TOPS"
+    )
+    ane_compile_limit: Optional[int] = Field(
+        None, ge=0, description="Maximum compiled models (~119 for M-series)"
+    )
+    # GPU/Metal capabilities
+    gpu_core_count: Optional[int] = Field(
+        None, ge=0, description="Number of GPU cores"
+    )
+    gpu_tflops: Optional[float] = Field(
+        None, ge=0, description="GPU performance in TFLOPS"
+    )
+    metal_version: Optional[str] = Field(
+        None, description="Metal API version (e.g., 3.1)"
+    )
+    metal_family: Optional[str] = Field(
+        None, description="Metal GPU family (e.g., apple9, mac2)"
+    )
+    mps_available: bool = Field(
+        default=True, description="Whether Metal Performance Shaders is available"
+    )
+    mlx_version: Optional[str] = Field(
+        None, description="MLX framework version if installed"
+    )
+    # Memory
+    memory_bandwidth_gbps: Optional[float] = Field(
+        None, ge=0, description="Memory bandwidth in GB/s"
+    )
+    unified_memory_gb: Optional[float] = Field(
+        None, ge=0, description="Unified memory in GB"
+    )
+    # API usage
+    private_apis_used: List[str] = Field(
+        default_factory=list,
+        description="Private APIs used: _ANEClient, _ANECompiler, etc."
+    )
+    frameworks_used: List[str] = Field(
+        default_factory=list,
+        description="ML frameworks: mlx, pytorch_mps, coreml, tensorflow_metal"
+    )
+    # Device identification
+    device_id_hash: str = Field(description="SHA-256 hash of device identifier")
+    os_version: Optional[str] = Field(None, description="Operating system version")
+    coreml_version: Optional[str] = Field(None, description="CoreML framework version")
+
+
+class CompileArtifactPayload(BaseModel):
+    """Payload for compiled ML artifacts: MIL programs, MLX graphs, Metal shaders.
+
+    Artifact formats:
+    - mil: CoreML MIL program (.mlmodel, .mlmodelc)
+    - mlx: MLX compiled graph
+    - metal: Metal shader library (.metallib)
+    - safetensors: Safetensors weight file
+    - gguf: GGML unified format
+    """
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    artifact_id: str = Field(description="Unique artifact identifier")
+    session_id: str = Field(description="Training session ID")
+    artifact_format: str = Field(
+        default="mil",
+        description="Format: mil, mlx, metal, safetensors, gguf"
+    )
+    # Content hashes (at least one required based on artifact_format)
+    mil_program_hash: Optional[str] = Field(
+        None, description="SHA-256 hash of MIL program (required for mil format)"
+    )
+    # Additional hashes by format
+    weight_blob_hash: Optional[str] = Field(
+        None, description="SHA-256 hash of weight blob"
+    )
+    compiled_model_hash: Optional[str] = Field(
+        None, description="SHA-256 hash of compiled model (ANE .mlmodelc)"
+    )
+    mlx_graph_hash: Optional[str] = Field(
+        None, description="SHA-256 hash of compiled MLX graph"
+    )
+    metal_library_hash: Optional[str] = Field(
+        None, description="SHA-256 hash of Metal shader library"
+    )
+    # Optimizations
+    fusion_optimizations: List[MILFusionOptimization] = Field(
+        default_factory=list, description="Applied fusion optimizations"
+    )
+    mlx_simplifications: Optional[List[str]] = Field(
+        None, description="MLX graph simplifications applied"
+    )
+    # Compilation details
+    compile_time_ms: Optional[int] = Field(
+        None, ge=0, description="Compilation time in milliseconds"
+    )
+    target_device: Optional[str] = Field(
+        None, description="Target device for compilation"
+    )
+    target_accelerator: Optional[str] = Field(
+        None, description="Target accelerator: ane, gpu, cpu"
+    )
+    coreml_spec_version: Optional[int] = Field(
+        None, description="CoreML specification version"
+    )
+    mlx_version: Optional[str] = Field(
+        None, description="MLX version used for compilation"
+    )
+    # Size
+    mlmodel_size_bytes: Optional[int] = Field(
+        None, ge=0, description="Size of compiled artifact in bytes"
+    )
+    storage_uri: Optional[str] = Field(
+        None, description="URI where artifact is stored"
+    )
+    created_at: UTCDateTime = Field(description="Artifact creation timestamp")
+
+
+class TrainingTelemetryPayload(BaseModel):
+    """Payload for real-time training telemetry metrics across ANE, GPU, and CPU."""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    session_id: str = Field(description="Training session ID")
+    measurement_window_seconds: int = Field(
+        ge=1, description="Measurement window in seconds"
+    )
+    steps_in_window: int = Field(ge=0, description="Steps completed in window")
+    avg_ms_per_step: float = Field(ge=0, description="Average milliseconds per step")
+    # ANE metrics (optional for GPU-only training)
+    avg_ane_utilization: Optional[float] = Field(
+        None, ge=0, le=100, description="Average ANE utilization percentage"
+    )
+    peak_ane_utilization: Optional[float] = Field(
+        None, ge=0, le=100, description="Peak ANE utilization"
+    )
+    # GPU/Metal metrics
+    avg_gpu_utilization: Optional[float] = Field(
+        None, ge=0, le=100, description="Average GPU utilization percentage"
+    )
+    peak_gpu_utilization: Optional[float] = Field(
+        None, ge=0, le=100, description="Peak GPU utilization"
+    )
+    gpu_memory_used_gb: Optional[float] = Field(
+        None, ge=0, description="GPU memory used in GB"
+    )
+    gpu_memory_allocated_gb: Optional[float] = Field(
+        None, ge=0, description="GPU memory allocated in GB"
+    )
+    metal_command_buffers_per_second: Optional[float] = Field(
+        None, ge=0, description="Metal command buffer throughput"
+    )
+    # Combined metrics
+    tflops_achieved: Optional[float] = Field(
+        None, ge=0, description="Combined TFLOPS achieved"
+    )
+    ane_tflops: Optional[float] = Field(
+        None, ge=0, description="ANE TFLOPS achieved"
+    )
+    gpu_tflops: Optional[float] = Field(
+        None, ge=0, description="GPU TFLOPS achieved"
+    )
+    # System metrics
+    memory_used_gb: Optional[float] = Field(
+        None, ge=0, description="Total unified memory used in GB"
+    )
+    thermal_state: Optional[str] = Field(
+        None, description="Thermal state: nominal, fair, serious, critical"
+    )
+    power_consumption_watts: Optional[float] = Field(
+        None, ge=0, description="Power consumption in watts"
+    )
+    # Attribution
+    compute_attribution: Optional[HybridComputeAttribution] = Field(
+        None, description="Aggregate compute attribution"
+    )
+    primary_accelerator: Optional[str] = Field(
+        None, description="Primary accelerator used: ane, gpu, cpu"
+    )
+    timestamp: UTCDateTime = Field(description="Telemetry timestamp")
+
+
+class ANETrainingSessionPayload(BaseModel):
+    """Payload for complete ANE training session with full provenance."""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    session_id: str = Field(description="Unique training session identifier")
+    model_id: str = Field(description="Model being trained")
+    model_name: Optional[str] = Field(None, description="Human-readable model name")
+    hardware_profile_id: str = Field(description="Reference to hardware profile")
+    started_at: UTCDateTime = Field(description="Session start time")
+    completed_at: Optional[UTCDateTime] = Field(None, description="Session end time")
+    status: str = Field(
+        default="running",
+        description="Status: pending, running, completed, failed, cancelled"
+    )
+    total_steps: Optional[int] = Field(None, ge=0, description="Total training steps")
+    completed_steps: int = Field(default=0, ge=0, description="Completed steps")
+    kernel_execution_count: int = Field(
+        default=0, ge=0, description="Total kernel executions"
+    )
+    compile_artifact_ids: List[str] = Field(
+        default_factory=list, description="References to compile artifacts"
+    )
+    final_loss: Optional[float] = Field(None, description="Final training loss")
+    avg_ms_per_step: Optional[float] = Field(
+        None, ge=0, description="Average ms per step"
+    )
+    avg_ane_utilization: Optional[float] = Field(
+        None, ge=0, le=100, description="Average ANE utilization"
+    )
+    total_ane_time_seconds: Optional[float] = Field(
+        None, ge=0, description="Total ANE compute time in seconds"
+    )
+    total_cpu_time_seconds: Optional[float] = Field(
+        None, ge=0, description="Total CPU compute time in seconds"
+    )
+    hyperparameters: Optional[Dict[str, Any]] = Field(
+        None, description="Training hyperparameters"
+    )
+    dataset_refs: Optional[List[DatasetReference]] = Field(
+        None, description="References to training datasets"
+    )
+    private_apis_used: List[str] = Field(
+        default_factory=list, description="Private APIs used in session"
+    )
+    dmca_1201f_claim: bool = Field(
+        default=False,
+        description="DMCA 1201(f) interoperability claim for reverse engineering"
+    )
+    research_purpose: Optional[str] = Field(
+        None, description="Research purpose declaration"
+    )
+    session_metadata: Optional[Dict[str, Any]] = Field(
+        None, description="Additional session metadata"
+    )
+
+
+# --- UATP 7.4 Agent Execution Traces Payloads ---
+
+
+class ToolCallPayload(BaseModel):
+    """Payload for individual tool invocation tracking."""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    call_id: str = Field(description="Unique tool call ID")
+    session_id: str = Field(description="Parent agent session")
+    tool_name: str = Field(description="Tool name (e.g., Bash, Read, Edit, WebFetch)")
+    tool_category: str = Field(
+        description="Category: terminal, file, browser, api, mcp, custom"
+    )
+    tool_inputs: Dict[str, Any] = Field(description="Input parameters")
+    tool_outputs: Optional[Dict[str, Any]] = Field(None, description="Output/result")
+    started_at: UTCDateTime = Field(description="When tool call started")
+    completed_at: Optional[UTCDateTime] = Field(None, description="When tool call completed")
+    duration_ms: Optional[int] = Field(None, ge=0, description="Duration in milliseconds")
+    status: str = Field(
+        default="pending",
+        description="Status: pending, success, error, timeout"
+    )
+    error_message: Optional[str] = Field(None, description="Error message if failed")
+    step_index: int = Field(ge=0, description="Order within session")
+    parent_call_id: Optional[str] = Field(None, description="For nested tool calls")
+
+
+class ActionTracePayload(BaseModel):
+    """Payload for terminal commands, browser actions, file operations."""
+
+    action_id: str = Field(description="Unique action ID")
+    session_id: str = Field(description="Parent agent session")
+    tool_call_id: Optional[str] = Field(None, description="Link to parent tool call")
+    action_type: str = Field(description="Type: terminal, browser, file, api")
+    # Terminal actions
+    command: Optional[str] = Field(None, description="Terminal command executed")
+    exit_code: Optional[int] = Field(None, description="Command exit code")
+    stdout_hash: Optional[str] = Field(None, description="SHA-256 hash of stdout (privacy)")
+    stderr_hash: Optional[str] = Field(None, description="SHA-256 hash of stderr (privacy)")
+    # Browser actions
+    url: Optional[str] = Field(None, description="URL for browser actions")
+    selector: Optional[str] = Field(None, description="CSS selector for element")
+    browser_action: Optional[str] = Field(
+        None, description="Browser action: navigate, click, type, screenshot"
+    )
+    # File actions
+    file_path: Optional[str] = Field(None, description="File path for file operations")
+    file_operation: Optional[str] = Field(
+        None, description="Operation: read, write, edit, delete, glob, grep"
+    )
+    bytes_affected: Optional[int] = Field(None, ge=0, description="Bytes affected")
+    # Timing
+    executed_at: UTCDateTime = Field(description="When action was executed")
+    duration_ms: int = Field(ge=0, description="Action duration in milliseconds")
+
+
+class DecisionPointPayload(BaseModel):
+    """Payload for agent reasoning and action selection."""
+
+    decision_id: str = Field(description="Unique decision ID")
+    session_id: str = Field(description="Parent agent session")
+    step_index: int = Field(ge=0, description="Step index within session")
+    reasoning: str = Field(description="Why this action was chosen")
+    alternatives_considered: List[str] = Field(
+        default_factory=list, description="Other options evaluated"
+    )
+    selected_action: str = Field(description="What was chosen")
+    confidence: Optional[float] = Field(
+        None, ge=0.0, le=1.0, description="Confidence score 0.0-1.0"
+    )
+    context_summary: Optional[str] = Field(
+        None, description="Relevant context for decision"
+    )
+    constraints_applied: List[str] = Field(
+        default_factory=list, description="Safety, permissions, etc."
+    )
+    timestamp: UTCDateTime = Field(description="When decision was made")
+
+
+class EnvironmentSnapshotPayload(BaseModel):
+    """Payload for system state capture at decision points."""
+
+    snapshot_id: str = Field(description="Unique snapshot ID")
+    session_id: str = Field(description="Parent agent session")
+    working_directory: str = Field(description="Current working directory")
+    env_vars_hash: str = Field(description="Hash of environment variables (privacy)")
+    git_branch: Optional[str] = Field(None, description="Current git branch")
+    git_commit_hash: Optional[str] = Field(None, description="Current commit hash")
+    git_dirty: Optional[bool] = Field(None, description="Whether working tree is dirty")
+    open_files: List[str] = Field(
+        default_factory=list, description="Files being tracked"
+    )
+    system_load: Optional[float] = Field(None, ge=0, description="System load average")
+    memory_available_gb: Optional[float] = Field(
+        None, ge=0, description="Available memory in GB"
+    )
+    timestamp: UTCDateTime = Field(description="Snapshot timestamp")
+
+
+class AgentSessionPayload(BaseModel):
+    """Payload for complete agent session with goals, context, and outcomes."""
+
+    session_id: str = Field(description="Unique session identifier")
+    agent_type: str = Field(description="Agent type: openclaw, claude_code, custom")
+    agent_version: Optional[str] = Field(None, description="Agent version string")
+    scheduler_type: Optional[str] = Field(
+        None, description="Scheduler: heartbeat, on_demand, scheduled"
+    )
+    trigger_message: Optional[str] = Field(
+        None, description="Message that initiated the session"
+    )
+    trigger_source: Optional[str] = Field(
+        None, description="Source: whatsapp, telegram, cli, api"
+    )
+    user_id_hash: Optional[str] = Field(
+        None, description="Privacy-preserving user ID hash"
+    )
+    goals: List[str] = Field(
+        default_factory=list, description="What the agent is trying to achieve"
+    )
+    started_at: UTCDateTime = Field(description="Session start time")
+    completed_at: Optional[UTCDateTime] = Field(None, description="Session end time")
+    status: str = Field(
+        default="pending",
+        description="Status: pending, running, completed, failed, cancelled"
+    )
+    tool_call_count: int = Field(default=0, ge=0, description="Number of tool calls")
+    action_count: int = Field(default=0, ge=0, description="Number of actions")
+    decision_count: int = Field(default=0, ge=0, description="Number of decisions")
+    total_duration_ms: Optional[int] = Field(
+        None, ge=0, description="Total session duration"
+    )
+    outcome_summary: Optional[str] = Field(None, description="Summary of outcomes")
+    error_message: Optional[str] = Field(None, description="Error if failed")
+
+
 # --- Concrete Capsule Models ---
 
 
@@ -825,6 +1585,147 @@ class AKCClusterCapsule(BaseCapsule):
     akc_cluster: AKCClusterPayload
 
 
+# --- UATP 7.2 Capsule Classes ---
+
+
+class TrainingProvenanceCapsule(BaseCapsule):
+    """Capsule for recording training session provenance."""
+
+    capsule_type: Literal[
+        CapsuleType.TRAINING_PROVENANCE
+    ] = CapsuleType.TRAINING_PROVENANCE
+    training_provenance: TrainingProvenancePayload
+
+
+class ModelRegistrationCapsule(BaseCapsule):
+    """Capsule for model registration events."""
+
+    capsule_type: Literal[
+        CapsuleType.MODEL_REGISTRATION
+    ] = CapsuleType.MODEL_REGISTRATION
+    model_registration: ModelRegistrationPayload
+
+
+class WorkflowStepCapsule(BaseCapsule):
+    """Capsule for individual agentic workflow steps."""
+
+    capsule_type: Literal[CapsuleType.WORKFLOW_STEP] = CapsuleType.WORKFLOW_STEP
+    workflow_step: WorkflowStepPayload
+
+
+class WorkflowCompleteCapsule(BaseCapsule):
+    """Capsule for workflow completion and sealing."""
+
+    capsule_type: Literal[CapsuleType.WORKFLOW_COMPLETE] = CapsuleType.WORKFLOW_COMPLETE
+    workflow_complete: WorkflowCompletePayload
+
+
+class HardwareAttestationCapsule(BaseCapsule):
+    """Capsule for hardware attestation records."""
+
+    capsule_type: Literal[
+        CapsuleType.HARDWARE_ATTESTATION
+    ] = CapsuleType.HARDWARE_ATTESTATION
+    hardware_attestation: HardwareAttestationPayload
+
+
+class EdgeSyncCapsule(BaseCapsule):
+    """Capsule for edge device synchronization events."""
+
+    capsule_type: Literal[CapsuleType.EDGE_SYNC] = CapsuleType.EDGE_SYNC
+    edge_sync: EdgeSyncPayload
+
+
+class ModelLicenseCapsule(BaseCapsule):
+    """Capsule for model license attachment."""
+
+    capsule_type: Literal[CapsuleType.MODEL_LICENSE] = CapsuleType.MODEL_LICENSE
+    model_license: ModelLicensePayload
+
+
+class ModelArtifactCapsule(BaseCapsule):
+    """Capsule for model artifact registration."""
+
+    capsule_type: Literal[CapsuleType.MODEL_ARTIFACT] = CapsuleType.MODEL_ARTIFACT
+    model_artifact: ModelArtifactPayload
+
+
+# --- UATP 7.3 ANE Training Provenance Capsule Classes ---
+
+
+class KernelExecutionCapsule(BaseCapsule):
+    """Capsule for ANE kernel execution tracking."""
+
+    capsule_type: Literal[CapsuleType.KERNEL_EXECUTION] = CapsuleType.KERNEL_EXECUTION
+    kernel_execution: KernelExecutionPayload
+
+
+class HardwareProfileCapsule(BaseCapsule):
+    """Capsule for hardware profile registration."""
+
+    capsule_type: Literal[CapsuleType.HARDWARE_PROFILE] = CapsuleType.HARDWARE_PROFILE
+    hardware_profile: HardwareProfilePayload
+
+
+class CompileArtifactCapsule(BaseCapsule):
+    """Capsule for MIL compile artifact registration."""
+
+    capsule_type: Literal[CapsuleType.COMPILE_ARTIFACT] = CapsuleType.COMPILE_ARTIFACT
+    compile_artifact: CompileArtifactPayload
+
+
+class TrainingTelemetryCapsule(BaseCapsule):
+    """Capsule for training telemetry records."""
+
+    capsule_type: Literal[CapsuleType.TRAINING_TELEMETRY] = CapsuleType.TRAINING_TELEMETRY
+    training_telemetry: TrainingTelemetryPayload
+
+
+class ANETrainingSessionCapsule(BaseCapsule):
+    """Capsule for complete ANE training session."""
+
+    capsule_type: Literal[CapsuleType.ANE_TRAINING_SESSION] = CapsuleType.ANE_TRAINING_SESSION
+    ane_training_session: ANETrainingSessionPayload
+
+
+# --- UATP 7.4 Agent Execution Traces Capsule Classes ---
+
+
+class AgentSessionCapsule(BaseCapsule):
+    """Capsule for complete agent session."""
+
+    capsule_type: Literal[CapsuleType.AGENT_SESSION] = CapsuleType.AGENT_SESSION
+    agent_session: AgentSessionPayload
+
+
+class ToolCallCapsule(BaseCapsule):
+    """Capsule for individual tool invocations."""
+
+    capsule_type: Literal[CapsuleType.TOOL_CALL] = CapsuleType.TOOL_CALL
+    tool_call: ToolCallPayload
+
+
+class ActionTraceCapsule(BaseCapsule):
+    """Capsule for terminal, browser, and file actions."""
+
+    capsule_type: Literal[CapsuleType.ACTION_TRACE] = CapsuleType.ACTION_TRACE
+    action_trace: ActionTracePayload
+
+
+class DecisionPointCapsule(BaseCapsule):
+    """Capsule for agent decision reasoning."""
+
+    capsule_type: Literal[CapsuleType.DECISION_POINT] = CapsuleType.DECISION_POINT
+    decision_point: DecisionPointPayload
+
+
+class EnvironmentSnapshotCapsule(BaseCapsule):
+    """Capsule for environment state capture."""
+
+    capsule_type: Literal[CapsuleType.ENVIRONMENT_SNAPSHOT] = CapsuleType.ENVIRONMENT_SNAPSHOT
+    environment_snapshot: EnvironmentSnapshotPayload
+
+
 # --- Discriminated Union for Type-Safe Parsing ---
 
 AnyCapsule = Annotated[
@@ -858,6 +1759,27 @@ AnyCapsule = Annotated[
         CitizenshipCapsule,
         AKCCapsule,
         AKCClusterCapsule,
+        # UATP 7.2 capsule types
+        TrainingProvenanceCapsule,
+        ModelRegistrationCapsule,
+        WorkflowStepCapsule,
+        WorkflowCompleteCapsule,
+        HardwareAttestationCapsule,
+        EdgeSyncCapsule,
+        ModelLicenseCapsule,
+        ModelArtifactCapsule,
+        # UATP 7.3 ANE Training Provenance capsule types
+        KernelExecutionCapsule,
+        HardwareProfileCapsule,
+        CompileArtifactCapsule,
+        TrainingTelemetryCapsule,
+        ANETrainingSessionCapsule,
+        # UATP 7.4 Agent Execution Traces capsule types
+        AgentSessionCapsule,
+        ToolCallCapsule,
+        ActionTraceCapsule,
+        DecisionPointCapsule,
+        EnvironmentSnapshotCapsule,
     ],
     Field(discriminator="capsule_type"),
 ]
@@ -897,6 +1819,27 @@ DividendBondCapsule.model_rebuild()
 CitizenshipCapsule.model_rebuild()
 AKCCapsule.model_rebuild()
 AKCClusterCapsule.model_rebuild()
+# UATP 7.2 capsule rebuilds
+TrainingProvenanceCapsule.model_rebuild()
+ModelRegistrationCapsule.model_rebuild()
+WorkflowStepCapsule.model_rebuild()
+WorkflowCompleteCapsule.model_rebuild()
+HardwareAttestationCapsule.model_rebuild()
+EdgeSyncCapsule.model_rebuild()
+ModelLicenseCapsule.model_rebuild()
+ModelArtifactCapsule.model_rebuild()
+# UATP 7.3 capsule rebuilds
+KernelExecutionCapsule.model_rebuild()
+HardwareProfileCapsule.model_rebuild()
+CompileArtifactCapsule.model_rebuild()
+TrainingTelemetryCapsule.model_rebuild()
+ANETrainingSessionCapsule.model_rebuild()
+# UATP 7.4 capsule rebuilds
+AgentSessionCapsule.model_rebuild()
+ToolCallCapsule.model_rebuild()
+ActionTraceCapsule.model_rebuild()
+DecisionPointCapsule.model_rebuild()
+EnvironmentSnapshotCapsule.model_rebuild()
 CapsuleList.model_rebuild()
 
 # --- Type Mapping for Deserialization ---
@@ -932,6 +1875,27 @@ CAPSULE_TYPE_MAP = {
     CapsuleType.CITIZENSHIP: CitizenshipCapsule,
     CapsuleType.AKC: AKCCapsule,
     CapsuleType.AKC_CLUSTER: AKCClusterCapsule,
+    # UATP 7.2 types
+    CapsuleType.TRAINING_PROVENANCE: TrainingProvenanceCapsule,
+    CapsuleType.MODEL_REGISTRATION: ModelRegistrationCapsule,
+    CapsuleType.WORKFLOW_STEP: WorkflowStepCapsule,
+    CapsuleType.WORKFLOW_COMPLETE: WorkflowCompleteCapsule,
+    CapsuleType.HARDWARE_ATTESTATION: HardwareAttestationCapsule,
+    CapsuleType.EDGE_SYNC: EdgeSyncCapsule,
+    CapsuleType.MODEL_LICENSE: ModelLicenseCapsule,
+    CapsuleType.MODEL_ARTIFACT: ModelArtifactCapsule,
+    # UATP 7.3 types
+    CapsuleType.KERNEL_EXECUTION: KernelExecutionCapsule,
+    CapsuleType.HARDWARE_PROFILE: HardwareProfileCapsule,
+    CapsuleType.COMPILE_ARTIFACT: CompileArtifactCapsule,
+    CapsuleType.TRAINING_TELEMETRY: TrainingTelemetryCapsule,
+    CapsuleType.ANE_TRAINING_SESSION: ANETrainingSessionCapsule,
+    # UATP 7.4 types
+    CapsuleType.AGENT_SESSION: AgentSessionCapsule,
+    CapsuleType.TOOL_CALL: ToolCallCapsule,
+    CapsuleType.ACTION_TRACE: ActionTraceCapsule,
+    CapsuleType.DECISION_POINT: DecisionPointCapsule,
+    CapsuleType.ENVIRONMENT_SNAPSHOT: EnvironmentSnapshotCapsule,
 }
 
 

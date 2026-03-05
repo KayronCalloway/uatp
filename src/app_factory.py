@@ -139,6 +139,19 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"PostgreSQL not available (using SQLite): {e}")
 
+        # Load lineage graph from database
+        try:
+            from .services.capsule_lifecycle_service import capsule_lifecycle_service
+
+            logger.info("Loading lineage graph from database...")
+            async with db.get_session() as session:
+                edge_count = await capsule_lifecycle_service.load_lineage_from_database(
+                    session
+                )
+                logger.info(f"Loaded {edge_count} lineage edges into graph")
+        except Exception as e:
+            logger.warning(f"Failed to load lineage graph (non-critical): {e}")
+
         # Initialize services
         logger.info("Initializing services...")
         app.state.user_service = create_user_service()

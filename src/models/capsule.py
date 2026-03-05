@@ -112,6 +112,17 @@ class CapsuleModel(db.Base):
     embedding_model = Column(String(100), nullable=True)  # Model used for embedding
     embedding_created_at = Column(DateTime(timezone=True), nullable=True)
 
+    # --- UATP 7.2 Workflow Chain Fields ---
+    # Link capsules to parent workflow for multi-step agent workflows
+    workflow_capsule_id = Column(
+        String(64), nullable=True, index=True
+    )  # Parent workflow ID
+    step_index = Column(Integer, nullable=True)  # Position in workflow (0-indexed)
+    step_type = Column(
+        String(50), nullable=True
+    )  # plan, tool_call, inference, output, human_input, verification
+    depends_on_steps = Column(JSON, nullable=True)  # List of step indices this depends on
+
     # No polymorphism - all capsule types use this single model
     __mapper_args__ = {}
 
