@@ -52,6 +52,8 @@ def strip_markdown(text: str) -> str:
     )
     # Remove horizontal rules
     text = re.sub(r"^[-*_]{3,}\s*$", "", text, flags=re.MULTILINE)
+    # Remove bullet point markers at line start
+    text = re.sub(r"^[\-\*•]\s+", "", text, flags=re.MULTILINE)
     # Clean up multiple newlines
     text = re.sub(r"\n{3,}", "\n\n", text)
     # Clean up multiple spaces
@@ -511,6 +513,8 @@ class CourtAdmissibleEnricher:
                     if len(sentence) > 20 and sentence not in specific_why_parts:
                         specific_why_parts.append(sentence)
 
+        # Strip markdown from why parts before joining
+        specific_why_parts = [strip_markdown(part) for part in specific_why_parts]
         specific_why = (
             " | ".join(specific_why_parts[:3])
             if specific_why_parts
@@ -529,8 +533,9 @@ class CourtAdmissibleEnricher:
                 or line.startswith("*")
                 or line.startswith("•")
             ):
-                # Clean up the line
+                # Clean up the line and strip markdown
                 cleaned = line.lstrip("0123456789.-*• ").strip()
+                cleaned = strip_markdown(cleaned)
                 if 10 < len(cleaned) < 200:
                     key_points.append(cleaned)
 
