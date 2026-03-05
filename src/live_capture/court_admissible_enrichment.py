@@ -30,25 +30,35 @@ def strip_markdown(text: str) -> str:
         return text
 
     # Remove code blocks (```...```)
-    text = re.sub(r'```[\s\S]*?```', '', text)
+    text = re.sub(r"```[\s\S]*?```", "", text)
     # Remove inline code (`...`)
-    text = re.sub(r'`([^`]+)`', r'\1', text)
+    text = re.sub(r"`([^`]+)`", r"\1", text)
     # Remove bold (**...**)
-    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+    text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
     # Remove italic (*...*)
-    text = re.sub(r'\*([^*]+)\*', r'\1', text)
+    text = re.sub(r"\*([^*]+)\*", r"\1", text)
     # Remove headers (# ...)
-    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
+    text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
     # Remove link syntax [text](url)
-    text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    # Remove markdown tables - header separator row (|---|---|)
+    text = re.sub(r"^\|[-:\s|]+\|\s*$", "", text, flags=re.MULTILINE)
+    # Remove table pipes and convert to plain text
+    text = re.sub(
+        r"^\|(.+)\|$",
+        lambda m: m.group(1).replace("|", " - "),
+        text,
+        flags=re.MULTILINE,
+    )
     # Remove horizontal rules
-    text = re.sub(r'^[-*_]{3,}\s*$', '', text, flags=re.MULTILINE)
+    text = re.sub(r"^[-*_]{3,}\s*$", "", text, flags=re.MULTILINE)
     # Clean up multiple newlines
-    text = re.sub(r'\n{3,}', '\n\n', text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
     # Clean up multiple spaces
-    text = re.sub(r' {2,}', ' ', text)
+    text = re.sub(r" {2,}", " ", text)
 
     return text.strip()
+
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
@@ -57,6 +67,7 @@ logger = logging.getLogger(__name__)
 # Import embedder for historical similarity lookup
 try:
     from src.embeddings.capsule_embedder import CapsuleEmbedder
+
     _embedder = CapsuleEmbedder()
     _EMBEDDER_AVAILABLE = True
 except Exception as e:
@@ -70,9 +81,7 @@ class CourtAdmissibleEnricher:
 
     @staticmethod
     def get_historical_accuracy(
-        session_content: str,
-        min_similarity: float = 0.3,
-        limit: int = 10
+        session_content: str, min_similarity: float = 0.3, limit: int = 10
     ) -> Tuple[int, Optional[float], List[Dict[str, Any]]]:
         """
         Find similar historical capsules and calculate accuracy from outcomes.
@@ -94,9 +103,7 @@ class CourtAdmissibleEnricher:
         try:
             # Find similar capsules using embeddings
             similar = _embedder.find_similar(
-                session_content,
-                limit=limit,
-                min_similarity=min_similarity
+                session_content, limit=limit, min_similarity=min_similarity
             )
 
             if not similar:
@@ -104,10 +111,9 @@ class CourtAdmissibleEnricher:
 
             # Query outcomes for similar capsules
             import psycopg2
+
             conn = psycopg2.connect(
-                host="localhost",
-                database="uatp_capsule_engine",
-                user="uatp_user"
+                host="localhost", database="uatp_capsule_engine", user="uatp_user"
             )
 
             similar_with_outcomes = []
@@ -116,12 +122,15 @@ class CourtAdmissibleEnricher:
 
             with conn.cursor() as cur:
                 for capsule_id, similarity, _ in similar:
-                    cur.execute("""
+                    cur.execute(
+                        """
                         SELECT outcome_status, outcome_notes,
                                payload->>'prompt' as prompt
                         FROM capsules
                         WHERE capsule_id = %s
-                    """, (capsule_id,))
+                    """,
+                        (capsule_id,),
+                    )
                     row = cur.fetchone()
 
                     if row and row[0]:  # Has outcome
@@ -130,13 +139,17 @@ class CourtAdmissibleEnricher:
                         if outcome_status == "success":
                             success_count += 1
 
-                        similar_with_outcomes.append({
-                            "capsule_id": capsule_id,
-                            "similarity": round(similarity, 3),
-                            "outcome": outcome_status,
-                            "notes": outcome_notes,
-                            "prompt_preview": (prompt[:50] + "...") if prompt and len(prompt) > 50 else prompt
-                        })
+                        similar_with_outcomes.append(
+                            {
+                                "capsule_id": capsule_id,
+                                "similarity": round(similarity, 3),
+                                "outcome": outcome_status,
+                                "notes": outcome_notes,
+                                "prompt_preview": (prompt[:50] + "...")
+                                if prompt and len(prompt) > 50
+                                else prompt,
+                            }
+                        )
 
             conn.close()
 
@@ -310,26 +323,33 @@ class CourtAdmissibleEnricher:
         )
 
         # Historical accuracy from similar capsules (using embeddings + outcomes)
-        session_content = " ".join([
-            getattr(msg, 'content', str(msg)) if hasattr(msg, 'content') else str(msg)
-            for msg in messages[:10]  # Use first 10 messages for similarity
-        ])
+        session_content = " ".join(
+            [
+                getattr(msg, "content", str(msg))
+                if hasattr(msg, "content")
+                else str(msg)
+                for msg in messages[:10]  # Use first 10 messages for similarity
+            ]
+        )
 
-        similar_decisions_count, historical_accuracy, similar_capsules = \
+        similar_decisions_count, historical_accuracy, similar_capsules = (
             CourtAdmissibleEnricher.get_historical_accuracy(
-                session_content,
-                min_similarity=0.25,
-                limit=20
+                session_content, min_similarity=0.25, limit=20
             )
+        )
 
         # Adjust hallucination probability based on historical accuracy
         if historical_accuracy is not None and similar_decisions_count >= 3:
             # If we have enough similar data, use it to refine the estimate
             historical_failure_rate = 1.0 - historical_accuracy
             # Blend: 50% model estimate, 50% historical data
-            blended_hallucination_prob = (probability_wrong * 0.2 + historical_failure_rate) / 2
+            blended_hallucination_prob = (
+                probability_wrong * 0.2 + historical_failure_rate
+            ) / 2
             failure_modes[-1]["probability"] = round(blended_hallucination_prob, 3)
-            failure_modes[-1]["historical_basis"] = f"Based on {similar_decisions_count} similar decisions"
+            failure_modes[-1]["historical_basis"] = (
+                f"Based on {similar_decisions_count} similar decisions"
+            )
 
         return {
             "probability_correct": round(probability_correct, 3),
@@ -343,7 +363,9 @@ class CourtAdmissibleEnricher:
             "failure_modes": failure_modes,
             "similar_decisions_count": similar_decisions_count,
             "historical_accuracy": historical_accuracy,
-            "similar_capsules": similar_capsules[:5] if similar_capsules else [],  # Top 5 similar
+            "similar_capsules": similar_capsules[:5]
+            if similar_capsules
+            else [],  # Top 5 similar
         }
 
     @staticmethod
@@ -438,19 +460,26 @@ class CourtAdmissibleEnricher:
         # Truncate if too long but keep more context (up to 500 chars for cleaner summary)
         if len(decision_text) > 500:
             # Try to find a natural break point
-            break_points = ['. ', '.\n', '\n\n', '! ', '? ']
+            break_points = [". ", ".\n", "\n\n", "! ", "? "]
             truncated = decision_text[:500]
             for bp in break_points:
                 last_break = truncated.rfind(bp)
                 if last_break > 200:  # Keep at least 200 chars
-                    truncated = truncated[:last_break + 1]
+                    truncated = truncated[: last_break + 1]
                     break
             decision_text = truncated + "..."
 
         # Extract specific "why" from the content
         why_indicators = [
-            "because", "since", "due to", "as a result", "therefore",
-            "this is because", "the reason", "in order to", "to ensure"
+            "because",
+            "since",
+            "due to",
+            "as a result",
+            "therefore",
+            "this is because",
+            "the reason",
+            "in order to",
+            "to ensure",
         ]
 
         specific_why_parts = []
@@ -459,8 +488,8 @@ class CourtAdmissibleEnricher:
             idx = content_lower.find(indicator)
             if idx != -1:
                 # Extract the sentence containing the indicator
-                start = max(0, content_lower.rfind('.', 0, idx) + 1)
-                end = content_lower.find('.', idx)
+                start = max(0, content_lower.rfind(".", 0, idx) + 1)
+                end = content_lower.find(".", idx)
                 if end == -1:
                     end = min(idx + 200, len(content_lower))
                 sentence = best_msg.content[start:end].strip()
@@ -474,26 +503,34 @@ class CourtAdmissibleEnricher:
             for pattern in rec_patterns:
                 idx = content_lower.find(pattern)
                 if idx != -1:
-                    start = max(0, content_lower.rfind('.', 0, idx) + 1)
-                    end = content_lower.find('.', idx)
+                    start = max(0, content_lower.rfind(".", 0, idx) + 1)
+                    end = content_lower.find(".", idx)
                     if end == -1:
                         end = min(idx + 150, len(content_lower))
                     sentence = best_msg.content[start:end].strip()
                     if len(sentence) > 20 and sentence not in specific_why_parts:
                         specific_why_parts.append(sentence)
 
-        specific_why = " | ".join(specific_why_parts[:3]) if specific_why_parts else \
-            f"Based on analysis of the user's request: {user_msgs[-1].content[:100] if user_msgs else 'unknown'}"
+        specific_why = (
+            " | ".join(specific_why_parts[:3])
+            if specific_why_parts
+            else f"Based on analysis of the user's request: {user_msgs[-1].content[:100] if user_msgs else 'unknown'}"
+        )
 
         # Extract key points (bullet-like items)
         key_points = []
-        lines = best_msg.content.split('\n')
+        lines = best_msg.content.split("\n")
         for line in lines:
             line = line.strip()
             # Look for numbered or bulleted items
-            if line and (line[0].isdigit() or line.startswith('-') or line.startswith('*') or line.startswith('•')):
+            if line and (
+                line[0].isdigit()
+                or line.startswith("-")
+                or line.startswith("*")
+                or line.startswith("•")
+            ):
                 # Clean up the line
-                cleaned = line.lstrip('0123456789.-*• ').strip()
+                cleaned = line.lstrip("0123456789.-*• ").strip()
                 if 10 < len(cleaned) < 200:
                     key_points.append(cleaned)
 
@@ -516,18 +553,21 @@ class CourtAdmissibleEnricher:
             PlainLanguageSummary dictionary
         """
         # Extract the ACTUAL decision and reasoning
-        decision, specific_why, extracted_points = \
+        decision, specific_why, extracted_points = (
             CourtAdmissibleEnricher.extract_key_recommendation(messages)
+        )
 
         # Get the user's original question for context
         user_questions = [m.content for m in messages if m.role == "user"]
-        original_question = user_questions[0][:200] if user_questions else "Unknown request"
+        original_question = (
+            user_questions[0][:200] if user_questions else "Unknown request"
+        )
 
         # Build specific key factors from extracted content
         key_factors = []
 
         # Add the original question
-        key_factors.append(f"User asked: \"{original_question}\"")
+        key_factors.append(f'User asked: "{original_question}"')
 
         # Add extracted key points
         for point in extracted_points[:3]:
@@ -543,9 +583,9 @@ class CourtAdmissibleEnricher:
 
         # What if different - make it specific to this conversation
         what_if_different = (
-            f"This recommendation is specific to your situation. "
-            f"Different requirements or constraints (e.g., different tech stack, "
-            f"different scale, different team expertise) could lead to different recommendations."
+            "This recommendation is specific to your situation. "
+            "Different requirements or constraints (e.g., different tech stack, "
+            "different scale, different team expertise) could lead to different recommendations."
         )
 
         # Your rights
