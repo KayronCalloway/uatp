@@ -58,6 +58,17 @@ class SQLAlchemyDB:
         from src.models.payment import PayoutMethodModel, TransactionModel  # noqa
         from src.models.user import UserModel  # noqa
 
+        # UATP 7.2 Training Provenance models
+        from src.models.model_registry import ModelRegistryModel  # noqa
+        from src.models.training_session import TrainingSessionModel  # noqa
+
+        # UATP 7.2 Workflow Chain models
+        from src.models.workflow_capsule import WorkflowCapsuleModel  # noqa
+
+        # UATP 7.2 Lineage and Chain Sealing models
+        from src.models.lineage import LineageEdgeModel  # noqa
+        from src.models.chain_seal import ChainSealModel  # noqa
+
         async with self.engine.begin() as conn:
             await conn.run_sync(self.Base.metadata.create_all)
 

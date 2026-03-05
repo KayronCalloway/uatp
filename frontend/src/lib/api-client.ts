@@ -710,6 +710,60 @@ export class UATCapsuleEngineClient {
     return response.data;
   }
 
+  // Lineage endpoints
+  async getCapsuleAncestors(capsuleId: string, depth?: number): Promise<{
+    capsule_id: string;
+    ancestors: string[];
+    count: number;
+    depth: number | null;
+  }> {
+    const response = await this.client.get(`/capsules/${capsuleId}/ancestors`, {
+      params: depth ? { depth } : {}
+    });
+    return response.data;
+  }
+
+  async getCapsuleDescendants(capsuleId: string, depth?: number): Promise<{
+    capsule_id: string;
+    descendants: string[];
+    count: number;
+    depth: number | null;
+  }> {
+    const response = await this.client.get(`/capsules/${capsuleId}/descendants`, {
+      params: depth ? { depth } : {}
+    });
+    return response.data;
+  }
+
+  async getCapsuleLineage(capsuleId: string): Promise<{
+    capsule_id: string;
+    lineage: string[];
+    depth: number;
+  }> {
+    const response = await this.client.get(`/capsules/${capsuleId}/lineage`);
+    return response.data;
+  }
+
+  async getChainCapsules(chainId: string): Promise<{
+    chain_id: string;
+    capsule_ids: string[];
+    capsule_count: number;
+    merkle_root: string | null;
+  }> {
+    const response = await this.client.get(`/chain/${chainId}/capsules`);
+    return response.data;
+  }
+
+  async getChainSealerStatus(): Promise<{
+    status: string;
+    seals_dir: string;
+    verify_key: string;
+    seal_count: number;
+  }> {
+    const response = await this.client.get('/chain/status');
+    return response.data;
+  }
+
   // Admin endpoints
   async getAdminCapsuleStats(): Promise<{
     total_capsules: number;
@@ -858,6 +912,13 @@ export const api = {
 
   // Admin
   getAdminCapsuleStats: () => apiClient.getAdminCapsuleStats(),
+
+  // Lineage
+  getCapsuleAncestors: (capsuleId: string, depth?: number) => apiClient.getCapsuleAncestors(capsuleId, depth),
+  getCapsuleDescendants: (capsuleId: string, depth?: number) => apiClient.getCapsuleDescendants(capsuleId, depth),
+  getCapsuleLineage: (capsuleId: string) => apiClient.getCapsuleLineage(capsuleId),
+  getChainCapsules: (chainId: string) => apiClient.getChainCapsules(chainId),
+  getChainSealerStatus: () => apiClient.getChainSealerStatus(),
 };
 
 export default apiClient;

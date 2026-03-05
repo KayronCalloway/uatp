@@ -212,6 +212,7 @@ async def csrf_middleware(request: Request, call_next):
         "/api/v1/live/",  # Live capture API uses API key authentication
         "/live/",  # Live capture API uses API key authentication (actual path)
         "/capsules",  # Capsule API uses API key authentication
+        "/chain",  # Chain sealing API uses API key authentication
     ]
 
     # Check if path should be skipped
