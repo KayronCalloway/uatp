@@ -18,7 +18,9 @@ import {
   Shield,
   Clock,
   AlertTriangle,
-  Lock
+  Lock,
+  MessageSquare,
+  Bot
 } from 'lucide-react';
 import { isEncrypted } from '@/lib/capsule-encryption';
 import { formatDate, truncateText, getCapsuleTypeColor } from '@/lib/utils';
@@ -383,6 +385,15 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
                 const plainSummary = capsule.payload?.plain_language_summary?.decision;
                 const capsuleIsEncrypted = isEncrypted(capsule);
 
+                // Conversation stats
+                const reasoningSteps = capsule.payload?.reasoning_steps || [];
+                const userMessages = reasoningSteps.filter((s: any) => s.role === 'user');
+                const assistantMessages = reasoningSteps.filter((s: any) => s.role === 'assistant');
+                const hasConversation = reasoningSteps.length > 0;
+                const hasAssistantResponse = assistantMessages.length > 0;
+                const firstUserMessage = userMessages[0]?.reasoning;
+                const lastAssistantMessage = assistantMessages[assistantMessages.length - 1]?.reasoning;
+
                 return (
                   <div
                     key={capsule.capsule_id || capsule.id || `capsule-${Math.random()}`}
@@ -423,14 +434,44 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
                               E2E
                             </Badge>
                           )}
+                          {hasConversation && (
+                            <Badge variant="outline" className={`h-5 text-xs flex items-center gap-1 ${hasAssistantResponse ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                              <MessageSquare className="h-3 w-3" />
+                              {userMessages.length}
+                              {hasAssistantResponse && (
+                                <>
+                                  <Bot className="h-3 w-3 ml-1" />
+                                  {assistantMessages.length}
+                                </>
+                              )}
+                            </Badge>
+                          )}
 
                           <span className="text-xs text-gray-400 font-mono ml-auto">
                             {truncateText(capsule.capsule_id, 12)}
                           </span>
                         </div>
 
-                        {/* Main content - show plain language summary if available */}
-                        {plainSummary ? (
+                        {/* Main content - show conversation preview if available */}
+                        {hasConversation ? (
+                          <div className="mb-2 space-y-1">
+                            {firstUserMessage && (
+                              <p className="text-sm text-gray-600 line-clamp-1">
+                                <span className="text-gray-400">Q:</span> {truncateText(firstUserMessage, 100)}
+                              </p>
+                            )}
+                            {hasAssistantResponse && lastAssistantMessage && (
+                              <p className="text-sm text-gray-900 line-clamp-1">
+                                <span className="text-emerald-600">A:</span> {truncateText(lastAssistantMessage, 100)}
+                              </p>
+                            )}
+                            {!hasAssistantResponse && (
+                              <p className="text-xs text-amber-600 italic">
+                                No assistant response captured
+                              </p>
+                            )}
+                          </div>
+                        ) : plainSummary ? (
                           <p className="text-sm text-gray-900 mb-2 line-clamp-2">
                             {truncateText(plainSummary, 150)}
                           </p>
