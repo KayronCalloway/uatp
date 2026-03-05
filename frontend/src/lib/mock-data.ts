@@ -239,7 +239,7 @@ export function getMockReasoningAnalysis() {
 export function getMockHealthCheck() {
   return {
     status: 'healthy',
-    version: '7.0.0-alpha',
+    version: '7.4.0',
     uptime: 342156,
     timestamp: new Date().toISOString(),
     database: 'connected',

@@ -30,7 +30,7 @@ export function AttributionCard({ attribution }: AttributionCardProps) {
           <Users className="w-5 h-5 text-blue-600" />
           Economic Attribution
           <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-auto">
-            UATP v7.0
+            UATP v7.4
           </span>
         </CardTitle>
       </CardHeader>

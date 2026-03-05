@@ -12,7 +12,10 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Key,
+  Lock,
+  FileCheck
 } from 'lucide-react';
 
 export function SystemView() {
@@ -29,12 +32,19 @@ export function SystemView() {
     staleTime: 1000 * 60,
   });
 
+  const { data: cryptoStatus, isLoading: cryptoLoading, refetch: refetchCrypto } = useQuery({
+    queryKey: ['crypto-status'],
+    queryFn: () => api.getCryptoStatus(),
+    staleTime: 1000 * 60,
+  });
+
   const isHealthy = health?.status === 'healthy';
   const dbConnected = stats?.database_connected !== false;
 
   const handleRefresh = () => {
     refetchHealth();
     refetchStats();
+    refetchCrypto();
   };
 
   return (
@@ -155,17 +165,19 @@ export function SystemView() {
                     <Shield className="h-5 w-5 text-green-600" />
                   </div>
                   <div>
-                    <h4 className="font-semibold">Verification</h4>
-                    <p className="text-xs text-gray-500">Cryptographic Signing</p>
+                    <h4 className="font-semibold">Cryptography</h4>
+                    <p className="text-xs text-gray-500">Signing & Verification</p>
                   </div>
                 </div>
                 <div className="h-3 w-3 rounded-full bg-green-500"></div>
               </div>
               <div className="text-sm text-gray-600">
-                Status: <span className="font-medium text-green-600">Active</span>
+                Status: <span className="font-medium text-green-600">
+                  {cryptoStatus?.summary?.active_features || 0}/{cryptoStatus?.summary?.total_features || 0} Active
+                </span>
               </div>
               <div className="text-xs text-gray-500 mt-2">
-                Ed25519 signatures enabled
+                {cryptoStatus?.algorithms?.signing?.join(', ') || 'Loading...'}
               </div>
             </CardContent>
           </Card>
@@ -275,6 +287,96 @@ export function SystemView() {
         </CardContent>
       </Card>
 
+      {/* Cryptographic Features */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Lock className="h-5 w-5" />
+            <span>Cryptographic Features</span>
+            {cryptoStatus?.summary && (
+              <span className="text-sm font-normal text-gray-500 ml-2">
+                ({cryptoStatus.summary.completion_percent}% complete)
+              </span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {cryptoLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : cryptoStatus?.features ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Object.entries(cryptoStatus.features).map(([key, feature]) => (
+                  <div
+                    key={key}
+                    className={`p-3 rounded-lg border ${
+                      feature.status === 'active'
+                        ? 'bg-green-50 border-green-200'
+                        : feature.status === 'available'
+                        ? 'bg-yellow-50 border-yellow-200'
+                        : 'bg-gray-50 border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{feature.name}</span>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                          feature.status === 'active'
+                            ? 'bg-green-100 text-green-700'
+                            : feature.status === 'available'
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        {feature.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Warnings */}
+              {cryptoStatus.warnings && cryptoStatus.warnings.length > 0 && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-start space-x-2">
+                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-yellow-800">Warnings</p>
+                      <ul className="text-xs text-yellow-700 mt-1 space-y-1">
+                        {cryptoStatus.warnings.map((warning, i) => (
+                          <li key={i}>{warning}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Recommendations */}
+              {cryptoStatus.recommendations && cryptoStatus.recommendations.length > 0 && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start space-x-2">
+                    <FileCheck className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-800">Recommendations</p>
+                      <ul className="text-xs text-blue-700 mt-1 space-y-1">
+                        {cryptoStatus.recommendations.map((rec, i) => (
+                          <li key={i}>{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-gray-500 text-sm">Unable to load crypto status</div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* System Information */}
       <Card>
         <CardHeader>
@@ -284,7 +386,7 @@ export function SystemView() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-600">Protocol Version:</span>
-              <span className="font-medium ml-2">UATP 7.0</span>
+              <span className="font-medium ml-2">UATP 7.4</span>
             </div>
             <div>
               <span className="text-gray-600">API Version:</span>
@@ -292,19 +394,23 @@ export function SystemView() {
             </div>
             <div>
               <span className="text-gray-600">Backend:</span>
-              <span className="font-medium ml-2">FastAPI + Quart</span>
+              <span className="font-medium ml-2">FastAPI</span>
             </div>
             <div>
               <span className="text-gray-600">Database:</span>
-              <span className="font-medium ml-2">PostgreSQL 14+</span>
+              <span className="font-medium ml-2">SQLite / PostgreSQL</span>
             </div>
             <div>
-              <span className="text-gray-600">Verification:</span>
-              <span className="font-medium ml-2">Ed25519</span>
+              <span className="text-gray-600">Signing Algorithms:</span>
+              <span className="font-medium ml-2">
+                {cryptoStatus?.algorithms?.signing?.join(', ') || 'Ed25519'}
+              </span>
             </div>
             <div>
-              <span className="text-gray-600">Storage Format:</span>
-              <span className="font-medium ml-2">JSONB</span>
+              <span className="text-gray-600">Environment:</span>
+              <span className="font-medium ml-2 capitalize">
+                {cryptoStatus?.environment || 'development'}
+              </span>
             </div>
           </div>
         </CardContent>

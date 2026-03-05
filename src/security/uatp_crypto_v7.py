@@ -26,6 +26,7 @@ import hashlib
 import json
 import logging
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
@@ -123,7 +124,24 @@ class UATPCryptoV7:
         """
         self.key_dir = Path(key_dir)
         self.signer_id = signer_id or "local_engine"
-        self.enable_pq = enable_pq and PQ_AVAILABLE
+
+        # SECURITY: In production, PQ is REQUIRED
+        is_production = os.getenv("UATP_ENV") == "production"
+        if is_production and not PQ_AVAILABLE:
+            logger.critical(
+                "🚨 SECURITY FAILURE: Post-quantum crypto required in production but liboqs not available"
+            )
+            raise RuntimeError(
+                "CRITICAL: Post-quantum cryptography (liboqs) is required in production. "
+                "Install with: pip install liboqs-python"
+            )
+
+        # In production, force PQ enabled
+        if is_production:
+            self.enable_pq = True
+            logger.info("🔐 Production mode: Post-quantum signatures ENFORCED")
+        else:
+            self.enable_pq = enable_pq and PQ_AVAILABLE
 
         # Check Ed25519 availability
         if not ED25519_AVAILABLE:
@@ -139,6 +157,9 @@ class UATPCryptoV7:
         # Ensure keys exist
         self._ensure_keys_exist()
         self._load_keys()
+
+        # Verify key file permissions
+        self._verify_key_permissions()
 
         if self.enable_pq:
             logger.info("🔐 Post-quantum signatures enabled (ML-DSA-65 / FIPS 204)")
@@ -231,7 +252,9 @@ class UATPCryptoV7:
             elif dil_priv_enc.exists() or dil_priv_legacy.exists():
                 # Legacy Dilithium3 keys exist - need to generate new ML-DSA-65 keys
                 # (ML-DSA-65 is the standardized version, keys are not interchangeable)
-                logger.info("🔄 Found legacy Dilithium3 keys, generating new ML-DSA-65 keys...")
+                logger.info(
+                    "🔄 Found legacy Dilithium3 keys, generating new ML-DSA-65 keys..."
+                )
                 self._pq_priv_path = pq_priv_enc
                 self._pq_encrypted = True
             else:
@@ -414,6 +437,62 @@ class UATPCryptoV7:
                 self.ml_dsa_65_public = f.read()
 
             logger.info("🔐 ML-DSA-65 keys loaded successfully")
+
+    def _verify_key_permissions(self):
+        """
+        Verify that private key files have secure permissions.
+
+        SECURITY: Private keys should be readable only by owner (0o600).
+        In production, insecure permissions will raise an error.
+        """
+        import stat
+
+        is_production = os.getenv("UATP_ENV") == "production"
+        insecure_keys = []
+
+        # Check Ed25519 private key
+        if self._ed25519_priv_path.exists():
+            try:
+                mode = self._ed25519_priv_path.stat().st_mode
+                # Check if group or others have any permissions
+                if mode & (stat.S_IRWXG | stat.S_IRWXO):
+                    insecure_keys.append((self._ed25519_priv_path, oct(mode & 0o777)))
+            except OSError:
+                pass
+
+        # Check ML-DSA-65 private key
+        if (
+            self.enable_pq
+            and hasattr(self, "_pq_priv_path")
+            and self._pq_priv_path.exists()
+        ):
+            try:
+                mode = self._pq_priv_path.stat().st_mode
+                if mode & (stat.S_IRWXG | stat.S_IRWXO):
+                    insecure_keys.append((self._pq_priv_path, oct(mode & 0o777)))
+            except OSError:
+                pass
+
+        if insecure_keys:
+            for key_path, perms in insecure_keys:
+                msg = f"🚨 INSECURE KEY PERMISSIONS: {key_path} has permissions {perms} (should be 0o600)"
+
+                if is_production:
+                    logger.critical(msg)
+                else:
+                    logger.warning(msg)
+                    # Try to fix permissions in development
+                    try:
+                        os.chmod(key_path, 0o600)
+                        logger.info(f"✅ Fixed permissions on {key_path}")
+                    except OSError as e:
+                        logger.warning(f"Could not fix permissions: {e}")
+
+            if is_production:
+                raise RuntimeError(
+                    f"SECURITY FAILURE: {len(insecure_keys)} private key(s) have insecure permissions. "
+                    "Fix with: chmod 600 <key_file>"
+                )
 
     def _compute_content_hash(self, data: Dict[str, Any]) -> str:
         """
@@ -632,7 +711,9 @@ class UATPCryptoV7:
             timestamp = tsa.timestamp_capsule(capsule_data)
 
             if timestamp.get("trusted"):
-                logger.info(f"🕐 Got trusted timestamp from {timestamp.get('tsa_url', 'TSA')}")
+                logger.info(
+                    f"🕐 Got trusted timestamp from {timestamp.get('tsa_url', 'TSA')}"
+                )
             else:
                 logger.debug("🕐 Using local timestamp (not independently verifiable)")
 
@@ -765,10 +846,16 @@ class UATPCryptoV7:
             # Verify PQ signature if present (supports both ML-DSA-65 and legacy Dilithium3)
             pq_signature = verification.get("pq_signature")
             if pq_signature and self.enable_pq:
-                pq_valid, pq_reason = self._verify_pq_signature(hash_bytes, pq_signature)
+                pq_valid, pq_reason = self._verify_pq_signature(
+                    hash_bytes, pq_signature
+                )
                 if not pq_valid:
                     return False, f"Post-quantum verification failed: {pq_reason}"
-                algo = "ML-DSA-65" if pq_signature.startswith("ml-dsa-65:") else "Dilithium3"
+                algo = (
+                    "ML-DSA-65"
+                    if pq_signature.startswith("ml-dsa-65:")
+                    else "Dilithium3"
+                )
                 logger.info(f"✅ {algo} post-quantum signature verified")
 
             return True, "Signature valid"
@@ -790,6 +877,438 @@ class UATPCryptoV7:
             "pq_signature": None,
             "merkle_root": "sha256:" + "0" * 64,
         }
+
+    def create_hybrid_signature(self, capsule_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Create a hybrid Ed25519 + ML-DSA-65 signature.
+
+        This provides both classical and post-quantum security.
+        The capsule is protected as long as EITHER algorithm remains secure.
+
+        Args:
+            capsule_data: Capsule data to sign
+
+        Returns:
+            Hybrid signature object:
+            {
+                "type": "hybrid",
+                "algorithms": ["ed25519", "ml-dsa-65"],
+                "ed25519": "ed25519:...",
+                "ml_dsa_65": "ml-dsa-65:...",
+                "combined_hash": "sha256:...",
+                "verification_mode": "strict" | "any"
+            }
+        """
+        if not self.enabled:
+            raise RuntimeError("Crypto not enabled")
+
+        if not self.enable_pq:
+            raise RuntimeError(
+                "Post-quantum crypto not enabled. "
+                "Set enable_pq=True or UATP_ENV=production"
+            )
+
+        # Compute content hash
+        content_hash = self._compute_content_hash(capsule_data)
+
+        # Create both signatures
+        ed25519_sig = self._sign_ed25519(capsule_data)
+        ml_dsa_65_sig = self._sign_ml_dsa_65(capsule_data)
+
+        return {
+            "type": "hybrid",
+            "algorithms": ["ed25519", "ml-dsa-65"],
+            "ed25519": ed25519_sig,
+            "ml_dsa_65": ml_dsa_65_sig,
+            "combined_hash": content_hash,
+            "verification_mode": "strict",  # Both must verify
+        }
+
+    def verify_hybrid_signature(
+        self,
+        capsule_data: Dict[str, Any],
+        hybrid_sig: Dict[str, Any],
+        mode: str = "strict",
+    ) -> Tuple[bool, str]:
+        """
+        Verify a hybrid Ed25519 + ML-DSA-65 signature.
+
+        Args:
+            capsule_data: Capsule data that was signed
+            hybrid_sig: Hybrid signature object from create_hybrid_signature
+            mode: "strict" (both must verify) or "any" (either verifies)
+
+        Returns:
+            Tuple of (is_valid: bool, reason: str)
+        """
+        if hybrid_sig.get("type") != "hybrid":
+            return False, "Not a hybrid signature"
+
+        # Verify content hash
+        expected_hash = self._compute_content_hash(capsule_data)
+        if hybrid_sig.get("combined_hash") != expected_hash:
+            return False, "Content hash mismatch"
+
+        # Get hash bytes for verification
+        hash_hex = (
+            expected_hash.split(":", 1)[1] if ":" in expected_hash else expected_hash
+        )
+        hash_bytes = hash_hex.encode("utf-8")
+
+        # Verify Ed25519
+        ed25519_valid = False
+        ed25519_reason = ""
+        try:
+            ed25519_sig = hybrid_sig.get("ed25519", "")
+            if ed25519_sig.startswith("ed25519:"):
+                sig_hex = ed25519_sig.split(":", 1)[1]
+                sig_bytes = bytes.fromhex(sig_hex)
+                verify_key_bytes = self.ed25519_public.public_bytes(
+                    encoding=serialization.Encoding.Raw,
+                    format=serialization.PublicFormat.Raw,
+                )
+                public_key = ed25519.Ed25519PublicKey.from_public_bytes(
+                    verify_key_bytes
+                )
+                public_key.verify(sig_bytes, hash_bytes)
+                ed25519_valid = True
+                ed25519_reason = "Ed25519 valid"
+        except Exception as e:
+            ed25519_reason = f"Ed25519 failed: {e}"
+
+        # Verify ML-DSA-65
+        ml_dsa_65_valid = False
+        ml_dsa_65_reason = ""
+        if self.enable_pq:
+            ml_dsa_65_sig = hybrid_sig.get("ml_dsa_65", "")
+            ml_dsa_65_valid, ml_dsa_65_reason = self._verify_pq_signature(
+                hash_bytes, ml_dsa_65_sig
+            )
+
+        # Determine overall validity based on mode
+        use_mode = hybrid_sig.get("verification_mode", mode)
+
+        if use_mode == "strict":
+            # Both must be valid
+            if ed25519_valid and ml_dsa_65_valid:
+                return True, "Hybrid signature valid (both algorithms verified)"
+            else:
+                reasons = []
+                if not ed25519_valid:
+                    reasons.append(ed25519_reason)
+                if not ml_dsa_65_valid:
+                    reasons.append(ml_dsa_65_reason)
+                return False, f"Hybrid verification failed: {'; '.join(reasons)}"
+        else:
+            # Any valid is sufficient (migration mode)
+            if ed25519_valid or ml_dsa_65_valid:
+                valid_algos = []
+                if ed25519_valid:
+                    valid_algos.append("Ed25519")
+                if ml_dsa_65_valid:
+                    valid_algos.append("ML-DSA-65")
+                return (
+                    True,
+                    f"Hybrid signature valid ({', '.join(valid_algos)} verified)",
+                )
+            else:
+                return (
+                    False,
+                    f"Hybrid verification failed: {ed25519_reason}; {ml_dsa_65_reason}",
+                )
+
+    def get_security_status(self) -> Dict[str, Any]:
+        """
+        Get the current security status of the crypto module.
+
+        Returns:
+            Security status dict with algorithm availability and recommendations
+        """
+        is_production = os.getenv("UATP_ENV") == "production"
+
+        status = {
+            "environment": "production" if is_production else "development",
+            "ed25519_available": ED25519_AVAILABLE,
+            "pq_available": PQ_AVAILABLE,
+            "pq_enabled": self.enable_pq,
+            "hybrid_capable": ED25519_AVAILABLE and self.enable_pq,
+            "algorithms": {
+                "signing": ["Ed25519"],
+                "hashing": ["SHA-256"],
+                "encryption": ["AES-256-GCM"],
+            },
+            "recommendations": [],
+            "warnings": [],
+        }
+
+        if self.enable_pq:
+            status["algorithms"]["signing"].append("ML-DSA-65 (FIPS 204)")
+
+        # Add recommendations
+        if not self.enable_pq:
+            status["recommendations"].append(
+                "Enable post-quantum signatures with enable_pq=True for quantum resistance"
+            )
+
+        if not is_production and not os.getenv("UATP_KEY_PASSWORD"):
+            status["warnings"].append(
+                "Using derived key password. Set UATP_KEY_PASSWORD for production."
+            )
+
+        if is_production and not self.enable_pq:
+            status["warnings"].append(
+                "Production mode without post-quantum crypto is not recommended"
+            )
+
+        return status
+
+    # --- RFC 3161 Timestamps ---
+
+    def add_timestamp(
+        self,
+        capsule_data: Dict[str, Any],
+        tsa_name: str = "freetsa",
+    ) -> Dict[str, Any]:
+        """
+        Add an RFC 3161 timestamp to capsule verification data.
+
+        Args:
+            capsule_data: Capsule data to timestamp
+            tsa_name: TSA to use (freetsa, digicert, sectigo)
+
+        Returns:
+            Timestamp information to include in verification
+        """
+        from src.security.rfc3161_timestamps import timestamp_capsule
+
+        return timestamp_capsule(capsule_data, tsa_name=tsa_name)
+
+    def verify_timestamp(
+        self,
+        capsule_data: Dict[str, Any],
+        timestamp_info: Dict[str, Any],
+    ) -> Tuple[bool, str]:
+        """
+        Verify a capsule's RFC 3161 timestamp.
+
+        Args:
+            capsule_data: Original capsule data
+            timestamp_info: Timestamp information from verification
+
+        Returns:
+            Tuple of (is_valid, reason)
+        """
+        from src.security.rfc3161_timestamps import verify_capsule_timestamp
+
+        return verify_capsule_timestamp(capsule_data, timestamp_info)
+
+    # --- Key Rotation ---
+
+    def get_key_rotation_manager(self):
+        """
+        Get the key rotation manager for this crypto instance.
+
+        Returns:
+            KeyRotationManager instance
+        """
+        from src.security.key_rotation import KeyRotationManager
+
+        if not hasattr(self, "_key_rotation_manager"):
+            self._key_rotation_manager = KeyRotationManager(
+                key_dir=str(self.key_dir),
+                signer_id=self.signer_id,
+            )
+        return self._key_rotation_manager
+
+    def rotate_keys(self) -> Dict[str, Any]:
+        """
+        Perform key rotation for all key types.
+
+        Returns:
+            Rotation result including new key IDs
+        """
+        from src.security.key_rotation import KeyType
+
+        manager = self.get_key_rotation_manager()
+
+        # Rotate based on what's enabled
+        rotated = []
+
+        # Always rotate Ed25519
+        new_keys = manager.rotate_keys(KeyType.ED25519)
+        rotated.extend([k.to_dict() for k in new_keys])
+
+        # Rotate PQ keys if enabled
+        if self.enable_pq:
+            new_keys = manager.rotate_keys(KeyType.ML_DSA_65)
+            rotated.extend([k.to_dict() for k in new_keys])
+
+        # Reload keys after rotation
+        self._load_keys()
+
+        return {
+            "rotated_keys": rotated,
+            "rotation_time": datetime.now(timezone.utc).isoformat(),
+        }
+
+    def check_rotation_needed(self) -> Dict[str, Any]:
+        """
+        Check if key rotation is needed.
+
+        Returns:
+            Status including keys needing rotation
+        """
+        manager = self.get_key_rotation_manager()
+        needs_rotation = manager.check_rotation_needed()
+
+        return {
+            "needs_rotation": len(needs_rotation) > 0,
+            "keys_to_rotate": [k.to_dict() for k in needs_rotation],
+            "status": manager.get_rotation_status(),
+        }
+
+    def revoke_key(self, key_id: str, reason: str) -> bool:
+        """
+        Revoke a compromised key.
+
+        Args:
+            key_id: ID of key to revoke
+            reason: Reason for revocation
+
+        Returns:
+            True if revocation successful
+        """
+        manager = self.get_key_rotation_manager()
+        return manager.revoke_key(key_id, reason)
+
+    # --- Merkle Audit Log ---
+
+    def get_audit_log(self, log_id: str = "default"):
+        """
+        Get or create a Merkle audit log.
+
+        Args:
+            log_id: Identifier for the log
+
+        Returns:
+            MerkleAuditLog instance
+        """
+        from src.security.merkle_audit_log import MerkleAuditLog
+
+        if not hasattr(self, "_audit_logs"):
+            self._audit_logs = {}
+
+        if log_id not in self._audit_logs:
+            log_dir = self.key_dir / "audit_logs" / log_id
+            self._audit_logs[log_id] = MerkleAuditLog(
+                log_dir=str(log_dir),
+                log_id=log_id,
+                signer=self,
+            )
+
+        return self._audit_logs[log_id]
+
+    def log_event(
+        self,
+        event_type: str,
+        data: Dict[str, Any],
+        log_id: str = "default",
+    ) -> Dict[str, Any]:
+        """
+        Log an event to the Merkle audit log.
+
+        Args:
+            event_type: Type of event (e.g., "capsule_created", "key_rotated")
+            data: Event data
+            log_id: Which log to append to
+
+        Returns:
+            Entry information including index and proof
+        """
+        log = self.get_audit_log(log_id)
+        entry = log.append(event_type, data)
+
+        # Generate inclusion proof
+        proof = log.get_inclusion_proof(entry.index)
+
+        return {
+            "entry_index": entry.index,
+            "entry_hash": entry.leaf_hash,
+            "root_hash": proof.root_hash,
+            "timestamp": entry.timestamp.isoformat(),
+            "inclusion_proof": proof.to_dict(),
+        }
+
+    def verify_audit_entry(
+        self,
+        entry_index: int,
+        entry_type: str,
+        data_hash: str,
+        proof: Dict[str, Any],
+        log_id: str = "default",
+    ) -> Tuple[bool, str]:
+        """
+        Verify an audit log entry using its inclusion proof.
+
+        Args:
+            entry_index: Index of the entry
+            entry_type: Expected entry type
+            data_hash: Expected data hash
+            proof: Inclusion proof dict
+            log_id: Which log to verify against
+
+        Returns:
+            Tuple of (is_valid, reason)
+        """
+        from src.security.merkle_audit_log import InclusionProof, LogEntry, leaf_hash
+
+        # Reconstruct entry
+        entry = LogEntry(
+            index=entry_index,
+            timestamp=datetime.now(timezone.utc),  # Not used in verification
+            entry_type=entry_type,
+            data_hash=data_hash,
+            leaf_hash="",  # Will be computed
+        )
+
+        # Compute leaf hash
+        leaf_data = f"{entry_type}:{data_hash}".encode()
+        entry.leaf_hash = leaf_hash(leaf_data).hex()
+
+        # Parse proof
+        inclusion_proof = InclusionProof.from_dict(proof)
+
+        # Verify
+        log = self.get_audit_log(log_id)
+        return log.verify_inclusion_proof(entry, inclusion_proof)
+
+    def get_audit_log_stats(self, log_id: str = "default") -> Dict[str, Any]:
+        """
+        Get statistics for an audit log.
+
+        Args:
+            log_id: Which log to query
+
+        Returns:
+            Log statistics including size, root hash, entry types
+        """
+        log = self.get_audit_log(log_id)
+        return log.get_statistics()
+
+    def verify_audit_log_integrity(self, log_id: str = "default") -> Tuple[bool, str]:
+        """
+        Verify the integrity of an entire audit log.
+
+        Args:
+            log_id: Which log to verify
+
+        Returns:
+            Tuple of (is_valid, reason)
+        """
+        from src.security.merkle_audit_log import verify_log_integrity
+
+        log = self.get_audit_log(log_id)
+        return verify_log_integrity(log)
 
 
 # Singleton instance for convenience

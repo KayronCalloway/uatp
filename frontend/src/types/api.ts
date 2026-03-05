@@ -137,6 +137,30 @@ export interface HealthCheckResponse {
   features: Record<string, boolean>;
 }
 
+export interface CryptoFeature {
+  name: string;
+  available: boolean;
+  status: 'active' | 'available' | 'unavailable';
+}
+
+export interface CryptoStatusResponse {
+  environment: string;
+  algorithms: {
+    signing: string[];
+    hashing: string[];
+    encryption: string[];
+  };
+  features: Record<string, CryptoFeature>;
+  summary: {
+    total_features: number;
+    active_features: number;
+    completion_percent: number;
+  };
+  recommendations: string[];
+  warnings: string[];
+  error?: string;
+}
+
 export interface IndexResponse {
   service: string;
   version: string;

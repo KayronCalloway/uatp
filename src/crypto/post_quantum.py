@@ -3,9 +3,7 @@ Real Post-Quantum Cryptography Implementation for UATP 7.0
 Using actual Dilithium signatures and Kyber key exchange
 """
 
-import hashlib
 import logging
-import secrets
 from dataclasses import dataclass
 from typing import Dict, Tuple
 
@@ -39,10 +37,15 @@ class PostQuantumCrypto:
         # In development mode, skip PQ crypto if liboqs is not available
         # This prevents the oqs package from auto-installing and hanging
         liboqs_path = os.path.join(os.path.expanduser("~"), "_oqs", "lib")
-        is_development = os.getenv("ENVIRONMENT") == "development" or os.getenv("UATP_ENV") != "production"
+        is_development = (
+            os.getenv("ENVIRONMENT") == "development"
+            or os.getenv("UATP_ENV") != "production"
+        )
 
         if is_development and not os.path.exists(liboqs_path):
-            logger.info("Development mode: liboqs not found, using secure simulation (PQ crypto enforced in production only)")
+            logger.info(
+                "Development mode: liboqs not found, using secure simulation (PQ crypto enforced in production only)"
+            )
             self.dilithium_available = False
             self.kyber_available = False
             return
@@ -50,11 +53,14 @@ class PostQuantumCrypto:
         # Configure liboqs library path before importing
         if os.path.exists(liboqs_path):
             # Set environment variable (for child processes)
-            os.environ["DYLD_LIBRARY_PATH"] = liboqs_path + ":" + os.environ.get("DYLD_LIBRARY_PATH", "")
+            os.environ["DYLD_LIBRARY_PATH"] = (
+                liboqs_path + ":" + os.environ.get("DYLD_LIBRARY_PATH", "")
+            )
             # Also set for current process (Python's ctypes uses this on macOS)
             if hasattr(sys, "setdlopenflags"):
                 # Set RTLD_GLOBAL so libraries can find each other
                 import ctypes
+
                 sys.setdlopenflags(sys.getdlopenflags() | ctypes.RTLD_GLOBAL)
 
         # Try to import real PQ libraries
@@ -70,10 +76,12 @@ class PostQuantumCrypto:
             logger.info(
                 "Using pqcrypto library with NIST-standardized ML-DSA-65 and ML-KEM-768"
             )
-        except (ImportError, OSError) as e:
+        except (ImportError, OSError):
             try:
                 # Configure oqs to use our compiled library
-                os.environ["OQS_INSTALL_PATH"] = os.path.join(os.path.expanduser("~"), "_oqs")
+                os.environ["OQS_INSTALL_PATH"] = os.path.join(
+                    os.path.expanduser("~"), "_oqs"
+                )
 
                 # Try liboqs-python as fallback (most comprehensive but requires compilation)
                 import oqs
@@ -82,7 +90,7 @@ class PostQuantumCrypto:
                 self.dilithium_available = True
                 self.kyber_available = True
                 logger.info("Using liboqs-python for post-quantum crypto")
-            except (ImportError, OSError) as e:
+            except (ImportError, OSError):
                 try:
                     # Try pqcrypto library with legacy names
                     import pqcrypto.kem.kyber768
@@ -95,7 +103,9 @@ class PostQuantumCrypto:
                     logger.info("Using pqcrypto library for post-quantum crypto")
                 except (ImportError, OSError) as e:
                     # Fallback to cryptographically secure simulation
-                    logger.warning(f"No PQ libraries found ({e}), using secure simulation")
+                    logger.warning(
+                        f"No PQ libraries found ({e}), using secure simulation"
+                    )
                     self.dilithium_available = False
                     self.kyber_available = False
 
@@ -229,8 +239,8 @@ class PostQuantumCrypto:
 
         elif self.dilithium_available and hasattr(self, "oqs"):
             try:
-                sig = self.oqs.Signature("Dilithium3")
-                sig.import_secret_key(private_key)
+                # Pass secret_key as constructor parameter (liboqs API)
+                sig = self.oqs.Signature("Dilithium3", secret_key=private_key)
                 return sig.sign(message)
             except Exception as e:
                 logger.error(f"Dilithium signing failed: {e}")

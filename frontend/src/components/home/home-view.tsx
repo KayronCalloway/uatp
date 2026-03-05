@@ -48,7 +48,7 @@ export function HomeView() {
               <span>•</span>
               <span>{totalCapsules.toLocaleString()} Capsules</span>
               <span>•</span>
-              <span>Version 7.0</span>
+              <span>Version 7.4</span>
             </div>
           </div>
         </CardContent>

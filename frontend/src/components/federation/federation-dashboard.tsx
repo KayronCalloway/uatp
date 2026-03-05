@@ -63,7 +63,7 @@ export function FederationDashboard() {
       name: 'UATP North America',
       url: 'https://na.uatp.network',
       status: 'online',
-      version: '7.0.0',
+      version: '7.4.0',
       lastSeen: new Date().toISOString(),
       capsuleCount: 15420,
       agentCount: 2156,
@@ -77,7 +77,7 @@ export function FederationDashboard() {
       name: 'UATP Europe',
       url: 'https://eu.uatp.network',
       status: 'online',
-      version: '7.0.0',
+      version: '7.4.0',
       lastSeen: new Date(Date.now() - 30000).toISOString(),
       capsuleCount: 12890,
       agentCount: 1876,
@@ -122,7 +122,7 @@ export function FederationDashboard() {
     totalCapsules: mockNodes.reduce((sum, node) => sum + node.capsuleCount, 0),
     totalAgents: mockNodes.reduce((sum, node) => sum + node.agentCount, 0),
     averageLatency: mockNodes.filter(n => n.latency > 0).reduce((sum, node) => sum + node.latency, 0) / mockNodes.filter(n => n.latency > 0).length,
-    syncStatus: mockNodes.some(n => n.status === 'error') ? 'critical' : 
+    syncStatus: mockNodes.some(n => n.status === 'error') ? 'critical' :
                 mockNodes.some(n => n.status === 'syncing') ? 'degraded' : 'healthy'
   };
 

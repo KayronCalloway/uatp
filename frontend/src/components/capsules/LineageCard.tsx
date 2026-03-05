@@ -56,7 +56,7 @@ export function LineageCard({ lineage }: LineageCardProps) {
           <GitBranch className="w-5 h-5 text-purple-600" />
           Provenance & Lineage
           <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded ml-auto">
-            UATP v7.0
+            UATP v7.4
           </span>
         </CardTitle>
       </CardHeader>

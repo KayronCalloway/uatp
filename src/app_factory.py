@@ -34,7 +34,7 @@ from .middleware.rate_limiting import (
 
 db_manager = get_database_manager()
 from .database.migrations import run_migrations  # noqa: E402
-from .integrations.ai_platform_framework import (
+from .integrations.ai_platform_framework import (  # noqa: E402
     setup_multi_platform_attribution,
 )
 
@@ -552,6 +552,99 @@ def setup_health_routes(app: FastAPI):
         """Prometheus metrics endpoint"""
         return generate_latest()
 
+    @app.get("/health/crypto", tags=["Monitoring"])
+    async def crypto_status():
+        """Get cryptographic subsystem status for dashboard"""
+        try:
+            from src.security.uatp_crypto_v7 import (
+                ED25519_AVAILABLE,
+                PQ_AVAILABLE,
+                UATPCryptoV7,
+            )
+
+            # Initialize crypto to get status
+            crypto = UATPCryptoV7(enable_pq=PQ_AVAILABLE)
+            status = crypto.get_security_status()
+
+            # Build feature list
+            features = {
+                "ed25519": {
+                    "name": "Ed25519 Signatures",
+                    "available": ED25519_AVAILABLE,
+                    "status": "active" if ED25519_AVAILABLE else "unavailable",
+                },
+                "ml_dsa_65": {
+                    "name": "ML-DSA-65 (Post-Quantum)",
+                    "available": PQ_AVAILABLE,
+                    "status": "active"
+                    if status.get("pq_enabled")
+                    else "available"
+                    if PQ_AVAILABLE
+                    else "unavailable",
+                },
+                "hybrid_signatures": {
+                    "name": "Hybrid Signatures",
+                    "available": status.get("hybrid_capable", False),
+                    "status": "active"
+                    if status.get("hybrid_capable")
+                    else "unavailable",
+                },
+                "rfc3161_timestamps": {
+                    "name": "RFC 3161 Timestamps",
+                    "available": hasattr(crypto, "add_timestamp"),
+                    "status": "active"
+                    if hasattr(crypto, "add_timestamp")
+                    else "unavailable",
+                },
+                "key_rotation": {
+                    "name": "Key Rotation",
+                    "available": hasattr(crypto, "rotate_keys"),
+                    "status": "active"
+                    if hasattr(crypto, "rotate_keys")
+                    else "unavailable",
+                },
+                "merkle_audit_log": {
+                    "name": "Merkle Audit Logs",
+                    "available": hasattr(crypto, "get_audit_log"),
+                    "status": "active"
+                    if hasattr(crypto, "get_audit_log")
+                    else "unavailable",
+                },
+                "key_encryption": {
+                    "name": "Key Encryption (AES-256-GCM)",
+                    "available": True,
+                    "status": "active",
+                },
+            }
+
+            # Count features
+            total = len(features)
+            active = sum(1 for f in features.values() if f["status"] == "active")
+
+            return {
+                "environment": status.get("environment", "development"),
+                "algorithms": status.get("algorithms", {}),
+                "features": features,
+                "summary": {
+                    "total_features": total,
+                    "active_features": active,
+                    "completion_percent": int(100 * active / total) if total > 0 else 0,
+                },
+                "recommendations": status.get("recommendations", []),
+                "warnings": status.get("warnings", []),
+            }
+        except Exception as e:
+            logger.error("Error fetching crypto status", error=str(e))
+            return {
+                "error": str(e),
+                "features": {},
+                "summary": {
+                    "total_features": 0,
+                    "active_features": 0,
+                    "completion_percent": 0,
+                },
+            }
+
 
 def setup_api_routes(app: FastAPI, rate_config: RateLimitConfig):
     """Setup API routes. Rate limiting is now handled by middleware."""
@@ -880,6 +973,61 @@ def create_app() -> FastAPI:
     from .api.user_keys_router import router as user_keys_router
 
     app.include_router(user_keys_router)
+
+    # Include UATP 7.2 Model Registry router (Training Provenance)
+    from .api.model_registry_router import router as model_registry_router
+
+    app.include_router(model_registry_router)
+
+    # Include UATP 7.2 Workflow Chain router (Agentic Workflows)
+    from .api.workflow_chain_router import router as workflow_chain_router
+
+    app.include_router(workflow_chain_router)
+
+    # Include UATP 7.2 Hardware Attestation router
+    from .api.attestation_router import router as attestation_router
+
+    app.include_router(attestation_router)
+
+    # Include UATP 7.2 Edge-Native Capsules router
+    from .api.edge_router import router as edge_router
+
+    app.include_router(edge_router)
+
+    # Include UATP 7.2 Model Artifacts and Licenses router
+    from .api.model_artifacts_router import router as model_artifacts_router
+
+    app.include_router(model_artifacts_router)
+
+    # Include UATP 7.3 ANE Training Provenance router
+    from .api.ane_training_router import router as ane_training_router
+
+    app.include_router(ane_training_router)
+
+    # Include UATP 7.4 Agent Execution Traces router
+    from .api.agent_execution_router import router as agent_execution_router
+
+    app.include_router(agent_execution_router)
+
+    # Include Chain Sealing router
+    from .api.chain_fastapi_router import router as chain_router
+
+    app.include_router(chain_router)
+
+    # Include Reasoning Analysis router
+    from .api.reasoning_fastapi_router import router as reasoning_router
+
+    app.include_router(reasoning_router)
+
+    # Include Universe Visualization router
+    from .api.universe_fastapi_router import router as universe_router
+
+    app.include_router(universe_router)
+
+    # Include Rights Evolution router
+    from .api.rights_evolution_fastapi_router import router as rights_evolution_router
+
+    app.include_router(rights_evolution_router)
 
     # Setup routes
     setup_health_routes(app)
