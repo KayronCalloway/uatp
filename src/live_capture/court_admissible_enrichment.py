@@ -36,8 +36,9 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# Config: Enable LLM summarization (can be toggled via env var)
-USE_LLM_SUMMARIZATION = os.getenv("UATP_LLM_SUMMARIZATION", "true").lower() == "true"
+# Config: Enable LLM summarization (disabled by default - heuristics work well)
+# Set UATP_LLM_SUMMARIZATION=true to enable if you have a valid ANTHROPIC_API_KEY
+USE_LLM_SUMMARIZATION = os.getenv("UATP_LLM_SUMMARIZATION", "false").lower() == "true"
 
 
 def summarize_decision_with_llm_sync(
