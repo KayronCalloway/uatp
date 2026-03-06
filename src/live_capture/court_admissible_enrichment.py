@@ -16,7 +16,6 @@ This module enriches existing capsules to meet:
 - EU AI Act Articles 9, 12, 13
 """
 
-import asyncio
 import logging
 import os
 import re
@@ -39,6 +38,133 @@ logger = logging.getLogger(__name__)
 # Config: Enable LLM summarization (disabled by default - heuristics work well)
 # Set UATP_LLM_SUMMARIZATION=true to enable if you have a valid ANTHROPIC_API_KEY
 USE_LLM_SUMMARIZATION = os.getenv("UATP_LLM_SUMMARIZATION", "false").lower() == "true"
+
+# Technical jargon to plain language mappings
+PLAIN_LANGUAGE_MAP = {
+    # Security terms
+    "buffer overflow": "a security weakness where data can leak",
+    "memory safety": "protection against data corruption",
+    "attack surface": "ways the system could be vulnerable",
+    "supply chain": "where the software components come from",
+    "prompt injection": "attempts to trick the AI",
+    "model tampering": "someone modifying the AI inappropriately",
+    "vulnerability": "security weakness",
+    "exploit": "security attack",
+    "malicious": "harmful",
+    # Technical terms
+    "llama-cpp": "the AI software",
+    "c++": "programming language",
+    "pypi": "software library source",
+    "huggingface": "AI model source",
+    "api": "connection point",
+    "dependency": "required component",
+    "runtime": "when the software runs",
+    "latency": "response time",
+    "throughput": "processing speed",
+    # Severity terms
+    "high severity": "important concern",
+    "medium severity": "moderate concern",
+    "low severity": "minor concern",
+}
+
+
+def simplify_to_plain_language(text: str) -> str:
+    """
+    Convert technical jargon to simple, mom-approved language.
+    Removes markdown tables and complex formatting.
+    """
+    if not text:
+        return text
+
+    result = text
+
+    # Remove markdown tables entirely - summarize what they contained
+    if "|" in result and "---" in result:
+        # Check if it's a risk/concern table
+        text_lower = result.lower()
+        if "risk" in text_lower or "severity" in text_lower or "concern" in text_lower:
+            # Count severity mentions
+            high_count = text_lower.count("high")
+            medium_count = text_lower.count("medium")
+            low_count = text_lower.count("low")
+
+            # Generate simple summary
+            concerns = []
+            if high_count:
+                concerns.append(
+                    f"{high_count} important concern{'s' if high_count > 1 else ''}"
+                )
+            if medium_count:
+                concerns.append(
+                    f"{medium_count} moderate concern{'s' if medium_count > 1 else ''}"
+                )
+            if low_count:
+                concerns.append(
+                    f"{low_count} minor concern{'s' if low_count > 1 else ''}"
+                )
+
+            if concerns:
+                result = f"Analysis found {', '.join(concerns)} to consider before proceeding."
+            else:
+                # Extract prose before/after table
+                lines = result.split("\n")
+                prose = [ln for ln in lines if "|" not in ln and ln.strip()]
+                result = (
+                    " ".join(prose[:2])
+                    if prose
+                    else "Analysis completed with recommendations."
+                )
+        else:
+            # Generic table removal
+            lines = result.split("\n")
+            prose = [
+                ln for ln in lines if "|" not in ln and "---" not in ln and ln.strip()
+            ]
+            result = " ".join(prose[:3]) if prose else text[:200]
+
+    # Remove markdown formatting
+    result = re.sub(r"\*\*([^*]+)\*\*", r"\1", result)  # bold
+    result = re.sub(r"\*([^*]+)\*", r"\1", result)  # italic
+    result = re.sub(r"`([^`]+)`", r"\1", result)  # code
+    result = re.sub(r"#{1,6}\s+", "", result)  # headers
+    result = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", result)  # links
+
+    # Remove technical parentheticals like "(buffer overflows)" or "(e.g., Redis)"
+    result = re.sub(
+        r"\s*\([^)]*(?:overflow|injection|e\.g\.|i\.e\.)[^)]*\)", "", result
+    )
+
+    # Simplify common technical phrases to plain language
+    simplifications = [
+        (r"attack surface", "potential security concerns"),
+        (r"supply chain risk", "concerns about where components come from"),
+        (r"buffer overflow", "data handling issue"),
+        (r"memory safety", "data protection"),
+        (r"prompt injection", "input manipulation"),
+        (r"model tampering", "unauthorized changes"),
+        (r"llama-cpp|llama\.cpp", "the AI system"),
+        (r"C\+\+\s*code", "the underlying software"),
+        (r"PyPI|HuggingFace", "external sources"),
+        (r"HIGH\s*\|", "Important: "),
+        (r"MEDIUM\s*\|", "Note: "),
+        (r"LOW\s*\|", "Minor: "),
+    ]
+
+    for pattern, replacement in simplifications:
+        result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+
+    # Clean up extra whitespace and pipes
+    result = re.sub(r"\|+", " ", result)
+    result = re.sub(r"\s+", " ", result).strip()
+
+    # If still too long, take first 2-3 meaningful sentences
+    if len(result) > 400:
+        sentences = re.split(r"[.!?]\s+", result)
+        meaningful = [s for s in sentences if len(s) > 20][:3]
+        if meaningful:
+            result = ". ".join(meaningful) + "."
+
+    return result
 
 
 def summarize_decision_with_llm_sync(
@@ -99,7 +225,9 @@ Rules:
         response_text = response_text.replace("```json", "").replace("```", "").strip()
         result = json.loads(response_text)
 
-        logger.info(f"LLM summarization succeeded: {result.get('decision', '')[:50]}...")
+        logger.info(
+            f"LLM summarization succeeded: {result.get('decision', '')[:50]}..."
+        )
         return {
             "decision": result.get("decision", "")[:200],
             "why": result.get("why", "")[:200],
@@ -595,19 +723,31 @@ class CourtAdmissibleEnricher:
 
         # Strategy 3: First meaningful sentence (often states the action)
         if not decision_text:
-            sentences = re.split(r'[.!?]\s+', content_clean)
+            sentences = re.split(r"[.!?]\s+", content_clean)
             for sent in sentences[:3]:
                 sent = sent.strip()
                 if len(sent) > 30 and len(sent) < 200:
                     # Skip meta-sentences
-                    skip_starts = ("let me", "i'll", "i will", "here's", "sure", "okay", "yes")
+                    skip_starts = (
+                        "let me",
+                        "i'll",
+                        "i will",
+                        "here's",
+                        "sure",
+                        "okay",
+                        "yes",
+                    )
                     if not sent.lower().startswith(skip_starts):
                         decision_text = sent
                         break
 
         # Fallback: truncated content
         if not decision_text:
-            decision_text = content_clean[:200] + "..." if len(content_clean) > 200 else content_clean
+            decision_text = (
+                content_clean[:200] + "..."
+                if len(content_clean) > 200
+                else content_clean
+            )
 
         # === WHY/REASONING EXTRACTION ===
         # Strategy 1: Look for problem-solution patterns
@@ -638,8 +778,15 @@ class CourtAdmissibleEnricher:
 
         # Strategy 2: Look for sentences with causal indicators
         if not specific_why:
-            causal_indicators = ["because", "since", "which caused", "resulting in",
-                                 "this meant", "the reason", "this was causing"]
+            causal_indicators = [
+                "because",
+                "since",
+                "which caused",
+                "resulting in",
+                "this meant",
+                "the reason",
+                "this was causing",
+            ]
             for indicator in causal_indicators:
                 idx = content_lower.find(indicator)
                 if idx != -1:
@@ -651,7 +798,11 @@ class CourtAdmissibleEnricher:
                     clause = content[start:end].strip().lstrip(": ")
                     if len(clause) > 15:
                         specific_why = strip_markdown(clause)
-                        specific_why = specific_why[0].upper() + specific_why[1:] if specific_why else None
+                        specific_why = (
+                            specific_why[0].upper() + specific_why[1:]
+                            if specific_why
+                            else None
+                        )
                         break
 
         # Strategy 3: Use the user's question as context
@@ -820,11 +971,16 @@ class CourtAdmissibleEnricher:
             "A human expert will review the AI's reasoning and provide clarification."
         )
 
+        # Apply plain language simplification to remove jargon
+        plain_decision = simplify_to_plain_language(decision)
+        plain_why = simplify_to_plain_language(specific_why) if specific_why else None
+        plain_key_factors = [simplify_to_plain_language(f) for f in key_factors]
+
         return {
-            "decision": decision,
-            "why": specific_why,
+            "decision": plain_decision,
+            "why": plain_why,
             "original_question": original_question,
-            "key_factors": key_factors,
+            "key_factors": plain_key_factors,
             "what_if_different": what_if_different,
             "your_rights": your_rights,
             "how_to_appeal": how_to_appeal,
