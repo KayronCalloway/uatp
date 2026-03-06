@@ -1,17 +1,48 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { MessageSquare, Info, Scale, HelpCircle } from 'lucide-react';
+import { MessageSquare, Info, Scale, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { PlainLanguageSummary } from '@/types/api';
 
 interface PlainLanguageCardProps {
   summary: PlainLanguageSummary;
 }
 
+// Simplify overly technical text for plain language display
+function simplifyText(text: string): string {
+  if (!text) return '';
+
+  // If text contains markdown tables or is very long, summarize it
+  if (text.includes('|') && text.includes('---')) {
+    // Extract key points from markdown table content
+    const lines = text.split('\n').filter(line =>
+      line.trim() &&
+      !line.includes('---') &&
+      !line.startsWith('|')
+    );
+    if (lines.length > 0) {
+      return lines.slice(0, 2).join(' ').substring(0, 300) + (lines.length > 2 ? '...' : '');
+    }
+  }
+
+  // Truncate very long text
+  if (text.length > 400) {
+    return text.substring(0, 400) + '...';
+  }
+
+  return text;
+}
+
 export function PlainLanguageCard({ summary }: PlainLanguageCardProps) {
+  const [expanded, setExpanded] = useState(false);
+
   if (!summary) {
     return null;
   }
+
+  const isLongDecision = summary.decision && summary.decision.length > 300;
+  const displayDecision = expanded ? summary.decision : simplifyText(summary.decision);
 
   return (
     <Card>
@@ -32,9 +63,23 @@ export function PlainLanguageCard({ summary }: PlainLanguageCardProps) {
               <Info className="w-5 h-5 text-teal-700" />
               <h4 className="font-semibold text-teal-900">Decision</h4>
             </div>
-            <p className="text-gray-800 leading-relaxed">
-              {summary.decision}
-            </p>
+            <div className={expanded ? "max-h-96 overflow-y-auto" : ""}>
+              <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                {displayDecision}
+              </p>
+            </div>
+            {isLongDecision && (
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="mt-2 text-sm text-teal-700 hover:text-teal-900 flex items-center gap-1"
+              >
+                {expanded ? (
+                  <>Show less <ChevronUp className="w-4 h-4" /></>
+                ) : (
+                  <>Show full details <ChevronDown className="w-4 h-4" /></>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Why */}
