@@ -69,6 +69,35 @@ class SQLAlchemyDB:
         from src.models.lineage import LineageEdgeModel  # noqa
         from src.models.chain_seal import ChainSealModel  # noqa
 
+        # Agent execution and ANE training models
+        from src.models.agent_execution import (  # noqa
+            AgentSessionModel,
+            ToolCallModel,
+            ActionTraceModel,
+        )
+        from src.models.ane_training_session import (  # noqa
+            HardwareProfileModel,
+            ANETrainingSessionModel,
+            KernelExecutionModel,
+        )
+
+        # Model artifacts and licensing
+        from src.models.model_artifact import ModelArtifactModel  # noqa
+        from src.models.model_license import ModelLicenseModel  # noqa
+
+        # User management
+        from src.models.user_management import (  # noqa
+            UserSessionModel,
+            IdentityVerificationModel,
+        )
+
+        # Outcome tracking
+        from src.models.outcome import (  # noqa
+            CapsuleOutcomeModel,
+            ConfidenceCalibrationModel,
+            ReasoningPatternModel,
+        )
+
         async with self.engine.begin() as conn:
             await conn.run_sync(self.Base.metadata.create_all)
 
