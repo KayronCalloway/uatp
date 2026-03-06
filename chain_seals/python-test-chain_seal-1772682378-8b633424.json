@@ -1,0 +1,10 @@
+{
+  "seal_id": "seal-1772682378-8b633424",
+  "chain_id": "python-test-chain",
+  "timestamp": "2026-03-05T03:46:18.120902+00:00",
+  "signer_id": "integration-test",
+  "chain_state_hash": "f967efe7bad4faeff9a3626167c9c7e16f7be20b17061e688093c5515316b9db",
+  "note": "Testing from Python",
+  "signature": "/ZSQDL8s6k7y2rDd25IBmXaOqeViLzQ+Oorx83Fg2tPNp4gkWY9eF8ZUh2wEd/VxlLMJsSuKOAo3MznWXijYCw==",
+  "verify_key": "9c15772bb9f6f0ef8f65643af0ed39cb5afb359e05314eea574e4279bd34f833"
+}

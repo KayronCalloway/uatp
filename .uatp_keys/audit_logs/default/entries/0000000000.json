@@ -1,0 +1,11 @@
+{
+  "index": 0,
+  "timestamp": "2026-03-05T00:09:45.215948+00:00",
+  "entry_type": "capsule_created",
+  "data_hash": "14d5aee86bfadfe14b7292585c2852b9d63ef59150a851c56edbaa88437b9297",
+  "leaf_hash": "2499cbee11a0e94847cc77338b191751cd28a6e0d29983b0c615535e56cc24ab",
+  "data": {
+    "capsule_id": "caps_001",
+    "type": "code_commit"
+  }
+}

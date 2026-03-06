@@ -1,0 +1,11 @@
+{
+  "chain_id": "python-test-chain",
+  "seals": [
+    {
+      "seal_id": "seal-1772682378-8b633424",
+      "timestamp": "2026-03-05T03:46:18.120902+00:00",
+      "signer_id": "integration-test",
+      "note": "Testing from Python"
+    }
+  ]
+}

@@ -4,78 +4,18 @@
 
    ▲ Next.js 15.4.8
    - Local:        http://localhost:3000
-   - Network:      http://192.168.1.218:3000
+   - Network:      http://192.168.1.219:3000
    - Environments: .env.local, .env.development
 
  ✓ Starting...
- ✓ Ready in 913ms
+ ✓ Ready in 1059ms
  ○ Compiling / ...
-Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
   npx update-browserslist-db@latest
   Why you should do it regularly: https://github.com/browserslist/update-db#readme
- ✓ Compiled / in 1238ms (2147 modules)
- GET / 200 in 1520ms
- ✓ Compiled in 269ms (988 modules)
- GET / 200 in 49ms
- GET / 200 in 67ms
- ✓ Compiled in 207ms (2133 modules)
- ✓ Compiled in 136ms (2133 modules)
- ✓ Compiled in 72ms (988 modules)
- GET / 200 in 47ms
- ✓ Compiled in 104ms (988 modules)
- GET / 200 in 13ms
- ✓ Compiled in 159ms (2133 modules)
- GET / 200 in 175ms
- GET / 200 in 4ms
- ✓ Compiled in 118ms (988 modules)
- GET / 200 in 14ms
- GET / 200 in 188ms
- ○ Compiling /ml-dashboard ...
- ✓ Compiled /ml-dashboard in 763ms (2312 modules)
- GET /ml-dashboard 200 in 996ms
- ✓ Compiled in 414ms (2326 modules)
- GET /ml-dashboard 200 in 53ms
- ✓ Compiled in 208ms (2326 modules)
- GET /ml-dashboard 200 in 51ms
- GET / 200 in 231ms
- GET / 200 in 34ms
- GET /ml-dashboard 200 in 5ms
- ✓ Compiled /analytics/outcomes in 175ms (2335 modules)
- GET /analytics/outcomes 200 in 228ms
- ✓ Compiled /analytics in 466ms (2344 modules)
- GET /analytics 200 in 527ms
- ✓ Compiled /analytics/patterns in 219ms (2367 modules)
- GET /analytics/patterns 200 in 257ms
- GET /analytics/outcomes 200 in 10ms
- ✓ Compiled /_not-found in 169ms (2372 modules)
- GET /analytics/calibration 404 in 202ms
- GET /analytics/calibration 404 in 67ms
- GET /analytics/causal 404 in 9ms
- GET /analytics/causal 404 in 29ms
- GET /ml-dashboard 200 in 11ms
- ✓ Compiled in 228ms (2367 modules)
- ✓ Compiled in 461ms (2379 modules)
- ✓ Compiled in 183ms (2365 modules)
- GET /ml-dashboard 200 in 212ms
- GET / 200 in 16ms
- GET /analytics/outcomes 200 in 10ms
- GET /analytics 200 in 9ms
- GET /analytics/patterns 200 in 9ms
- ✓ Compiled /_not-found in 219ms (2370 modules)
- GET /analytics/calibration 404 in 276ms
- GET /analytics/calibration 404 in 57ms
- GET /analytics/calibration 404 in 18ms
- GET /analytics 200 in 13ms
- GET /analytics/causal 404 in 3ms
- GET /analytics/causal 404 in 12ms
- GET /apple-touch-icon-precomposed.png 404 in 75ms
- GET /apple-touch-icon.png 404 in 74ms
- ✓ Compiled /favicon.ico in 312ms (1322 modules)
- GET /favicon.ico 200 in 760ms
- GET / 200 in 761ms
- GET /favicon.ico 200 in 2ms
- GET /favicon.ico 200 in 637ms
- GET /apple-touch-icon.png 404 in 708ms
- GET /apple-touch-icon-precomposed.png 404 in 714ms
- GET / 200 in 753ms
- GET /favicon.ico 200 in 2ms
+ ✓ Compiled / in 1257ms (2217 modules)
+ GET / 200 in 1562ms
+ ✓ Compiled in 223ms (1001 modules)
+ GET / 200 in 60ms
+ GET / 200 in 75ms
+ GET / 200 in 39ms

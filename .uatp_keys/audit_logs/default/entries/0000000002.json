@@ -1,0 +1,11 @@
+{
+  "index": 2,
+  "timestamp": "2026-03-05T00:09:45.216789+00:00",
+  "entry_type": "signature_verified",
+  "data_hash": "ba0e9d4573992e0e288b0d967a6b97ff77dc076dc6a680e12746f44e3c4dd3ba",
+  "leaf_hash": "f1243c19ddd5715e1b3562cbd874bf73e0ebddaf5c3618a3b95a35b0df2b071f",
+  "data": {
+    "capsule_id": "caps_001",
+    "result": true
+  }
+}
