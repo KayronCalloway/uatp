@@ -52,3 +52,17 @@ frontend/node_modules/
 
 # System Status
 SYSTEM_STATUS.md
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.pre-commit-cache/
+.hypothesis/
+
+# Test/runtime data
+chain_seals/
+federation_data/
+
+# Sensitive keys (handle separately)
+.uatp_keys/

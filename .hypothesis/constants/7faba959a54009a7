@@ -1,4 +1,0 @@
-# file: /Users/kay/uatp-capsule-engine/src/api/chain_sealer.py
-# hypothesis_version: 6.135.26
-
-['*_seals.json', ',', ':', 'Invalid signature', 'UATP_CHAIN_PATH', 'UATP_SEALS_PATH', 'UATP_SIGNING_KEY', 'active', 'capsule_chain.jsonl', 'chain_id', 'chain_seals', 'chain_state_hash', 'chain_unchanged', 'error', 'expected_key', 'note', 'r', 'seal_count', 'seal_id', 'seals', 'seals_dir', 'signature', 'signer_id', 'status', 'timestamp', 'unknown', 'utf-8', 'verified', 'verify_key', 'w']

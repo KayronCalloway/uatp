@@ -1,4 +1,0 @@
-# file: /Users/kay/uatp-capsule-engine/reasoning/trace.py
-# hypothesis_version: 6.135.26
-
-[0.0, 1.0, 'ReasoningStep', 'ReasoningTrace', 'action', 'conclusion', 'confidence', 'content', 'evidence', 'hypothesis', 'inference', 'json', 'metadata', 'observation', 'reflection', 'step_type', 'timestamp', 'uncertainty']

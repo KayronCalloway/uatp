@@ -1,4 +1,0 @@
-# file: /Users/kay/uatp-capsule-engine/config/cache_settings.py
-# hypothesis_version: 6.135.26
-
-[120, 300, 900, 1000, '1', 'UATP_AI_CACHE_TTL', 'UATP_CACHE_ENABLED', 'UATP_CACHE_SIZE', 'UATP_CHAIN_CACHE_TTL', 'UATP_FORKS_CACHE_TTL', 'UATP_STATS_CACHE_TTL', 'ai', 'chain', 'forks', 'stats', 't', 'true', 'uatp_api.cache', 'verification', 'yes']

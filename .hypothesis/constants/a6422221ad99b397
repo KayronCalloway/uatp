@@ -1,4 +1,0 @@
-# file: /Users/kay/uatp-capsule-engine/src/api/capsule_routes.py
-# hypothesis_version: 6.135.26
-
-[120, 200, 201, 300, 400, 404, 500, '/<capsule_id>', '/bulk', '/capsules', '/stats', '/verify/<capsule_id>', '100 per minute', '120 per minute', '150 per minute', '30 per minute', 'Capsule not found', 'Failed to get stats', 'GET', 'POST', 'agent_id', 'capsule_model', 'capsules', 'data', 'error', 'index', 'original_json', 'read', 'reason', 'verify_key', 'write']

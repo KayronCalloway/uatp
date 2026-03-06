@@ -1,4 +1,0 @@
-# file: /Users/kay/uatp-capsule-engine/visualizer/utils/colors.py
-# hypothesis_version: 6.135.26
-
-[0.4, 0.7, 100, '#26a69a', '#42a5f5', '#4caf50', '#4dd0e1', '#5c6bc0', '#64b5f6', '#66bb6a', '#78909c', '#7e57c2', '#81c784', '#8d6e63', '#90a4ae', '#9575cd', '#9ccc65', '#a1887f', '#ba68c8', '#e57373', '#ec407a', '#ef5350', '#f44336', '#ff8a65', '#ff9800', '#ffa726', '#ffb74d', '#ffd54f', 'AncestralKnowledge', 'CapsuleExpiration', 'Consent', 'DEFAULT', 'Economic', 'Embodied', 'Governance', 'ImplicitConsent', 'Influence', 'Introspective', 'Joint', 'Lifecycle', 'Merge', 'Meta', 'Perspective', 'Refusal', 'Remix', 'SelfHallucination', 'SimulatedMalice', 'TemporalSignature', 'TrustRenewal', 'ValueInception']

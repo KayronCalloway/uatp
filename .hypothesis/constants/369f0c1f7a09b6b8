@@ -1,4 +1,0 @@
-# file: /Users/kay/uatp-capsule-engine/src/crypto_utils.py
-# hypothesis_version: 6.135.26
-
-['Invalid signature.', '__iter__', 'hash_', 'signature', 'to_dict', 'utf-8']

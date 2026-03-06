@@ -1,4 +1,0 @@
-# file: /Users/kay/uatp-capsule-engine/src/engine/capsule_engine.py
-# hypothesis_version: 6.135.26
-
-[0.8, 0.95, 1.0, 'Capsule', 'Merge', 'Perspective', 'Perspective Fork', 'UATP_AGENT_ID', 'UATP_CHAIN_PATH', 'UATP_SIGNING_KEY', 'a', 'agent_id', 'capsule_chain.jsonl', 'capsule_id', 'capsule_type', 'confidence', 'cqss_first', 'fork_of', 'gpt-4', 'input_data', 'metadata', 'model_version', 'output', 'parent_capsule', 'r', 'reasoning', 'reasoning_trace', 'score', 'source', 'source_model', 'timestamp', 'uatp.engine', 'user', 'verify_key']

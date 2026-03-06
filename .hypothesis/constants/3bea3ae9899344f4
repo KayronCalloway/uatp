@@ -1,4 +1,0 @@
-# file: /Users/kay/uatp-capsule-engine/api/logger.py
-# hypothesis_version: 6.135.26
-
-['DEBUG', 'FLASK_ENV', 'INFO', 'LOG_LEVEL', 'STRUCTURED_LOGS', 'Z', 'development', 'duration_ms', 'endpoint', 'exception', 'extra_data', 'false', 'function', 'level', 'line', 'message', 'module', 'process_id', 'production', 'request_id', 'thread_id', 'timestamp', 'true', 'uatp_capsule_engine', 'user_id']

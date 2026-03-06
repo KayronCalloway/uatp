@@ -1,4 +1,0 @@
-# file: /Users/kay/uatp-capsule-engine/src/api/health_routes.py
-# hypothesis_version: 6.135.26
-
-['/health', '0.0.0', 'CACHE_ENABLED', 'Not Initialized', 'OK', 'VERSION', 'caching', 'engine', 'features', 'health', 'ok', 'rate_limiting', 'status', 'timestamp', 'version']

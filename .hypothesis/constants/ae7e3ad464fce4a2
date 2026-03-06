@@ -1,4 +1,0 @@
-# file: /Users/kay/uatp-capsule-engine/src/api/cache.py
-# hypothesis_version: 6.135.26
-
-[100, 120, 300, 512, 1000, '..', ':', 'K', 'T', 'V', '__dict__', 'cache_enabled', 'cache_size', 'capacity', 'chain', 'chain_cache', 'chain_ttl', 'config', 'evictions', 'forks', 'forks_cache', 'forks_ttl', 'full_path', 'general', 'general_ttl', 'hit_rate', 'hits', 'misses', 'request', 'response_cache', 'size', 'stats', 'stats_cache', 'stats_ttl', 'to_dict', 'uatp.cache', 'verification', 'verification_cache', 'verification_ttl']

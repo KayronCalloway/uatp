@@ -1,4 +1,0 @@
-# file: /Users/kay/uatp-capsule-engine/src/api/dependencies.py
-# hypothesis_version: 6.135.26
-
-[300, 401, 403, 500, 'API key required', 'API_KEYS', 'Cache-Control', 'Invalid API key', 'No engine configured', 'X-API-Key', 'agent_id', 'db_session', 'engine', 'engine_override', 'error', 'headers', 'roles']

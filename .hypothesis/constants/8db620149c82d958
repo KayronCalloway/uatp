@@ -1,4 +1,0 @@
-# file: /Users/kay/uatp-capsule-engine/api/reasoning_api.py
-# hypothesis_version: 6.135.26
-
-[200, 201, 400, 404, 500, 503, '/analyze', '/analyze-batch', '/compare', '/generate', '/validate', 'POST', 'error', 'read', 'reasoning', 'step_type', 'steps', 'write']
