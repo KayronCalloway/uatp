@@ -536,84 +536,130 @@ class CourtAdmissibleEnricher:
     def extract_key_recommendation(messages: List[Any]) -> Tuple[str, str, List[str]]:
         """
         Extract the actual key recommendation/decision from assistant messages.
+        Uses smart pattern matching to find action + reasoning.
 
         Returns:
             Tuple of (decision_text, specific_why, key_points)
         """
-        # Collect all assistant messages
         assistant_msgs = [m for m in messages if m.role == "assistant"]
         user_msgs = [m for m in messages if m.role == "user"]
 
         if not assistant_msgs:
             return "No recommendation provided", "No assistant response captured", []
 
-        # Find the most substantive assistant message (longest, most detailed)
-        best_msg = max(assistant_msgs, key=lambda m: len(m.content))
+        # Use the LAST assistant message (most likely the conclusion)
+        # But also check the longest for context
+        last_msg = assistant_msgs[-1]
+        longest_msg = max(assistant_msgs, key=lambda m: len(m.content))
 
-        # Strip markdown for clean plain language display
-        decision_text = strip_markdown(best_msg.content)
+        # Prefer last message unless it's very short
+        best_msg = last_msg if len(last_msg.content) > 100 else longest_msg
+        content = best_msg.content
+        content_lower = content.lower()
+        content_clean = strip_markdown(content)
 
-        # Truncate if too long but keep more context (up to 500 chars for cleaner summary)
-        if len(decision_text) > 500:
-            # Try to find a natural break point
-            break_points = [". ", ".\n", "\n\n", "! ", "? "]
-            truncated = decision_text[:500]
-            for bp in break_points:
-                last_break = truncated.rfind(bp)
-                if last_break > 200:  # Keep at least 200 chars
-                    truncated = truncated[: last_break + 1]
-                    break
-            decision_text = truncated + "..."
-
-        # Extract specific "why" from the content
-        why_indicators = [
-            "because",
-            "since",
-            "due to",
-            "as a result",
-            "therefore",
-            "this is because",
-            "the reason",
-            "in order to",
-            "to ensure",
+        # === DECISION EXTRACTION ===
+        # Strategy 1: Look for action verb patterns at sentence starts
+        action_patterns = [
+            # Past tense actions (completed work)
+            r"(?:^|\. |\n)((?:Added|Created|Fixed|Updated|Implemented|Removed|"
+            r"Configured|Enabled|Disabled|Set up|Built|Wrote|Modified|Changed|"
+            r"Committed|Deployed|Installed|Migrated|Refactored|Resolved|"
+            r"Cleaned|Stripped|Merged|Pushed)[^.!?\n]{10,80}[.!?]?)",
+            # Present perfect (just did)
+            r"(?:^|\. |\n)((?:I've |I have |We've |We have )(?:added|created|fixed|"
+            r"updated|implemented|set up|built|configured)[^.!?\n]{10,80}[.!?]?)",
+            # Done/Complete patterns
+            r"(?:^|\. |\n)((?:Done|Completed|Finished|Ready)[.:] ?[^.!?\n]{5,80}[.!?]?)",
         ]
 
-        specific_why_parts = []
-        content_lower = best_msg.content.lower()
-        for indicator in why_indicators:
-            idx = content_lower.find(indicator)
-            if idx != -1:
-                # Extract the sentence containing the indicator
-                start = max(0, content_lower.rfind(".", 0, idx) + 1)
-                end = content_lower.find(".", idx)
-                if end == -1:
-                    end = min(idx + 200, len(content_lower))
-                sentence = best_msg.content[start:end].strip()
-                if len(sentence) > 20 and sentence not in specific_why_parts:
-                    specific_why_parts.append(sentence)
+        decision_text = None
+        for pattern in action_patterns:
+            match = re.search(pattern, content, re.IGNORECASE | re.MULTILINE)
+            if match:
+                decision_text = strip_markdown(match.group(1).strip())
+                break
 
-        # If no explicit "why" found, extract key action items
-        if not specific_why_parts:
-            # Look for recommendation patterns
-            rec_patterns = ["should", "recommend", "suggest", "need to", "must", "will"]
-            for pattern in rec_patterns:
-                idx = content_lower.find(pattern)
+        # Strategy 2: Look for summary sections
+        if not decision_text:
+            summary_patterns = [
+                r"(?:Summary|Result|Conclusion|Done|Fixed|Solution)[:\s]+([^\n]{20,150})",
+                r"(?:^|\n)(?:\*\*)?(?:TL;?DR|In short)[:\s]*(?:\*\*)?([^\n]{20,150})",
+            ]
+            for pattern in summary_patterns:
+                match = re.search(pattern, content, re.IGNORECASE)
+                if match:
+                    decision_text = strip_markdown(match.group(1).strip())
+                    break
+
+        # Strategy 3: First meaningful sentence (often states the action)
+        if not decision_text:
+            sentences = re.split(r'[.!?]\s+', content_clean)
+            for sent in sentences[:3]:
+                sent = sent.strip()
+                if len(sent) > 30 and len(sent) < 200:
+                    # Skip meta-sentences
+                    skip_starts = ("let me", "i'll", "i will", "here's", "sure", "okay", "yes")
+                    if not sent.lower().startswith(skip_starts):
+                        decision_text = sent
+                        break
+
+        # Fallback: truncated content
+        if not decision_text:
+            decision_text = content_clean[:200] + "..." if len(content_clean) > 200 else content_clean
+
+        # === WHY/REASONING EXTRACTION ===
+        # Strategy 1: Look for problem-solution patterns
+        why_patterns = [
+            # Problem was X
+            r"(?:The )?(?:issue|problem|bug|error|root cause) (?:was|is)[:\s]+([^.!?\n]{15,120})",
+            # Because/Since patterns
+            r"(?:because|since|as) ([^.!?\n]{15,100})",
+            # This fixes/solves X
+            r"(?:This |It )(?:fixes|solves|resolves|addresses|prevents|ensures) ([^.!?\n]{10,100})",
+            # To fix/prevent X
+            r"(?:to |in order to )(?:fix|prevent|ensure|handle|support|enable) ([^.!?\n]{10,100})",
+            # Root cause pattern
+            r"(?:caused by|due to|resulted from) ([^.!?\n]{10,100})",
+            # The X was Y pattern (explanatory)
+            r"(?:The table|The schema|The code|The function|The API|The system) (?:was|had|used|contained) ([^.!?\n]{10,100})",
+        ]
+
+        specific_why = None
+        for pattern in why_patterns:
+            match = re.search(pattern, content, re.IGNORECASE)
+            if match:
+                specific_why = strip_markdown(match.group(1).strip().rstrip(".,"))
+                # Capitalize first letter
+                if specific_why:
+                    specific_why = specific_why[0].upper() + specific_why[1:]
+                break
+
+        # Strategy 2: Look for sentences with causal indicators
+        if not specific_why:
+            causal_indicators = ["because", "since", "which caused", "resulting in",
+                                 "this meant", "the reason", "this was causing"]
+            for indicator in causal_indicators:
+                idx = content_lower.find(indicator)
                 if idx != -1:
-                    start = max(0, content_lower.rfind(".", 0, idx) + 1)
-                    end = content_lower.find(".", idx)
+                    # Extract the clause after the indicator
+                    start = idx + len(indicator)
+                    end = content.find(".", start)
                     if end == -1:
-                        end = min(idx + 150, len(content_lower))
-                    sentence = best_msg.content[start:end].strip()
-                    if len(sentence) > 20 and sentence not in specific_why_parts:
-                        specific_why_parts.append(sentence)
+                        end = min(start + 100, len(content))
+                    clause = content[start:end].strip().lstrip(": ")
+                    if len(clause) > 15:
+                        specific_why = strip_markdown(clause)
+                        specific_why = specific_why[0].upper() + specific_why[1:] if specific_why else None
+                        break
 
-        # Strip markdown from why parts before joining
-        specific_why_parts = [strip_markdown(part) for part in specific_why_parts]
-        specific_why = (
-            " | ".join(specific_why_parts[:3])
-            if specific_why_parts
-            else f"Based on analysis of the user's request: {user_msgs[-1].content[:100] if user_msgs else 'unknown'}"
-        )
+        # Strategy 3: Use the user's question as context
+        if not specific_why and user_msgs:
+            user_q = user_msgs[-1].content[:80] if user_msgs else "the request"
+            specific_why = f"In response to: {strip_markdown(user_q)}"
+
+        if not specific_why:
+            specific_why = "Action taken based on conversation context"
 
         # Extract key points (bullet-like items)
         key_points = []
