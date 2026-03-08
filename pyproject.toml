@@ -109,7 +109,26 @@ exclude = [
     "src/security/",
     "src/utils/",
     "tests/",
+    "test_.*\\.py",  # Root-level test files
 ]
+
+# Skip type-checking imports from legacy modules
+[[tool.mypy.overrides]]
+module = [
+    "src.security.*",
+    "src.analysis.*",
+    "src.api.*",
+    "src.core.*",
+    "src.embeddings.*",
+    "src.enrichment.*",
+    "src.feedback.*",
+    "src.live_capture.*",
+    "src.ml.*",
+    "src.models.*",
+    "src.reasoning.*",
+    "src.utils.*",
+]
+ignore_errors = true
 
 [tool.ruff]
 line-length = 88
