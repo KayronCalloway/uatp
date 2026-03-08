@@ -64,5 +64,29 @@ dist/
 chain_seals/
 federation_data/
 
-# Sensitive keys (handle separately)
+# ============================================
+# SENSITIVE - NEVER COMMIT
+# ============================================
+
+# User private keys (CRITICAL - never commit)
 .uatp_keys/
+~/.uatp/
+*.key
+*.pem
+!*.pem.example
+
+# Deployment secrets
+deployment/environments/*.env
+!deployment/environments/*.env.example
+
+# Any encrypted keys
+*.enc
+*.encrypted
+
+# Backup files that might contain keys
+*.key.bak
+*.pem.bak
+
+# ============================================
+# END SENSITIVE
+# ============================================
