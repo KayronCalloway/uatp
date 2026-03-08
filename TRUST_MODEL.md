@@ -248,7 +248,7 @@ This architecture supports:
 - [x] Implement hash-only timestamp flow
 - [x] Document key backup/recovery process (in UserKeyManager)
 - [x] Create standalone verification function
-- [ ] Update SDK to use new local signing
+- [x] Update SDK to use new local signing (`sdk/python/uatp/crypto/`, `client.certify_local()`)
 - [ ] Create transparency log infrastructure
 - [ ] Security audit of new architecture
-- [ ] Update Claude Code capture to use local signing
+- [x] Update Claude Code capture to use local signing (`UATP_SIGNING_MODE=local`)

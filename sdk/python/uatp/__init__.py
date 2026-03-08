@@ -3,6 +3,14 @@ UATP Python SDK - Court-admissible AI evidence
 """
 
 from .client import UATP, CapsuleProof, CertificationResult
+from .crypto import (
+    LocalSigner,
+    SignedCapsule,
+    UserKeyManager,
+    UserKeyPair,
+    get_user_key_manager,
+    verify_capsule_standalone,
+)
 from .models import (
     Alternative,
     DataSource,
@@ -20,6 +28,13 @@ __all__ = [
     "UATP",
     "CertificationResult",
     "CapsuleProof",
+    # Zero-trust local signing
+    "LocalSigner",
+    "SignedCapsule",
+    "UserKeyManager",
+    "UserKeyPair",
+    "get_user_key_manager",
+    "verify_capsule_standalone",
     # Rich data models
     "DataSource",
     "Alternative",

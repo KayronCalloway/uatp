@@ -6,6 +6,7 @@ NOW WITH: Enhanced context extraction, critical path analysis, and confidence ex
 """
 
 import logging
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -42,6 +43,26 @@ except Exception as e:
     _crypto = None
     _CRYPTO_AVAILABLE = False
 
+# Import LocalSigner for zero-trust local signing mode
+try:
+    from src.crypto.local_signer import LocalSigner
+
+    _LOCAL_SIGNER_AVAILABLE = True
+except Exception as e:
+    logger.debug(f"LocalSigner not available: {e}")
+    _LOCAL_SIGNER_AVAILABLE = False
+
+
+def _get_signing_mode() -> str:
+    """Get the signing mode from environment variable."""
+    return os.getenv("UATP_SIGNING_MODE", "server").lower()
+
+
+def _get_signer_passphrase() -> Optional[str]:
+    """Get the signer passphrase from environment variable."""
+    return os.getenv("UATP_SIGNER_PASSPHRASE")
+
+
 # Import reasoning extractor for AI enrichment
 try:
     from src.enrichment.reasoning_extractor import ReasoningExtractor
@@ -60,7 +81,7 @@ except Exception as e:
     logger.warning(f"Embedder not available: {e}")
     _embedder = None
     _EMBEDDER_AVAILABLE = False
-from src.utils.rich_capsule_creator import (
+from src.utils.rich_capsule_creator import (  # noqa: E402
     RichReasoningStep,
     create_rich_reasoning_capsule,
 )
@@ -624,7 +645,51 @@ class RichCaptureEnhancer:
         # - WHO signed (Ed25519 key holder)
         # - WHAT was signed (SHA256 hash)
         # - WHEN it existed (RFC 3161 from DigiCert)
-        if _CRYPTO_AVAILABLE and _crypto:
+        #
+        # Supports two modes via UATP_SIGNING_MODE environment variable:
+        # - "server" (default): Use UATPCryptoV7 server-side signing
+        # - "local": Use LocalSigner for zero-trust user signing
+        signing_mode = _get_signing_mode()
+
+        if signing_mode == "local" and _LOCAL_SIGNER_AVAILABLE:
+            # ZERO-TRUST LOCAL SIGNING
+            # Private key never leaves device, only hash sent for timestamping
+            passphrase = _get_signer_passphrase()
+            if passphrase:
+                try:
+                    signer = LocalSigner(
+                        passphrase=passphrase,
+                        auto_generate=True,  # Generate key on first use
+                    )
+
+                    # Sign the capsule content (payload is the signed content)
+                    signed = signer.sign_capsule(capsule.get("payload", capsule))
+
+                    # Add verification data to capsule
+                    capsule["verification"] = {
+                        "signer": "user",
+                        "hash": signed.content_hash,
+                        "signature": f"ed25519:{signed.signature}",
+                        "verify_key": signed.public_key,
+                        "signed_at": signed.signed_at.isoformat(),
+                        "signing_mode": "local",
+                    }
+
+                    logger.info(
+                        f" Capsule {capsule['capsule_id']} signed locally "
+                        f"with key {signer._key_id[:16]}..."
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"[WARN] Local signing failed: {e}. Capsule unsigned."
+                    )
+            else:
+                logger.warning(
+                    "[WARN] Local signing mode requires UATP_SIGNER_PASSPHRASE. "
+                    "Capsule will be unsigned."
+                )
+        elif _CRYPTO_AVAILABLE and _crypto:
+            # SERVER SIGNING MODE (default)
             try:
                 # Sign with auto timestamp mode (tries online TSA, falls back to local)
                 verification = _crypto.sign_capsule(capsule, timestamp_mode="auto")
