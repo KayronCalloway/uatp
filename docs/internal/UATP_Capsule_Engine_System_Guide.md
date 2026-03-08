@@ -1192,7 +1192,7 @@ tar -xzf capsule_files_20240101.tar.gz -C /var/lib/capsule_engine/
 #### Database Connection Issues
 
 **Problem:** Database connection failures
-**Symptoms:** 
+**Symptoms:**
 - "Database connection timeout" errors
 - 500 errors on API requests
 - Health check failures

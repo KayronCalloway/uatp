@@ -11,7 +11,7 @@
 
 ### The Accountability Revolution
 - **No more "the algorithm decided"** - every decision traceable to specific reasoning
-- **No more algorithmic discrimination** - bias detectable and provable  
+- **No more algorithmic discrimination** - bias detectable and provable
 - **No more corporate deflection** - companies liable for documented AI decisions
 - **No more regulatory gaps** - all significant AI must explain itself
 
@@ -142,7 +142,7 @@ Every autonomous vehicle crash, biased loan rejection, and medical AI error crea
 - 100+ developers using UATP SDKs
 - 1+ regulatory partnership established
 
-### Phase 2 Targets  
+### Phase 2 Targets
 - 1000+ AI systems under UATP compliance
 - 10+ major enterprise deployments
 - First legal precedent using UATP evidence

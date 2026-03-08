@@ -41,7 +41,7 @@ print(result.proof_url)
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/your-org/uatp-capsule-engine
+git clone https://github.com/KayronCalloway/uatp
 cd uatp-capsule-engine
 ```
 
@@ -203,9 +203,9 @@ Planned pricing:
 
 ## Support
 
-- **Issues:** [GitHub Issues](https://github.com/your-org/uatp-capsule-engine/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/your-org/uatp-capsule-engine/discussions)
-- **Email:** your@email.com
+- **Issues:** [GitHub Issues](https://github.com/KayronCalloway/uatp/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/KayronCalloway/uatp/discussions)
+- **Email:** Kayron@houseofcalloway.com
 
 **Looking for beta testers!** We'd love your feedback.
 
@@ -259,7 +259,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## Get Started Now
 
 ```bash
-git clone https://github.com/your-org/uatp-capsule-engine
+git clone https://github.com/KayronCalloway/uatp
 cd uatp-capsule-engine
 ./start_backend_dev.sh
 
@@ -274,4 +274,4 @@ python3 test_actual_sdk.py
 
 **Built with:** Python, FastAPI, PostgreSQL, Ed25519, React
 **Status:** Open Beta
-**Community:** [Join the discussion](https://github.com/your-org/uatp-capsule-engine/discussions)
+**Community:** [Join the discussion](https://github.com/KayronCalloway/uatp/discussions)

@@ -17,7 +17,7 @@
 ```bash
 # Alternative ZK proof libraries
 pip install snarkjs-python
-pip install circom-python  
+pip install circom-python
 pip install libsnark-python
 
 # Build bulletproofs from source

@@ -25,7 +25,7 @@ This document details the comprehensive performance optimizations implemented fo
 
 ### 2. Resource Allocation Optimization
 
-**Files**: 
+**Files**:
 - `/k8s/deployment.yaml` (updated)
 - `/k8s/environments/production/deployment.yaml` (updated)
 - `/k8s/resource-quotas.yaml` (new)
@@ -167,7 +167,7 @@ resources:
 
 - **Horizontal Scaling**: Support for 3-50 pods in production
 - **Vertical Scaling**: Automatic resource optimization
-- **Database Scaling**: Read replicas handle 70% of database load  
+- **Database Scaling**: Read replicas handle 70% of database load
 - **Cache Performance**: 90%+ cache hit ratio with Redis optimization
 
 ## Deployment Instructions

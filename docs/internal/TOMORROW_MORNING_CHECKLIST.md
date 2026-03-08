@@ -40,10 +40,10 @@ python3 demo_audit_artifacts.py
 ```
 Hi [Name],
 
-[Their company] is [facing/underwriting/auditing] AI systems without 
+[Their company] is [facing/underwriting/auditing] AI systems without
 visibility into runtime behavior.
 
-We've built UATP - a runtime trust layer that cryptographically seals 
+We've built UATP - a runtime trust layer that cryptographically seals
 every AI decision into a verifiable capsule chain. Think HTTPS for AI trust.
 
 90-day pilot:
@@ -51,7 +51,7 @@ every AI decision into a verifiable capsule chain. Think HTTPS for AI trust.
 - You get complete capsule chains proving policy enforcement
 - Result: Quantifiable risk reduction + defensible audit trails
 
-The attached proposal has full details. Available for a 30-minute call 
+The attached proposal has full details. Available for a 30-minute call
 this week to discuss?
 
 Best regards,
@@ -66,7 +66,7 @@ Demo video: [If you make one]
 
 **Tier 1 - Cyber Insurance (Most Desperate):**
 - [ ] Coalition (innovation@coalitioninc.com)
-- [ ] At-Bay (partnerships@at-bay.com)  
+- [ ] At-Bay (partnerships@at-bay.com)
 - [ ] Corvus Insurance (info@corvusinsurance.com)
 
 **Tier 2 - Healthcare Compliance:**
@@ -86,7 +86,7 @@ Demo video: [If you make one]
 
 For each target, research:
 - Their current AI initiatives
-- Their compliance pain points  
+- Their compliance pain points
 - Recent news/press releases
 - Who to contact (LinkedIn)
 
@@ -256,7 +256,7 @@ npm install
 **At end of day, ask yourself:**
 
 1. Did I send at least 3 pilot proposals? ☐
-2. Did I get at least 1 response (even if no)? ☐  
+2. Did I get at least 1 response (even if no)? ☐
 3. Did I learn something about my target market? ☐
 4. Do I know what to do tomorrow? ☐
 
@@ -287,7 +287,7 @@ npm install
 
 **You have:**
 - ✅ World-class technology
-- ✅ Working audit artifacts  
+- ✅ Working audit artifacts
 - ✅ Professional pilot proposal
 - ✅ Clear strategy
 

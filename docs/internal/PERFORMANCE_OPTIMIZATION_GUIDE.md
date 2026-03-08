@@ -270,7 +270,7 @@ AlertRule(
 
 # Low cache hit rate
 AlertRule(
-    name="low_cache_hit_rate", 
+    name="low_cache_hit_rate",
     metric_name="cache_hit_rate_percent",
     threshold=70.0,
     operator="lt",
@@ -351,7 +351,7 @@ print(json.dumps(analysis, indent=2))
 - **Query Optimization**: Monitor and optimize slow queries
 - **Connection Pooling**: Optimize pool size based on load patterns
 
-### 3. Response Optimization  
+### 3. Response Optimization
 - **Compression**: Enable for all responses >500 bytes
 - **ETags**: Implement conditional requests
 - **Async Processing**: Use background tasks for heavy operations

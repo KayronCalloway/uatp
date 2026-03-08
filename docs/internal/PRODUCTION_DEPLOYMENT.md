@@ -194,16 +194,16 @@ server {
 server {
     listen 443 ssl http2;
     server_name your-domain.com www.your-domain.com;
-    
+
     ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
     ssl_private_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
-    
+
     # Security headers
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
     add_header X-Frame-Options DENY;
     add_header X-Content-Type-Options nosniff;
     add_header X-XSS-Protection "1; mode=block";
-    
+
     # Backend API
     location /api/ {
         proxy_pass http://localhost:8000/;
@@ -212,7 +212,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-    
+
     # Frontend
     location / {
         proxy_pass http://localhost:3000;

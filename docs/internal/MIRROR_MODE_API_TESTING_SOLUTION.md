@@ -19,7 +19,7 @@ We implemented a comprehensive testing approach that works around the Quart comp
 - **Module Import**: Confirms all API components can be imported without errors
 - **Server Integration**: Checks that the Mirror Mode API is properly integrated into the main server
 
-#### Tier 2: Business Logic Tests (`test_mirror_mode_integration.py`) 
+#### Tier 2: Business Logic Tests (`test_mirror_mode_integration.py`)
 - **Model Validation**: Tests Pydantic request/response models
 - **API Logic**: Tests the core business logic of each endpoint without HTTP layer
 - **Error Handling**: Verifies proper error handling for edge cases
@@ -36,7 +36,7 @@ We implemented a comprehensive testing approach that works around the Quart comp
 ```python
 # Tests cover all major API functionality:
 - GET /api/v1/mirror/config (configuration retrieval)
-- PUT /api/v1/mirror/config (configuration updates)  
+- PUT /api/v1/mirror/config (configuration updates)
 - POST /api/v1/mirror/audit (manual audit triggering)
 - GET /api/v1/mirror/audits (audit results listing)
 ```
@@ -77,8 +77,8 @@ mirror_mode_bp = create_mirror_mode_api_blueprint(
 
 app.register_blueprint(
     tag(
-        mirror_mode_bp, 
-        name="Mirror Mode", 
+        mirror_mode_bp,
+        name="Mirror Mode",
         description="Endpoints for Mirror Mode self-auditing agent configuration and audit results."
     ),
 )
@@ -90,7 +90,7 @@ app.register_blueprint(
 - `GET /api/v1/mirror/config` - Get current Mirror Mode configuration
 - `PUT /api/v1/mirror/config` - Update Mirror Mode configuration
 
-### 2. Audit Operations  
+### 2. Audit Operations
 - `POST /api/v1/mirror/audit` - Trigger manual audit of a specific capsule
 - `GET /api/v1/mirror/audits` - List all audit and refusal results
 
