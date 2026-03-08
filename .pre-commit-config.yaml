@@ -9,7 +9,10 @@ repos:
     rev: v1.9.0
     hooks:
       - id: mypy
-        additional_dependencies: ["types-requests"]
+        additional_dependencies:
+          - "types-requests"
+          - "pynacl"
+          - "cryptography"
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.14.0
     hooks:
