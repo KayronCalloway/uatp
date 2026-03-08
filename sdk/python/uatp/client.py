@@ -627,14 +627,19 @@ class UATP:
         except Exception as e:
             raise Exception(f"Failed to record outcome: {e}") from e
 
-    def close(self):
+    def close(self) -> None:
         """Close the HTTP session."""
         self.session.close()
 
-    def __enter__(self):
+    def __enter__(self) -> "UATP":
         """Context manager support."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[Any],
+    ) -> None:
         """Context manager cleanup."""
         self.close()

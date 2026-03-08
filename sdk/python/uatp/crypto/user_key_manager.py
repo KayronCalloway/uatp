@@ -305,7 +305,7 @@ class UserKeyManager:
             True if signature is valid, False otherwise
         """
         try:
-            verify_key = VerifyKey(public_key_hex, encoder=HexEncoder)
+            verify_key = VerifyKey(public_key_hex.encode(), encoder=HexEncoder)
             signature_bytes = bytes.fromhex(signature_hex)
 
             # Verify (raises exception if invalid)
