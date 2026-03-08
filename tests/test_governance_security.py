@@ -4,29 +4,26 @@ Comprehensive Security Testing Suite for UATP Governance System.
 This test suite validates that democratic governance protections work against
 various attack scenarios including:
 - Stake concentration attacks
-- Sybil attacks 
+- Sybil attacks
 - Coordinated manipulation
 - Rapid governance takeover
 - Constitutional violations
 - Byzantine validator attacks
 """
 
-import pytest
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
 from unittest.mock import Mock, patch
 
+import pytest
+
+from src.consensus.multi_agent_consensus import ConsensusNode, MultiAgentConsensusEngine
 from src.governance.advanced_governance import (
     GovernanceDAOEngine,
-    Stakeholder,
-    Proposal,
     ProposalType,
     VoteType,
     VotingMethod,
-    ConstitutionalFramework,
 )
 from src.governance.constitutional_framework import constitutional_framework
-from src.consensus.multi_agent_consensus import MultiAgentConsensusEngine, ConsensusNode
 
 
 class TestStakeConcentrationProtection:
@@ -563,7 +560,6 @@ class TestByzantineFaultTolerance:
         byzantine_node.byzantine_behavior_score = 0.9  # Very high score
 
         # Initialize a consensus protocol with validator set
-        from src.consensus.multi_agent_consensus import ProofOfStakeConsensus
 
         # Create mock protocol with validator set
         mock_protocol = Mock()
@@ -696,7 +692,7 @@ def test_comprehensive_attack_scenario():
 
     assert constitutional.constitutional_emergency_active
 
-    print("✅ Comprehensive attack scenario successfully defended against!")
+    print("[OK] Comprehensive attack scenario successfully defended against!")
 
 
 if __name__ == "__main__":

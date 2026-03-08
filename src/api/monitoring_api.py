@@ -8,22 +8,21 @@ and metrics collection for the UATP system.
 """
 
 import asyncio
-import json
 import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-
-from quart import request, jsonify, g
-from werkzeug.exceptions import BadRequest, NotFound
-import sys
 import os
+import sys
+from datetime import datetime
+
+from quart import jsonify, request
+from werkzeug.exceptions import BadRequest, NotFound
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+from monitoring.health_checks import HealthStatus, get_health_manager
+from monitoring.metrics import get_metrics_collector
+
 from .custom_quart import CustomQuart
-from monitoring.health_checks import get_health_manager, HealthStatus
-from monitoring.metrics import get_metrics_collector, get_performance_monitor
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +61,7 @@ async def detailed_health_check():
         return jsonify(system_health), 200
 
     except Exception as e:
-        logger.error(f"❌ Detailed health check failed: {e}")
+        logger.error(f"[ERROR] Detailed health check failed: {e}")
         return (
             jsonify(
                 {
@@ -97,7 +96,7 @@ async def service_health_check(service: str):
         return jsonify(result.to_dict()), 200
 
     except Exception as e:
-        logger.error(f"❌ Service health check failed for {service}: {e}")
+        logger.error(f"[ERROR] Service health check failed for {service}: {e}")
         return (
             jsonify(
                 {
@@ -136,7 +135,7 @@ async def health_history():
         )
 
     except Exception as e:
-        logger.error(f"❌ Health history request failed: {e}")
+        logger.error(f"[ERROR] Health history request failed: {e}")
         return jsonify({"error": str(e), "timestamp": datetime.now().isoformat()}), 500
 
 
@@ -162,7 +161,7 @@ async def uptime_stats():
         )
 
     except Exception as e:
-        logger.error(f"❌ Uptime stats request failed: {e}")
+        logger.error(f"[ERROR] Uptime stats request failed: {e}")
         return jsonify({"error": str(e), "timestamp": datetime.now().isoformat()}), 500
 
 
@@ -193,7 +192,7 @@ async def get_metrics():
             )
 
     except Exception as e:
-        logger.error(f"❌ Metrics request failed: {e}")
+        logger.error(f"[ERROR] Metrics request failed: {e}")
         return jsonify({"error": str(e), "timestamp": datetime.now().isoformat()}), 500
 
 
@@ -211,7 +210,7 @@ async def metrics_summary():
         )
 
     except Exception as e:
-        logger.error(f"❌ Metrics summary request failed: {e}")
+        logger.error(f"[ERROR] Metrics summary request failed: {e}")
         return jsonify({"error": str(e), "timestamp": datetime.now().isoformat()}), 500
 
 
@@ -251,7 +250,7 @@ async def get_metric(metric_name: str):
         )
 
     except Exception as e:
-        logger.error(f"❌ Metric request failed for {metric_name}: {e}")
+        logger.error(f"[ERROR] Metric request failed for {metric_name}: {e}")
         return jsonify({"error": str(e), "timestamp": datetime.now().isoformat()}), 500
 
 
@@ -295,7 +294,7 @@ async def get_histogram_summary(metric_name: str):
         )
 
     except Exception as e:
-        logger.error(f"❌ Histogram request failed for {metric_name}: {e}")
+        logger.error(f"[ERROR] Histogram request failed for {metric_name}: {e}")
         return jsonify({"error": str(e), "timestamp": datetime.now().isoformat()}), 500
 
 
@@ -347,7 +346,7 @@ async def record_metric():
     except BadRequest:
         raise
     except Exception as e:
-        logger.error(f"❌ Record metric failed: {e}")
+        logger.error(f"[ERROR] Record metric failed: {e}")
         return jsonify({"error": str(e), "timestamp": datetime.now().isoformat()}), 500
 
 
@@ -396,7 +395,7 @@ async def monitoring_dashboard():
         )
 
     except Exception as e:
-        logger.error(f"❌ Dashboard request failed: {e}")
+        logger.error(f"[ERROR] Dashboard request failed: {e}")
         return jsonify({"error": str(e), "timestamp": datetime.now().isoformat()}), 500
 
 
@@ -435,7 +434,7 @@ async def _get_prometheus_metrics():
         )
 
     except Exception as e:
-        logger.error(f"❌ Prometheus metrics failed: {e}")
+        logger.error(f"[ERROR] Prometheus metrics failed: {e}")
         return jsonify({"error": str(e), "timestamp": datetime.now().isoformat()}), 500
 
 
@@ -458,11 +457,11 @@ async def handle_internal_error(e):
 async def main():
     """Run the monitoring API server."""
 
-    print("🏥 Starting Monitoring API Server")
+    print(" Starting Monitoring API Server")
     print("=" * 40)
 
     # Start metrics collectors
-    from monitoring.metrics import get_system_collector, get_app_collector
+    from monitoring.metrics import get_app_collector, get_system_collector
 
     system_collector = get_system_collector()
     app_collector = get_app_collector()
@@ -472,7 +471,7 @@ async def main():
         await system_collector.start()
         await app_collector.start()
 
-        logger.info("📊 Metrics collectors started")
+        logger.info(" Metrics collectors started")
 
         # Run the server
         await app.run_task(host="0.0.0.0", port=5003, debug=True)
@@ -481,7 +480,7 @@ async def main():
         # Stop collectors
         await system_collector.stop()
         await app_collector.stop()
-        logger.info("📊 Metrics collectors stopped")
+        logger.info(" Metrics collectors stopped")
 
 
 if __name__ == "__main__":

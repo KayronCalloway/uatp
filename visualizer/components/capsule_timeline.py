@@ -477,7 +477,7 @@ def render_capsule_timeline(
         # Node limit warning
         if len(capsules) > 50:
             st.warning(
-                f"⚠️ Large capsule chain detected ({len(capsules)} capsules). Pagination is enabled for better performance."
+                f"[WARN] Large capsule chain detected ({len(capsules)} capsules). Pagination is enabled for better performance."
             )
         if min_date != max_date:
             st.markdown("### Filter by Date Range")

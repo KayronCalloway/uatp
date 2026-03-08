@@ -174,8 +174,8 @@ const mockData = DEMO_MODE ? {
 Based on code analysis, these dashboards have mock data that needs wrapping:
 
 ### High Priority (Extensive Mock Data):
-1. ✅ **compliance-dashboard.tsx** - Already cleared in previous cleanup
-2. ✅ **payment-dashboard.tsx** - Already cleared in previous cleanup
+1. [OK] **compliance-dashboard.tsx** - Already cleared in previous cleanup
+2. [OK] **payment-dashboard.tsx** - Already cleared in previous cleanup
 3. ⏳ **platform-dashboard.tsx** - 19 mock references (platforms, API keys, usage)
 4. ⏳ **akc-dashboard.tsx** - 13 mock references (sources, clusters, stats)
 5. ⏳ **reasoning-dashboard.tsx** - 13 mock references (chains, steps, stats)

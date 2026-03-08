@@ -1,19 +1,18 @@
 """
 UATP Python SDK - Watermarking Module
 
-Provides World Economic Forum Top 10 2025 watermarking capabilities with 
+Provides World Economic Forum Top 10 2025 watermarking capabilities with
 Meta Stable Signature, IMATAG, and SynthID compatibility.
 """
 
-import asyncio
-import logging
+import base64
 import hashlib
+import json
+import logging
 import secrets
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any, Union
 from datetime import datetime, timezone
-import json
-import base64
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -105,9 +104,7 @@ class WatermarkEngine:
             },
         }
 
-        logger.info(
-            "🏷️ Watermark Engine initialized with 2025 breakthrough technologies"
-        )
+        logger.info(" Watermark Engine initialized with 2025 breakthrough technologies")
 
     async def apply_watermark(
         self,
@@ -189,11 +186,11 @@ class WatermarkEngine:
             # Cache the result
             self.watermark_cache[watermark_id] = watermark_result
 
-            logger.info(f"🏷️ Applied {selected_tech} watermark: {watermark_id}")
+            logger.info(f" Applied {selected_tech} watermark: {watermark_id}")
             return watermark_result
 
         except Exception as e:
-            logger.error(f"❌ Watermark application failed: {e}")
+            logger.error(f"[ERROR] Watermark application failed: {e}")
 
             # Return fallback result
             return WatermarkResult(
@@ -324,12 +321,12 @@ class WatermarkEngine:
                 detections.append(watermark_result)
 
             logger.info(
-                f"🔍 Detected {len(detections)} watermarks in {content_type} content"
+                f" Detected {len(detections)} watermarks in {content_type} content"
             )
             return detections
 
         except Exception as e:
-            logger.error(f"❌ Watermark detection failed: {e}")
+            logger.error(f"[ERROR] Watermark detection failed: {e}")
 
             # Return fallback detection
             content_hash = hashlib.sha256(str(content).encode()).hexdigest()
@@ -388,12 +385,14 @@ class WatermarkEngine:
 
             result = response.json()
             logger.info(
-                f"✅ Verified watermark {watermark_id}: {result.get('verified', False)}"
+                f"[OK] Verified watermark {watermark_id}: {result.get('verified', False)}"
             )
             return result
 
         except Exception as e:
-            logger.error(f"❌ Watermark verification failed for {watermark_id}: {e}")
+            logger.error(
+                f"[ERROR] Watermark verification failed for {watermark_id}: {e}"
+            )
             return {
                 "verified": False,
                 "watermark_id": watermark_id,
@@ -414,7 +413,9 @@ class WatermarkEngine:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ Failed to get watermark analytics for {creator_id}: {e}")
+            logger.error(
+                f"[ERROR] Failed to get watermark analytics for {creator_id}: {e}"
+            )
             return {
                 "creator_id": creator_id,
                 "total_watermarks": 0,
@@ -436,7 +437,7 @@ class WatermarkEngine:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ Failed to get technology capabilities: {e}")
+            logger.error(f"[ERROR] Failed to get technology capabilities: {e}")
             return {
                 "technologies": self.technologies,
                 "default_configs": {
@@ -455,4 +456,4 @@ class WatermarkEngine:
     def clear_cache(self):
         """Clear the watermark cache."""
         self.watermark_cache.clear()
-        logger.info("🧹 Watermark cache cleared")
+        logger.info(" Watermark cache cleared")

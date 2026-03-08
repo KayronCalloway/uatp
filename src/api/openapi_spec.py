@@ -6,11 +6,9 @@ OpenAPI Specification for UATP Capsule API
 This module provides the OpenAPI/Swagger specification for the UATP Capsule API.
 """
 
-from quart import jsonify
-from quart_schema import QuartSchema, validate_json, validate_querystring
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 # OpenAPI specification
 openapi_spec = {
@@ -21,7 +19,7 @@ openapi_spec = {
         "description": "REST API for Universal Attribution and Transparency Protocol (UATP) capsule management",
         "contact": {
             "name": "UATP Team",
-            "url": "https://github.com/uatp/capsule-engine",
+            "url": "https://github.com/KayronCalloway/capsule-engine",
         },
     },
     "servers": [{"url": "http://localhost:8000", "description": "Development server"}],

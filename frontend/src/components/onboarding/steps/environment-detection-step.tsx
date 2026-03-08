@@ -9,11 +9,11 @@ interface EnvironmentDetectionStepProps {
 }
 
 const DETECTION_ITEMS = [
-  { id: 'system', label: 'System Information', icon: '💻' },
-  { id: 'api_keys', label: 'API Key Discovery', icon: '🔑' },
-  { id: 'platforms', label: 'AI Platform Detection', icon: '🤖' },
-  { id: 'network', label: 'Network Connectivity', icon: '🌐' },
-  { id: 'optimization', label: 'Configuration Optimization', icon: '⚡' },
+  { id: 'system', label: 'System Information', icon: '' },
+  { id: 'api_keys', label: 'API Key Discovery', icon: '' },
+  { id: 'platforms', label: 'AI Platform Detection', icon: '' },
+  { id: 'network', label: 'Network Connectivity', icon: '' },
+  { id: 'optimization', label: 'Configuration Optimization', icon: '' },
 ];
 
 export function EnvironmentDetectionStep({ onComplete, progress }: EnvironmentDetectionStepProps) {
@@ -25,10 +25,10 @@ export function EnvironmentDetectionStep({ onComplete, progress }: EnvironmentDe
     const runDetection = async () => {
       for (let i = 0; i < DETECTION_ITEMS.length; i++) {
         setCurrentDetection(i);
-        
+
         // Simulate detection time
         await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400));
-        
+
         setDetectionProgress(prev => ({
           ...prev,
           [DETECTION_ITEMS[i].id]: true
@@ -55,7 +55,7 @@ export function EnvironmentDetectionStep({ onComplete, progress }: EnvironmentDe
       {/* Header */}
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Analyzing Your Environment 🔍
+          Analyzing Your Environment
         </h2>
         <p className="text-gray-600">
           We're automatically detecting your system configuration to provide the optimal setup experience.
@@ -64,7 +64,7 @@ export function EnvironmentDetectionStep({ onComplete, progress }: EnvironmentDe
 
       {/* Overall Progress */}
       <div className="bg-gray-100 rounded-full h-3 overflow-hidden">
-        <div 
+        <div
           className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 ease-out"
           style={{ width: `${progressPercentage}%` }}
         />
@@ -82,23 +82,23 @@ export function EnvironmentDetectionStep({ onComplete, progress }: EnvironmentDe
               key={item.id}
               className={`
                 flex items-center p-4 rounded-lg border-2 transition-all duration-300
-                ${isCompleted 
-                  ? 'border-green-200 bg-green-50' 
-                  : isCurrent 
-                    ? 'border-blue-200 bg-blue-50' 
+                ${isCompleted
+                  ? 'border-green-200 bg-green-50'
+                  : isCurrent
+                    ? 'border-blue-200 bg-blue-50'
                     : 'border-gray-200 bg-gray-50'
                 }
               `}
             >
               <div className="text-2xl mr-4">{item.icon}</div>
-              
+
               <div className="flex-1">
                 <h3 className="font-medium text-gray-900">{item.label}</h3>
                 <p className="text-sm text-gray-600">
-                  {isCompleted 
-                    ? 'Completed ✓' 
-                    : isCurrent 
-                      ? 'Analyzing...' 
+                  {isCompleted
+                    ? 'Completed '
+                    : isCurrent
+                      ? 'Analyzing...'
                       : 'Pending'
                   }
                 </p>
@@ -107,7 +107,7 @@ export function EnvironmentDetectionStep({ onComplete, progress }: EnvironmentDe
               <div className="ml-4">
                 {isCompleted ? (
                   <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm">✓</span>
+                    <span className="text-white text-sm"></span>
                   </div>
                 ) : isCurrent ? (
                   <div className="w-6 h-6 border-2 border-blue-500 rounded-full animate-spin border-t-transparent" />
@@ -126,19 +126,19 @@ export function EnvironmentDetectionStep({ onComplete, progress }: EnvironmentDe
           <h4 className="font-medium text-blue-900 mb-2">Detection Results:</h4>
           <div className="space-y-1 text-sm text-blue-800">
             {detectionProgress.system && (
-              <div>✓ Operating System: {navigator.platform}</div>
+              <div> Operating System: {navigator.platform}</div>
             )}
             {detectionProgress.api_keys && (
-              <div>✓ Found potential API key configurations</div>
+              <div> Found potential API key configurations</div>
             )}
             {detectionProgress.platforms && (
-              <div>✓ Detected compatible AI platforms</div>
+              <div> Detected compatible AI platforms</div>
             )}
             {detectionProgress.network && (
-              <div>✓ Network connectivity verified</div>
+              <div> Network connectivity verified</div>
             )}
             {detectionProgress.optimization && (
-              <div>✓ Optimal configuration determined</div>
+              <div> Optimal configuration determined</div>
             )}
           </div>
         </div>
@@ -148,7 +148,7 @@ export function EnvironmentDetectionStep({ onComplete, progress }: EnvironmentDe
       {completedCount === DETECTION_ITEMS.length && (
         <div className="text-center py-4">
           <div className="text-green-600 font-medium mb-2">
-            Environment Analysis Complete! ✨
+            Environment Analysis Complete!
           </div>
           <div className="text-gray-600 text-sm">
             Automatically continuing to platform setup...
@@ -158,7 +158,7 @@ export function EnvironmentDetectionStep({ onComplete, progress }: EnvironmentDe
 
       {/* Reassuring Message */}
       <div className="text-center text-sm text-gray-500">
-        <p>🔒 All detection happens locally on your system. No data is sent to external servers.</p>
+        <p> All detection happens locally on your system. No data is sent to external servers.</p>
       </div>
     </div>
   );

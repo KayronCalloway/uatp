@@ -6,7 +6,7 @@
 
 ---
 
-## 💰 The Premium Reduction Claim
+##  The Premium Reduction Claim
 
 **Headline:** "UATP can reduce AI liability insurance premiums by 15-20%"
 
@@ -16,7 +16,7 @@
 
 ---
 
-## 📊 Insurance Premium Calculation (Simplified)
+##  Insurance Premium Calculation (Simplified)
 
 ### Base Formula
 ```
@@ -33,7 +33,7 @@ Annual Premium =
 
 ---
 
-## 🎯 Factor 1: Loss Frequency Reduction (5-8% premium impact)
+##  Factor 1: Loss Frequency Reduction (5-8% premium impact)
 
 ### Without UATP
 ```
@@ -71,7 +71,7 @@ If violations cause 20% of claims:
 
 ---
 
-## 🎯 Factor 2: Loss Severity Reduction (5-7% premium impact)
+##  Factor 2: Loss Severity Reduction (5-7% premium impact)
 
 ### Without UATP
 ```
@@ -111,7 +111,7 @@ Overall premium impact: -5% to -7%
 
 ---
 
-## 🎯 Factor 3: Risk Margin Reduction (5-7% premium impact)
+##  Factor 3: Risk Margin Reduction (5-7% premium impact)
 
 ### Without UATP
 ```
@@ -150,7 +150,7 @@ Overall premium impact: -5% to -7%
 
 ---
 
-## 📈 Combined Impact: 15-20% Premium Reduction
+##  Combined Impact: 15-20% Premium Reduction
 
 ### Conservative Estimate (15%)
 ```
@@ -181,7 +181,7 @@ Total Premium Reduction:    -20%
 
 ---
 
-## 💼 Case Study: Modeled Scenario
+##  Case Study: Modeled Scenario
 
 ### Company Profile
 - **Industry:** Healthcare AI
@@ -236,7 +236,7 @@ Plus:
 
 ---
 
-## 🔬 Actuarial Data Points UATP Captures
+##  Actuarial Data Points UATP Captures
 
 ### Real-Time Risk Indicators
 ```json
@@ -274,7 +274,7 @@ Plus:
 
 ---
 
-## 📊 Premium Reduction Timeline
+##  Premium Reduction Timeline
 
 ### Month 1-3 (Pilot Phase)
 ```
@@ -310,7 +310,7 @@ Evidence: Multi-year loss data
 
 ---
 
-## 🎯 What Insurers Need To See
+##  What Insurers Need To See
 
 ### For 5-8% Reduction (Initial)
 - [ ] 90 days of capsule data
@@ -333,7 +333,7 @@ Evidence: Multi-year loss data
 
 ---
 
-## 💼 Positioning for Different Buyers
+##  Positioning for Different Buyers
 
 ### For CFOs:
 > "UATP pays for itself through insurance premium reductions. $36K annual cost vs. $40K annual savings = positive ROI from day one."
@@ -349,7 +349,7 @@ Evidence: Multi-year loss data
 
 ---
 
-## 📋 Validation Process
+##  Validation Process
 
 ### Step 1: Baseline (Month 0)
 - Current premium: $200K
@@ -382,7 +382,7 @@ Evidence: Multi-year loss data
 
 ---
 
-## 🔑 Key Messages
+##  Key Messages
 
 ### For Insurance Companies:
 > "UATP gives you visibility into AI runtime behavior that you've never had before. This lets you price AI risk based on actual controls instead of guesswork."
@@ -395,7 +395,7 @@ Evidence: Multi-year loss data
 
 ---
 
-## 📊 Competitive Advantage
+##  Competitive Advantage
 
 **What others provide:**
 - Logging (tamperable)
@@ -414,7 +414,7 @@ Evidence: Multi-year loss data
 
 ---
 
-## ✅ Summary
+## [OK] Summary
 
 **Claim:** UATP reduces AI liability premiums 15-20%
 
@@ -437,4 +437,4 @@ Evidence: Multi-year loss data
 - $4K+ net annual benefit
 - $20K+ 5-year value
 
-**The math works. Show it.** 💰
+**The math works. Show it.**

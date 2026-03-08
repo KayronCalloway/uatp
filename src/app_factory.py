@@ -241,10 +241,10 @@ def setup_middleware(app: FastAPI, limiter: RateLimitConfig, metrics: Dict[str, 
     # Uses sliding window algorithm with Redis for distributed rate limiting
     use_redis = os.getenv("RATE_LIMIT_USE_REDIS", "true").lower() == "true"
     if use_redis:
-        logger.info("🚀 Using Redis-backed rate limiter (production mode)")
+        logger.info(" Using Redis-backed rate limiter (production mode)")
         app.add_middleware(RateLimitMiddleware, config=limiter)
     else:
-        logger.warning("⚠️ Using in-memory rate limiter (development mode only)")
+        logger.warning("[WARN] Using in-memory rate limiter (development mode only)")
         # Fallback: create in-memory limiter for development
         from .middleware.rate_limiting import InMemoryRateLimiter
 
@@ -412,7 +412,12 @@ def setup_health_routes(app: FastAPI):
     @app.get("/health", tags=["Monitoring"])
     async def health_check():
         """Health check endpoint"""
-        return {"status": "healthy", "timestamp": "2024-07-10T00:00:00Z"}
+        from datetime import datetime, timezone
+
+        return {
+            "status": "healthy",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
 
     @app.get("/ready", tags=["Monitoring"])
     async def readiness_check():
@@ -432,7 +437,12 @@ def setup_health_routes(app: FastAPI):
     @app.get("/startup")
     async def startup_check():
         """Startup check endpoint"""
-        return {"status": "started", "timestamp": "2024-07-10T00:00:00Z"}
+        from datetime import datetime, timezone
+
+        return {
+            "status": "started",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
 
     @app.get("/health/activity", tags=["Monitoring"])
     async def recent_activity():
@@ -520,38 +530,40 @@ def setup_health_routes(app: FastAPI):
                 }
             )
 
-            # API health
-            metrics.append(
-                {"name": "api", "label": "API", "value": 97, "status": "healthy"}
-            )
-
-            # Trust system health
+            # API health - based on successful response
+            api_health = 100 if db_health >= 60 else 50
             metrics.append(
                 {
-                    "name": "trust",
-                    "label": "Trust System",
-                    "value": 94,
-                    "status": "healthy",
+                    "name": "api",
+                    "label": "API",
+                    "value": api_health,
+                    "status": "healthy" if api_health >= 90 else "degraded",
                 }
             )
 
-            # Economic system health
-            metrics.append(
-                {
-                    "name": "economic",
-                    "label": "Economic Engine",
-                    "value": 91,
-                    "status": "healthy",
-                }
-            )
+            # Crypto/signature system health - verify key manager is accessible
+            crypto_health = 100
+            try:
+                from src.security.secure_key_manager import SecureKeyManager
 
-            # Verification system health
+                key_manager = SecureKeyManager()
+                if key_manager.get_signing_key():
+                    crypto_health = 100
+                else:
+                    crypto_health = 50
+            except Exception:
+                crypto_health = 0
+
             metrics.append(
                 {
-                    "name": "verification",
-                    "label": "Verification",
-                    "value": 93,
-                    "status": "healthy",
+                    "name": "crypto",
+                    "label": "Cryptography",
+                    "value": crypto_health,
+                    "status": "healthy"
+                    if crypto_health >= 90
+                    else "degraded"
+                    if crypto_health >= 50
+                    else "unhealthy",
                 }
             )
 
@@ -897,8 +909,8 @@ def create_app() -> FastAPI:
         ],
         contact={
             "name": "UATP Development Team",
-            "url": "https://github.com/username/uatp-capsule-engine",
-            "email": "support@uatp.com",
+            "url": "https://github.com/KayronCalloway/uatp",
+            "email": "Kayron@houseofcalloway.com",
         },
         license_info={
             "name": "MIT License",

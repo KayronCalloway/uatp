@@ -477,7 +477,7 @@ class CausalReasoningEngine:
 
 # Example usage
 if __name__ == "__main__":
-    print("✅ Causal Reasoning Engine Ready")
+    print("[OK] Causal Reasoning Engine Ready")
     print("\nCapabilities:")
     print("  - Ingest capsules and build causal models")
     print("  - Identify root causes of outcomes")

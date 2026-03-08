@@ -7,17 +7,17 @@ Simple script to run the end-to-end integration demo with different configuratio
 
 Usage:
     python3 demo/run_demo.py [quick|full|stress]
-    
+
 Examples:
     python3 demo/run_demo.py quick    # 2-minute quick demo
     python3 demo/run_demo.py full     # 5-minute full demo
     python3 demo/run_demo.py stress   # 10-minute stress test
 """
 
-import sys
 import asyncio
 import json
 import os
+import sys
 from pathlib import Path
 
 # Add project root to path
@@ -33,14 +33,14 @@ async def run_demo_scenario(scenario: str = "full"):
     # Load demo configuration
     config_path = project_root / "demo" / "demo_config.json"
     try:
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             config = json.load(f)
     except FileNotFoundError:
-        print("❌ Demo configuration file not found!")
+        print("[ERROR] Demo configuration file not found!")
         return
 
-    print(f"🚀 Running {scenario} demo scenario")
-    print(f"📋 Configuration: {config['demo_scenarios'].get(scenario, 'default')}")
+    print(f" Running {scenario} demo scenario")
+    print(f" Configuration: {config['demo_scenarios'].get(scenario, 'default')}")
     print("=" * 60)
 
     # Run the demo
@@ -59,24 +59,24 @@ def main():
     # Validate scenario
     valid_scenarios = ["quick", "full", "stress"]
     if scenario not in valid_scenarios:
-        print(f"❌ Invalid scenario: {scenario}")
+        print(f"[ERROR] Invalid scenario: {scenario}")
         print(f"Valid options: {', '.join(valid_scenarios)}")
         print("\nUsage: python3 demo/run_demo.py [quick|full|stress]")
         sys.exit(1)
 
-    print("🤖 UATP Capsule Engine - End-to-End Integration Demo")
+    print(" UATP Capsule Engine - End-to-End Integration Demo")
     print("=" * 60)
-    print(f"📦 Scenario: {scenario}")
-    print(f"📍 Working directory: {os.getcwd()}")
-    print(f"🐍 Python version: {sys.version}")
+    print(f" Scenario: {scenario}")
+    print(f" Working directory: {os.getcwd()}")
+    print(f" Python version: {sys.version}")
     print()
 
     try:
         asyncio.run(run_demo_scenario(scenario))
     except KeyboardInterrupt:
-        print("\n\n⏹️ Demo interrupted by user")
+        print("\n\n Demo interrupted by user")
     except Exception as e:
-        print(f"\n\n❌ Demo failed with error: {e}")
+        print(f"\n\n[ERROR] Demo failed with error: {e}")
         sys.exit(1)
 
 

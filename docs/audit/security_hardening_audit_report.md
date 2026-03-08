@@ -30,10 +30,10 @@ The audit employed a multi-layered approach:
 
 ## Detailed Findings
 
-### 🟢 RESOLVED - High Priority Risks
+###  RESOLVED - High Priority Risks
 
 #### R1. OpenAI API Resilience and Cost Control
-**Status:** ✅ CLOSED
+**Status:** [OK] CLOSED
 **Implementation:** `src/integrations/openai_client.py`
 - **Exponential backoff** with jitter and configurable retry attempts
 - **Cost tracking** with real-time usage metrics and spend monitoring
@@ -52,7 +52,7 @@ for attempt in range(self.retry_config.max_retries + 1):
 ```
 
 #### R2. Secrets Management and Rotation
-**Status:** ✅ CLOSED
+**Status:** [OK] CLOSED
 **Implementation:** `src/security/secrets_manager.py`
 - **HashiCorp Vault** integration with HTTP API client
 - **AWS Secrets Manager** support with automatic rotation
@@ -69,7 +69,7 @@ class VaultBackend(SecretBackend):
 ```
 
 #### R3. Ethics Circuit Breaker Integration
-**Status:** ✅ CLOSED
+**Status:** [OK] CLOSED
 **Implementation:** `src/engine/ethics_circuit_breaker.py` → `src/ethics/rect_system.py`
 - **Real-time ethical monitoring** integrated into capsule lifecycle
 - **Refusal logic** with detailed explanations and audit trails
@@ -85,7 +85,7 @@ if not allowed:
 ```
 
 #### R4. Comprehensive Observability
-**Status:** ✅ CLOSED
+**Status:** [OK] CLOSED
 **Implementation:** `src/observability/telemetry.py`
 - **OpenTelemetry** tracing with distributed context propagation
 - **Prometheus** metrics collection with custom business metrics
@@ -102,10 +102,10 @@ class TelemetryCollector:
         self.setup_prometheus()
 ```
 
-### 🟡 WATCH STATUS - Medium Priority Items
+###  WATCH STATUS - Medium Priority Items
 
 #### W1. Database Security Hardening
-**Status:** 🟡 WATCH
+**Status:**  WATCH
 **Current State:** Basic SQLAlchemy with connection pooling
 **Gaps Identified:**
 - No database connection encryption (SSL/TLS)
@@ -116,7 +116,7 @@ class TelemetryCollector:
 **Recommendation:** Implement database connection encryption and audit logging within 30 days.
 
 #### W2. Container Runtime Security
-**Status:** 🟡 WATCH
+**Status:**  WATCH
 **Current State:** Multi-stage Dockerfile with non-root user
 **Gaps Identified:**
 - No runtime security scanning integration
@@ -127,7 +127,7 @@ class TelemetryCollector:
 **Recommendation:** Integrate container security scanning into CI/CD pipeline.
 
 #### W3. API Rate Limiting Granularity
-**Status:** 🟡 WATCH
+**Status:**  WATCH
 **Current State:** Basic rate limiting with quart-rate-limiter
 **Gaps Identified:**
 - No per-user rate limiting
@@ -137,10 +137,10 @@ class TelemetryCollector:
 
 **Recommendation:** Implement Redis-based distributed rate limiting with user-specific quotas.
 
-### 🔴 OPEN ITEMS - Action Required
+###  OPEN ITEMS - Action Required
 
 #### A1. Certificate Management
-**Status:** 🔴 OPEN
+**Status:**  OPEN
 **Priority:** HIGH
 **Description:** No automated certificate lifecycle management
 **Impact:** Manual certificate rotation introduces operational risk
@@ -154,7 +154,7 @@ class TelemetryCollector:
 4. Document certificate rotation procedures
 
 #### A2. Backup and Disaster Recovery
-**Status:** 🔴 OPEN
+**Status:**  OPEN
 **Priority:** MEDIUM
 **Description:** No automated backup strategy for capsule data
 **Impact:** Potential data loss in disaster scenarios
@@ -233,18 +233,18 @@ class TelemetryCollector:
 ## Compliance Status
 
 ### SOC 2 Type II Readiness
-- **Control Environment:** ✅ READY
-- **Risk Assessment:** ✅ READY
-- **Information & Communication:** ✅ READY
-- **Monitoring Activities:** 🟡 PARTIALLY READY
-- **Control Activities:** 🟡 PARTIALLY READY
+- **Control Environment:** [OK] READY
+- **Risk Assessment:** [OK] READY
+- **Information & Communication:** [OK] READY
+- **Monitoring Activities:**  PARTIALLY READY
+- **Control Activities:**  PARTIALLY READY
 
 ### ISO 27001 Readiness
-- **Information Security Management:** ✅ READY
-- **Risk Management:** ✅ READY
-- **Asset Management:** 🟡 PARTIALLY READY
-- **Access Control:** ✅ READY
-- **Incident Management:** 🟡 PARTIALLY READY
+- **Information Security Management:** [OK] READY
+- **Risk Management:** [OK] READY
+- **Asset Management:**  PARTIALLY READY
+- **Access Control:** [OK] READY
+- **Incident Management:**  PARTIALLY READY
 
 ## Conclusion
 

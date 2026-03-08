@@ -38,10 +38,10 @@ async def test_filtering():
     print(f"Real capsules: {len(filtered_capsules) - demo_count_filtered}")
 
     if demo_count_filtered == 0:
-        print("\n✅ SUCCESS: Filtering is working correctly!")
+        print("\n[OK] SUCCESS: Filtering is working correctly!")
     else:
         print(
-            f"\n❌ FAILURE: Filtering not working - found {demo_count_filtered} demo capsules when there should be 0"
+            f"\n[ERROR] FAILURE: Filtering not working - found {demo_count_filtered} demo capsules when there should be 0"
         )
         print("\nDemo capsules that leaked through:")
         for c in filtered_capsules:

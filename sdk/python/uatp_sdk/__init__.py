@@ -3,16 +3,16 @@ UATP Python SDK - Official Developer Kit
 
 The complete Python SDK for integrating with UATP's civilization-grade infrastructure.
 
-🚀 Features:
+ Features:
 - Simple attribution tracking for AI interactions
-- Real-time economic attribution and payments  
+- Real-time economic attribution and payments
 - Constitutional governance participation
 - Zero-knowledge privacy proofs
 - C2PA content credentials generation
 - World Economic Forum Top 10 2025 watermarking
 - Multi-platform AI integration (OpenAI, Anthropic, HuggingFace)
 
-🎯 Getting Started:
+ Getting Started:
 ```python
 from uatp_sdk import UATP
 
@@ -32,13 +32,13 @@ rewards = client.get_attribution_rewards(user_id="your-user-id")
 ```
 """
 
+from .attribution import AttributionResult, AttributionTracker
 from .client import UATP, UATPConfig
-from .attribution import AttributionTracker, AttributionResult
 from .economics import EconomicEngine, RewardCalculator
+from .federation import FederationClient, Node
 from .governance import GovernanceClient, Proposal, Vote
 from .privacy import PrivacyEngine, ZKProof
 from .watermarking import WatermarkEngine, WatermarkResult
-from .federation import FederationClient, Node
 
 __version__ = "1.0.0"
 __author__ = "UATP Foundation"

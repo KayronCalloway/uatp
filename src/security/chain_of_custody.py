@@ -360,13 +360,13 @@ def get_chain_manager() -> ChainOfCustodyManager:
 # Example usage
 if __name__ == "__main__":
     print("=" * 70)
-    print("🔒 Chain of Custody - Legal Grade Data Provenance")
+    print(" Chain of Custody - Legal Grade Data Provenance")
     print("=" * 70)
 
     manager = ChainOfCustodyManager()
 
     # Simulate API call sequence
-    print("\n📥 Step 1: Receive data from Experian API")
+    print("\n Step 1: Receive data from Experian API")
     credit_score_data = {"score": 720, "date": "2025-12-14"}
     receipt1 = manager.create_receipt(
         data_source="Experian Credit Bureau",
@@ -378,11 +378,11 @@ if __name__ == "__main__":
         http_status=200,
         include_data_snapshot=True,
     )
-    print(f"✅ Receipt created: {receipt1.receipt_id}")
+    print(f"[OK] Receipt created: {receipt1.receipt_id}")
     print(f"   Data hash: {receipt1.data_hash[:32]}...")
     print(f"   Signature: {receipt1.signature[:32]}...")
 
-    print("\n📥 Step 2: Receive data from Income Verification (chained)")
+    print("\n Step 2: Receive data from Income Verification (chained)")
     income_data = {"monthly_income": 7083}
     receipt2 = manager.create_receipt(
         data_source="Income Verification Service",
@@ -394,19 +394,19 @@ if __name__ == "__main__":
         previous_receipt_id=receipt1.receipt_id,
         include_data_snapshot=True,
     )
-    print(f"✅ Receipt created: {receipt2.receipt_id}")
+    print(f"[OK] Receipt created: {receipt2.receipt_id}")
     print(f"   Chained to: {receipt1.receipt_id}")
 
-    print("\n🔍 Step 3: Verify chain of custody")
+    print("\n Step 3: Verify chain of custody")
     verification = manager.verify_chain(receipt2.receipt_id)
-    print(f"✅ Chain valid: {verification['valid']}")
+    print(f"[OK] Chain valid: {verification['valid']}")
     print(f"   Chain length: {verification['chain_length']} receipts")
     print(f"   Breaks: {verification['breaks'] or 'None'}")
 
-    print("\n⚖️  Step 4: Export for court presentation")
+    print("\n  Step 4: Export for court presentation")
     court_doc = manager.export_for_court(receipt2.receipt_id)
     if "error" not in court_doc:
-        print("✅ Court-ready documentation generated:")
+        print("[OK] Court-ready documentation generated:")
         print(f"   Legal standard: {court_doc['legal_standard']}")
         print(f"   Total steps: {court_doc['chain_summary']['total_steps']}")
         print(
@@ -414,15 +414,15 @@ if __name__ == "__main__":
         )
 
     print("\n" + "=" * 70)
-    print("✅ Chain of Custody System Ready")
+    print("[OK] Chain of Custody System Ready")
     print("=" * 70)
-    print("\n📋 Legal Benefits:")
-    print("   ✓ Proves data source authenticity")
-    print("   ✓ Detects tampering with cryptographic certainty")
-    print("   ✓ Provides complete audit trail")
-    print("   ✓ Court-admissible under FRE 901(b)(9)")
-    print("\n🔒 Security Properties:")
-    print("   ✓ HMAC-SHA256 signatures")
-    print("   ✓ Tamper-evident chaining")
-    print("   ✓ Constant-time signature verification")
-    print("   ✓ Secure key management ready")
+    print("\n Legal Benefits:")
+    print("    Proves data source authenticity")
+    print("    Detects tampering with cryptographic certainty")
+    print("    Provides complete audit trail")
+    print("    Court-admissible under FRE 901(b)(9)")
+    print("\n Security Properties:")
+    print("    HMAC-SHA256 signatures")
+    print("    Tamper-evident chaining")
+    print("    Constant-time signature verification")
+    print("    Secure key management ready")

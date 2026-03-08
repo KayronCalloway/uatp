@@ -139,22 +139,22 @@ Would love to share what we're building. Open to a quick call?
 ## Success Metrics:
 
 **Week 1:**
-- ✅ Find 3 contacts at Armilla
-- ✅ Send personalized emails
-- ✅ LinkedIn connection requests
+- [OK] Find 3 contacts at Armilla
+- [OK] Send personalized emails
+- [OK] LinkedIn connection requests
 
 **Week 2:**
-- ✅ Follow-up emails
-- ✅ Schedule call with at least 1 person
+- [OK] Follow-up emails
+- [OK] Schedule call with at least 1 person
 
 **Week 3:**
-- ✅ Demo on call
-- ✅ Share sample data
-- ✅ Pilot proposal sent
+- [OK] Demo on call
+- [OK] Share sample data
+- [OK] Pilot proposal sent
 
 **Month 2:**
-- ✅ Pilot agreement signed
-- ✅ Technical integration started
+- [OK] Pilot agreement signed
+- [OK] Technical integration started
 
 ---
 

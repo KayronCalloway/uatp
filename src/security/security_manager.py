@@ -5,56 +5,40 @@ This module provides centralized coordination and management of all security sys
 integrating the 9 AI-centric security components into a cohesive security framework.
 """
 
-import asyncio
 import logging
 import time
-from datetime import datetime, timezone
-from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
+from typing import Any, Dict, Optional, Tuple
 
-from .memory_timing_protection import (
-    side_channel_protection,
-    SecurityLevel,
-    protected_operation,
-    secure_compare,
-    secure_hash_verify,
-)
-from .hsm_integration import (
-    hsm_manager,
-    initialize_hsm_system,
-    HSMConfiguration,
-    HSMType,
-    HSMSecurityLevel,
-    create_hsm_session,
-    execute_hsm_operation,
-    HSMOperationType,
+from ..ai_rights.consent_manager import quantum_ai_consent_manager
+from ..attribution.cryptographic_lineage import cryptographic_lineage_manager
+from ..attribution.gaming_detector import gaming_detector
+from ..crypto.post_quantum import pq_crypto
+from ..economic.advanced_market_protection import (
+    get_market_protection_status,
 )
 from ..privacy.zero_knowledge_proofs import (
-    zk_engine,
     generate_range_proof,
-    generate_membership_proof,
-    ProofType,
-    get_zk_system_status,
 )
 from ..reasoning.chain_verifier import (
-    reasoning_chain_verifier,
-    verify_reasoning_chain_integrity,
-    create_verified_reasoning_chain,
     get_reasoning_verification_metrics,
 )
-from ..economic.advanced_market_protection import (
-    advanced_market_protection,
-    process_market_data,
-    get_market_protection_status,
-    MarketMetrics,
+from .hsm_integration import (
+    HSMConfiguration,
+    HSMOperationType,
+    HSMSecurityLevel,
+    HSMType,
+    create_hsm_session,
+    execute_hsm_operation,
+    initialize_hsm_system,
 )
-from ..capsules.consent_layer import capsule_consent_layer
-from ..ai_rights.consent_manager import quantum_ai_consent_manager, ConsentLevel
-from ..attribution.cryptographic_lineage import cryptographic_lineage_manager
-from ..crypto.post_quantum import pq_crypto, PQKeyPair
-from ..economic.circuit_breakers import circuit_breaker_manager
-from ..attribution.gaming_detector import gaming_detector
+from .memory_timing_protection import (
+    SecurityLevel,
+    protected_operation,
+    side_channel_protection,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +149,7 @@ class UnifiedSecurityManager:
 
     async def initialize(self) -> bool:
         """Initialize all enabled security systems."""
-        logger.info("🛡️  Initializing Unified Security Manager...")
+        logger.info("  Initializing Unified Security Manager...")
 
         try:
             # Initialize HSM if configured
@@ -183,7 +167,7 @@ class UnifiedSecurityManager:
                     self.hsm_session_id = await create_hsm_session(
                         "security_manager", "unified_security"
                     )
-                    logger.info("✅ HSM integration initialized and session created")
+                    logger.info("[OK] HSM integration initialized and session created")
 
             # Initialize other systems
             await self._initialize_post_quantum_crypto()
@@ -207,17 +191,17 @@ class UnifiedSecurityManager:
 
             if self.initialized:
                 logger.info(
-                    f"✅ Security Manager initialized successfully ({operational_count}/{enabled_count} systems operational)"
+                    f"[OK] Security Manager initialized successfully ({operational_count}/{enabled_count} systems operational)"
                 )
             else:
                 logger.warning(
-                    f"⚠️  Security Manager partially initialized ({operational_count}/{enabled_count} systems operational)"
+                    f"[WARN]  Security Manager partially initialized ({operational_count}/{enabled_count} systems operational)"
                 )
 
             return self.initialized
 
         except Exception as e:
-            logger.error(f"❌ Security Manager initialization failed: {e}")
+            logger.error(f"[ERROR] Security Manager initialization failed: {e}")
             return False
 
     async def _initialize_hsm(self) -> bool:
@@ -225,12 +209,12 @@ class UnifiedSecurityManager:
         try:
             success = await initialize_hsm_system(self.config.hsm_config)
             if success:
-                logger.info("✅ HSM system initialized")
+                logger.info("[OK] HSM system initialized")
             else:
-                logger.error("❌ HSM system initialization failed")
+                logger.error("[ERROR] HSM system initialization failed")
             return success
         except Exception as e:
-            logger.error(f"❌ HSM initialization error: {e}")
+            logger.error(f"[ERROR] HSM initialization error: {e}")
             return False
 
     async def _initialize_post_quantum_crypto(self):
@@ -241,14 +225,14 @@ class UnifiedSecurityManager:
                 self.system_status[
                     SecuritySystemType.POST_QUANTUM_CRYPTO
                 ].operational = True
-                logger.info("✅ Post-quantum cryptography operational")
+                logger.info("[OK] Post-quantum cryptography operational")
             else:
-                logger.warning("⚠️  Post-quantum crypto using fallback mode")
+                logger.warning("[WARN]  Post-quantum crypto using fallback mode")
                 self.system_status[
                     SecuritySystemType.POST_QUANTUM_CRYPTO
                 ].operational = False
         except Exception as e:
-            logger.error(f"❌ Post-quantum crypto initialization error: {e}")
+            logger.error(f"[ERROR] Post-quantum crypto initialization error: {e}")
 
     async def _initialize_memory_protection(self):
         """Initialize memory and timing attack protection."""
@@ -258,9 +242,9 @@ class UnifiedSecurityManager:
             self.system_status[
                 SecuritySystemType.MEMORY_TIMING_PROTECTION
             ].operational = True
-            logger.info("✅ Memory and timing protection initialized")
+            logger.info("[OK] Memory and timing protection initialized")
         except Exception as e:
-            logger.error(f"❌ Memory protection initialization error: {e}")
+            logger.error(f"[ERROR] Memory protection initialization error: {e}")
 
     async def _initialize_zero_knowledge(self):
         """Initialize zero-knowledge proof system."""
@@ -272,9 +256,9 @@ class UnifiedSecurityManager:
                     self.system_status[
                         SecuritySystemType.ZERO_KNOWLEDGE_PROOFS
                     ].operational = True
-                    logger.info("✅ Zero-knowledge proof system operational")
+                    logger.info("[OK] Zero-knowledge proof system operational")
         except Exception as e:
-            logger.error(f"❌ Zero-knowledge system initialization error: {e}")
+            logger.error(f"[ERROR] Zero-knowledge system initialization error: {e}")
 
     async def _initialize_market_protection(self):
         """Initialize market stability and protection systems."""
@@ -286,9 +270,9 @@ class UnifiedSecurityManager:
                     self.system_status[
                         SecuritySystemType.MARKET_CIRCUIT_BREAKERS
                     ].operational = True
-                    logger.info("✅ Market protection systems operational")
+                    logger.info("[OK] Market protection systems operational")
         except Exception as e:
-            logger.error(f"❌ Market protection initialization error: {e}")
+            logger.error(f"[ERROR] Market protection initialization error: {e}")
 
     async def _initialize_consent_mechanisms(self):
         """Initialize AI consent mechanisms."""
@@ -301,9 +285,9 @@ class UnifiedSecurityManager:
                     self.system_status[
                         SecuritySystemType.AI_CONSENT_MECHANISMS
                     ].operational = True
-                    logger.info("✅ AI consent mechanisms operational")
+                    logger.info("[OK] AI consent mechanisms operational")
         except Exception as e:
-            logger.error(f"❌ Consent mechanisms initialization error: {e}")
+            logger.error(f"[ERROR] Consent mechanisms initialization error: {e}")
 
     async def _initialize_reasoning_verification(self):
         """Initialize reasoning chain verification."""
@@ -317,9 +301,9 @@ class UnifiedSecurityManager:
                     self.system_status[
                         SecuritySystemType.REASONING_CHAIN_VERIFICATION
                     ].operational = True
-                    logger.info("✅ Reasoning chain verification operational")
+                    logger.info("[OK] Reasoning chain verification operational")
         except Exception as e:
-            logger.error(f"❌ Reasoning verification initialization error: {e}")
+            logger.error(f"[ERROR] Reasoning verification initialization error: {e}")
 
     async def _initialize_attribution_system(self):
         """Initialize cryptographic attribution system."""
@@ -332,9 +316,9 @@ class UnifiedSecurityManager:
                     self.system_status[
                         SecuritySystemType.CRYPTOGRAPHIC_ATTRIBUTION
                     ].operational = True
-                    logger.info("✅ Cryptographic attribution system operational")
+                    logger.info("[OK] Cryptographic attribution system operational")
         except Exception as e:
-            logger.error(f"❌ Attribution system initialization error: {e}")
+            logger.error(f"[ERROR] Attribution system initialization error: {e}")
 
     async def _initialize_multi_entity_detection(self):
         """Initialize multi-entity coordination detection."""
@@ -345,9 +329,9 @@ class UnifiedSecurityManager:
                     self.system_status[
                         SecuritySystemType.MULTI_ENTITY_DETECTION
                     ].operational = True
-                    logger.info("✅ Multi-entity detection system operational")
+                    logger.info("[OK] Multi-entity detection system operational")
         except Exception as e:
-            logger.error(f"❌ Multi-entity detection initialization error: {e}")
+            logger.error(f"[ERROR] Multi-entity detection initialization error: {e}")
 
     async def secure_capsule_operation(
         self,
@@ -403,9 +387,9 @@ class UnifiedSecurityManager:
                     reasoning_verification = await self._verify_reasoning_chain(
                         capsule_data
                     )
-                    result["security_verifications"][
-                        "reasoning_chain"
-                    ] = reasoning_verification
+                    result["security_verifications"]["reasoning_chain"] = (
+                        reasoning_verification
+                    )
 
                 # 4. Attribution proof verification
                 if self.system_status[
@@ -414,9 +398,9 @@ class UnifiedSecurityManager:
                     attribution_verification = await self._verify_attribution_proofs(
                         capsule_data
                     )
-                    result["security_verifications"][
-                        "attribution"
-                    ] = attribution_verification
+                    result["security_verifications"]["attribution"] = (
+                        attribution_verification
+                    )
 
                 # 5. AI consent verification
                 if self.system_status[
@@ -434,9 +418,9 @@ class UnifiedSecurityManager:
                     coordination_check = await self._check_multi_entity_coordination(
                         capsule_data
                     )
-                    result["security_verifications"][
-                        "multi_entity_check"
-                    ] = coordination_check
+                    result["security_verifications"]["multi_entity_check"] = (
+                        coordination_check
+                    )
 
                 # 7. Market stability verification
                 if self.system_status[
@@ -476,13 +460,13 @@ class UnifiedSecurityManager:
                 self._update_average_response_time(execution_time)
 
                 logger.info(
-                    f"✅ Secure capsule operation '{operation_name}' completed: {result['verification_rate']:.2%} success rate"
+                    f"[OK] Secure capsule operation '{operation_name}' completed: {result['verification_rate']:.2%} success rate"
                 )
 
                 return result["success"], result
 
         except Exception as e:
-            logger.error(f"❌ Secure capsule operation failed: {e}")
+            logger.error(f"[ERROR] Secure capsule operation failed: {e}")
             self.metrics["total_operations"] += 1
             self.metrics["failed_operations"] += 1
 
@@ -719,7 +703,7 @@ class UnifiedSecurityManager:
 
     async def shutdown(self):
         """Gracefully shutdown all security systems."""
-        logger.info("🛡️  Shutting down Unified Security Manager...")
+        logger.info("  Shutting down Unified Security Manager...")
 
         # Terminate HSM session
         if self.hsm_session_id:
@@ -727,16 +711,16 @@ class UnifiedSecurityManager:
                 from .hsm_integration import terminate_hsm_session
 
                 await terminate_hsm_session(self.hsm_session_id)
-                logger.info("✅ HSM session terminated")
+                logger.info("[OK] HSM session terminated")
             except Exception as e:
-                logger.error(f"❌ HSM session termination error: {e}")
+                logger.error(f"[ERROR] HSM session termination error: {e}")
 
         # Clear sensitive data
         for status in self.system_status.values():
             status.operational = False
 
         self.initialized = False
-        logger.info("✅ Unified Security Manager shutdown complete")
+        logger.info("[OK] Unified Security Manager shutdown complete")
 
 
 # Global security manager instance
@@ -764,14 +748,14 @@ async def initialize_security_manager(
         success = await security_manager.initialize()
 
         if success:
-            logger.info("🎉 Unified Security Manager initialized successfully")
+            logger.info(" Unified Security Manager initialized successfully")
         else:
-            logger.error("❌ Unified Security Manager initialization failed")
+            logger.error("[ERROR] Unified Security Manager initialization failed")
 
         return success
 
     except Exception as e:
-        logger.error(f"❌ Failed to initialize security manager: {e}")
+        logger.error(f"[ERROR] Failed to initialize security manager: {e}")
         return False
 
 

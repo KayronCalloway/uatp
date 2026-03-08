@@ -11,13 +11,13 @@
 
 ## Critical Assessment
 
-### The Good ✅
+### The Good [OK]
 - **Core modules work** (`src/live_capture/` - 13 files, 5,038 lines)
 - **Currently capturing** (2 processes running, data flowing)
 - **Rich metadata** (confidence, uncertainty, court-admissible format)
 - **Multiple platform support** (Claude, OpenAI, Cursor, Windsurf, Gemini)
 
-### The Bad ❌
+### The Bad [ERROR]
 - **79 total files** (44 experimental scripts cluttering root)
 - **13+ ways to capture** (no canonical approach documented)
 - **Import bugs** (4 files will fail at runtime)
@@ -25,7 +25,7 @@
 - **Duplicate processes** (2 running, probably capturing same data)
 - **Tests in wrong location** (10 files in root instead of tests/)
 
-### The Ugly 🚨
+### The Ugly
 - **No architecture doc** explaining which system to use
 - **70% code duplication** across 6 hook files
 - **Single class doing 7+ jobs** (ClaudeCodeCapture)
@@ -35,7 +35,7 @@
 
 ## Phase 1: CRITICAL BUGS (Fix Immediately)
 
-### Bug #1: Import Path Errors ❌ CRITICAL
+### Bug #1: Import Path Errors [ERROR] CRITICAL
 
 **4 files will fail at runtime:**
 
@@ -61,7 +61,7 @@ for file in src/live_capture/{openai,cursor,windsurf,anthropic}_hook.py; do
 done
 ```
 
-### Bug #2: Timezone Issues ❌ HIGH
+### Bug #2: Timezone Issues [ERROR] HIGH
 
 **File:** `src/live_capture/claude_code_hook.py:84`
 
@@ -75,7 +75,7 @@ done
 
 **Scope:** Need to scan all capture files for naive datetime usage.
 
-### Bug #3: Duplicate Processes 🔴 MEDIUM
+### Bug #3: Duplicate Processes  MEDIUM
 
 **Running:**
 - PID 1325: `claude_code_auto_capture.py` (since Dec 2)
@@ -517,23 +517,23 @@ mv test_*.py tests/capture/
 ## Success Metrics
 
 ### Before:
-- ❌ 79 files (44 experimental)
-- ❌ 13+ ways to capture
-- ❌ Import bugs in 4 files
-- ❌ Timezone bugs present
-- ❌ 70% code duplication
-- ❌ No architecture docs
-- ❌ Tests scattered
+- [ERROR] 79 files (44 experimental)
+- [ERROR] 13+ ways to capture
+- [ERROR] Import bugs in 4 files
+- [ERROR] Timezone bugs present
+- [ERROR] 70% code duplication
+- [ERROR] No architecture docs
+- [ERROR] Tests scattered
 - **Grade: C+**
 
 ### After:
-- ✅ ~15 production files
-- ✅ 1 canonical capture path
-- ✅ All import bugs fixed
-- ✅ All timezone bugs fixed
-- ✅ Minimal duplication (BaseHook pattern)
-- ✅ Complete architecture docs
-- ✅ Organized test suite
+- [OK] ~15 production files
+- [OK] 1 canonical capture path
+- [OK] All import bugs fixed
+- [OK] All timezone bugs fixed
+- [OK] Minimal duplication (BaseHook pattern)
+- [OK] Complete architecture docs
+- [OK] Organized test suite
 - **Grade: A**
 
 ---

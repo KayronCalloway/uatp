@@ -2,8 +2,8 @@
 FastAPI Capsules Router - Full Operational System
 Provides real capsule CRUD operations with database persistence
 
-⚠️  ACTIVE ROUTER - This file is used by the production API
-⚠️  DO NOT EDIT: src/api/DEPRECATED_capsule_routes.py.old (old Quart version)
+[WARN]  ACTIVE ROUTER - This file is used by the production API
+[WARN]  DO NOT EDIT: src/api/DEPRECATED_capsule_routes.py.old (old Quart version)
 
 Request Flow:
   run.py → src.main:app → app_factory.create_app() → THIS ROUTER
@@ -668,7 +668,7 @@ async def verify_capsule(
                     "alternatives_considered": [],
                 }
 
-        logger.info(f"🔍 DEBUG Verification data: {capsule_data.get('verification')}")
+        logger.info(f" DEBUG Verification data: {capsule_data.get('verification')}")
 
         payload = capsule.payload or {}
 
@@ -699,7 +699,7 @@ async def verify_capsule(
                     }
 
                     logger.info(
-                        f"🔐 Cryptographic verification for {capsule_id}: {'VALID' if is_valid else 'INVALID'}"
+                        f" Cryptographic verification for {capsule_id}: {'VALID' if is_valid else 'INVALID'}"
                     )
 
                 except Exception as verify_error:
@@ -709,7 +709,7 @@ async def verify_capsule(
                         "error": f"Verification exception: {str(verify_error)}",
                     }
                     logger.error(
-                        f"❌ Verification error for {capsule_id}: {verify_error}"
+                        f"[ERROR] Verification error for {capsule_id}: {verify_error}"
                     )
             else:
                 verification_result = {
@@ -844,7 +844,7 @@ async def record_capsule_outcome(
 
         await session.commit()
 
-        logger.info(f"📊 Recorded outcome for {capsule_id}: {outcome_status}")
+        logger.info(f" Recorded outcome for {capsule_id}: {outcome_status}")
 
         return {
             "capsule_id": capsule_id,

@@ -20,23 +20,22 @@ import asyncio
 import logging
 import sys
 import threading
-import time
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.events.event_system import initialize_event_system, get_event_bus
-from src.events.event_handlers import setup_event_handlers
-from src.events.service_integration import get_service_integrator
-from src.dashboard.web_dashboard import DashboardWebServer, create_dashboard_template
 from src.dashboard.analytics_engine import initialize_analytics_engine
+from src.dashboard.web_dashboard import DashboardWebServer, create_dashboard_template
+from src.events.event_handlers import setup_event_handlers
+from src.events.event_system import initialize_event_system
+from src.events.service_integration import get_service_integrator
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="📊 %(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format=" %(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("dashboard_demo")
 
@@ -59,7 +58,7 @@ class DashboardDemo:
 
     async def setup(self):
         """Set up the dashboard and analytics system."""
-        logger.info("🚀 Setting up AI Rights Dashboard system")
+        logger.info(" Setting up AI Rights Dashboard system")
 
         # Initialize event system
         self.event_bus = await initialize_event_system()
@@ -81,12 +80,12 @@ class DashboardDemo:
         await self.dashboard_server.initialize()
 
         self.demo_stats["start_time"] = datetime.now(timezone.utc)
-        logger.info("✅ Dashboard system ready")
+        logger.info("[OK] Dashboard system ready")
 
     async def run_demo(self):
         """Run the complete dashboard demo."""
         logger.info("=" * 60)
-        logger.info("📊 UATP AI Rights Dashboard Demo")
+        logger.info(" UATP AI Rights Dashboard Demo")
         logger.info("=" * 60)
 
         await self.setup()
@@ -98,8 +97,8 @@ class DashboardDemo:
             # Wait for server to start
             await asyncio.sleep(2)
 
-            logger.info("🌐 Dashboard available at: http://localhost:5000")
-            logger.info("📡 Starting real-time data generation...")
+            logger.info(" Dashboard available at: http://localhost:5000")
+            logger.info(" Starting real-time data generation...")
 
             # Generate demo data scenarios
             await self.scenario_1_agent_onboarding()
@@ -117,18 +116,18 @@ class DashboardDemo:
             await self.demo_summary()
 
             # Keep server running for interaction
-            logger.info("🔄 Dashboard server running - Press Ctrl+C to stop")
-            logger.info("📈 Visit http://localhost:5000 to view the dashboard")
+            logger.info(" Dashboard server running - Press Ctrl+C to stop")
+            logger.info(" Visit http://localhost:5000 to view the dashboard")
 
             try:
                 while True:
                     await asyncio.sleep(5)
                     await self.generate_background_activity()
             except KeyboardInterrupt:
-                logger.info("⏹️ Demo stopped by user")
+                logger.info(" Demo stopped by user")
 
         except Exception as e:
-            logger.error(f"❌ Demo failed: {e}")
+            logger.error(f"[ERROR] Demo failed: {e}")
             raise
 
     def start_dashboard_server(self):
@@ -143,11 +142,11 @@ class DashboardDemo:
 
         server_thread = threading.Thread(target=run_server, daemon=True)
         server_thread.start()
-        logger.info("🌐 Dashboard server started")
+        logger.info(" Dashboard server started")
 
     async def scenario_1_agent_onboarding(self):
         """Scenario 1: Agent onboarding and citizenship workflow."""
-        logger.info("\n👥 SCENARIO 1: Agent Onboarding & Citizenship")
+        logger.info("\n SCENARIO 1: Agent Onboarding & Citizenship")
         logger.info("-" * 50)
 
         agents = [
@@ -171,7 +170,7 @@ class DashboardDemo:
 
         for agent in agents:
             agent_id = agent["id"]
-            logger.info(f"📝 Onboarding agent {agent_id}")
+            logger.info(f" Onboarding agent {agent_id}")
 
             # Register IP assets
             await self.service_integrator.dividend_bonds_service.register_ip_asset(
@@ -219,18 +218,18 @@ class DashboardDemo:
             )
 
             if citizenship_id:
-                logger.info(f"   ✅ Citizenship granted: {citizenship_id}")
+                logger.info(f"   [OK] Citizenship granted: {citizenship_id}")
 
             self.demo_stats["agents_created"] += 1
-            self.demo_stats[
-                "events_generated"
-            ] += 4  # Asset, application, assessments, citizenship
+            self.demo_stats["events_generated"] += (
+                4  # Asset, application, assessments, citizenship
+            )
 
             await asyncio.sleep(0.5)
 
     async def scenario_2_financial_activities(self):
         """Scenario 2: Financial activities and bond operations."""
-        logger.info("\n💰 SCENARIO 2: Financial Activities & Bond Operations")
+        logger.info("\n SCENARIO 2: Financial Activities & Bond Operations")
         logger.info("-" * 50)
 
         financial_activities = [
@@ -241,7 +240,7 @@ class DashboardDemo:
 
         for activity in financial_activities:
             agent_id = activity["agent"]
-            logger.info(f"💳 Creating bond for {agent_id}")
+            logger.info(f" Creating bond for {agent_id}")
 
             # Create dividend bond
             bond_capsule = await self.service_integrator.dividend_bonds_service.create_dividend_bond_capsule(
@@ -264,7 +263,7 @@ class DashboardDemo:
                     payment_source=f"{activity['type']}_stream",
                     recipient_agent_id=f"investor_{i+1}",
                 )
-                logger.info(f"   💸 Dividend payment: ${payment_amount:.2f}")
+                logger.info(f"    Dividend payment: ${payment_amount:.2f}")
 
             self.demo_stats["events_generated"] += 3  # Bond creation + 2 payments
             self.demo_stats["workflows_executed"] += 1
@@ -273,7 +272,7 @@ class DashboardDemo:
 
     async def scenario_3_compliance_events(self):
         """Scenario 3: Compliance monitoring and risk events."""
-        logger.info("\n⚖️ SCENARIO 3: Compliance Monitoring & Risk Events")
+        logger.info("\n SCENARIO 3: Compliance Monitoring & Risk Events")
         logger.info("-" * 50)
 
         # Simulate compliance issues
@@ -292,10 +291,10 @@ class DashboardDemo:
 
         for scenario in compliance_scenarios:
             agent_id = scenario["agent"]
-            logger.info(f"⚠️ Compliance issue for {agent_id}: {scenario['issue']}")
+            logger.info(f"[WARN] Compliance issue for {agent_id}: {scenario['issue']}")
 
             # Simulate compliance check
-            from src.events.event_system import Event, EventType, EventPublisher
+            from src.events.event_system import EventPublisher
 
             publisher = EventPublisher(self.event_bus, "compliance_system")
 
@@ -320,18 +319,18 @@ class DashboardDemo:
 
     async def scenario_4_system_monitoring(self):
         """Scenario 4: System health and monitoring events."""
-        logger.info("\n🔧 SCENARIO 4: System Health & Monitoring")
+        logger.info("\n SCENARIO 4: System Health & Monitoring")
         logger.info("-" * 50)
 
         # Generate system events
-        from src.events.event_system import Event, EventType, EventPublisher
+        from src.events.event_system import Event, EventPublisher, EventType
 
         publisher = EventPublisher(self.event_bus, "system_monitor")
 
         # Service health checks
         services = ["dividend_bonds_service", "citizenship_service", "analytics_engine"]
         for service in services:
-            logger.info(f"🔍 Health check: {service}")
+            logger.info(f" Health check: {service}")
 
             # Publish service started event
             await self.event_bus.publish(
@@ -352,8 +351,9 @@ class DashboardDemo:
     async def generate_background_activity(self):
         """Generate background activity for real-time dashboard updates."""
         # Generate random events to keep dashboard active
-        from src.events.event_system import Event, EventType
         import random
+
+        from src.events.event_system import Event, EventType
 
         # Random agent activity
         agents = [f"ai_agent_{i:03d}" for i in range(10, 20)]
@@ -382,7 +382,7 @@ class DashboardDemo:
 
     async def demo_summary(self):
         """Display demo summary and analytics."""
-        logger.info("\n📊 DASHBOARD DEMO SUMMARY")
+        logger.info("\n DASHBOARD DEMO SUMMARY")
         logger.info("=" * 50)
 
         # Get analytics engine stats
@@ -393,40 +393,40 @@ class DashboardDemo:
             datetime.now(timezone.utc) - self.demo_stats["start_time"]
         ).total_seconds()
 
-        logger.info(f"⏱️ Demo Duration: {duration:.1f} seconds")
-        logger.info(f"👥 Total Agents: {stats.total_agents}")
-        logger.info(f"🏛️ Active Citizens: {stats.active_citizens}")
-        logger.info(f"💰 Total Asset Value: ${stats.total_asset_value:,.2f}")
-        logger.info(f"💳 Active Bonds: {stats.active_bonds}")
-        logger.info(f"💸 Total Dividends: ${stats.total_dividends_paid:,.2f}")
-        logger.info(f"📊 Average Yield: {stats.average_yield:.2%}")
-        logger.info(f"📡 Total Events: {stats.total_events}")
-        logger.info(f"⚡ Events/Minute: {stats.events_per_minute:.1f}")
-        logger.info(f"🛡️ Compliance Issues: {stats.compliance_issues}")
+        logger.info(f" Demo Duration: {duration:.1f} seconds")
+        logger.info(f" Total Agents: {stats.total_agents}")
+        logger.info(f" Active Citizens: {stats.active_citizens}")
+        logger.info(f" Total Asset Value: ${stats.total_asset_value:,.2f}")
+        logger.info(f" Active Bonds: {stats.active_bonds}")
+        logger.info(f" Total Dividends: ${stats.total_dividends_paid:,.2f}")
+        logger.info(f" Average Yield: {stats.average_yield:.2%}")
+        logger.info(f" Total Events: {stats.total_events}")
+        logger.info(f" Events/Minute: {stats.events_per_minute:.1f}")
+        logger.info(f" Compliance Issues: {stats.compliance_issues}")
 
-        logger.info("\n🎯 Dashboard Features Demonstrated:")
-        logger.info("   ✅ Real-time analytics engine")
-        logger.info("   ✅ WebSocket-based live updates")
-        logger.info("   ✅ Comprehensive metrics collection")
-        logger.info("   ✅ Agent activity monitoring")
-        logger.info("   ✅ Financial performance tracking")
-        logger.info("   ✅ Compliance and risk assessment")
-        logger.info("   ✅ Interactive web interface")
-        logger.info("   ✅ Data export functionality")
-        logger.info("   ✅ System health monitoring")
+        logger.info("\n Dashboard Features Demonstrated:")
+        logger.info("   [OK] Real-time analytics engine")
+        logger.info("   [OK] WebSocket-based live updates")
+        logger.info("   [OK] Comprehensive metrics collection")
+        logger.info("   [OK] Agent activity monitoring")
+        logger.info("   [OK] Financial performance tracking")
+        logger.info("   [OK] Compliance and risk assessment")
+        logger.info("   [OK] Interactive web interface")
+        logger.info("   [OK] Data export functionality")
+        logger.info("   [OK] System health monitoring")
 
-        logger.info("\n📈 Key Analytics Capabilities:")
-        logger.info("   💡 Agent performance trends")
-        logger.info("   📊 Financial portfolio analysis")
-        logger.info("   🔍 Risk assessment scoring")
-        logger.info("   ⚖️ Compliance monitoring")
-        logger.info("   🚀 Real-time event processing")
-        logger.info("   📋 Activity audit trails")
-        logger.info("   📊 Custom metrics aggregation")
+        logger.info("\n Key Analytics Capabilities:")
+        logger.info("    Agent performance trends")
+        logger.info("    Financial portfolio analysis")
+        logger.info("    Risk assessment scoring")
+        logger.info("    Compliance monitoring")
+        logger.info("    Real-time event processing")
+        logger.info("    Activity audit trails")
+        logger.info("    Custom metrics aggregation")
 
         # Display top performing assets
         if stats.top_performing_assets:
-            logger.info(f"\n🏆 Top Performing Assets:")
+            logger.info("\n Top Performing Assets:")
             for i, asset in enumerate(stats.top_performing_assets[:3], 1):
                 logger.info(
                     f"   {i}. {asset['asset_id']}: ${asset['market_value']:,.2f}"
@@ -435,7 +435,7 @@ class DashboardDemo:
         # Display recent activity
         if stats.recent_activity:
             logger.info(
-                f"\n📋 Recent Agent Activity ({len(stats.recent_activity)} agents):"
+                f"\n Recent Agent Activity ({len(stats.recent_activity)} agents):"
             )
             for activity in stats.recent_activity[:5]:
                 logger.info(

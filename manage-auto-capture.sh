@@ -12,17 +12,17 @@ show_status() {
     echo "================================================"
 
     if launchctl list | grep -q "$SERVICE_NAME"; then
-        echo "✅ Service is LOADED"
+        echo "[OK] Service is LOADED"
 
         # Check if it's actually running
         PID=$(launchctl list | grep "$SERVICE_NAME" | awk '{print $1}')
         if [ "$PID" != "-" ]; then
-            echo "✅ Service is RUNNING (PID: $PID)"
+            echo "[OK] Service is RUNNING (PID: $PID)"
         else
-            echo "⚠️  Service is loaded but NOT running"
+            echo "[WARN]  Service is loaded but NOT running"
         fi
     else
-        echo "❌ Service is NOT loaded"
+        echo "[ERROR] Service is NOT loaded"
     fi
 
     echo ""
@@ -33,7 +33,7 @@ show_status() {
 }
 
 install_service() {
-    echo "📦 Installing UATP Auto-Capture Service..."
+    echo " Installing UATP Auto-Capture Service..."
 
     # Create LaunchAgents directory if it doesn't exist
     mkdir -p "$LAUNCHD_DIR"
@@ -42,18 +42,18 @@ install_service() {
     cp "$PLIST_FILE" "$LAUNCHD_DIR/"
 
     if [ $? -eq 0 ]; then
-        echo "✅ Service files copied to $LAUNCHD_DIR"
+        echo "[OK] Service files copied to $LAUNCHD_DIR"
         echo ""
         echo "To start the service, run:"
         echo "  ./manage-auto-capture.sh start"
     else
-        echo "❌ Failed to install service"
+        echo "[ERROR] Failed to install service"
         exit 1
     fi
 }
 
 uninstall_service() {
-    echo "🗑️  Uninstalling UATP Auto-Capture Service..."
+    echo "️  Uninstalling UATP Auto-Capture Service..."
 
     # Stop the service first
     stop_service
@@ -62,19 +62,19 @@ uninstall_service() {
     rm -f "$LAUNCHD_DIR/$SERVICE_NAME.plist"
 
     if [ $? -eq 0 ]; then
-        echo "✅ Service uninstalled"
+        echo "[OK] Service uninstalled"
     else
-        echo "❌ Failed to uninstall service"
+        echo "[ERROR] Failed to uninstall service"
         exit 1
     fi
 }
 
 start_service() {
-    echo "🚀 Starting UATP Auto-Capture Service..."
+    echo " Starting UATP Auto-Capture Service..."
 
     # Check if plist exists in LaunchAgents
     if [ ! -f "$LAUNCHD_DIR/$SERVICE_NAME.plist" ]; then
-        echo "⚠️  Service not installed. Installing now..."
+        echo "[WARN]  Service not installed. Installing now..."
         install_service
     fi
 
@@ -87,29 +87,29 @@ start_service() {
 }
 
 stop_service() {
-    echo "⏹️  Stopping UATP Auto-Capture Service..."
+    echo "  Stopping UATP Auto-Capture Service..."
 
     launchctl stop "$SERVICE_NAME" 2>/dev/null
     launchctl unload "$LAUNCHD_DIR/$SERVICE_NAME.plist" 2>/dev/null
 
-    echo "✅ Service stopped"
+    echo "[OK] Service stopped"
 }
 
 restart_service() {
-    echo "🔄 Restarting UATP Auto-Capture Service..."
+    echo " Restarting UATP Auto-Capture Service..."
     stop_service
     sleep 2
     start_service
 }
 
 view_logs() {
-    echo "📋 Viewing Auto-Capture Logs (Ctrl+C to exit)"
+    echo " Viewing Auto-Capture Logs (Ctrl+C to exit)"
     echo "================================================"
     tail -f "$HOME/uatp-capsule-engine/claude_capture.log"
 }
 
 test_service() {
-    echo "🧪 Testing Auto-Capture Service..."
+    echo " Testing Auto-Capture Service..."
     python3 "$HOME/uatp-capsule-engine/claude_code_auto_capture.py" &
     PID=$!
     echo "Started test process (PID: $PID)"
@@ -117,11 +117,11 @@ test_service() {
     sleep 10
 
     if ps -p $PID > /dev/null; then
-        echo "✅ Service is running successfully"
+        echo "[OK] Service is running successfully"
         kill $PID
         echo "Test complete (stopped test process)"
     else
-        echo "❌ Service exited unexpectedly"
+        echo "[ERROR] Service exited unexpectedly"
         echo "Check logs for errors"
     fi
 }

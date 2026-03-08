@@ -10,12 +10,12 @@ with open("README.md", encoding="utf-8") as fh:
 setup(
     name="uatp",
     version="0.1.0",
-    author="UATP Team",
-    author_email="support@uatp.ai",
+    author="Kayron Calloway",
+    author_email="Kayron@houseofcalloway.com",
     description="Make AI decisions auditable with cryptographic proof",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/uatp/uatp-python-sdk",
+    url="https://github.com/KayronCalloway/uatp",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",

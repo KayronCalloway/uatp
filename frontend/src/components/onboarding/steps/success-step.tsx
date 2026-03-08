@@ -12,12 +12,12 @@ interface SuccessStepProps {
 export function SuccessStep({ progress, onContinue }: SuccessStepProps) {
   const getCompletionTime = () => {
     if (!progress?.start_time) return 'a few minutes';
-    
+
     const startTime = new Date(progress.start_time);
     const now = new Date();
     const diffMs = now.getTime() - startTime.getTime();
     const diffMinutes = Math.round(diffMs / (1000 * 60));
-    
+
     if (diffMinutes < 1) return 'less than a minute';
     if (diffMinutes === 1) return '1 minute';
     return `${diffMinutes} minutes`;
@@ -25,11 +25,11 @@ export function SuccessStep({ progress, onContinue }: SuccessStepProps) {
 
   const getPersonalizedMessage = () => {
     const userType = progress?.user_type;
-    
+
     switch (userType) {
       case 'developer':
         return {
-          title: 'Development Environment Ready! 👨‍💻',
+          title: 'Development Environment Ready! ‍',
           message: 'Your UATP development environment is configured with API access, debugging tools, and code examples.',
           nextSteps: [
             'Explore the API documentation',
@@ -38,10 +38,10 @@ export function SuccessStep({ progress, onContinue }: SuccessStepProps) {
             'Join the developer community'
           ]
         };
-        
+
       case 'enterprise':
         return {
-          title: 'Enterprise System Activated! 🏢',
+          title: 'Enterprise System Activated! ',
           message: 'Your enterprise-grade UATP system is ready with security, compliance, and governance features.',
           nextSteps: [
             'Configure team access controls',
@@ -50,10 +50,10 @@ export function SuccessStep({ progress, onContinue }: SuccessStepProps) {
             'Schedule team training'
           ]
         };
-        
+
       case 'researcher':
         return {
-          title: 'Research Environment Ready! 🔬',
+          title: 'Research Environment Ready! ',
           message: 'Your UATP research setup is complete with transparency tools and data export capabilities.',
           nextSteps: [
             'Explore attribution analytics',
@@ -62,10 +62,10 @@ export function SuccessStep({ progress, onContinue }: SuccessStepProps) {
             'Connect with research community'
           ]
         };
-        
+
       case 'business_user':
         return {
-          title: 'Business System Ready! 💼',
+          title: 'Business System Ready! ',
           message: 'Your UATP business environment is configured for team collaboration and reporting.',
           nextSteps: [
             'Invite team members',
@@ -74,10 +74,10 @@ export function SuccessStep({ progress, onContinue }: SuccessStepProps) {
             'Explore business features'
           ]
         };
-        
+
       default:
         return {
-          title: 'UATP System Ready! 🚀',
+          title: 'UATP System Ready! ',
           message: 'Your UATP system is configured and ready for AI trust and attribution tracking.',
           nextSteps: [
             'Create more capsules',
@@ -95,8 +95,8 @@ export function SuccessStep({ progress, onContinue }: SuccessStepProps) {
     <div className="space-y-6 text-center">
       {/* Success Animation */}
       <div className="relative">
-        <div className="text-8xl animate-bounce">🎉</div>
-        <div className="absolute inset-0 text-8xl animate-pulse opacity-50">✨</div>
+        <div className="text-8xl animate-bounce"></div>
+        <div className="absolute inset-0 text-8xl animate-pulse opacity-50"></div>
       </div>
 
       {/* Success Message */}
@@ -115,29 +115,29 @@ export function SuccessStep({ progress, onContinue }: SuccessStepProps) {
         <div className="grid md:grid-cols-2 gap-4 text-sm">
           <div className="space-y-2">
             <div className="flex items-center justify-center text-green-700">
-              <span className="mr-2">✅</span>
+              <span className="mr-2">[OK]</span>
               System configured and optimized
             </div>
             <div className="flex items-center justify-center text-green-700">
-              <span className="mr-2">✅</span>
+              <span className="mr-2">[OK]</span>
               AI platform connected and tested
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-center text-green-700">
-              <span className="mr-2">✅</span>
+              <span className="mr-2">[OK]</span>
               First capsule created with attribution
             </div>
             <div className="flex items-center justify-center text-green-700">
-              <span className="mr-2">✅</span>
+              <span className="mr-2">[OK]</span>
               Ready for production use
             </div>
           </div>
         </div>
-        
+
         <div className="mt-4 pt-4 border-t border-green-200">
           <div className="text-green-800 font-medium">
-            ⏱️ Setup completed in {getCompletionTime()}!
+             Setup completed in {getCompletionTime()}!
           </div>
         </div>
       </div>
@@ -182,7 +182,7 @@ export function SuccessStep({ progress, onContinue }: SuccessStepProps) {
           onClick={onContinue}
           className="px-8 py-3 text-lg font-medium bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
         >
-          Continue to Dashboard 🚀
+          Continue to Dashboard
         </Button>
       </div>
 
@@ -203,7 +203,7 @@ export function SuccessStep({ progress, onContinue }: SuccessStepProps) {
           </span>
         </div>
         <p>
-          Welcome to the future of AI trust and attribution! 🌟
+          Welcome to the future of AI trust and attribution!
         </p>
       </div>
     </div>

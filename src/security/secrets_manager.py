@@ -719,7 +719,7 @@ if __name__ == "__main__":
 
     async def test_secrets_manager():
         """Test the secrets manager."""
-        print("🔐 UATP Secrets Manager Test")
+        print(" UATP Secrets Manager Test")
         print("=" * 40)
 
         # Test with local backend
@@ -747,18 +747,18 @@ if __name__ == "__main__":
         db_password = await secrets_manager.get_secret("db_password")
         signing_key = await secrets_manager.get_secret("signing_key")
 
-        print(f"✅ OpenAI Key: {openai_key[:10]}...")
-        print(f"✅ DB Password: {db_password[:10]}...")
-        print(f"✅ Signing Key: {signing_key[:10]}...")
+        print(f"[OK] OpenAI Key: {openai_key[:10]}...")
+        print(f"[OK] DB Password: {db_password[:10]}...")
+        print(f"[OK] Signing Key: {signing_key[:10]}...")
 
         # List secrets
         secrets_list = await secrets_manager.list_secrets()
-        print(f"✅ Total secrets: {len(secrets_list)}")
+        print(f"[OK] Total secrets: {len(secrets_list)}")
 
         # Get secrets status
         status = await secrets_manager.get_secrets_status()
         print(
-            f"✅ Secrets status: {status['total_secrets']} total, {status['secrets_needing_rotation']} need rotation"
+            f"[OK] Secrets status: {status['total_secrets']} total, {status['secrets_needing_rotation']} need rotation"
         )
 
         # Test rotation
@@ -767,24 +767,24 @@ if __name__ == "__main__":
         await secrets_manager.rotate_secret("openai_api_key")
         new_key = await secrets_manager.get_secret("openai_api_key")
 
-        print(f"✅ Secret rotated: {old_key != new_key}")
+        print(f"[OK] Secret rotated: {old_key != new_key}")
 
         # Clean up
         await secrets_manager.delete_secret("openai_api_key")
         await secrets_manager.delete_secret("db_password")
         await secrets_manager.delete_secret("signing_key")
 
-        print("\n✅ Secrets manager test complete!")
+        print("\n[OK] Secrets manager test complete!")
 
         # Show capabilities
-        print("\n🎯 Secrets Manager Capabilities:")
-        print("   ✅ HashiCorp Vault integration")
-        print("   ✅ AWS Secrets Manager integration")
-        print("   ✅ Local file-based storage")
-        print("   ✅ Automatic secret rotation")
-        print("   ✅ Multiple secret types support")
-        print("   ✅ Metadata and versioning")
-        print("   ✅ Expiration handling")
-        print("   ✅ Comprehensive status monitoring")
+        print("\n Secrets Manager Capabilities:")
+        print("   [OK] HashiCorp Vault integration")
+        print("   [OK] AWS Secrets Manager integration")
+        print("   [OK] Local file-based storage")
+        print("   [OK] Automatic secret rotation")
+        print("   [OK] Multiple secret types support")
+        print("   [OK] Metadata and versioning")
+        print("   [OK] Expiration handling")
+        print("   [OK] Comprehensive status monitoring")
 
     asyncio.run(test_secrets_manager())

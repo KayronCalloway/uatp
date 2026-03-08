@@ -6,7 +6,7 @@
 
 ---
 
-## 🎬 THE SETUP (15 seconds)
+##  THE SETUP (15 seconds)
 
 **YOU SAY:**
 > "Your AI system just made a decision that triggered a liability claim. The patient was harmed. The regulator is asking questions. Your lawyers need answers."
@@ -17,7 +17,7 @@
 
 ---
 
-## ❌ SLIDE 1: WITHOUT UATP (30 seconds)
+## [ERROR] SLIDE 1: WITHOUT UATP (30 seconds)
 
 ### The Scenario
 **Regulator asks:** "Show me proof that your AI followed HIPAA guidelines on October 15th at 2:30 PM."
@@ -50,7 +50,7 @@ Outcome: Uncertain compliance, no proof
 
 ---
 
-## ✅ SLIDE 2: WITH UATP (30 seconds)
+## [OK] SLIDE 2: WITH UATP (30 seconds)
 
 ### Same Scenario
 **Regulator asks:** "Show me proof that your AI followed HIPAA guidelines on October 15th at 2:30 PM."
@@ -60,11 +60,11 @@ Outcome: Uncertain compliance, no proof
 30 Minutes Later: Complete audit report delivered
 
 Evidence Provided:
-  ✅ Capsule chain from input to output
-  ✅ HIPAA policy check capsule (passed)
-  ✅ Cryptographic signature (untamperable)
-  ✅ Refusal mechanisms (verified functional)
-  ✅ Uncertainty acknowledgment (documented)
+  [OK] Capsule chain from input to output
+  [OK] HIPAA policy check capsule (passed)
+  [OK] Cryptographic signature (untamperable)
+  [OK] Refusal mechanisms (verified functional)
+  [OK] Uncertainty acknowledgment (documented)
 
 Result: Compliance proven cryptographically
 Timeline: 30 minutes
@@ -77,7 +77,7 @@ Outcome: Defensible, provable, airtight
 
 ---
 
-## 💡 THE CLOSE (15 seconds)
+##  THE CLOSE (15 seconds)
 
 **YOU SAY:**
 > "The question isn't 'can you afford UATP?' The question is: 'can you afford NOT to have this evidence when the regulator calls?'"
@@ -88,7 +88,7 @@ Outcome: Defensible, provable, airtight
 
 ---
 
-## 📊 VISUAL: The Two Slides
+##  VISUAL: The Two Slides
 
 ### Slide 1: WITHOUT UATP
 ```
@@ -99,15 +99,15 @@ Outcome: Defensible, provable, airtight
 
 Week 1    Week 2    Week 3    Outcome
   ↓         ↓         ↓          ↓
-📁 Logs   👥 Staff  💰 Audit   ❌ Uncertain
+ Logs    Staff   Audit   [ERROR] Uncertain
 Incomplete Uncertain External  Settlement
 Rotated   Recall    $50K+      Fine
                                Reputation Hit
 
 Timeline: 21 days
 Cost: $150K+ (investigation + settlement)
-Result: ⚠️  No cryptographic proof
-Status: ❌ Liability exposure
+Result: [WARN]  No cryptographic proof
+Status: [ERROR] Liability exposure
 ```
 
 ### Slide 2: WITH UATP
@@ -119,23 +119,23 @@ Status: ❌ Liability exposure
 
 30 Minutes Later:
   ↓
-📊 Complete Audit Report Generated
+ Complete Audit Report Generated
 
-✅ Chain Integrity: VERIFIED
-✅ Policy Checks: DOCUMENTED
-✅ Refusal Mechanisms: FUNCTIONAL
-✅ Cryptographic Proof: UNTAMPERABLE
-✅ Compliance Status: HIPAA COMPLIANT
+[OK] Chain Integrity: VERIFIED
+[OK] Policy Checks: DOCUMENTED
+[OK] Refusal Mechanisms: FUNCTIONAL
+[OK] Cryptographic Proof: UNTAMPERABLE
+[OK] Compliance Status: HIPAA COMPLIANT
 
 Timeline: 30 minutes
 Cost: Included in subscription
-Result: ✅ Cryptographic proof provided
-Status: ✅ Defensible in litigation
+Result: [OK] Cryptographic proof provided
+Status: [OK] Defensible in litigation
 ```
 
 ---
 
-## 🎯 Why This Works
+##  Why This Works
 
 ### 1. Visceral Pain
 - Everyone in the room has lived through "show me proof" moments
@@ -159,7 +159,7 @@ Status: ✅ Defensible in litigation
 
 ---
 
-## 📝 Demo Script Variations
+##  Demo Script Variations
 
 ### For Insurance Underwriters:
 **Scenario:** "Your insured gets a claim. You need to assess liability."
@@ -208,7 +208,7 @@ Status: ✅ Defensible in litigation
 
 ---
 
-## 🎬 Live Demo Flow
+##  Live Demo Flow
 
 ### Part 1: Show the Problem (30 sec)
 **Screen:** Messy logs, incomplete data, unclear timeline
@@ -235,7 +235,7 @@ Status: ✅ Defensible in litigation
 
 ---
 
-## 📊 The Follow-Up Slide (Optional)
+##  The Follow-Up Slide (Optional)
 
 ### ROI Calculation
 ```
@@ -258,7 +258,7 @@ Break-even: First year
 
 ---
 
-## 🎯 Call to Action
+##  Call to Action
 
 **After the demo, ask:**
 > "If we can deliver this evidence in 90 days, would that change how you think about AI liability?"
@@ -270,7 +270,7 @@ Break-even: First year
 
 ---
 
-## 🔑 Key Phrases To Use
+##  Key Phrases To Use
 
 ### During Pain Setup:
 - "Show me proof" (the nightmare request)
@@ -294,7 +294,7 @@ Break-even: First year
 
 ---
 
-## 📋 Checklist: Demo Readiness
+##  Checklist: Demo Readiness
 
 Before any demo:
 - [ ] Two-slide deck created
@@ -306,7 +306,7 @@ Before any demo:
 
 ---
 
-## 🎬 One-Pager Version (For Email)
+##  One-Pager Version (For Email)
 
 **Email Subject:** 3 Weeks vs. 30 Minutes: AI Liability Evidence
 
@@ -337,4 +337,4 @@ Fixed price. Complete audit artifacts delivered.
 
 **This demo sells itself because the pain is real and the solution is dramatic.**
 
-**Practice it. Record it. Send it.** 🎬
+**Practice it. Record it. Send it.**

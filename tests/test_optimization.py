@@ -224,4 +224,4 @@ if __name__ == "__main__":
     test_capsule_pruning()
     test_optimization_engine()
     test_batch_optimization()
-    print("✅ All optimization tests passed!")
+    print("[OK] All optimization tests passed!")

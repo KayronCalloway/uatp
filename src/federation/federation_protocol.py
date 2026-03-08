@@ -5,13 +5,13 @@ This module implements the distributed federation protocol that enables global
 coordination across thousands of UATP nodes worldwide. It establishes the
 foundation for planetary-scale AI attribution and economic coordination.
 
-🌍 GLOBAL COORDINATION ARCHITECTURE:
+ GLOBAL COORDINATION ARCHITECTURE:
 - Continental Nodes (6-12 major regions)
-- National Nodes (50+ countries) 
+- National Nodes (50+ countries)
 - Regional Nodes (1000+ cities)
 - Organization Nodes (millions of entities)
 
-🔗 FEDERATION CAPABILITIES:
+ FEDERATION CAPABILITIES:
 - Cross-node capsule verification and consensus
 - Economic attribution across legal jurisdictions
 - Multi-currency support and automatic conversion
@@ -24,17 +24,14 @@ into civilization-grade infrastructure coordinating human-AI economic cooperatio
 """
 
 import asyncio
-import hashlib
-import json
 import logging
 import secrets
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple, Any, AsyncIterator
+from datetime import datetime, timezone
 from decimal import Decimal
-import urllib.parse
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -234,9 +231,7 @@ class GlobalFederationProtocol:
         self.crisis_mode = False
         self.emergency_coordinators: Set[str] = set()
 
-        logger.info(
-            f"🌍 Global Federation Protocol initialized for {local_jurisdiction}"
-        )
+        logger.info(f" Global Federation Protocol initialized for {local_jurisdiction}")
 
     async def join_federation(
         self,
@@ -278,11 +273,11 @@ class GlobalFederationProtocol:
             await self._start_synchronization()
 
             logger.info(
-                f"✅ Successfully joined UATP federation as {node_type.value} node"
+                f"[OK] Successfully joined UATP federation as {node_type.value} node"
             )
             return True
         else:
-            logger.error("❌ Failed to join UATP federation")
+            logger.error("[ERROR] Failed to join UATP federation")
             return False
 
     async def _discover_federation_nodes(self) -> Dict[str, Dict[str, Any]]:
@@ -331,7 +326,7 @@ class GlobalFederationProtocol:
             },
         }
 
-        logger.info(f"🔍 Discovered {len(mock_nodes)} federation nodes")
+        logger.info(f" Discovered {len(mock_nodes)} federation nodes")
         return mock_nodes
 
     async def _request_federation_admission(self, local_node: FederationNode) -> bool:
@@ -358,7 +353,7 @@ class GlobalFederationProtocol:
         self.federation_proposals[admission_proposal.proposal_id] = admission_proposal
 
         logger.info(
-            f"✅ Federation admission approved with {admission_proposal.approval_percentage:.1%} support"
+            f"[OK] Federation admission approved with {admission_proposal.approval_percentage:.1%} support"
         )
         return True
 
@@ -371,7 +366,7 @@ class GlobalFederationProtocol:
                 sync_task = asyncio.create_task(self._sync_with_node(node_id))
                 # Don't await here - let it run in background
 
-        logger.info("🔄 Started federation synchronization")
+        logger.info(" Started federation synchronization")
 
     async def _sync_with_node(self, peer_node_id: str):
         """Synchronize capsules and state with a specific peer node."""
@@ -393,10 +388,10 @@ class GlobalFederationProtocol:
             await asyncio.sleep(0.1)  # Simulate network delay
             self.sync_status[peer_node_id] = datetime.now(timezone.utc)
 
-            logger.debug(f"🔄 Synced with peer node {peer_node_id}")
+            logger.debug(f" Synced with peer node {peer_node_id}")
 
         except Exception as e:
-            logger.error(f"❌ Sync failed with {peer_node_id}: {e}")
+            logger.error(f"[ERROR] Sync failed with {peer_node_id}: {e}")
 
     async def create_federation_proposal(
         self,
@@ -423,7 +418,7 @@ class GlobalFederationProtocol:
         # Distribute proposal to federation
         await self._distribute_proposal(proposal)
 
-        logger.info(f"📋 Created federation proposal: {title}")
+        logger.info(f" Created federation proposal: {title}")
         return proposal
 
     async def _distribute_proposal(self, proposal: FederationProposal):
@@ -435,7 +430,7 @@ class GlobalFederationProtocol:
         for node_id, node in self.federation_nodes.items():
             if node_id != self.local_node_id and node.status == NodeStatus.ACTIVE:
                 # Simulate sending proposal
-                logger.debug(f"📤 Sent proposal {proposal.proposal_id} to {node_id}")
+                logger.debug(f" Sent proposal {proposal.proposal_id} to {node_id}")
 
     async def vote_on_federation_proposal(
         self, proposal_id: str, vote: bool, voting_node_id: Optional[str] = None
@@ -465,7 +460,7 @@ class GlobalFederationProtocol:
         elif voter_node.node_type == NodeType.ORGANIZATIONAL:
             proposal.organizational_votes[voter_id] = vote
 
-        logger.info(f"🗳️ Vote cast on proposal {proposal_id}: {vote}")
+        logger.info(f"️ Vote cast on proposal {proposal_id}: {vote}")
         return True
 
     def calculate_federation_proposal_result(
@@ -562,7 +557,7 @@ class GlobalFederationProtocol:
         }
 
         logger.info(
-            f"🏁 Federation proposal {proposal_id} result: {'PASSED' if passed else 'FAILED'} ({approval_percentage:.1%} approval)"
+            f" Federation proposal {proposal_id} result: {'PASSED' if passed else 'FAILED'} ({approval_percentage:.1%} approval)"
         )
         return passed, result
 
@@ -602,7 +597,7 @@ class GlobalFederationProtocol:
             await self._execute_cross_border_transfer(transaction)
 
         logger.info(
-            f"💸 Cross-border transaction processed: {transaction.transaction_id}"
+            f" Cross-border transaction processed: {transaction.transaction_id}"
         )
         return transaction
 
@@ -621,7 +616,7 @@ class GlobalFederationProtocol:
         }
 
         rate = mock_rates.get((from_currency, to_currency), 1.0)
-        logger.debug(f"💱 Exchange rate {from_currency}/{to_currency}: {rate}")
+        logger.debug(f" Exchange rate {from_currency}/{to_currency}: {rate}")
         return rate
 
     async def _process_regulatory_clearance(self, transaction: CrossBorderTransaction):
@@ -633,9 +628,9 @@ class GlobalFederationProtocol:
             transaction.amount,
             transaction.source_currency,
         )
-        transaction.regulatory_clearance[
-            transaction.source_jurisdiction
-        ] = source_cleared
+        transaction.regulatory_clearance[transaction.source_jurisdiction] = (
+            source_cleared
+        )
 
         # Check target jurisdiction compliance
         target_cleared = await self._check_jurisdiction_compliance(
@@ -643,9 +638,9 @@ class GlobalFederationProtocol:
             transaction.amount * Decimal(str(transaction.exchange_rate)),
             transaction.target_currency,
         )
-        transaction.regulatory_clearance[
-            transaction.target_jurisdiction
-        ] = target_cleared
+        transaction.regulatory_clearance[transaction.target_jurisdiction] = (
+            target_cleared
+        )
 
         # Update status
         if source_cleared and target_cleared:
@@ -654,7 +649,7 @@ class GlobalFederationProtocol:
             transaction.status = "compliance_failed"
 
         logger.info(
-            f"⚖️ Regulatory clearance for {transaction.transaction_id}: {transaction.status}"
+            f" Regulatory clearance for {transaction.transaction_id}: {transaction.status}"
         )
 
     async def _check_jurisdiction_compliance(
@@ -700,12 +695,12 @@ class GlobalFederationProtocol:
             transaction.status = "completed"
 
             logger.info(
-                f"✅ Cross-border transfer completed: {transaction.amount} {transaction.source_currency} → {target_amount} {transaction.target_currency}"
+                f"[OK] Cross-border transfer completed: {transaction.amount} {transaction.source_currency} → {target_amount} {transaction.target_currency}"
             )
 
         except Exception as e:
             transaction.status = "failed"
-            logger.error(f"❌ Cross-border transfer failed: {e}")
+            logger.error(f"[ERROR] Cross-border transfer failed: {e}")
 
     def activate_crisis_mode(
         self, crisis_reason: str, coordinator_nodes: Set[str]
@@ -719,8 +714,8 @@ class GlobalFederationProtocol:
         self.crisis_mode = True
         self.emergency_coordinators = coordinator_nodes
 
-        logger.critical(f"🚨 CRISIS MODE ACTIVATED: {crisis_reason}")
-        logger.critical(f"🚨 Emergency coordinators: {list(coordinator_nodes)}")
+        logger.critical(f" CRISIS MODE ACTIVATED: {crisis_reason}")
+        logger.critical(f" Emergency coordinators: {list(coordinator_nodes)}")
 
         return True
 

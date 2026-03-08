@@ -553,14 +553,14 @@ try:
     )
 
     if capsule_id:
-        print(f"✅ Captured: {capsule_id}")
+        print(f"[OK] Captured: {capsule_id}")
     else:
         print("ℹ️ Not significant enough for capsule")
 
 except ValueError as e:
-    print(f"❌ Invalid platform: {e}")
+    print(f"[ERROR] Invalid platform: {e}")
 except Exception as e:
-    print(f"❌ Capture error: {e}")
+    print(f"[ERROR] Capture error: {e}")
 ```
 
 ---
@@ -648,7 +648,7 @@ class NewPlatformCapture(BaseHook):
         super().__init__(platform="new_platform", user_id=user_id)
 
     def get_platform_emoji(self) -> str:
-        return "🚀"
+        return ""
 
     def get_platform_specific_metadata(self, **kwargs) -> Dict[str, Any]:
         return {
@@ -696,11 +696,11 @@ capsule_id = await capture(
 The UATP Capture System is a production-grade, well-tested, maintainable system for capturing AI interactions across multiple platforms:
 
 **Achievements:**
-- ✅ Single unified API (1 function vs 6 platform-specific functions)
-- ✅ 485 lines of duplication eliminated (19.5% reduction)
-- ✅ Comprehensive test coverage (45 tests)
-- ✅ Grade improvement: D → A
-- ✅ World-class engineering principles applied
+- [OK] Single unified API (1 function vs 6 platform-specific functions)
+- [OK] 485 lines of duplication eliminated (19.5% reduction)
+- [OK] Comprehensive test coverage (45 tests)
+- [OK] Grade improvement: D → A
+- [OK] World-class engineering principles applied
 
 **Benefits:**
 - **For Developers:** 10x simpler API, easy to use

@@ -438,4 +438,4 @@ if __name__ == "__main__":
     test_treasury_management()
     test_attribution_record_validation()
     test_contribution_value_calculation()
-    print("✅ All FCDE economics tests passed!")
+    print("[OK] All FCDE economics tests passed!")

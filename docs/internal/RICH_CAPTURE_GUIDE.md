@@ -4,12 +4,12 @@
 
 Your frontend is **fully ready** to display rich reasoning metadata. The capture system has been updated to support:
 
-- ✅ Per-step confidence scores
-- ✅ Uncertainty source tracking
-- ✅ Measurement data
-- ✅ Alternatives considered
-- ✅ Step dependencies
-- ✅ Confidence methodology
+- [OK] Per-step confidence scores
+- [OK] Uncertainty source tracking
+- [OK] Measurement data
+- [OK] Alternatives considered
+- [OK] Step dependencies
+- [OK] Confidence methodology
 
 ## What Was Fixed
 

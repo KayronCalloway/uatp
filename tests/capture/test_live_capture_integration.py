@@ -83,24 +83,22 @@ async def test_live_capture_integration():
         session=session, user_id="test_user"
     )
 
-    print(f"\n✅ Capsule Created: {capsule['capsule_id']}")
+    print(f"\n[OK] Capsule Created: {capsule['capsule_id']}")
 
     # Check metadata
     payload = capsule["payload"]
     verification = capsule["verification"]
 
-    print("\n🎯 Rich Metadata Check:")
+    print("\n Rich Metadata Check:")
     print(
-        f"   {'✓' if 'trust_score' in verification else '✗'} Trust Score: {verification.get('trust_score', 'MISSING')}"
+        f"   {'' if 'trust_score' in verification else ''} Trust Score: {verification.get('trust_score', 'MISSING')}"
+    )
+    print(f"   {'' if 'uncertainty_analysis' in payload else ''} Uncertainty Analysis")
+    print(
+        f"   {'' if 'critical_path_analysis' in payload else ''} Critical Path Analysis"
     )
     print(
-        f"   {'✓' if 'uncertainty_analysis' in payload else '✗'} Uncertainty Analysis"
-    )
-    print(
-        f"   {'✓' if 'critical_path_analysis' in payload else '✗'} Critical Path Analysis"
-    )
-    print(
-        f"   {'✓' if 'improvement_recommendations' in payload else '✗'} Improvement Recommendations"
+        f"   {'' if 'improvement_recommendations' in payload else ''} Improvement Recommendations"
     )
 
     all_present = all(
@@ -112,7 +110,7 @@ async def test_live_capture_integration():
         ]
     )
 
-    print(f"\n{'✅ TEST PASSED' if all_present else '⚠️ TEST PARTIAL'}")
+    print(f"\n{'[OK] TEST PASSED' if all_present else '[WARN] TEST PARTIAL'}")
     return all_present
 
 

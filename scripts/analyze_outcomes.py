@@ -139,7 +139,7 @@ class OutcomeAnalyzer:
         for bucket, data in calibration.get("calibration_by_bucket", {}).items():
             if data["calibration_error"] > 0.15 and data["sample_size"] >= 5:
                 recommendations.append(
-                    f"⚠️ Overconfident at {bucket}: predicted {float(bucket):.0%}, "
+                    f"[WARN] Overconfident at {bucket}: predicted {float(bucket):.0%}, "
                     f"actual {data['actual_success_rate']:.0%} (n={data['sample_size']})"
                 )
 
@@ -147,14 +147,14 @@ class OutcomeAnalyzer:
         for bucket, data in calibration.get("calibration_by_bucket", {}).items():
             if data["calibration_error"] < -0.15 and data["sample_size"] >= 5:
                 recommendations.append(
-                    f"📈 Underconfident at {bucket}: predicted {float(bucket):.0%}, "
+                    f" Underconfident at {bucket}: predicted {float(bucket):.0%}, "
                     f"actual {data['actual_success_rate']:.0%} (n={data['sample_size']})"
                 )
 
         # High confidence failures
         if failures.get("high_confidence_failures", 0) > 0:
             recommendations.append(
-                f"🔴 {failures['high_confidence_failures']} failures with high confidence (>0.8) - "
+                f" {failures['high_confidence_failures']} failures with high confidence (>0.8) - "
                 "review these cases for systematic issues"
             )
 
@@ -163,12 +163,12 @@ class OutcomeAnalyzer:
         for topic, count in sorted(topic_failures.items(), key=lambda x: -x[1])[:3]:
             if count >= 2:
                 recommendations.append(
-                    f"📚 Topic '{topic}' has {count} failures - may need more training data"
+                    f" Topic '{topic}' has {count} failures - may need more training data"
                 )
 
         if not recommendations:
             recommendations.append(
-                "✅ No significant issues detected - continue collecting data"
+                "[OK] No significant issues detected - continue collecting data"
             )
 
         return recommendations
@@ -180,13 +180,13 @@ class OutcomeAnalyzer:
         print("=" * 60)
 
         # Calibration
-        print("\n📊 CONFIDENCE CALIBRATION")
+        print("\n CONFIDENCE CALIBRATION")
         print("-" * 40)
         calibration = await self.get_calibration_data()
         print(f"Total tracked capsules: {calibration['total_tracked']}")
         print("\nBy confidence bucket:")
         for bucket, data in calibration.get("calibration_by_bucket", {}).items():
-            error_indicator = "⚠️" if abs(data["calibration_error"]) > 0.15 else "✓"
+            error_indicator = "[WARN]" if abs(data["calibration_error"]) > 0.15 else ""
             print(
                 f"  {bucket}: predicted={float(bucket):.0%}, "
                 f"actual={data['actual_success_rate']:.0%}, "
@@ -194,7 +194,7 @@ class OutcomeAnalyzer:
             )
 
         # Failure patterns
-        print("\n❌ FAILURE PATTERNS")
+        print("\n[ERROR] FAILURE PATTERNS")
         print("-" * 40)
         failures = await self.get_failure_patterns()
         print(f"Total failures: {failures['total_failures']}")
@@ -204,7 +204,7 @@ class OutcomeAnalyzer:
             print("By platform:", failures["platforms"])
 
         # Recommendations
-        print("\n💡 RECOMMENDATIONS")
+        print("\n RECOMMENDATIONS")
         print("-" * 40)
         recommendations = await self.get_improvement_recommendations()
         for rec in recommendations:

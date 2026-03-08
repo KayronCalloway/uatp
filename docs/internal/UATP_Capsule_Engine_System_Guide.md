@@ -735,7 +735,7 @@ report = await compliance_framework.generate_compliance_report(
 
 1. **Clone Repository:**
 ```bash
-git clone https://github.com/your-org/uatp-capsule-engine.git
+git clone https://github.com/KayronCalloway/uatp.git
 cd uatp-capsule-engine
 ```
 
@@ -1328,10 +1328,10 @@ CACHE_MAX_CONNECTIONS = 20
 The UATP Capsule Engine provides a comprehensive platform for AI reasoning trace management, federated model collaboration, and enterprise-grade payment processing. This guide covers the essential aspects of system architecture, development, deployment, and operations.
 
 For additional support:
-- GitHub Issues: https://github.com/your-org/uatp-capsule-engine/issues
+- GitHub Issues: https://github.com/KayronCalloway/uatp/issues
 - Documentation: https://docs.uatp-capsule-engine.com
 - Community Forum: https://forum.uatp-capsule-engine.com
-- Email Support: support@uatp-capsule-engine.com
+- Email Support: Kayron@houseofcalloway.com
 
 ---
 

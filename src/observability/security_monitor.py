@@ -103,9 +103,9 @@ class SecurityMonitor:
 
     def _log_event(self, event: SecurityEvent):
         """Log security event based on severity."""
-        emoji_map = {"low": "ℹ️", "medium": "⚠️", "high": "🚨", "critical": "🔥"}
+        emoji_map = {"low": "ℹ️", "medium": "[WARN]", "high": "", "critical": ""}
 
-        emoji = emoji_map.get(event.severity, "❓")
+        emoji = emoji_map.get(event.severity, "")
         print(f"{emoji} SECURITY [{event.severity.upper()}]: {event.description}")
 
         if event.source_ip:
@@ -149,7 +149,7 @@ class SecurityMonitor:
 
     def _alert_pattern(self, title: str, details: str):
         """Alert on detected attack pattern."""
-        print(f"🚨 ATTACK PATTERN DETECTED: {title}")
+        print(f" ATTACK PATTERN DETECTED: {title}")
         print(f"   {details}")
         print("   Consider blocking source or enabling additional security measures")
 

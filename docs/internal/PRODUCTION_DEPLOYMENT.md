@@ -2,7 +2,7 @@
 
 This guide provides step-by-step instructions for deploying the UATP Capsule Engine to a production environment.
 
-## 🚀 Quick Start
+##  Quick Start
 
 For a quick production deployment:
 
@@ -21,7 +21,7 @@ nano .env.production
 ./scripts/deploy_production.sh
 ```
 
-## 📋 Prerequisites
+##  Prerequisites
 
 ### System Requirements
 
@@ -40,7 +40,7 @@ nano .env.production
 - Nginx
 - SSL certificates (Let's Encrypt recommended)
 
-## 🔧 Manual Deployment Steps
+##  Manual Deployment Steps
 
 ### 1. System Preparation
 
@@ -232,7 +232,7 @@ sudo nginx -t
 sudo systemctl restart nginx
 ```
 
-## 🐳 Docker Deployment
+##  Docker Deployment
 
 For containerized deployment:
 
@@ -250,7 +250,7 @@ docker-compose -f docker-compose.production.yml up -d
 docker-compose -f docker-compose.production.yml ps
 ```
 
-## 🔒 Security Hardening
+##  Security Hardening
 
 ### Firewall Configuration
 
@@ -298,7 +298,7 @@ curl -I https://your-domain.com
 curl -s "https://api.ssllabs.com/api/v3/analyze?host=your-domain.com" | jq
 ```
 
-## 📊 Monitoring Setup
+##  Monitoring Setup
 
 ### Health Checks
 
@@ -336,7 +336,7 @@ curl https://your-domain.com/metrics
 # Access at https://your-domain.com:3000
 ```
 
-## 🔄 Backup Strategy
+##  Backup Strategy
 
 ### Automated Database Backups
 
@@ -362,7 +362,7 @@ sudo crontab -e
 # Add: 0 2 * * * /opt/uatp-capsule-engine/scripts/backup_db.sh
 ```
 
-## 🚨 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -408,7 +408,7 @@ sudo crontab -e
    MAX_REQUESTS_PER_WORKER=5000
    ```
 
-## 🔄 Updates and Maintenance
+##  Updates and Maintenance
 
 ### Application Updates
 
@@ -441,7 +441,7 @@ python3 scripts/migrate_database.py
 python3 -c "from src.core.database import db; print('Database OK')"
 ```
 
-## 📞 Support
+##  Support
 
 For production support:
 
@@ -450,7 +450,7 @@ For production support:
 - Database status: `sudo systemctl status postgresql`
 - API health: `curl https://your-domain.com/health`
 
-## 🎯 Production Checklist
+##  Production Checklist
 
 - [ ] Secure passwords and API keys configured
 - [ ] SSL certificates installed and auto-renewal working
@@ -465,4 +465,4 @@ For production support:
 
 ---
 
-**⚠️ Security Notice**: Always review and customize security settings for your specific environment. Never use default passwords or keys in production.
+**[WARN] Security Notice**: Always review and customize security settings for your specific environment. Never use default passwords or keys in production.

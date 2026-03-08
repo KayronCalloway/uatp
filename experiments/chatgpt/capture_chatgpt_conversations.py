@@ -28,10 +28,10 @@ async def fetch_and_capture_chatgpt_conversations():
     print("  ChatGPT Conversation Capture")
     print("=" * 70)
 
-    print("\n⚠️  OpenAI doesn't provide API access to ChatGPT web conversations")
-    print("\n📋 To capture your ChatGPT conversations, you can:")
+    print("\n[WARN]  OpenAI doesn't provide API access to ChatGPT web conversations")
+    print("\n To capture your ChatGPT conversations, you can:")
 
-    print("\n   ✅ Option 1: Export from ChatGPT (RECOMMENDED)")
+    print("\n   [OK] Option 1: Export from ChatGPT (RECOMMENDED)")
     print("   1. Go to https://chat.openai.com")
     print("   2. Click your profile → Settings → Data controls")
     print("   3. Click 'Export data'")
@@ -60,14 +60,14 @@ async def import_chatgpt_export(export_file: str):
     print("=" * 70)
 
     if not os.path.exists(export_file):
-        print(f"❌ File not found: {export_file}")
+        print(f"[ERROR] File not found: {export_file}")
         return False
 
     try:
         with open(export_file) as f:
             data = json.load(f)
 
-        print(f"\n📂 Loaded export file: {len(data)} conversations found")
+        print(f"\n Loaded export file: {len(data)} conversations found")
 
         db = DatabaseManager()
         await db.connect()
@@ -160,19 +160,19 @@ async def import_chatgpt_export(export_file: str):
 
             if result:
                 created_count += 1
-                print(f"✅ Imported: {title[:60]}")
+                print(f"[OK] Imported: {title[:60]}")
 
         await db.disconnect()
 
         print(f"\n{'='*70}")
-        print(f"✅ Import Complete: {created_count} conversations imported")
+        print(f"[OK] Import Complete: {created_count} conversations imported")
         print(f"{'='*70}")
-        print("\n🎯 View in frontend: http://localhost:3000")
+        print("\n View in frontend: http://localhost:3000")
 
         return True
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERROR] Error: {e}")
         import traceback
 
         traceback.print_exc()

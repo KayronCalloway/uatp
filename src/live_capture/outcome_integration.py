@@ -232,7 +232,7 @@ class OutcomeTracker:
                 del self._pending[pending.capsule_id]
                 self._save_state()
                 logger.info(
-                    f"✅ Outcome inferred for {pending.capsule_id}: "
+                    f"[OK] Outcome inferred for {pending.capsule_id}: "
                     f"{inference.status.value} (confidence: {inference.confidence:.0%})"
                 )
         else:

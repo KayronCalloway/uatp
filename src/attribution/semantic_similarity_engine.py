@@ -4,21 +4,21 @@ UATP Semantic Similarity Engine - 2025 Breakthrough Edition
 This module implements cutting-edge semantic similarity analysis using the latest
 breakthrough models from 2024-2025 research including:
 
-🏆 2025 BREAKTHROUGH MODELS:
+ 2025 BREAKTHROUGH MODELS:
 - E5-Mistral-7B-instruct (66.63 MTEB benchmark leader)
 - BGE-Large-en-v1.5 (64.23 MTEB, optimized efficiency)
 - LLaMA 3 multimodal reasoning (405B parameters, 128K context)
 - Sentence Transformers v3.0 (15,000+ models available)
 - Cross-lingual models with 95.28% correlation rate
 
-🔬 ADVANCED TECHNIQUES:
+ ADVANCED TECHNIQUES:
 - PA-LRP (Positional-Aware Layer-wise Relevance Propagation)
 - AttnLRP for accurate attribution flow through non-linear components
 - BERTopic hybrid BOW+embedding approach for precision
 - LLM2Vec for unsupervised state-of-the-art embeddings
 - o1-style reasoning chains for explainable attribution
 
-🛡️ SECURITY FEATURES:
+ SECURITY FEATURES:
 - Multi-model ensemble for attribution confidence
 - Adversarial detection and mitigation
 - Cross-validation framework

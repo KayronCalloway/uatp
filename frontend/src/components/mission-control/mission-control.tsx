@@ -348,7 +348,7 @@ function DetailPanel({ activity, onClose }: {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold">Activity Details</h2>
             <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-              ✕
+
             </button>
           </div>
 
@@ -408,7 +408,7 @@ function HealthDetailPanel({ metric, onClose }: {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold">{metric.label} System</h2>
             <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-              ✕
+
             </button>
           </div>
 

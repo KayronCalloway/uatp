@@ -63,17 +63,17 @@ Overall capsule metadata:
 ```
 
 **Strengths**:
-- ✅ Real-time confidence tracking based on message characteristics
-- ✅ Uncertainty detection from language patterns
-- ✅ Measurement extraction (tokens, timing, content metrics)
-- ✅ Alternative identification from conversation content
-- ✅ Frontend fully supports rich display with color-coding
+- [OK] Real-time confidence tracking based on message characteristics
+- [OK] Uncertainty detection from language patterns
+- [OK] Measurement extraction (tokens, timing, content metrics)
+- [OK] Alternative identification from conversation content
+- [OK] Frontend fully supports rich display with color-coding
 
 **Current Limitations**:
-- ⚠️ Confidence calculations are heuristic (not learned or validated)
-- ⚠️ No feedback loop to improve confidence calibration
-- ⚠️ Limited context beyond immediate message
-- ⚠️ No cross-capsule learning or pattern recognition
+- [WARN] Confidence calculations are heuristic (not learned or validated)
+- [WARN] No feedback loop to improve confidence calibration
+- [WARN] Limited context beyond immediate message
+- [WARN] No cross-capsule learning or pattern recognition
 
 ### 1.3 Frontend Display
 
@@ -87,15 +87,15 @@ Overall capsule metadata:
 - Attribution sources
 
 **Strengths**:
-- ✅ Rich, informative display
-- ✅ Color-coded confidence at a glance
-- ✅ Clear separation of concerns (measurements vs uncertainty)
+- [OK] Rich, informative display
+- [OK] Color-coded confidence at a glance
+- [OK] Clear separation of concerns (measurements vs uncertainty)
 
 **Gaps**:
-- ❌ No trend visualization (confidence over time)
-- ❌ No comparison between similar capsules
-- ❌ No drill-down into why confidence is what it is
-- ❌ No learning/improvement suggestions
+- [ERROR] No trend visualization (confidence over time)
+- [ERROR] No comparison between similar capsules
+- [ERROR] No drill-down into why confidence is what it is
+- [ERROR] No learning/improvement suggestions
 
 ---
 

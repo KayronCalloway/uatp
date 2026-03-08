@@ -145,14 +145,14 @@ class CapsuleEngine:
 
             if success:
                 self._security_initialized = True
-                logger.info("✅ Security systems initialized in CapsuleEngine")
+                logger.info("[OK] Security systems initialized in CapsuleEngine")
             else:
-                logger.error("❌ Security system initialization failed")
+                logger.error("[ERROR] Security system initialization failed")
 
             return success
 
         except Exception as e:
-            logger.error(f"❌ Failed to initialize security systems: {e}")
+            logger.error(f"[ERROR] Failed to initialize security systems: {e}")
             return False
 
     async def create_secure_capsule_async(self, capsule: AnyCapsule) -> AnyCapsule:
@@ -176,7 +176,9 @@ class CapsuleEngine:
                 "capsule_id": capsule.capsule_id,
                 "content": getattr(capsule, "reasoning_trace", {}) or str(capsule),
                 "timestamp": capsule.timestamp.isoformat(),
-                "capsule_type": capsule.capsule_type.value if hasattr(capsule.capsule_type, 'value') else str(capsule.capsule_type),
+                "capsule_type": capsule.capsule_type.value
+                if hasattr(capsule.capsule_type, "value")
+                else str(capsule.capsule_type),
                 "contributor_id": self.agent_id,
                 "signature": getattr(capsule.verification, "signature", None),
                 "public_key": getattr(capsule.verification, "public_key", None),
@@ -200,7 +202,7 @@ class CapsuleEngine:
                     os.getenv("ENVIRONMENT") == "development" or True
                 ):  # Temporary override
                     logger.warning(
-                        "⚠️ Continuing with capsule creation despite security verification failure (development mode)"
+                        "[WARN] Continuing with capsule creation despite security verification failure (development mode)"
                     )
                     security_result = {
                         "development_mode": True,
@@ -228,12 +230,12 @@ class CapsuleEngine:
             secured_capsule = await self.create_capsule_async(capsule)
 
             logger.info(
-                f"✅ Secure capsule created: {capsule.capsule_id} (verification rate: {security_result.get('verification_rate', 0):.2%})"
+                f"[OK] Secure capsule created: {capsule.capsule_id} (verification rate: {security_result.get('verification_rate', 0):.2%})"
             )
             return secured_capsule
 
         except Exception as e:
-            logger.error(f"❌ Secure capsule creation failed: {e}")
+            logger.error(f"[ERROR] Secure capsule creation failed: {e}")
             raise UATPEngineError(f"Secure capsule creation failed: {e}")
 
     @asynccontextmanager
@@ -362,7 +364,9 @@ class CapsuleEngine:
         audit_emitter.emit_capsule_created(
             capsule_id=capsule.capsule_id,
             agent_id=self.agent_id,
-            capsule_type=capsule.capsule_type.value if hasattr(capsule.capsule_type, 'value') else str(capsule.capsule_type),
+            capsule_type=capsule.capsule_type.value
+            if hasattr(capsule.capsule_type, "value")
+            else str(capsule.capsule_type),
         )
 
         # Trigger probabilistic self-audit in background
@@ -379,7 +383,9 @@ class CapsuleEngine:
         logger.info(f"Logged capsule: {capsule.capsule_id}")
         return capsule
 
-    async def store_rich_capsule_async(self, capsule_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def store_rich_capsule_async(
+        self, capsule_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Signs and stores a rich capsule dict (from RichCaptureEnhancer) directly.
 
@@ -412,8 +418,11 @@ class CapsuleEngine:
         # Create hash of capsule content for signing
         import hashlib
         import json
+
         # Hash the payload content for signature
-        payload_str = json.dumps(capsule_data.get("payload", {}), sort_keys=True, default=str)
+        payload_str = json.dumps(
+            capsule_data.get("payload", {}), sort_keys=True, default=str
+        )
         content_hash = hashlib.sha256(payload_str.encode()).hexdigest()
         verification["hash"] = content_hash
 
@@ -451,18 +460,23 @@ class CapsuleEngine:
                 capsule_id=capsule_id,
                 capsule_type=capsule_data.get("type", "reasoning_trace"),
                 version=capsule_data.get("version", "7.1"),
-                timestamp=datetime.fromisoformat(capsule_data["timestamp"].replace("Z", "+00:00"))
-                    if isinstance(capsule_data["timestamp"], str)
-                    else capsule_data["timestamp"],
+                timestamp=datetime.fromisoformat(
+                    capsule_data["timestamp"].replace("Z", "+00:00")
+                )
+                if isinstance(capsule_data["timestamp"], str)
+                else capsule_data["timestamp"],
                 status=capsule_data.get("status", "sealed"),
                 verification=verification,
                 payload=capsule_data.get("payload", {}),
                 # Embedding fields for semantic search
                 embedding=capsule_data.get("embedding"),
                 embedding_model=capsule_data.get("embedding_model"),
-                embedding_created_at=datetime.fromisoformat(capsule_data["embedding_created_at"].replace("Z", "+00:00"))
-                    if capsule_data.get("embedding_created_at") and isinstance(capsule_data["embedding_created_at"], str)
-                    else capsule_data.get("embedding_created_at"),
+                embedding_created_at=datetime.fromisoformat(
+                    capsule_data["embedding_created_at"].replace("Z", "+00:00")
+                )
+                if capsule_data.get("embedding_created_at")
+                and isinstance(capsule_data["embedding_created_at"], str)
+                else capsule_data.get("embedding_created_at"),
             )
             session.add(capsule_model)
             await session.commit()

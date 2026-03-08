@@ -5,26 +5,22 @@ Consolidates and improves all UATP auto-capture mechanisms with advanced signifi
 """
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
-import hashlib
-import time
-import threading
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Dict, List, Optional, Any
-import requests
-import subprocess
 import sqlite3
 
 # Add parent directory to path for imports
 import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.live_capture.claude_code_capture import capture_system
 from src.integrations.cursor_ide_capture import cursor_capture_system
+from src.live_capture.claude_code_capture import capture_system
 
 # Configure logging
 logging.basicConfig(
@@ -345,7 +341,7 @@ class UniversalAutoCapture:
         )
         self.init_tracking_database()
 
-        logger.info("🚀 Enhanced Universal Auto-Capture System initialized")
+        logger.info(" Enhanced Universal Auto-Capture System initialized")
 
     def init_tracking_database(self):
         """Initialize tracking database for auto-capture analytics."""
@@ -386,9 +382,9 @@ class UniversalAutoCapture:
 
             conn.commit()
             conn.close()
-            logger.info("✅ Auto-capture tracking database initialized")
+            logger.info("[OK] Auto-capture tracking database initialized")
         except Exception as e:
-            logger.error(f"❌ Failed to initialize tracking database: {e}")
+            logger.error(f"[ERROR] Failed to initialize tracking database: {e}")
 
     async def process_content(
         self,
@@ -533,12 +529,12 @@ class UniversalAutoCapture:
                 self.capture_stats["high_priority_captures"] += 1
 
             logger.info(
-                f"✅ Auto-captured {source} content (significance: {decision['significance_score']:.2f})"
+                f"[OK] Auto-captured {source} content (significance: {decision['significance_score']:.2f})"
             )
             return result
 
         except Exception as e:
-            logger.error(f"❌ Auto-capture failed: {e}")
+            logger.error(f"[ERROR] Auto-capture failed: {e}")
             return {"success": False, "error": str(e)}
 
     async def auto_capture_conversation(
@@ -598,12 +594,12 @@ class UniversalAutoCapture:
                 self.capture_stats["high_priority_captures"] += 1
 
             logger.info(
-                f"✅ Auto-captured conversation with {len(messages)} messages (significance: {decision['significance_score']:.2f})"
+                f"[OK] Auto-captured conversation with {len(messages)} messages (significance: {decision['significance_score']:.2f})"
             )
             return result
 
         except Exception as e:
-            logger.error(f"❌ Conversation auto-capture failed: {e}")
+            logger.error(f"[ERROR] Conversation auto-capture failed: {e}")
             return {"success": False, "error": str(e)}
 
     def log_capture_decision(
@@ -616,8 +612,8 @@ class UniversalAutoCapture:
 
             cursor.execute(
                 """
-                INSERT INTO auto_captures 
-                (timestamp, source, platform, significance_score, decision_reason, 
+                INSERT INTO auto_captures
+                (timestamp, source, platform, significance_score, decision_reason,
                  content_preview, metadata, capsule_created)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -638,7 +634,7 @@ class UniversalAutoCapture:
             conn.commit()
             conn.close()
         except Exception as e:
-            logger.error(f"❌ Failed to log capture decision: {e}")
+            logger.error(f"[ERROR] Failed to log capture decision: {e}")
 
     def get_capture_analytics(self) -> Dict[str, Any]:
         """Get analytics about auto-capture performance."""
@@ -650,8 +646,8 @@ class UniversalAutoCapture:
             cursor.execute(
                 """
                 SELECT source, platform, significance_score, decision_reason, timestamp
-                FROM auto_captures 
-                ORDER BY timestamp DESC 
+                FROM auto_captures
+                ORDER BY timestamp DESC
                 LIMIT 20
             """
             )
@@ -660,11 +656,11 @@ class UniversalAutoCapture:
             # Get daily stats
             cursor.execute(
                 """
-                SELECT DATE(timestamp) as date, 
+                SELECT DATE(timestamp) as date,
                        COUNT(*) as captures,
                        AVG(significance_score) as avg_significance,
                        SUM(CASE WHEN capsule_created THEN 1 ELSE 0 END) as capsules
-                FROM auto_captures 
+                FROM auto_captures
                 WHERE timestamp >= datetime('now', '-7 days')
                 GROUP BY DATE(timestamp)
                 ORDER BY date DESC
@@ -697,7 +693,7 @@ class UniversalAutoCapture:
                 ],
             }
         except Exception as e:
-            logger.error(f"❌ Failed to get analytics: {e}")
+            logger.error(f"[ERROR] Failed to get analytics: {e}")
             return {"current_stats": self.capture_stats}
 
 
@@ -738,13 +734,13 @@ def get_auto_capture_analytics() -> Dict[str, Any]:
 if __name__ == "__main__":
     # Test the enhanced system
     async def test_enhanced_capture():
-        logger.info("🧪 Testing Enhanced Universal Auto-Capture System...")
+        logger.info(" Testing Enhanced Universal Auto-Capture System...")
 
         # Test content significance
         test_content = """
-        I need to implement a UATP capsule creation system that automatically detects 
+        I need to implement a UATP capsule creation system that automatically detects
         significant conversations and creates attribution capsules. Here's my approach:
-        
+
         ```python
         def create_capsule_from_conversation(conversation):
             significance = calculate_significance_score(conversation)
@@ -752,7 +748,7 @@ if __name__ == "__main__":
                 return create_attribution_capsule(conversation)
             return None
         ```
-        
+
         The system should use machine learning to improve its detection over time.
         """
 
@@ -763,7 +759,7 @@ if __name__ == "__main__":
             metadata={"user_id": "test-user", "file_path": "test.py"},
         )
 
-        print(f"✅ Content significance analysis: {decision}")
+        print(f"[OK] Content significance analysis: {decision}")
 
         # Test conversation significance
         test_messages = [
@@ -792,11 +788,11 @@ if __name__ == "__main__":
             metadata={"session_duration": 600, "total_tokens": 1500},
         )
 
-        print(f"✅ Conversation significance analysis: {decision}")
+        print(f"[OK] Conversation significance analysis: {decision}")
 
         # Show analytics
         analytics = get_auto_capture_analytics()
-        print(f"✅ Analytics: {analytics}")
+        print(f"[OK] Analytics: {analytics}")
 
     # Run test
     asyncio.run(test_enhanced_capture())

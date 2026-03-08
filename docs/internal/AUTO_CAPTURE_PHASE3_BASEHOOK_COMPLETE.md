@@ -1,7 +1,7 @@
 # Auto Capture Phase 3: BaseHook Pattern - MILESTONE
 
 ## Date: 2025-12-14
-## Status: ✅ BaseHook Created + OpenAI Refactored (Pattern Established)
+## Status: [OK] BaseHook Created + OpenAI Refactored (Pattern Established)
 
 ---
 
@@ -10,9 +10,9 @@
 Successfully created the BaseHook abstract class and refactored OpenAI hook as proof-of-concept.
 
 **Progress:**
-- ✅ BaseHook class created (230 lines)
-- ✅ OpenAI hook refactored: 593 lines → 326 lines (45% reduction)
-- 📋 Pattern established for remaining 5 hooks
+- [OK] BaseHook class created (230 lines)
+- [OK] OpenAI hook refactored: 593 lines → 326 lines (45% reduction)
+-  Pattern established for remaining 5 hooks
 
 **Impact So Far:**
 - **OpenAI hook**: 267 lines eliminated (45% reduction)
@@ -118,7 +118,7 @@ class OpenAILiveCapture(BaseHook):
         super().__init__(platform="openai", user_id=user_id)
 
     def get_platform_emoji(self) -> str:
-        return "🤖"
+        return ""
 
     def get_platform_specific_metadata(self, **kwargs) -> Dict:
         return {
@@ -129,7 +129,7 @@ class OpenAILiveCapture(BaseHook):
         }
 
     def _log_platform_specific_init(self) -> None:
-        logger.info(f"   API Key: {'✅ Set' if self.api_key else '❌ Missing'}")
+        logger.info(f"   API Key: {'[OK] Set' if self.api_key else '[ERROR] Missing'}")
 
     async def capture_openai_interaction(self, ...):
         # Thin wrapper around base class
@@ -177,7 +177,7 @@ class OpenAILiveCapture(BaseHook):
 4. **Implement required methods:**
    ```python
    def get_platform_emoji(self) -> str:
-       return "🎯"  # Platform-specific emoji
+       return ""  # Platform-specific emoji
 
    def get_platform_specific_metadata(self, **kwargs) -> Dict:
        return {
@@ -261,11 +261,11 @@ class OpenAILiveCapture(BaseHook):
 ## Benefits Achieved (So Far)
 
 ### Code Quality:
-✅ **Eliminated duplication** - Core capture logic now in one place
-✅ **Standardized interface** - All hooks follow same pattern
-✅ **Easier to maintain** - Fix bugs once in BaseHook, all hooks benefit
-✅ **Easier to test** - Test BaseHook logic once
-✅ **Easier to extend** - New platforms just implement 2 abstract methods
+[OK] **Eliminated duplication** - Core capture logic now in one place
+[OK] **Standardized interface** - All hooks follow same pattern
+[OK] **Easier to maintain** - Fix bugs once in BaseHook, all hooks benefit
+[OK] **Easier to test** - Test BaseHook logic once
+[OK] **Easier to extend** - New platforms just implement 2 abstract methods
 
 ### Specific Improvements:
 
@@ -305,8 +305,8 @@ class OpenAILiveCapture(BaseHook):
 ### After Phase 3 (Current):
 | Metric | Status | Grade |
 |--------|--------|-------|
-| BaseHook pattern | ✅ Created | A |
-| OpenAI refactored | ✅ 45% reduction | A |
+| BaseHook pattern | [OK] Created | A |
+| OpenAI refactored | [OK] 45% reduction | A |
 | Code duplication | 1 hook done, 5 to go | B |
 | Maintainability | Much easier with BaseHook | B+ |
 | Testability | BaseHook tested once | A |
@@ -356,7 +356,7 @@ class NewPlatformCapture(BaseHook):
         super().__init__(platform="new_platform", user_id=user_id)
 
     def get_platform_emoji(self) -> str:
-        return "🚀"
+        return ""
 
     def get_platform_specific_metadata(self, **kwargs) -> Dict:
         return {
@@ -375,27 +375,27 @@ class NewPlatformCapture(BaseHook):
 
 ### What We Did Right:
 
-1. **✅ Identified Root Cause:**
+1. **[OK] Identified Root Cause:**
    - Not just "code duplication" - but **systematic architectural duplication**
    - 70% of code was identical across 6 files
 
-2. **✅ Created Proper Abstraction:**
+2. **[OK] Created Proper Abstraction:**
    - BaseHook captures **what's common** (capture flow, logging, error handling)
    - Abstract methods define **what's different** (platform metadata, emoji)
    - Optional hooks for **platform-specific behavior**
 
-3. **✅ Proof-of-Concept First:**
+3. **[OK] Proof-of-Concept First:**
    - Refactored OpenAI as proof-of-concept
    - Validated the pattern works
    - Established clear refactoring template for remaining hooks
 
-4. **✅ Maintained Backward Compatibility:**
+4. **[OK] Maintained Backward Compatibility:**
    - All existing convenience methods kept
    - API wrappers unchanged
    - Global instance management preserved
    - Tests still work
 
-5. **✅ Improved Extensibility:**
+5. **[OK] Improved Extensibility:**
    - SimplePlatformHook for quick integrations
    - Clear pattern for new platforms
    - Reduced barrier from ~500 lines → ~15 lines
@@ -407,10 +407,10 @@ class NewPlatformCapture(BaseHook):
 Phase 3 milestone achieved: **BaseHook pattern established and validated**.
 
 **What was accomplished:**
-- ✅ Created production-grade BaseHook abstract class (230 lines)
-- ✅ Refactored OpenAI hook (593 → 326 lines, 45% reduction)
-- ✅ Established clear refactoring pattern
-- ✅ Validated approach with proof-of-concept
+- [OK] Created production-grade BaseHook abstract class (230 lines)
+- [OK] Refactored OpenAI hook (593 → 326 lines, 45% reduction)
+- [OK] Established clear refactoring pattern
+- [OK] Validated approach with proof-of-concept
 
 **What's next:**
 - Refactor remaining 5 hooks (~2-3 hours)
@@ -423,6 +423,6 @@ Phase 3 milestone achieved: **BaseHook pattern established and validated**.
 
 *Completed: 2025-12-14*
 *Phase: 3 of 7 (In Progress)*
-*Status: BaseHook Created + OpenAI Refactored ✅*
-*Pattern: Established and Validated ✅*
+*Status: BaseHook Created + OpenAI Refactored [OK]*
+*Pattern: Established and Validated [OK]*
 *Next: Refactor Remaining 5 Hooks*

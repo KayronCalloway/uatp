@@ -2,11 +2,11 @@
 
 > Build the future of AI attribution with UATP's civilization-grade infrastructure
 
-## 🎯 What You'll Build
+##  What You'll Build
 
 UATP enables developers to integrate **attribution tracking**, **economic rewards**, and **democratic governance** into any application. This guide gets you up and running in 10 minutes.
 
-## 📦 Choose Your SDK
+##  Choose Your SDK
 
 ### Python SDK
 Perfect for data science, AI platforms, and backend services.
@@ -15,14 +15,14 @@ Perfect for data science, AI platforms, and backend services.
 pip install uatp-sdk
 ```
 
-### JavaScript/TypeScript SDK  
+### JavaScript/TypeScript SDK
 Ideal for web apps, Node.js services, and React applications.
 
 ```bash
 npm install @uatp/sdk
 ```
 
-## 🚀 5-Minute Quick Start
+##  5-Minute Quick Start
 
 ### Step 1: Get Your API Key
 
@@ -57,7 +57,7 @@ const client = new UATP({
 result = await client.track_ai_interaction(
     prompt="What is the capital of France?",
     response="The capital of France is Paris.",
-    platform="openai",  # or "anthropic", "huggingface" 
+    platform="openai",  # or "anthropic", "huggingface"
     model="gpt-4",
     user_id="user-123"  # optional
 )
@@ -93,15 +93,15 @@ print(f"Pending rewards: ${rewards['pending_rewards']}")
 
 **JavaScript/TypeScript:**
 ```typescript
-// Get attribution rewards for a user  
+// Get attribution rewards for a user
 const rewards = await client.getAttributionRewards('user-123');
 console.log(`Total earned: $${rewards.totalEarned}`);
 console.log(`Pending rewards: $${rewards.pendingRewards}`);
 ```
 
-🎉 **Congratulations!** You've just integrated AI attribution into your application.
+ **Congratulations!** You've just integrated AI attribution into your application.
 
-## 🏗️ Real-World Examples
+##  Real-World Examples
 
 ### Chatbot Integration
 
@@ -112,7 +112,7 @@ Add attribution to your chatbot to reward users for valuable conversations:
 async def handle_chat_message(user_message, user_id):
     # Get AI response from your preferred platform
     ai_response = await get_ai_response(user_message)
-    
+
     # Track for attribution and rewards
     attribution = await client.track_ai_interaction(
         prompt=user_message,
@@ -121,7 +121,7 @@ async def handle_chat_message(user_message, user_id):
         model="gpt-4",
         user_id=user_id
     )
-    
+
     return {
         "response": ai_response,
         "attribution_id": attribution.attribution_id,
@@ -134,7 +134,7 @@ async def handle_chat_message(user_message, user_id):
 async function handleChatMessage(userMessage: string, userId: string) {
   // Get AI response from your preferred platform
   const aiResponse = await getAiResponse(userMessage);
-  
+
   // Track for attribution and rewards
   const attribution = await client.trackAiInteraction({
     prompt: userMessage,
@@ -143,7 +143,7 @@ async function handleChatMessage(userMessage: string, userId: string) {
     model: 'gpt-4',
     userId
   });
-  
+
   return {
     response: aiResponse,
     attributionId: attribution.attributionId,
@@ -161,14 +161,14 @@ Reward users for generating high-quality content:
 async def create_content(prompt, platform, model, creator_id):
     # Generate content using AI
     content = await generate_ai_content(prompt, platform, model)
-    
+
     # Apply watermarking for authenticity
     watermark = await client.watermarking.apply_watermark(
         content=content,
         content_type="text",
         creator_id=creator_id
     )
-    
+
     # Track attribution
     attribution = await client.track_ai_interaction(
         prompt=prompt,
@@ -177,7 +177,7 @@ async def create_content(prompt, platform, model, creator_id):
         model=model,
         user_id=creator_id
     )
-    
+
     return {
         "content": content,
         "watermark_id": watermark.watermark_id,
@@ -207,7 +207,7 @@ const votingPower = await client.governance.getVotingPower('user-123');
 console.log(`Voting power: ${votingPower.votingPower}`);
 ```
 
-## 🎨 UI Components & Templates
+##  UI Components & Templates
 
 ### React Attribution Display
 
@@ -291,7 +291,7 @@ const hasVoted = (proposalId) => userVotes.value.has(proposalId);
 </script>
 ```
 
-## 🔧 Advanced Configuration
+##  Advanced Configuration
 
 ### Production Configuration
 
@@ -373,12 +373,12 @@ try {
         // Wait and retry
         await new Promise(resolve => setTimeout(resolve, 5000));
         return await client.trackAiInteraction(...);
-        
+
       case 'INSUFFICIENT_BALANCE':
         // Handle payment
         console.log(`Add funds to continue: ${error.message}`);
         break;
-        
+
       default:
         console.error(`UATP error: ${error.code} - ${error.message}`);
         throw error;
@@ -391,7 +391,7 @@ try {
 }
 ```
 
-## 🌟 Next Steps
+##  Next Steps
 
 Now that you have the basics working, explore these advanced features:
 
@@ -401,15 +401,15 @@ Now that you have the basics working, explore these advanced features:
 4. **[Federation Scaling](./federation-guide.md)** - Connect to global networks
 5. **[Economic Models](./economics-guide.md)** - Design reward systems
 
-## 💬 Get Help
+##  Get Help
 
-- 📖 **Full Documentation**: [docs.uatp.org](https://docs.uatp.org)
-- 💬 **Discord Community**: [discord.gg/uatp](https://discord.gg/uatp)
-- 🐛 **Report Issues**: [github.com/uatp/sdk/issues](https://github.com/uatp/sdk/issues)
-- 📧 **Email Support**: developers@uatp.org
+-  **Full Documentation**: [docs.uatp.org](https://docs.uatp.org)
+-  **Discord Community**: [discord.gg/uatp](https://discord.gg/uatp)
+-  **Report Issues**: [github.com/KayronCalloway/sdk/issues](https://github.com/KayronCalloway/sdk/issues)
+-  **Email Support**: developers@uatp.org
 
 **Ready to build the future?** Start with the [Example Applications](./examples/) or dive into the [Complete API Reference](./api-reference/).
 
 ---
 
-*Building attribution infrastructure for human-AI collaboration at civilization scale* 🌍
+*Building attribution infrastructure for human-AI collaboration at civilization scale*

@@ -39,27 +39,29 @@ class ClaudeCodeLiveCapture(BaseHook):
         super().__init__(platform="claude_code", user_id="kay", session_id=session_id)
 
     def get_platform_emoji(self) -> str:
-        return "🎯"
+        return ""
 
     def get_platform_specific_metadata(self, **kwargs) -> Dict[str, Any]:
         """Get Claude Code-specific metadata."""
         return {
             "model": "claude-sonnet-4",
             "interface": "claude_code",
-            "conversation_turn": kwargs.get("conversation_turn", len(self.conversation_history)),
+            "conversation_turn": kwargs.get(
+                "conversation_turn", len(self.conversation_history)
+            ),
             "total_exchanges": len(self.conversation_history),
         }
 
     async def _on_capsule_created(self, interaction, capsule_id):
         """Called when a capsule is created."""
-        print(f"🎉 Live capsule created: {capsule_id}")
+        print(f" Live capsule created: {capsule_id}")
         print(f"   Session: {interaction.session_id}")
         print(f"   Platform: {interaction.platform}")
         print(f"   Messages: {len(interaction.messages)}")
 
     async def _on_interaction_captured(self, interaction, messages):
         """Called when an interaction is captured."""
-        print(f"📝 Interaction captured in session {interaction.session_id}")
+        print(f" Interaction captured in session {interaction.session_id}")
         print(f"   Messages in session: {len(interaction.messages)}")
 
     async def start_session(self):
@@ -70,7 +72,7 @@ class ClaudeCodeLiveCapture(BaseHook):
             platform=self.platform,
             context={"model": self.model, "interface": "claude_code"},
         )
-        print(f"🟢 Started live capture session: {self.session_id}")
+        print(f" Started live capture session: {self.session_id}")
 
     async def capture_current_conversation(
         self, user_message: str, ai_response: str
@@ -100,7 +102,7 @@ class ClaudeCodeLiveCapture(BaseHook):
         """End the live capture session."""
         result = await self.generator.end_session(self.session_id)
         if result:
-            print(f"🔚 Ended live capture session: {self.session_id}")
+            print(f" Ended live capture session: {self.session_id}")
             print(f"   Total exchanges: {len(self.conversation_history)}")
         return result
 
@@ -135,7 +137,7 @@ class ClaudeCodeLiveCapture(BaseHook):
         created_capsules = []
 
         for i, exchange in enumerate(exchanges, 1):
-            print(f"\n📝 Capturing conversation exchange {i}:")
+            print(f"\n Capturing conversation exchange {i}:")
             print(f"   User: {exchange['user'][:50]}...")
             print(f"   Assistant: {exchange['assistant'][:50]}...")
 
@@ -145,13 +147,13 @@ class ClaudeCodeLiveCapture(BaseHook):
 
             if capsule_id:
                 created_capsules.append(capsule_id)
-                print(f"   ✅ Created capsule: {capsule_id}")
+                print(f"   [OK] Created capsule: {capsule_id}")
             else:
-                print("   ❌ No capsule created (not significant enough)")
+                print("   [ERROR] No capsule created (not significant enough)")
 
         # Show final stats
         stats = self.get_session_stats()
-        print("\n📊 Session Statistics:")
+        print("\n Session Statistics:")
         print(f"   Total capsules created: {len(created_capsules)}")
         print(f"   Active sessions: {stats['generator_stats']['active_sessions']}")
         print(
@@ -166,7 +168,7 @@ class ClaudeCodeLiveCapture(BaseHook):
 async def main():
     """Main function to demonstrate live capture."""
 
-    print("🎯 Claude Code Live Capture Demo (with BaseHook)")
+    print(" Claude Code Live Capture Demo (with BaseHook)")
     print("=" * 50)
 
     # Create live capture instance
@@ -176,14 +178,14 @@ async def main():
         # Demo capturing this conversation
         capsules = await capture.demo_capture_this_conversation()
 
-        print("\n✅ Demo complete (with BaseHook refactoring)!")
+        print("\n[OK] Demo complete (with BaseHook refactoring)!")
         print(f"   Created {len(capsules)} capsules from live conversation")
 
         if capsules:
             print(f"   Capsule IDs: {', '.join(capsules)}")
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERROR] Error: {e}")
         import traceback
 
         traceback.print_exc()

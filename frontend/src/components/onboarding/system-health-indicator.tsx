@@ -49,15 +49,15 @@ export function SystemHealthIndicator({ health }: SystemHealthIndicatorProps) {
   const getHealthIcon = (status: string) => {
     switch (status) {
       case 'excellent':
-        return '🟢';
+        return '';
       case 'good':
-        return '🟡';
+        return '';
       case 'warning':
-        return '🟠';
+        return '';
       case 'critical':
-        return '🔴';
+        return '';
       default:
-        return '⚪';
+        return '';
     }
   };
 
@@ -82,7 +82,7 @@ export function SystemHealthIndicator({ health }: SystemHealthIndicatorProps) {
         <div className="cursor-help text-gray-400 hover:text-gray-600">
           ⓘ
         </div>
-        
+
         {/* Tooltip */}
         <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
           <div className="text-sm">

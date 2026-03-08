@@ -1,6 +1,6 @@
 # UATP Quick Start Guide
 
-## 🚀 Starting the System
+##  Starting the System
 
 ### One-Command Start
 ```bash
@@ -25,7 +25,7 @@ UATP_DEMO_MODE=true python3 -m quart --app src.api.server:app run --host 0.0.0.0
 cd frontend && npm run dev &
 ```
 
-## 🔍 Checking Status
+##  Checking Status
 
 ```bash
 ./check_uatp_status.sh
@@ -37,13 +37,13 @@ Shows:
 - Process IDs
 - System health metrics
 
-## 🌐 Accessing the System
+##  Accessing the System
 
 - **Frontend Dashboard**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **API Platforms**: http://localhost:8000/onboarding/api/platforms
 
-## 🛑 Stopping the System
+##  Stopping the System
 
 ```bash
 # Stop both services
@@ -55,7 +55,7 @@ kill $(cat api_server.pid)         # Backend
 kill $(cat frontend/frontend.pid)  # Frontend
 ```
 
-## 📊 Viewing Logs
+##  Viewing Logs
 
 ```bash
 # Backend logs (live)
@@ -69,7 +69,7 @@ tail -50 api_server.log
 tail -50 frontend.log
 ```
 
-## 🔧 Configuration
+##  Configuration
 
 ### Backend Environment
 The backend runs in **Demo Mode** by default:
@@ -85,14 +85,14 @@ NEXT_PUBLIC_ENABLE_REAL_API=true
 NEXT_PUBLIC_DEBUG_MODE=true
 ```
 
-## 📚 Documentation
+##  Documentation
 
 - **System Status**: `SYSTEM_STATUS.md` - Current configuration
 - **Technical Debt**: `TECHNICAL_DEBT_ASSESSMENT.md` - Code quality
 - **Dependency Injection**: `DEPENDENCY_INJECTION_REFACTORING_COMPLETE.md` - Architecture
 - **Session Summary**: `SESSION_SUMMARY_DEPENDENCY_INJECTION.md` - Recent work
 
-## ✅ System Health
+## [OK] System Health
 
 **Current Status**: Production-Ready
 
@@ -102,11 +102,11 @@ NEXT_PUBLIC_DEBUG_MODE=true
 - **Security**: Post-quantum cryptography enabled
 
 ### Core Components Status
-- ✅ Security Layer: Quantum-resistant
-- ✅ Economic Layer: Fair attribution working
-- ✅ Governance Layer: DAO functionality operational
-- ✅ Ethics Layer: Real-time monitoring active
-- ✅ API Layer: REST API functional
+- [OK] Security Layer: Quantum-resistant
+- [OK] Economic Layer: Fair attribution working
+- [OK] Governance Layer: DAO functionality operational
+- [OK] Ethics Layer: Real-time monitoring active
+- [OK] API Layer: REST API functional
 
 ## 🆘 Troubleshooting
 
@@ -151,7 +151,7 @@ cat frontend.log
 grep -i error api_server.log | tail -20
 ```
 
-## 🔄 Restarting Services
+##  Restarting Services
 
 ```bash
 # Restart backend only
@@ -163,7 +163,7 @@ cd frontend && pkill next-server
 npm run dev &
 ```
 
-## 📈 Monitoring
+##  Monitoring
 
 ```bash
 # Watch processes

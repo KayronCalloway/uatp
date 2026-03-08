@@ -56,18 +56,18 @@ After import:
   Importing ChatGPT Export
 ======================================================================
 
-📂 Loaded export file: 145 conversations found
+ Loaded export file: 145 conversations found
 
-✅ Imported: Building a REST API with FastAPI and PostgreSQL
-✅ Imported: Python async programming best practices
-✅ Imported: Understanding Docker containers
+[OK] Imported: Building a REST API with FastAPI and PostgreSQL
+[OK] Imported: Python async programming best practices
+[OK] Imported: Understanding Docker containers
 ...
 
 ======================================================================
-✅ Import Complete: 145 conversations imported
+[OK] Import Complete: 145 conversations imported
 ======================================================================
 
-🎯 View in frontend: http://localhost:3000
+ View in frontend: http://localhost:3000
 ```
 
 ## Troubleshooting

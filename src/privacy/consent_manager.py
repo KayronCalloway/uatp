@@ -800,7 +800,7 @@ if __name__ == "__main__":
         user_id = "user123"
 
         # Request consent
-        print("🔐 Requesting consent...")
+        print(" Requesting consent...")
         request_result = await consent_manager.request_consent(
             user_id=user_id,
             consent_type=ConsentType.ATTRIBUTION_TRACKING,
@@ -810,7 +810,7 @@ if __name__ == "__main__":
         print(f"Request result: {request_result}")
 
         # Grant consent
-        print("\n✅ Granting consent...")
+        print("\n[OK] Granting consent...")
         grant_result = await consent_manager.grant_consent(
             user_id=user_id,
             consent_type=ConsentType.ATTRIBUTION_TRACKING,
@@ -820,14 +820,14 @@ if __name__ == "__main__":
         print(f"Grant result: {grant_result}")
 
         # Check consent
-        print("\n🔍 Checking consent...")
+        print("\n Checking consent...")
         consent_status = await consent_manager.get_user_consent(
             user_id, ConsentType.ATTRIBUTION_TRACKING
         )
         print(f"Consent status: {consent_status}")
 
         # Set privacy preferences
-        print("\n⚙️ Setting privacy preferences...")
+        print("\n Setting privacy preferences...")
         prefs_result = await consent_manager.set_privacy_preferences(
             user_id=user_id,
             preferences={"allow_analytics": True, "data_retention_days": 180},
@@ -835,7 +835,7 @@ if __name__ == "__main__":
         print(f"Preferences result: {prefs_result}")
 
         # Check consent requirements
-        print("\n📋 Checking consent requirements...")
+        print("\n Checking consent requirements...")
         requirements = await consent_manager.check_consent_required(
             user_id=user_id,
             data_categories=[
@@ -847,7 +847,7 @@ if __name__ == "__main__":
         print(f"Requirements: {requirements}")
 
         # Generate consent report
-        print("\n📊 Generating consent report...")
+        print("\n Generating consent report...")
         report = await consent_manager.generate_consent_report(user_id)
         print(f"Report: {report}")
 

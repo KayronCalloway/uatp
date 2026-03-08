@@ -112,7 +112,7 @@ export function DataSourcesCard({ dataSources }: DataSourcesCardProps) {
                       </span>
                       {source.verification.consensus && (
                         <span className="ml-2 text-green-600 font-medium">
-                          ✓ Consensus
+                           Consensus
                         </span>
                       )}
                     </div>

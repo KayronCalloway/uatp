@@ -15,21 +15,19 @@ Features:
 """
 
 import asyncio
-import json
 import logging
-import time
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, field
-from contextlib import asynccontextmanager
-
-import sys
 import os
+import sys
+import time
+from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any, Callable, Dict, List, Optional
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.filters.integration_layer import get_integration_layer
 from src.filters.capsule_creator import get_capsule_creator
+from src.filters.integration_layer import get_integration_layer
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +85,7 @@ class RealTimeCapsuleGenerator:
             "sessions_ended": 0,
         }
 
-        logger.info("🔴 Real-Time Capsule Generator initialized")
+        logger.info(" Real-Time Capsule Generator initialized")
         logger.info(f"   Auto-encapsulation: {auto_encapsulate}")
         logger.info(f"   Session timeout: {session_timeout}s")
         logger.info(f"   Significance threshold: {significance_threshold}")
@@ -116,7 +114,7 @@ class RealTimeCapsuleGenerator:
         self.stats["sessions_started"] += 1
         self.stats["active_sessions"] = len(self.active_sessions)
 
-        logger.info(f"📱 Started session {session_id} for {user_id} on {platform}")
+        logger.info(f" Started session {session_id} for {user_id} on {platform}")
 
         # Trigger callbacks
         for callback in self.on_session_started:
@@ -167,7 +165,7 @@ class RealTimeCapsuleGenerator:
 
         self.stats["total_interactions"] += 1
 
-        logger.info(f"📝 Captured interaction in session {session_id}")
+        logger.info(f" Captured interaction in session {session_id}")
         logger.info(f"   User: {user_message[:50]}...")
         logger.info(f"   AI: {ai_response[:50]}...")
 
@@ -201,7 +199,7 @@ class RealTimeCapsuleGenerator:
                 model=interaction.context.get("model"),
             )
 
-            logger.info(f"🔍 Filter result for session {interaction.session_id}:")
+            logger.info(f" Filter result for session {interaction.session_id}:")
             logger.info(f"   Decision: {result.decision.value}")
             logger.info(f"   Significance: {result.significance_score:.2f}")
             logger.info(f"   Should encapsulate: {result.should_encapsulate}")
@@ -217,7 +215,7 @@ class RealTimeCapsuleGenerator:
                 self.stats["total_capsules_created"] += 1
 
                 logger.info(
-                    f"✅ Auto-encapsulated session {interaction.session_id} as {capsule_id}"
+                    f"[OK] Auto-encapsulated session {interaction.session_id} as {capsule_id}"
                 )
 
                 # Trigger callbacks
@@ -231,7 +229,7 @@ class RealTimeCapsuleGenerator:
 
             else:
                 logger.info(
-                    f"❌ Session {interaction.session_id} not significant enough for encapsulation"
+                    f"[ERROR] Session {interaction.session_id} not significant enough for encapsulation"
                 )
                 return None
 
@@ -259,7 +257,7 @@ class RealTimeCapsuleGenerator:
         self.stats["sessions_ended"] += 1
         self.stats["active_sessions"] = len(self.active_sessions)
 
-        logger.info(f"🔚 Ended session {session_id}")
+        logger.info(f" Ended session {session_id}")
         logger.info(
             f"   Duration: {(interaction.last_activity - interaction.start_time).total_seconds():.1f}s"
         )
@@ -288,7 +286,7 @@ class RealTimeCapsuleGenerator:
                 expired_sessions.append(session_id)
 
         for session_id in expired_sessions:
-            logger.info(f"🧹 Cleaning up expired session {session_id}")
+            logger.info(f" Cleaning up expired session {session_id}")
             await self.end_session(session_id)
 
         return len(expired_sessions)
@@ -399,10 +397,10 @@ if __name__ == "__main__":
 
         # Add some callbacks for demonstration
         async def on_capsule_created(interaction, capsule_id):
-            print(f"🎉 Capsule created: {capsule_id}")
+            print(f" Capsule created: {capsule_id}")
 
         async def on_session_started(interaction):
-            print(f"🟢 Session started: {interaction.session_id}")
+            print(f" Session started: {interaction.session_id}")
 
         generator.add_callback("capsule_created", on_capsule_created)
         generator.add_callback("session_started", on_session_started)
@@ -419,11 +417,11 @@ if __name__ == "__main__":
             )
 
             if capsule_id:
-                print(f"✅ Created capsule: {capsule_id}")
+                print(f"[OK] Created capsule: {capsule_id}")
             else:
-                print("❌ No capsule created")
+                print("[ERROR] No capsule created")
 
         # Show stats
-        print(f"📊 Stats: {generator.get_stats()}")
+        print(f" Stats: {generator.get_stats()}")
 
     asyncio.run(demo())

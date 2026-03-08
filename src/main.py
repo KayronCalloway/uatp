@@ -4,7 +4,7 @@ Production-ready FastAPI application with unified architecture
 """
 
 import structlog
-import os
+
 from .app_factory import create_app
 
 # Configure logging for ASGI deployment
@@ -13,7 +13,7 @@ logger = structlog.get_logger(__name__)
 
 def create_asgi_app():
     """Create production-ready ASGI application"""
-    logger.info("🚀 Initializing UATP ASGI application")
+    logger.info(" Initializing UATP ASGI application")
 
     # Use the canonical FastAPI factory
     app = create_app()
@@ -36,7 +36,7 @@ def create_asgi_app():
 
         return response
 
-    logger.info("✅ UATP ASGI application ready for deployment")
+    logger.info("[OK] UATP ASGI application ready for deployment")
     return app
 
 

@@ -29,7 +29,7 @@ class CursorLiveCapture(BaseHook):
         super().__init__(platform="cursor", user_id=user_id)
 
     def get_platform_emoji(self) -> str:
-        return "🎯"
+        return ""
 
     def get_platform_specific_metadata(self, **kwargs) -> Dict:
         """Get Cursor-specific metadata."""
@@ -255,7 +255,7 @@ class CursorIntegrationHelper:
         self.auto_capture = auto_capture
         self.capture = get_cursor_capture(user_id, workspace_path)
 
-        logger.info("✅ Cursor integration helper initialized")
+        logger.info("[OK] Cursor integration helper initialized")
 
     async def on_chat_message(
         self,
@@ -313,11 +313,11 @@ class CursorIntegrationHelper:
 
 async def main():
     """Test the Cursor integration."""
-    print("🎯 Testing Cursor Live Capture Integration (with BaseHook)")
+    print(" Testing Cursor Live Capture Integration (with BaseHook)")
     print("=" * 50)
 
     # Test code assistance
-    print("\n💻 Testing code assistance capture...")
+    print("\n Testing code assistance capture...")
     code_assistance_capsule = await capture_cursor_interaction(
         user_input="Help me write a Python function to validate email addresses",
         assistant_response="Here's a Python function to validate email addresses using regex...",
@@ -332,11 +332,11 @@ async def main():
     )
 
     if code_assistance_capsule:
-        print(f"✅ Code assistance captured: {code_assistance_capsule}")
+        print(f"[OK] Code assistance captured: {code_assistance_capsule}")
     else:
-        print("❌ No capsule created")
+        print("[ERROR] No capsule created")
 
-    print("\n✅ Cursor integration test completed (with BaseHook refactoring)!")
+    print("\n[OK] Cursor integration test completed (with BaseHook refactoring)!")
 
 
 if __name__ == "__main__":

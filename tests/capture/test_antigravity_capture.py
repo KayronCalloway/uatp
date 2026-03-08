@@ -23,7 +23,7 @@ from src.live_capture import (
 async def capture_this_conversation():
     """Capture the current Antigravity conversation."""
 
-    print("🤖 Antigravity Conversation Capture Test")
+    print(" Antigravity Conversation Capture Test")
     print("=" * 60)
 
     # Current conversation session ID
@@ -36,9 +36,9 @@ async def capture_this_conversation():
         model="gemini-2.5-pro",
     )
 
-    print(f"📝 Session ID: {capture.session_id}")
-    print(f"👤 User ID: {capture.user_id}")
-    print(f"🤖 Model: {capture.model}")
+    print(f" Session ID: {capture.session_id}")
+    print(f" User ID: {capture.user_id}")
+    print(f" Model: {capture.model}")
     print()
 
     # Capture the key exchanges from this conversation
@@ -69,7 +69,7 @@ async def capture_this_conversation():
         },
     ]
 
-    print(f"📨 Capturing {len(exchanges)} conversation exchanges...")
+    print(f" Capturing {len(exchanges)} conversation exchanges...")
     print()
 
     capsule_ids = []
@@ -89,20 +89,20 @@ async def capture_this_conversation():
 
         if capsule_id:
             capsule_ids.append(capsule_id)
-            print(f"  ✅ Capsule created: {capsule_id}")
+            print(f"  [OK] Capsule created: {capsule_id}")
         else:
-            print("  📝 Captured (no capsule threshold met)")
+            print("   Captured (no capsule threshold met)")
         print()
 
     # Show session stats
     stats = capture.get_session_stats()
-    print("📊 Session Statistics:")
+    print(" Session Statistics:")
     for key, value in stats.items():
         print(f"   {key}: {value}")
 
     # Check the database
     print()
-    print("🔍 Checking live_capture.db...")
+    print(" Checking live_capture.db...")
     db_path = os.path.join(os.path.dirname(__file__), "live_capture.db")
 
     if os.path.exists(db_path):
@@ -136,11 +136,11 @@ async def capture_this_conversation():
 
         conn.close()
     else:
-        print(f"   ⚠️ Database not found at {db_path}")
+        print(f"   [WARN] Database not found at {db_path}")
 
     print()
     print("=" * 60)
-    print("✅ Antigravity capture test complete!")
+    print("[OK] Antigravity capture test complete!")
     print(f"   Capsules created: {len(capsule_ids)}")
     print(f"   Total exchanges captured: {len(exchanges)}")
 

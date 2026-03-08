@@ -25,7 +25,6 @@ Usage:
 
 import asyncio
 import logging
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -60,10 +59,12 @@ class AntigravityLiveCapture(BaseHook):
         self.brain_dir = self.antigravity_home / "brain"
         self.conversations_dir = self.antigravity_home / "conversations"
 
-        super().__init__(platform="google_antigravity", user_id=user_id, session_id=session_id)
+        super().__init__(
+            platform="google_antigravity", user_id=user_id, session_id=session_id
+        )
 
     def get_platform_emoji(self) -> str:
-        return "✨"
+        return ""
 
     def get_platform_specific_metadata(self, **kwargs) -> Dict[str, Any]:
         """Get Antigravity-specific metadata."""
@@ -264,7 +265,7 @@ class AntigravityLiveCapture(BaseHook):
     def clear_conversation_buffer(self):
         """Clear the conversation buffer after capsule creation."""
         self.conversation_buffer = []
-        logger.info("🧹 Conversation buffer cleared")
+        logger.info(" Conversation buffer cleared")
 
 
 # Global instance for easy access
@@ -337,11 +338,11 @@ async def capture_antigravity_interaction(
 async def main():
     """Test the Antigravity integration."""
 
-    print("✨ Testing Antigravity Live Capture Integration (with BaseHook)")
+    print(" Testing Antigravity Live Capture Integration (with BaseHook)")
     print("=" * 60)
 
     # Test agentic coding interaction
-    print("\n🔧 Testing agentic coding capture...")
+    print("\n Testing agentic coding capture...")
     agentic_capsule = await capture_antigravity_interaction(
         user_input="Help me capture Antigravity conversations for UATP at the same detail level as Claude Code",
         assistant_response="""I'll create a comprehensive capture system for Antigravity/Gemini conversations
@@ -362,12 +363,12 @@ async def main():
     )
 
     if agentic_capsule:
-        print(f"✅ Agentic coding interaction captured: {agentic_capsule}")
+        print(f"[OK] Agentic coding interaction captured: {agentic_capsule}")
     else:
-        print("❌ No capsule created - interaction not significant enough")
+        print("[ERROR] No capsule created - interaction not significant enough")
 
     # Test planning session
-    print("\n📝 Testing planning session capture...")
+    print("\n Testing planning session capture...")
     planning_capsule = await capture_antigravity_interaction(
         user_input="What's the implementation plan for this feature?",
         assistant_response="""Here's the implementation plan:
@@ -383,18 +384,18 @@ async def main():
     )
 
     if planning_capsule:
-        print(f"✅ Planning session captured: {planning_capsule}")
+        print(f"[OK] Planning session captured: {planning_capsule}")
     else:
-        print("❌ No capsule created")
+        print("[ERROR] No capsule created")
 
     # Show session stats
     capture = get_antigravity_capture()
     stats = capture.get_session_stats()
-    print("\n📊 Session Statistics:")
+    print("\n Session Statistics:")
     for key, value in stats.items():
         print(f"   {key}: {value}")
 
-    print("\n✅ Antigravity integration test completed (with BaseHook refactoring)!")
+    print("\n[OK] Antigravity integration test completed (with BaseHook refactoring)!")
 
 
 if __name__ == "__main__":

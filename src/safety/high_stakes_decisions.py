@@ -51,15 +51,14 @@ Usage:
         await request_human_approval(validation.approval_request_id)
 """
 
-import asyncio
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, Set
-from dataclasses import dataclass, asdict, field
-from enum import Enum
-from pathlib import Path
 import json
 import logging
 import secrets
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -424,7 +423,7 @@ class DecisionSafetyValidator:
             approval_status = ApprovalStatus.EMERGENCY_STOP
             reason = "Emergency stop active for this decision"
 
-            logger.critical(f"🛑 EMERGENCY STOP: Decision {decision_id} blocked")
+            logger.critical(f" EMERGENCY STOP: Decision {decision_id} blocked")
 
             return DecisionValidation(
                 validation_id=validation_id,
@@ -529,7 +528,7 @@ class DecisionSafetyValidator:
         # Log based on approval status
         if approved:
             logger.info(
-                f"✅ Decision validated: {validation_id} (risk: {risk_level.value})"
+                f"[OK] Decision validated: {validation_id} (risk: {risk_level.value})"
             )
         elif approval_status == ApprovalStatus.PENDING_HUMAN:
             logger.warning(
@@ -603,7 +602,7 @@ class DecisionSafetyValidator:
         self._save_approval_request(request)
 
         logger.info(
-            f"📋 Human approval request created: {request_id} "
+            f" Human approval request created: {request_id} "
             f"(decision: {decision_id}, risk: {risk_level.value})"
         )
 
@@ -635,7 +634,7 @@ class DecisionSafetyValidator:
         self._save_consensus_request(request)
 
         logger.info(
-            f"🤝 Consensus request created: {request_id} "
+            f" Consensus request created: {request_id} "
             f"(requires {required_agents} agents)"
         )
 
@@ -665,7 +664,7 @@ class DecisionSafetyValidator:
         self._save_emergency_stop(stop)
 
         logger.critical(
-            f"🛑 EMERGENCY STOP TRIGGERED: {stop_id} "
+            f" EMERGENCY STOP TRIGGERED: {stop_id} "
             f"Decision {decision_id} stopped by {triggered_by}. Reason: {reason}"
         )
 

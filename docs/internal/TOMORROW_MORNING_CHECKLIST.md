@@ -6,7 +6,7 @@
 
 ---
 
-## ☐ Morning (30 minutes): Review Materials
+##  Morning (30 minutes): Review Materials
 
 ### 1. Read the Consultant Deliverables
 ```bash
@@ -24,13 +24,13 @@ python3 demo_audit_artifacts.py
 ```
 
 **Verify:**
-- ✅ Reports generate successfully
-- ✅ Audit summary looks professional
-- ✅ JSON report is complete
+- [OK] Reports generate successfully
+- [OK] Audit summary looks professional
+- [OK] JSON report is complete
 
 ---
 
-## ☐ Mid-Morning (1 hour): Prepare Outreach
+##  Mid-Morning (1 hour): Prepare Outreach
 
 ### 1. Create Email Template
 
@@ -94,7 +94,7 @@ For each target, research:
 
 ---
 
-## ☐ Afternoon (1 hour): Send Outreach
+##  Afternoon (1 hour): Send Outreach
 
 ### 1. Send 5 Pilot Proposals
 
@@ -122,7 +122,7 @@ Create simple spreadsheet:
 
 ---
 
-## ☐ Evening (30 minutes): Start Live Demo
+##  Evening (30 minutes): Start Live Demo
 
 **If you have time, start building the web interface:**
 
@@ -255,10 +255,10 @@ npm install
 
 **At end of day, ask yourself:**
 
-1. Did I send at least 3 pilot proposals? ☐
-2. Did I get at least 1 response (even if no)? ☐
-3. Did I learn something about my target market? ☐
-4. Do I know what to do tomorrow? ☐
+1. Did I send at least 3 pilot proposals?
+2. Did I get at least 1 response (even if no)?
+3. Did I learn something about my target market?
+4. Do I know what to do tomorrow?
 
 **If you answered no to #4, read `READY_TO_SHIP.md` again.**
 
@@ -286,24 +286,24 @@ npm install
 ## Remember
 
 **You have:**
-- ✅ World-class technology
-- ✅ Working audit artifacts
-- ✅ Professional pilot proposal
-- ✅ Clear strategy
+- [OK] World-class technology
+- [OK] Working audit artifacts
+- [OK] Professional pilot proposal
+- [OK] Clear strategy
 
 **You need:**
-- ☐ One person to say "yes"
-- ☐ One successful pilot
-- ☐ One validation letter
+-  One person to say "yes"
+-  One successful pilot
+-  One validation letter
 
 **Then:**
-- 🚀 Scale to 10 customers
-- 🚀 Become industry standard
-- 🚀 Build the business you envisioned
+-  Scale to 10 customers
+-  Become industry standard
+-  Build the business you envisioned
 
 ---
 
-**Go get 'em.** 🚀
+**Go get 'em.**
 
 ---
 

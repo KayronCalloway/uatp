@@ -7,10 +7,10 @@ This module provides database configuration and connection management
 for both SQLite and PostgreSQL backends.
 """
 
-import os
 import logging
-from typing import Dict, Any, Optional
+import os
 from enum import Enum
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class DatabaseConfig:
         self.db_type = self._get_database_type()
         self.config = self._load_config()
 
-        logger.info(f"🗄️ Database configuration loaded: {self.db_type.value}")
+        logger.info(f"️ Database configuration loaded: {self.db_type.value}")
 
     def _get_database_type(self) -> DatabaseType:
         """Determine database type from environment."""
@@ -126,8 +126,8 @@ class DatabaseFactory:
 
         try:
             # Import existing SQLite database interface
-            import sys
             import os
+            import sys
 
             sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -195,7 +195,7 @@ PG_SSL_MODE=prefer
 def main():
     """Test database configuration."""
 
-    print("🗄️ Testing Database Configuration")
+    print("️ Testing Database Configuration")
     print("=" * 40)
 
     # Test configuration loading
@@ -212,19 +212,19 @@ def main():
             print(f"  {key}: {value}")
 
     # Test adapter creation
-    print("\n🔌 Testing adapter creation...")
+    print("\n Testing adapter creation...")
     adapter = get_database_adapter()
 
     if adapter:
-        print(f"✅ Adapter created: {type(adapter).__name__}")
+        print(f"[OK] Adapter created: {type(adapter).__name__}")
     else:
-        print("❌ Failed to create adapter")
+        print("[ERROR] Failed to create adapter")
 
     # Show environment template
-    print("\n📝 Environment Template:")
+    print("\n Environment Template:")
     print(create_environment_template())
 
-    print("\n✅ Database configuration test completed!")
+    print("\n[OK] Database configuration test completed!")
 
 
 if __name__ == "__main__":

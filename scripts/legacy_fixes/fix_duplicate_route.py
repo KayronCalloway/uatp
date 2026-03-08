@@ -20,13 +20,13 @@ def fix_duplicate_route():
     # Find the first occurrence
     first_pos = content.find(first_route)
     if first_pos == -1:
-        print("❌ Could not find the first route declaration.")
+        print("[ERROR] Could not find the first route declaration.")
         return False
 
     # Find the second occurrence
     second_pos = content.find(first_route, first_pos + len(first_route))
     if second_pos == -1:
-        print("✅ No duplicate route found.")
+        print("[OK] No duplicate route found.")
         return True
 
     # Remove the first occurrence and its corresponding line
@@ -38,7 +38,7 @@ def fix_duplicate_route():
     with open(server_path, "w") as f:
         f.write(new_content)
 
-    print("✅ Successfully removed duplicate route declaration.")
+    print("[OK] Successfully removed duplicate route declaration.")
     return True
 
 

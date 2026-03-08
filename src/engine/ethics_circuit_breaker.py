@@ -470,9 +470,10 @@ if __name__ == "__main__":
     async def test_ethics_circuit_breaker():
         """Test the ethics circuit breaker."""
         from capsules.specialized_capsules import ReasoningCapsule
+
         from src.capsule_schema import CapsuleStatus, CapsuleType
 
-        print("🛡️ Ethics Circuit Breaker Test")
+        print(" Ethics Circuit Breaker Test")
         print("=" * 40)
 
         # Create circuit breaker (uses RealRefusalPolicy by default)
@@ -489,20 +490,20 @@ if __name__ == "__main__":
         # Test safe capsule
         print("Testing safe capsule...")
         allowed, refusal = await circuit_breaker.pre_creation_check(safe_capsule)
-        print(f"✅ Safe capsule allowed: {allowed}")
+        print(f"[OK] Safe capsule allowed: {allowed}")
 
         # Test ethics evaluation
         evaluation = await circuit_breaker.evaluate_capsule_ethics(safe_capsule)
-        print(f"✅ Ethics score: {evaluation.confidence:.2f}")
-        print(f"✅ Severity: {evaluation.severity.value}")
-        print(f"✅ Intervention: {evaluation.intervention_action.value}")
+        print(f"[OK] Ethics score: {evaluation.confidence:.2f}")
+        print(f"[OK] Severity: {evaluation.severity.value}")
+        print(f"[OK] Intervention: {evaluation.intervention_action.value}")
 
         # Get statistics
         stats = circuit_breaker.get_refusal_statistics()
-        print("\n📊 Statistics:")
+        print("\n Statistics:")
         for key, value in stats.items():
             print(f"  {key}: {value}")
 
-        print("\n🎉 Ethics circuit breaker test complete!")
+        print("\n Ethics circuit breaker test complete!")
 
     asyncio.run(test_ethics_circuit_breaker())

@@ -35,11 +35,11 @@ The system implements a multi-layer verification process:
 
 ### Cryptographic Verification Results
 ```
-✅ Verification Status: VERIFIED
-✅ Ed25519 signature validation: PASSED
-✅ Hash integrity check: PASSED
-✅ Replay protection: PASSED
-✅ Format validation: PASSED
+[OK] Verification Status: VERIFIED
+[OK] Ed25519 signature validation: PASSED
+[OK] Hash integrity check: PASSED
+[OK] Replay protection: PASSED
+[OK] Format validation: PASSED
 ```
 
 ### Key Components
@@ -105,8 +105,8 @@ Successfully integrated with existing UATP database schema:
 ### 1. Direct Cryptographic Verification
 ```bash
 $ python3 verify_from_database.py
-🎉 SUCCESS: Capsule is cryptographically verified!
-Status: ✅ VERIFIED
+ SUCCESS: Capsule is cryptographically verified!
+Status: [OK] VERIFIED
 Reason: Verified - Signature and hash are cryptographically valid
 ```
 
@@ -126,22 +126,22 @@ Reason: Verified - Signature and hash are cryptographically valid
 
 **Overall Security Rating**: PRODUCTION READY
 
-**Mathematical Verification**: ✅ PASSED
+**Mathematical Verification**: [OK] PASSED
 - Ed25519 algorithm correctness confirmed
 - Cryptographic security proofs valid
 - Implementation follows best practices
 
-**Implementation Analysis**: ✅ PASSED
+**Implementation Analysis**: [OK] PASSED
 - No vulnerabilities identified
 - Proper error handling implemented
 - Secure key management practices
 
-**Quantum Readiness**: ⚠️ CLASSICAL SECURE
+**Quantum Readiness**: [WARN] CLASSICAL SECURE
 - Ed25519 provides classical security
 - Quantum-resistant until Shor's algorithm
 - Post-quantum migration path available
 
-**Compliance Status**: ✅ COMPLIANT
+**Compliance Status**: [OK] COMPLIANT
 - UATP 7.0 specification compliance
 - Industry standard algorithm usage
 - Proper audit trail implementation
@@ -149,9 +149,9 @@ Reason: Verified - Signature and hash are cryptographically valid
 ## Recommendations
 
 ### Immediate Actions
-1. ✅ Deploy verified capsule to production
-2. ✅ Enable frontend verification display
-3. ✅ Monitor cryptographic audit logs
+1. [OK] Deploy verified capsule to production
+2. [OK] Enable frontend verification display
+3. [OK] Monitor cryptographic audit logs
 
 ### Future Enhancements
 1. **Post-Quantum Migration**: Implement Dilithium3 hybrid signatures
@@ -164,7 +164,7 @@ Reason: Verified - Signature and hash are cryptographically valid
 The UATP cryptographic verification system has been successfully implemented with production-grade security. The created capsule demonstrates proper Ed25519 digital signatures with comprehensive verification including replay protection, format validation, and hash integrity checks. The system is ready for production deployment and will correctly display "Verified" status in the frontend interface.
 
 **Frontend Access**: http://localhost:3000
-**Verification Status**: ✅ CRYPTOGRAPHICALLY VERIFIED
+**Verification Status**: [OK] CRYPTOGRAPHICALLY VERIFIED
 **Security Level**: 128-bit equivalent (Ed25519 + SHA-256)
 **Compliance**: UATP 7.0, RFC 8032, FIPS 186-4
 

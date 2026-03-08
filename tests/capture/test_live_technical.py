@@ -19,21 +19,21 @@ from live_capture import capture_live_interaction, get_real_time_generator
 async def test_technical_conversation():
     """Test live capture with a technical conversation."""
 
-    print("🧪 Testing Live Capture with Technical Conversation")
+    print(" Testing Live Capture with Technical Conversation")
     print("=" * 60)
 
     generator = get_real_time_generator()
 
     # Add callbacks for monitoring
     async def on_capsule_created(interaction, capsule_id):
-        print(f"🎉 LIVE CAPSULE CREATED: {capsule_id}")
+        print(f" LIVE CAPSULE CREATED: {capsule_id}")
         print(f"   Session: {interaction.session_id}")
         print(f"   Platform: {interaction.platform}")
         print(f"   User: {interaction.user_id}")
         print(f"   Auto-encapsulated: {interaction.auto_encapsulated}")
 
     async def on_interaction_captured(interaction, messages):
-        print(f"📝 Interaction captured - Session: {interaction.session_id}")
+        print(f" Interaction captured - Session: {interaction.session_id}")
         print(f"   Total messages: {len(interaction.messages)}")
 
     generator.add_callback("capsule_created", on_capsule_created)
@@ -49,7 +49,7 @@ async def test_technical_conversation():
         context={"model": "claude-sonnet-4", "interface": "claude_code"},
     )
 
-    print(f"\n🟢 Started live session: {session_id}")
+    print(f"\n Started live session: {session_id}")
 
     # Technical conversation that should create capsules
     technical_exchanges = [
@@ -316,7 +316,7 @@ Key features:
     created_capsules = []
 
     for i, exchange in enumerate(technical_exchanges, 1):
-        print(f"\n📝 Exchange {i}: Capturing technical conversation...")
+        print(f"\n Exchange {i}: Capturing technical conversation...")
         print(f"   User: {exchange['user'][:80]}...")
         print(f"   Assistant: {exchange['assistant'][:80]}...")
 
@@ -336,16 +336,16 @@ Key features:
 
         if capsule_id:
             created_capsules.append(capsule_id)
-            print(f"   ✅ Created capsule: {capsule_id}")
+            print(f"   [OK] Created capsule: {capsule_id}")
         else:
-            print("   ❌ No capsule created")
+            print("   [ERROR] No capsule created")
 
     # End session
     await generator.end_session(session_id)
 
     # Show final results
     print("\n" + "=" * 60)
-    print("📊 LIVE CAPTURE RESULTS")
+    print(" LIVE CAPTURE RESULTS")
     print("=" * 60)
 
     stats = generator.get_stats()
@@ -356,11 +356,11 @@ Key features:
     )
 
     if created_capsules:
-        print(f"\n✅ Successfully created {len(created_capsules)} live capsules:")
+        print(f"\n[OK] Successfully created {len(created_capsules)} live capsules:")
         for capsule_id in created_capsules:
             print(f"   • {capsule_id}")
     else:
-        print("\n⚠️  No capsules were created from live interactions")
+        print("\n[WARN]  No capsules were created from live interactions")
 
     return created_capsules
 

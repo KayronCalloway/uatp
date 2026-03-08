@@ -76,14 +76,14 @@ Volume Tiers:
 **4. No Hidden Fees:**
 ```
 Included in Base Price:
-  ✅ Unlimited policies
-  ✅ Unlimited audit reports
-  ✅ Unlimited users
-  ✅ Standard support
-  ✅ All template packs
-  ✅ Dashboard access
-  ✅ API access
-  ✅ SDK updates
+  [OK] Unlimited policies
+  [OK] Unlimited audit reports
+  [OK] Unlimited users
+  [OK] Standard support
+  [OK] All template packs
+  [OK] Dashboard access
+  [OK] API access
+  [OK] SDK updates
 
 Extra Costs (Transparent):
   - Premium support (24/7): +$10K/year
@@ -176,10 +176,10 @@ Reference Program Benefits (For First Customers):
 ```
 Milestone 1: UATP Installed and Generating Capsules
   Success Criteria:
-    ✅ UATP SDK integrated with 1 AI workflow
-    ✅ First capsule generated and verified
-    ✅ Signature verification passes
-    ✅ Dashboard accessible
+    [OK] UATP SDK integrated with 1 AI workflow
+    [OK] First capsule generated and verified
+    [OK] Signature verification passes
+    [OK] Dashboard accessible
 
   Deliverable:
     - Installation report
@@ -187,17 +187,17 @@ Milestone 1: UATP Installed and Generating Capsules
 
   Proof:
     - You run: uatp verify --chain-id <your-chain>
-    - Result: "✅ All signatures valid, chain intact"
+    - Result: "[OK] All signatures valid, chain intact"
 ```
 
 **Week 2-3: Policy Deployment (Shadow Mode)**
 ```
 Milestone 2: Policies Detecting Issues (Not Blocking Yet)
   Success Criteria:
-    ✅ HIPAA/GDPR template pack deployed
-    ✅ Shadow mode active (logging but not enforcing)
-    ✅ At least 10,000 AI interactions captured
-    ✅ Policy violation rate measured
+    [OK] HIPAA/GDPR template pack deployed
+    [OK] Shadow mode active (logging but not enforcing)
+    [OK] At least 10,000 AI interactions captured
+    [OK] Policy violation rate measured
 
   Deliverable:
     - Shadow mode report showing:
@@ -214,10 +214,10 @@ Milestone 2: Policies Detecting Issues (Not Blocking Yet)
 ```
 Milestone 3: Policies Enforcing in Staging/Canary
   Success Criteria:
-    ✅ Enforcement mode enabled (10% of traffic)
-    ✅ Circuit breaker tested (manual trigger)
-    ✅ Refusal mechanism working (blocked AI requests logged)
-    ✅ False positive rate < 2%
+    [OK] Enforcement mode enabled (10% of traffic)
+    [OK] Circuit breaker tested (manual trigger)
+    [OK] Refusal mechanism working (blocked AI requests logged)
+    [OK] False positive rate < 2%
 
   Deliverable:
     - Enforcement report showing:
@@ -234,10 +234,10 @@ Milestone 3: Policies Enforcing in Staging/Canary
 ```
 Milestone 4: Audit Artifacts Generated for Regulator
   Success Criteria:
-    ✅ At least 50,000 interactions in capsule chains
-    ✅ Generate audit report for 1 workflow
-    ✅ Cryptographic verification passes
-    ✅ Human-readable summary clear and accurate
+    [OK] At least 50,000 interactions in capsule chains
+    [OK] Generate audit report for 1 workflow
+    [OK] Cryptographic verification passes
+    [OK] Human-readable summary clear and accurate
 
   Deliverable:
     - Full audit report (JSON + PDF)
@@ -253,11 +253,11 @@ Milestone 4: Audit Artifacts Generated for Regulator
 ```
 Milestone 5: Full Production Deployment Plan
   Success Criteria:
-    ✅ Performance validated (< 50ms p99 latency)
-    ✅ Storage scaling plan confirmed
-    ✅ DR tested (backup/restore)
-    ✅ Alerting configured
-    ✅ Runbooks reviewed
+    [OK] Performance validated (< 50ms p99 latency)
+    [OK] Storage scaling plan confirmed
+    [OK] DR tested (backup/restore)
+    [OK] Alerting configured
+    [OK] Runbooks reviewed
 
   Deliverable:
     - Production deployment plan
@@ -272,16 +272,16 @@ Milestone 5: Full Production Deployment Plan
 **Pilot Success Criteria (Go/No-Go Decision):**
 ```
 MUST HAVE (No-Go if Missing):
-  ✅ Capsules generating correctly
-  ✅ Signatures verifying (no false negatives)
-  ✅ Audit reports generated successfully
-  ✅ Performance impact < 50ms p99
-  ✅ False positive rate < 2% (tuned)
+  [OK] Capsules generating correctly
+  [OK] Signatures verifying (no false negatives)
+  [OK] Audit reports generated successfully
+  [OK] Performance impact < 50ms p99
+  [OK] False positive rate < 2% (tuned)
 
 NICE TO HAVE (Deferred if Missing):
-  ⚠️  Full multi-region deployment
-  ⚠️  Custom policy templates (use standard ones)
-  ⚠️  Advanced analytics (basic dashboards sufficient)
+  [WARN]  Full multi-region deployment
+  [WARN]  Custom policy templates (use standard ones)
+  [WARN]  Advanced analytics (basic dashboards sufficient)
 ```
 
 **What Happens After Pilot:**
@@ -356,10 +356,10 @@ Example:
   $ uatp-verify --export-file capsules.json --check-signatures
 
   Output:
-    ✅ 45,892 capsules verified
-    ✅ All signatures valid
-    ✅ Chain integrity intact
-    ✅ No UATP backend required
+    [OK] 45,892 capsules verified
+    [OK] All signatures valid
+    [OK] Chain integrity intact
+    [OK] No UATP backend required
 ```
 
 **Step 4: Storage Cleanup (Days 31-60)**
@@ -385,10 +385,10 @@ Data Deletion (Your Choice):
 **Step 5: Termination Certificate (Day 60)**
 ```
 Final Deliverables:
-  ✅ Data export complete (verified)
-  ✅ Data deletion certificate (if requested)
-  ✅ Final invoice (prorated)
-  ✅ Offboarding report (what worked, what didn't)
+  [OK] Data export complete (verified)
+  [OK] Data deletion certificate (if requested)
+  [OK] Final invoice (prorated)
+  [OK] Offboarding report (what worked, what didn't)
 
   Optional: Exit interview to improve UATP
 ```
@@ -465,17 +465,17 @@ Interactive Graph View:
   - Click any capsule → drill into full details
 
 Visual Elements:
-  🟢 INPUT_PERSPECTIVE
+   INPUT_PERSPECTIVE
     ↓
-  🟢 POLICY_CHECK (HIPAA) ✅
+   POLICY_CHECK (HIPAA) [OK]
     ↓
-  🟢 ETHICS_EVALUATION ✅
+   ETHICS_EVALUATION [OK]
     ↓
-  🟢 REASONING_CHAIN
+   REASONING_CHAIN
     ↓
-  🟢 OUTPUT_DECISION
+   OUTPUT_DECISION
     ↓
-  🔒 Signature: VALID (Dilithium3)
+   Signature: VALID (Dilithium3)
 ```
 
 **3. Signature Verification Tool:**
@@ -487,9 +487,9 @@ Bulk Verification:
   - Report generation at completion
 
 Results Display:
-  ✅ 1,245 of 1,245 signatures valid
-  ✅ Chain integrity: INTACT
-  ⚠️  3 capsules flagged for review (unusual timestamps)
+  [OK] 1,245 of 1,245 signatures valid
+  [OK] Chain integrity: INTACT
+  [WARN]  3 capsules flagged for review (unusual timestamps)
 
   Download: verification_report_2025-10-26.pdf
 ```
@@ -521,9 +521,9 @@ Live Dashboard:
   - Storage usage trends
 
 Alerts:
-  🔴 Circuit breaker triggered (workflow: patient-triage)
-  🟠 Policy violation rate spike: 2.3% → 8.7%
-  🟡 Disk usage: 85% (consider scaling storage)
+   Circuit breaker triggered (workflow: patient-triage)
+   Policy violation rate spike: 2.3% → 8.7%
+   Disk usage: 85% (consider scaling storage)
 ```
 
 **6. User Management:**
@@ -642,7 +642,7 @@ Alerts:
 
 **Alert Notification Example (Slack):**
 ```
-🔴 UATP ALERT: Policy Violation Spike
+ UATP ALERT: Policy Violation Spike
 
 Workflow: patient-triage
 Metric: policy_violation_rate
@@ -655,9 +655,9 @@ Recent Violations:
   - data_minimization: 8 failures (last 5 min)
 
 Actions:
-  🔍 View Dashboard: https://uatp.company.com/chains?filter=violations
-  📊 Generate Report: /uatp report --workflow patient-triage --last 1h
-  🛑 Circuit Breaker: /uatp circuit-breaker open --workflow patient-triage
+   View Dashboard: https://uatp.company.com/chains?filter=violations
+   Generate Report: /uatp report --workflow patient-triage --last 1h
+   Circuit Breaker: /uatp circuit-breaker open --workflow patient-triage
 
 Acknowledged by: @security-oncall
 ```
@@ -839,10 +839,10 @@ PCI DSS Template Pack (Payment Card Industry Data Security Standard):
 $ uatp templates install --pack hipaa --version 2024.1
 
 Output:
-  ✅ Installed 7 policies
-  ✅ Installed 3 refusal mechanisms
-  ✅ Installed 4 audit report templates
-  📄 Documentation: ./docs/hipaa-template-pack.md
+  [OK] Installed 7 policies
+  [OK] Installed 3 refusal mechanisms
+  [OK] Installed 4 audit report templates
+   Documentation: ./docs/hipaa-template-pack.md
 
 # Customize for your org
 $ uatp templates customize \
@@ -855,9 +855,9 @@ $ uatp templates test --pack hipaa --mode shadow
 
 Output:
   Testing 7 policies in shadow mode...
-  ✅ hipaa_phi_access_control: 1,234 checks, 0 false positives
-  ✅ hipaa_consent_verification: 892 checks, 12 expected refusals
-  ⚠️  hipaa_minimum_necessary: 456 checks, 34 potential false positives
+  [OK] hipaa_phi_access_control: 1,234 checks, 0 false positives
+  [OK] hipaa_consent_verification: 892 checks, 12 expected refusals
+  [WARN]  hipaa_minimum_necessary: 456 checks, 34 potential false positives
 
   Recommendation: Tune hipaa_minimum_necessary threshold before enforcement
 ```
@@ -1542,112 +1542,112 @@ Production:
 
 **Supported AI Providers:**
 
-**OpenAI (Full Support ✅)**
+**OpenAI (Full Support [OK])**
 ```yaml
 Models Supported:
-  ✅ GPT-4, GPT-4 Turbo, GPT-4o
-  ✅ GPT-3.5 Turbo
-  ✅ o1, o1-mini (reasoning models)
-  ✅ DALL-E 3 (image generation)
-  ✅ Whisper (speech-to-text)
-  ✅ TTS (text-to-speech)
+  [OK] GPT-4, GPT-4 Turbo, GPT-4o
+  [OK] GPT-3.5 Turbo
+  [OK] o1, o1-mini (reasoning models)
+  [OK] DALL-E 3 (image generation)
+  [OK] Whisper (speech-to-text)
+  [OK] TTS (text-to-speech)
 
 Features:
-  ✅ Chat completions (standard)
-  ✅ Streaming responses
-  ✅ Function calling / Tools
-  ✅ Vision (image inputs)
-  ✅ JSON mode
-  ✅ Embeddings (text-embedding-3)
-  ✅ Batch API
-  ✅ Fine-tuned models
+  [OK] Chat completions (standard)
+  [OK] Streaming responses
+  [OK] Function calling / Tools
+  [OK] Vision (image inputs)
+  [OK] JSON mode
+  [OK] Embeddings (text-embedding-3)
+  [OK] Batch API
+  [OK] Fine-tuned models
 
 UATP Capsule Coverage:
-  ✅ Input capsule: Captures prompt, function definitions, images
-  ✅ Tool call capsules: Each function call gets own capsule
-  ✅ Output capsule: Captures response (streaming or complete)
-  ✅ Vision capsule: Captures image analysis requests
-  ✅ Batch capsule: Special handling for batch jobs
+  [OK] Input capsule: Captures prompt, function definitions, images
+  [OK] Tool call capsules: Each function call gets own capsule
+  [OK] Output capsule: Captures response (streaming or complete)
+  [OK] Vision capsule: Captures image analysis requests
+  [OK] Batch capsule: Special handling for batch jobs
 ```
 
-**Anthropic (Full Support ✅)**
+**Anthropic (Full Support [OK])**
 ```yaml
 Models Supported:
-  ✅ Claude 3.5 Sonnet
-  ✅ Claude 3 Opus
-  ✅ Claude 3 Haiku
-  ✅ Claude 2.1
+  [OK] Claude 3.5 Sonnet
+  [OK] Claude 3 Opus
+  [OK] Claude 3 Haiku
+  [OK] Claude 2.1
 
 Features:
-  ✅ Messages API (standard)
-  ✅ Streaming responses
-  ✅ Tool use (function calling)
-  ✅ Vision (image inputs)
-  ✅ Extended context (200K tokens)
-  ✅ Prompt caching
+  [OK] Messages API (standard)
+  [OK] Streaming responses
+  [OK] Tool use (function calling)
+  [OK] Vision (image inputs)
+  [OK] Extended context (200K tokens)
+  [OK] Prompt caching
 
 UATP Capsule Coverage:
-  ✅ Full coverage (same as OpenAI)
-  ✅ Tool use: Each tool invocation captured
-  ✅ Vision: Image analysis documented
-  ✅ Caching: Cache usage logged (for attribution)
+  [OK] Full coverage (same as OpenAI)
+  [OK] Tool use: Each tool invocation captured
+  [OK] Vision: Image analysis documented
+  [OK] Caching: Cache usage logged (for attribution)
 ```
 
-**Google Vertex AI (Beta ✅)**
+**Google Vertex AI (Beta [OK])**
 ```yaml
 Models Supported:
-  ✅ Gemini 1.5 Pro
-  ✅ Gemini 1.5 Flash
-  ✅ PaLM 2
-  ✅ Codey (code generation)
+  [OK] Gemini 1.5 Pro
+  [OK] Gemini 1.5 Flash
+  [OK] PaLM 2
+  [OK] Codey (code generation)
 
 Features:
-  ✅ Chat / Generate content
-  ✅ Streaming responses
-  ✅ Function calling
-  ✅ Multi-modal (text, image, video)
-  ⚠️  Batch API (limited support)
+  [OK] Chat / Generate content
+  [OK] Streaming responses
+  [OK] Function calling
+  [OK] Multi-modal (text, image, video)
+  [WARN]  Batch API (limited support)
 
 UATP Capsule Coverage:
-  ✅ Standard chat/completion
-  ✅ Streaming
-  ✅ Function calling
+  [OK] Standard chat/completion
+  [OK] Streaming
+  [OK] Function calling
   ⏳ Video inputs (in progress, Q1 2026)
 ```
 
-**Azure OpenAI (Full Support ✅)**
+**Azure OpenAI (Full Support [OK])**
 ```yaml
 Models Supported:
-  ✅ All OpenAI models (via Azure)
-  ✅ Azure-specific deployments
+  [OK] All OpenAI models (via Azure)
+  [OK] Azure-specific deployments
 
 Features:
-  ✅ Same as OpenAI (full feature parity)
-  ✅ Azure AD authentication
-  ✅ Private endpoints (VNet integration)
-  ✅ Managed identity support
+  [OK] Same as OpenAI (full feature parity)
+  [OK] Azure AD authentication
+  [OK] Private endpoints (VNet integration)
+  [OK] Managed identity support
 
 UATP Capsule Coverage:
-  ✅ Full coverage (same as OpenAI)
-  ✅ Azure-specific: Managed identity logged in attribution
+  [OK] Full coverage (same as OpenAI)
+  [OK] Azure-specific: Managed identity logged in attribution
 ```
 
-**AWS Bedrock (Beta ✅)**
+**AWS Bedrock (Beta [OK])**
 ```yaml
 Models Supported:
-  ✅ Claude (via Bedrock)
-  ✅ Titan
-  ✅ Llama 2/3
-  ✅ Jurassic-2
+  [OK] Claude (via Bedrock)
+  [OK] Titan
+  [OK] Llama 2/3
+  [OK] Jurassic-2
 
 Features:
-  ✅ Invoke model (standard)
-  ✅ Streaming
-  ⚠️  Function calling (model-dependent)
+  [OK] Invoke model (standard)
+  [OK] Streaming
+  [WARN]  Function calling (model-dependent)
 
 UATP Capsule Coverage:
-  ✅ Standard invocations
-  ✅ Streaming
+  [OK] Standard invocations
+  [OK] Streaming
   ⏳ Advanced features (in progress)
 ```
 
@@ -1671,19 +1671,19 @@ Integration:
 
 | Feature | OpenAI | Anthropic | Vertex AI | Azure OpenAI | Bedrock |
 |---------|--------|-----------|-----------|--------------|---------|
-| **Chat completions** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Streaming** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Function calling** | ✅ | ✅ | ✅ | ✅ | ⚠️ |
-| **Tool use** | ✅ | ✅ | ✅ | ✅ | ⚠️ |
-| **Vision (images)** | ✅ | ✅ | ✅ | ✅ | ⚠️ |
-| **JSON mode** | ✅ | ⏳ | ✅ | ✅ | ⚠️ |
-| **Embeddings** | ✅ | ⏳ | ✅ | ✅ | ✅ |
-| **Batch API** | ✅ | ⏳ | ⚠️ | ✅ | ⚠️ |
-| **Fine-tuned models** | ✅ | ⏳ | ✅ | ✅ | ✅ |
+| **Chat completions** | [OK] | [OK] | [OK] | [OK] | [OK] |
+| **Streaming** | [OK] | [OK] | [OK] | [OK] | [OK] |
+| **Function calling** | [OK] | [OK] | [OK] | [OK] | [WARN] |
+| **Tool use** | [OK] | [OK] | [OK] | [OK] | [WARN] |
+| **Vision (images)** | [OK] | [OK] | [OK] | [OK] | [WARN] |
+| **JSON mode** | [OK] | ⏳ | [OK] | [OK] | [WARN] |
+| **Embeddings** | [OK] | ⏳ | [OK] | [OK] | [OK] |
+| **Batch API** | [OK] | ⏳ | [WARN] | [OK] | [WARN] |
+| **Fine-tuned models** | [OK] | ⏳ | [OK] | [OK] | [OK] |
 
 Legend:
-- ✅ Full support (production-ready)
-- ⚠️ Partial support (works, may have limitations)
+- [OK] Full support (production-ready)
+- [WARN] Partial support (works, may have limitations)
 - ⏳ In progress (planned for Q1 2026)
 
 ---
@@ -1713,12 +1713,12 @@ Capsule Created:
   }
 
 User Experience:
-  ✅ No additional latency (streaming works normally)
-  ✅ Capsule created after stream completes (doesn't block streaming)
+  [OK] No additional latency (streaming works normally)
+  [OK] Capsule created after stream completes (doesn't block streaming)
 
 Performance:
-  ✅ Streaming overhead: <5ms (passthrough)
-  ✅ Capsule creation: Async (doesn't slow stream)
+  [OK] Streaming overhead: <5ms (passthrough)
+  [OK] Capsule creation: Async (doesn't slow stream)
 ```
 
 **Function Calling / Tool Use:**
@@ -1753,9 +1753,9 @@ Chain:
   (All linked cryptographically)
 
 Benefits:
-  ✅ Complete audit trail (can see which tools AI used)
-  ✅ Tool execution time tracked (performance debugging)
-  ✅ Tool results verified (can replay tool calls)
+  [OK] Complete audit trail (can see which tools AI used)
+  [OK] Tool execution time tracked (performance debugging)
+  [OK] Tool results verified (can replay tool calls)
 ```
 
 **Vision / Image Inputs:**
@@ -1789,14 +1789,14 @@ UATP Processing:
      }
 
 Privacy:
-  ✅ Image content NOT stored in capsule (only hash)
-  ✅ Image stored in YOUR S3 (you control access)
-  ✅ HIPAA compliance maintained (PHI never in capsule DB)
+  [OK] Image content NOT stored in capsule (only hash)
+  [OK] Image stored in YOUR S3 (you control access)
+  [OK] HIPAA compliance maintained (PHI never in capsule DB)
 
 Verification:
   - Provide image + capsule
   - Recompute hash
-  - Verify: Hash matches capsule hash ✅
+  - Verify: Hash matches capsule hash [OK]
 ```
 
 **RAG (Retrieval-Augmented Generation):**
@@ -1833,9 +1833,9 @@ Capsules Created:
   4. Output capsule: AI's final response
 
 Benefits:
-  ✅ Can audit: Which documents were used
-  ✅ Can verify: Retrieval quality (relevance scores)
-  ✅ Can debug: Why AI gave this answer (see retrieved context)
+  [OK] Can audit: Which documents were used
+  [OK] Can verify: Retrieval quality (relevance scores)
+  [OK] Can debug: Why AI gave this answer (see retrieved context)
 
 Integration:
   - Works with: LangChain, LlamaIndex, Haystack
@@ -1897,13 +1897,13 @@ Service Definition (Protobuf):
   }
 
 Supported Languages (via gRPC):
-  ✅ Java
-  ✅ C++
-  ✅ C#
-  ✅ Go
-  ✅ Ruby
-  ✅ PHP
-  ✅ Any language with gRPC support
+  [OK] Java
+  [OK] C++
+  [OK] C#
+  [OK] Go
+  [OK] Ruby
+  [OK] PHP
+  [OK] Any language with gRPC support
 
 Example (Go):
   import "uatp/proto/capsule"
@@ -1998,9 +1998,9 @@ How It Works:
   - Writes capsules to DynamoDB or S3 (not to Lambda's ephemeral storage)
 
 Supported Platforms:
-  ✅ AWS Lambda (via Lambda Extensions)
-  ✅ GCP Cloud Functions (via buildpack)
-  ✅ Azure Functions (via custom runtime)
+  [OK] AWS Lambda (via Lambda Extensions)
+  [OK] GCP Cloud Functions (via buildpack)
+  [OK] Azure Functions (via custom runtime)
 
 Performance Overhead:
   - Cold start: +50-100ms (extension initialization)
@@ -2057,18 +2057,18 @@ Example Usage:
   }
 
 Creates:
-  ✅ EKS cluster with UATP pods
-  ✅ RDS PostgreSQL database
-  ✅ Application Load Balancer
-  ✅ Security groups
-  ✅ IAM roles and policies
-  ✅ CloudWatch dashboards
-  ✅ Backup policies
+  [OK] EKS cluster with UATP pods
+  [OK] RDS PostgreSQL database
+  [OK] Application Load Balancer
+  [OK] Security groups
+  [OK] IAM roles and policies
+  [OK] CloudWatch dashboards
+  [OK] Backup policies
 
 Supported Cloud Providers:
-  ✅ AWS (mature)
-  ✅ GCP (mature)
-  ✅ Azure (beta)
+  [OK] AWS (mature)
+  [OK] GCP (mature)
+  [OK] Azure (beta)
   ⏳ On-premises (coming Q1 2026)
 ```
 
@@ -2134,11 +2134,11 @@ values.yaml (Customization):
             pathType: Prefix
 
 Features:
-  ✅ High availability (multi-replica)
-  ✅ Auto-scaling (HPA)
-  ✅ TLS/HTTPS (cert-manager integration)
-  ✅ Monitoring (Prometheus, Grafana)
-  ✅ Backup (velero integration)
+  [OK] High availability (multi-replica)
+  [OK] Auto-scaling (HPA)
+  [OK] TLS/HTTPS (cert-manager integration)
+  [OK] Monitoring (Prometheus, Grafana)
+  [OK] Backup (velero integration)
 ```
 
 **REST Shim for Legacy Systems:**
@@ -2260,13 +2260,13 @@ Span Attributes:
   - upstream_model: "gpt-4"
 
 Export Targets:
-  ✅ Jaeger
-  ✅ Zipkin
-  ✅ Datadog APM
-  ✅ New Relic
-  ✅ Honeycomb
-  ✅ AWS X-Ray
-  ✅ Google Cloud Trace
+  [OK] Jaeger
+  [OK] Zipkin
+  [OK] Datadog APM
+  [OK] New Relic
+  [OK] Honeycomb
+  [OK] AWS X-Ray
+  [OK] Google Cloud Trace
 
 Configuration:
   apiVersion: v1
@@ -2280,9 +2280,9 @@ Configuration:
     OTEL_TRACES_SAMPLER_ARG: "1.0"  # 100% sampling (adjust as needed)
 
 Benefits:
-  ✅ End-to-end request tracing (see where time is spent)
-  ✅ Debugging: Identify slow policy checks, database writes
-  ✅ Distributed tracing: Correlate with your app's traces
+  [OK] End-to-end request tracing (see where time is spent)
+  [OK] Debugging: Identify slow policy checks, database writes
+  [OK] Distributed tracing: Correlate with your app's traces
 ```
 
 **Pre-Built Dashboards:**
@@ -2383,10 +2383,10 @@ Infrastructure:
   - Network I/O (timeseries)
 
 Alerts:
-  ✅ High error rate
-  ✅ High latency
-  ✅ Database connectivity issues
-  ✅ Policy violations spike
+  [OK] High error rate
+  [OK] High latency
+  [OK] Database connectivity issues
+  [OK] Policy violations spike
 
 Integration:
   - Datadog Agent: Automatically scrapes UATP metrics
@@ -2442,10 +2442,10 @@ Search Queries (Pre-Configured):
   | search action IN ("policy_change", "user_elevation", "break_glass_access")
 
 Alerts (Pre-Configured):
-  ✅ Policy violation spike (>10 violations in 5 min)
-  ✅ Failed authentication spike (>5 failures in 1 min)
-  ✅ Break-glass access (immediate alert)
-  ✅ Bulk data export (immediate alert)
+  [OK] Policy violation spike (>10 violations in 5 min)
+  [OK] Failed authentication spike (>5 failures in 1 min)
+  [OK] Break-glass access (immediate alert)
+  [OK] Bulk data export (immediate alert)
 ```
 
 **CloudWatch Dashboard (AWS):**
@@ -2486,10 +2486,10 @@ Custom Metrics (from UATP):
   - Chain verification rate
 
 Alarms:
-  ✅ Pod CPU >80% for 5 minutes
-  ✅ Database connections >80% of max
-  ✅ ALB target unhealthy
-  ✅ UATP error rate >1%
+  [OK] Pod CPU >80% for 5 minutes
+  [OK] Database connections >80% of max
+  [OK] ALB target unhealthy
+  [OK] UATP error rate >1%
 ```
 
 ---
@@ -2525,11 +2525,11 @@ Header-Based Versioning (Alternative):
 Guarantees:
 
 Within Same Major Version (e.g., v1.x):
-  ✅ All existing endpoints continue to work
-  ✅ All existing request formats accepted
-  ✅ All existing response fields present
-  ✅ New fields may be added (clients should ignore unknown fields)
-  ✅ No breaking changes
+  [OK] All existing endpoints continue to work
+  [OK] All existing request formats accepted
+  [OK] All existing response fields present
+  [OK] New fields may be added (clients should ignore unknown fields)
+  [OK] No breaking changes
 
 Example:
   v1.0.0 → v1.1.0: Add new optional field "confidence_score"
@@ -2537,10 +2537,10 @@ Example:
   New clients: Can use new field
 
 Major Version Change (e.g., v1 → v2):
-  ⚠️  Breaking changes allowed
-  ⚠️  Endpoint structure may change
-  ⚠️  Request/response formats may change
-  ⚠️  Field names may change or be removed
+  [WARN]  Breaking changes allowed
+  [WARN]  Endpoint structure may change
+  [WARN]  Request/response formats may change
+  [WARN]  Field names may change or be removed
 
 Example:
   v1: POST /capsules (returns {capsule_id, hash})
@@ -2617,19 +2617,19 @@ v0 (Legacy):
 What Constitutes a Breaking Change:
 
 Breaking (Requires Major Version Bump):
-  ❌ Removing an endpoint
-  ❌ Removing a field from response
-  ❌ Changing field type (string → number)
-  ❌ Making optional field required
-  ❌ Changing authentication method
-  ❌ Changing HTTP method (GET → POST)
+  [ERROR] Removing an endpoint
+  [ERROR] Removing a field from response
+  [ERROR] Changing field type (string → number)
+  [ERROR] Making optional field required
+  [ERROR] Changing authentication method
+  [ERROR] Changing HTTP method (GET → POST)
 
 Not Breaking (Allowed in Minor Version):
-  ✅ Adding new endpoint
-  ✅ Adding new optional field to request
-  ✅ Adding new field to response
-  ✅ Adding new optional parameter
-  ✅ Making required field optional
+  [OK] Adding new endpoint
+  [OK] Adding new optional field to request
+  [OK] Adding new field to response
+  [OK] Adding new optional parameter
+  [OK] Making required field optional
 
 How We Communicate:
   - Changelog: Published with every release
@@ -2704,7 +2704,7 @@ Interface:
 │  UATP Policy Review Queue                     Filters: [All] │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
-│  🔴 Pending Review (23)    🟢 Approved (156)    🔴 Rejected (12)  │
+│   Pending Review (23)     Approved (156)     Rejected (12)  │
 │                                                               │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │ Request #1247  [BLOCKED]             2025-10-26 14:30 │  │
@@ -2975,7 +2975,7 @@ Step-by-Step Process:
    │  Attach supporting docs (optional):    │
    │  [Upload]                              │
    │                                        │
-   │  ⚠️  Warning: Override will be audited │
+   │  [WARN]  Warning: Override will be audited │
    │                                        │
    │  [Submit Override Request]             │
    └────────────────────────────────────────┘
@@ -3214,7 +3214,7 @@ Report Contents:
 7. Action Items
    - [ ] Review policy adjustment for ER emergency access
    - [ ] Investigate slowest approval (45 min) – was approver available?
-   - [✓] All high-risk overrides reviewed (completed)
+   - [] All high-risk overrides reviewed (completed)
 
 [Download Full Report CSV]  [Export to SIEM]
 ```
@@ -3397,10 +3397,10 @@ Run Tests:
   $ uatp policy test policies/hipaa_consent.yaml
 
   Running 4 tests...
-  ✅ Allow request with valid consent token (45ms)
-  ✅ Block request without consent token (12ms)
-  ✅ Block request with expired consent (23ms)
-  ✅ Allow doctor without consent (emergency) (18ms)
+  [OK] Allow request with valid consent token (45ms)
+  [OK] Block request without consent token (12ms)
+  [OK] Block request with expired consent (23ms)
+  [OK] Allow doctor without consent (emergency) (18ms)
 
   4/4 tests passed (98ms total)
 ```
@@ -3475,7 +3475,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ Policies deployed to staging in shadow mode for 7 days. Review results at https://dashboard.uatp.com/staging/shadow-mode'
+              body: '[OK] Policies deployed to staging in shadow mode for 7 days. Review results at https://dashboard.uatp.com/staging/shadow-mode'
             })
 
   promote-to-production:
@@ -3558,8 +3558,8 @@ Shadow Mode Dashboard:
 │    - Request #14555: Admin, maintenance task                  │
 │                                                                │
 │  Recommendation:                                               │
-│    ✅ Safe to enforce (FP rate <5%)                           │
-│    ⚠️  Consider exemption for emergency department doctors    │
+│    [OK] Safe to enforce (FP rate <5%)                           │
+│    [WARN]  Consider exemption for emergency department doctors    │
 │                                                                │
 │  [Export Report]  [Extend Shadow Mode]  [Deploy to Production]│
 └───────────────────────────────────────────────────────────────┘
@@ -3612,22 +3612,22 @@ Rollback:
 Policy Linter (Built-in):
 
 Checks:
-  ✅ Syntax errors (invalid YAML)
-  ✅ Required fields present (name, version, triggers, actions)
-  ✅ API endpoints reachable (check URLs respond)
-  ✅ Timeout values reasonable (<5000ms)
-  ✅ Security issues (hardcoded secrets, insecure APIs)
-  ✅ Best practices (meaningful names, documentation)
+  [OK] Syntax errors (invalid YAML)
+  [OK] Required fields present (name, version, triggers, actions)
+  [OK] API endpoints reachable (check URLs respond)
+  [OK] Timeout values reasonable (<5000ms)
+  [OK] Security issues (hardcoded secrets, insecure APIs)
+  [OK] Best practices (meaningful names, documentation)
 
 Run Linter:
   $ uatp policy lint policies/hipaa_consent.yaml
 
   Linting policies/hipaa_consent.yaml...
-  ✅ Syntax valid
-  ✅ Required fields present
-  ⚠️  Warning: API timeout is 500ms (consider circuit breaker)
-  ⚠️  Warning: No rate limiting on API call (risk of DDoS)
-  ❌ Error: Hardcoded API key found in line 23 (use secrets instead)
+  [OK] Syntax valid
+  [OK] Required fields present
+  [WARN]  Warning: API timeout is 500ms (consider circuit breaker)
+  [WARN]  Warning: No rate limiting on API call (risk of DDoS)
+  [ERROR] Error: Hardcoded API key found in line 23 (use secrets instead)
 
   Lint result: FAILED (1 error, 2 warnings)
 
@@ -3661,12 +3661,12 @@ Pre-commit Hook:
 Status: Available immediately (template ready)
 
 What we commit to:
-  ✅ UATP is HIPAA compliant (technical controls)
-  ✅ We don't access your PHI
-  ✅ If managed deployment: We sign BAA covering our ops team
-  ✅ Annual compliance review
-  ✅ Breach notification within 24 hours
-  ✅ Audit rights (you can audit us)
+  [OK] UATP is HIPAA compliant (technical controls)
+  [OK] We don't access your PHI
+  [OK] If managed deployment: We sign BAA covering our ops team
+  [OK] Annual compliance review
+  [OK] Breach notification within 24 hours
+  [OK] Audit rights (you can audit us)
 
 Requirements:
   - Your legal team reviews our BAA template
@@ -3682,12 +3682,12 @@ Cost: Included in pilot and production pricing (no extra fee)
 Status: Available immediately (template ready)
 
 What we commit to:
-  ✅ UATP is GDPR compliant (Article 28 requirements)
-  ✅ We process data only per your instructions
-  ✅ We implement appropriate technical/organizational measures
-  ✅ We assist with data subject requests (GDPR Art. 15-17)
-  ✅ We notify you of breaches within 72 hours
-  ✅ We allow audits and inspections
+  [OK] UATP is GDPR compliant (Article 28 requirements)
+  [OK] We process data only per your instructions
+  [OK] We implement appropriate technical/organizational measures
+  [OK] We assist with data subject requests (GDPR Art. 15-17)
+  [OK] We notify you of breaches within 72 hours
+  [OK] We allow audits and inspections
 
 Includes:
   - Standard Contractual Clauses (SCCs) for EU transfers
@@ -3810,10 +3810,10 @@ Signing Flow:
   └──────────────┘  6. Store capsule (you control database)
 
 You control:
-  ✅ Key generation
-  ✅ Key rotation schedule
-  ✅ Access policies (which services can request signatures)
-  ✅ Audit logs (every signing operation logged in your KMS)
+  [OK] Key generation
+  [OK] Key rotation schedule
+  [OK] Access policies (which services can request signatures)
+  [OK] Audit logs (every signing operation logged in your KMS)
 ```
 
 **Key Rotation:**
@@ -3880,14 +3880,14 @@ Cost Example (AWS CloudHSM):
 **Key Material Security:**
 ```python
 # UATP code does NOT contain:
-❌ Hardcoded keys
-❌ Private keys in environment variables
-❌ Keys in config files
+[ERROR] Hardcoded keys
+[ERROR] Private keys in environment variables
+[ERROR] Keys in config files
 
 # UATP code references keys by ID only:
-✅ AWS KMS Key ARN: "arn:aws:kms:us-east-1:123456789012:key/abc-def-ghi"
-✅ Azure Key Vault URI: "https://your-vault.vault.azure.net/keys/uatp-signing-key"
-✅ GCP KMS Resource Name: "projects/your-project/locations/us/keyRings/uatp/cryptoKeys/signing"
+[OK] AWS KMS Key ARN: "arn:aws:kms:us-east-1:123456789012:key/abc-def-ghi"
+[OK] Azure Key Vault URI: "https://your-vault.vault.azure.net/keys/uatp-signing-key"
+[OK] GCP KMS Resource Name: "projects/your-project/locations/us/keyRings/uatp/cryptoKeys/signing"
 ```
 
 ---
@@ -3899,11 +3899,11 @@ Cost Example (AWS CloudHSM):
 **Signed Releases:**
 ```yaml
 Every Release:
-  ✅ Git commit signed with maintainer GPG key
-  ✅ Container images signed with Cosign (Sigstore)
-  ✅ Helm charts signed with GPG
-  ✅ Release artifacts checksummed (SHA-256)
-  ✅ Release notes include signature verification instructions
+  [OK] Git commit signed with maintainer GPG key
+  [OK] Container images signed with Cosign (Sigstore)
+  [OK] Helm charts signed with GPG
+  [OK] Release artifacts checksummed (SHA-256)
+  [OK] Release notes include signature verification instructions
 
 Verification:
   # Verify container image signature
@@ -4002,7 +4002,7 @@ Example Audit Report (Monthly):
   Transitive dependencies: 104
   Known vulnerabilities: 2 (both low severity, patches applied)
   Outdated dependencies: 5 (updates scheduled)
-  License compliance: ✅ All compatible
+  License compliance: [OK] All compatible
 ```
 
 **Dependency Update Process:**
@@ -4028,13 +4028,13 @@ Testing Before Merge:
 **Supply-Chain Attack Mitigations:**
 ```yaml
 Protections:
-  ✅ Two-factor authentication required for all maintainers
-  ✅ Branch protection (require reviews before merge)
-  ✅ Signed commits (GPG verification)
-  ✅ CI/CD runs in isolated environment (no access to secrets)
-  ✅ Container images built from source (not pre-built binaries)
-  ✅ SBOM generated from actual build (not declared)
-  ✅ Private package mirror (for critical dependencies)
+  [OK] Two-factor authentication required for all maintainers
+  [OK] Branch protection (require reviews before merge)
+  [OK] Signed commits (GPG verification)
+  [OK] CI/CD runs in isolated environment (no access to secrets)
+  [OK] Container images built from source (not pre-built binaries)
+  [OK] SBOM generated from actual build (not declared)
+  [OK] Private package mirror (for critical dependencies)
 
 Monitoring:
   - GitHub Security Alerts (enabled)
@@ -4094,11 +4094,11 @@ Findings:
 Overall Security Rating: 8.5/10
 
 Key Strengths Noted:
-  ✅ Post-quantum cryptography implementation sound
-  ✅ No SQL injection vectors found
-  ✅ Authentication/authorization properly implemented
-  ✅ Secrets management follows best practices
-  ✅ Capsule chain integrity held up under adversarial testing
+  [OK] Post-quantum cryptography implementation sound
+  [OK] No SQL injection vectors found
+  [OK] Authentication/authorization properly implemented
+  [OK] Secrets management follows best practices
+  [OK] Capsule chain integrity held up under adversarial testing
 ```
 
 **Bug Bounty Program:**
@@ -4159,9 +4159,9 @@ Security Requirements:
   - Compliance mapping (HIPAA, GDPR, etc.)
 
 Artifacts:
-  ✅ Threat model diagrams (available to enterprise customers)
-  ✅ Security requirements specification
-  ✅ Data flow diagrams with trust boundaries
+  [OK] Threat model diagrams (available to enterprise customers)
+  [OK] Security requirements specification
+  [OK] Data flow diagrams with trust boundaries
 ```
 
 **Development Phase:**
@@ -4173,11 +4173,11 @@ Secure Coding Practices:
   - Pre-commit hooks (secrets detection, format checking)
 
 Tools Integrated in CI/CD:
-  ✅ Snyk (dependency scanning)
-  ✅ Trivy (container scanning)
-  ✅ GitLeaks (secrets detection)
-  ✅ Bandit (Python security linter)
-  ✅ OWASP Dependency-Check
+  [OK] Snyk (dependency scanning)
+  [OK] Trivy (container scanning)
+  [OK] GitLeaks (secrets detection)
+  [OK] Bandit (Python security linter)
+  [OK] OWASP Dependency-Check
 
 Developer Training:
   - Annual secure coding training (OWASP Top 10)
@@ -4195,11 +4195,11 @@ Security Testing:
   - Compliance testing (HIPAA, GDPR validators)
 
 Automated Security Tests:
-  ✅ Authentication bypass attempts (90 test cases)
-  ✅ Authorization checks (150 test cases)
-  ✅ Input validation (500+ test cases, includes fuzzing)
-  ✅ Cryptographic operations (200 test cases)
-  ✅ Capsule chain integrity (100 adversarial test cases)
+  [OK] Authentication bypass attempts (90 test cases)
+  [OK] Authorization checks (150 test cases)
+  [OK] Input validation (500+ test cases, includes fuzzing)
+  [OK] Cryptographic operations (200 test cases)
+  [OK] Capsule chain integrity (100 adversarial test cases)
 ```
 
 **Deployment Phase:**
@@ -4211,11 +4211,11 @@ Security Gates:
   - Release notes include security fixes
 
 Production Hardening:
-  ✅ Principle of least privilege (RBAC, IAM policies)
-  ✅ Network segmentation (firewall rules, NetworkPolicies)
-  ✅ Encryption at rest (database, backups)
-  ✅ Encryption in transit (TLS 1.3)
-  ✅ Secrets management (KMS, not environment variables)
+  [OK] Principle of least privilege (RBAC, IAM policies)
+  [OK] Network segmentation (firewall rules, NetworkPolicies)
+  [OK] Encryption at rest (database, backups)
+  [OK] Encryption in transit (TLS 1.3)
+  [OK] Secrets management (KMS, not environment variables)
 ```
 
 **Operations Phase:**
@@ -4251,12 +4251,12 @@ HIPAA:
   Next assessment: Q3 2026
 
 Evidence Package Available:
-  ✅ Secure SDLC documentation
-  ✅ Pen test reports (executive summaries)
-  ✅ Security architecture diagrams
-  ✅ Incident response procedures
-  ✅ Vulnerability management process
-  ✅ Security training records
+  [OK] Secure SDLC documentation
+  [OK] Pen test reports (executive summaries)
+  [OK] Security architecture diagrams
+  [OK] Incident response procedures
+  [OK] Vulnerability management process
+  [OK] Security training records
 ```
 
 ---
@@ -4270,12 +4270,12 @@ Evidence Package Available:
 **SSO/SAML:**
 ```yaml
 Supported Identity Providers:
-  ✅ Okta
-  ✅ Azure Active Directory / Entra ID
-  ✅ Google Workspace
-  ✅ OneLogin
-  ✅ Auth0
-  ✅ Custom SAML 2.0 providers
+  [OK] Okta
+  [OK] Azure Active Directory / Entra ID
+  [OK] Google Workspace
+  [OK] OneLogin
+  [OK] Auth0
+  [OK] Custom SAML 2.0 providers
 
 Configuration:
   - Setup time: 30 minutes with your IdP
@@ -4296,9 +4296,9 @@ Cost: Included in Enterprise tier
 **OIDC (OpenID Connect):**
 ```yaml
 Supported:
-  ✅ Any OIDC-compliant provider
-  ✅ OAuth 2.0 with OIDC layer
-  ✅ Social logins (Google, GitHub) - for dev environments only
+  [OK] Any OIDC-compliant provider
+  [OK] OAuth 2.0 with OIDC layer
+  [OK] Social logins (Google, GitHub) - for dev environments only
 
 Configuration:
   - Provide: Client ID, Client Secret, Discovery URL
@@ -4408,11 +4408,11 @@ Configuration:
 Status: Supported (v2.0)
 
 Capabilities:
-  ✅ User provisioning (create users from IdP)
-  ✅ User deprovisioning (delete users when they leave org)
-  ✅ User updates (sync email, name, role changes)
-  ✅ Group management (sync groups from IdP)
-  ✅ Real-time sync (changes propagate within 1 minute)
+  [OK] User provisioning (create users from IdP)
+  [OK] User deprovisioning (delete users when they leave org)
+  [OK] User updates (sync email, name, role changes)
+  [OK] Group management (sync groups from IdP)
+  [OK] Real-time sync (changes propagate within 1 minute)
 
 Supported IdPs:
   - Okta (native SCIM integration)
@@ -4476,14 +4476,14 @@ Example Break-Glass Log Entry:
 
 ```yaml
 What Gets Logged:
-  ✅ All authentication attempts (success and failure)
-  ✅ All authorization decisions (allow/deny)
-  ✅ All admin actions (create, update, delete)
-  ✅ All policy changes (who changed what, when)
-  ✅ All configuration changes (system settings)
-  ✅ All access to sensitive data (audit reports, capsule exports)
-  ✅ All break-glass access usage
-  ✅ All API calls (with user/service account identity)
+  [OK] All authentication attempts (success and failure)
+  [OK] All authorization decisions (allow/deny)
+  [OK] All admin actions (create, update, delete)
+  [OK] All policy changes (who changed what, when)
+  [OK] All configuration changes (system settings)
+  [OK] All access to sensitive data (audit reports, capsule exports)
+  [OK] All break-glass access usage
+  [OK] All API calls (with user/service account identity)
 
 Audit Log Format:
   {
@@ -4706,11 +4706,11 @@ $ uatp gdpr export \
     --output /tmp/gdpr-export-user-12345.zip
 
 Output:
-  ✅ 1,247 capsules exported
-  ✅ Metadata included
-  ✅ Cryptographic signatures intact
-  ✅ Human-readable summary generated
-  📦 Package: /tmp/gdpr-export-user-12345.zip (23.4 MB)
+  [OK] 1,247 capsules exported
+  [OK] Metadata included
+  [OK] Cryptographic signatures intact
+  [OK] Human-readable summary generated
+   Package: /tmp/gdpr-export-user-12345.zip (23.4 MB)
 ```
 
 **Export Format:**
@@ -4735,19 +4735,19 @@ $ uatp gdpr delete \
     --audit-trail
 
 Confirmation Required:
-  ⚠️  This will PERMANENTLY delete 1,247 capsules for user-12345
-  ⚠️  Deletion is IRREVERSIBLE
-  ⚠️  Legal hold check: PASSED (no active litigation)
-  ⚠️  Retention policy check: PASSED (no regulatory holds)
+  [WARN]  This will PERMANENTLY delete 1,247 capsules for user-12345
+  [WARN]  Deletion is IRREVERSIBLE
+  [WARN]  Legal hold check: PASSED (no active litigation)
+  [WARN]  Retention policy check: PASSED (no regulatory holds)
 
 Type 'DELETE' to confirm: DELETE
 
 Output:
-  ✅ 1,247 capsules marked for deletion
-  ✅ Tombstone records created (for chain integrity)
-  ✅ Actual deletion scheduled (30-day delay for backup pruning)
-  ✅ Audit trail capsule created (cryptographically sealed)
-  📄 Deletion certificate: /tmp/gdpr-deletion-cert-user-12345.pdf
+  [OK] 1,247 capsules marked for deletion
+  [OK] Tombstone records created (for chain integrity)
+  [OK] Actual deletion scheduled (30-day delay for backup pruning)
+  [OK] Audit trail capsule created (cryptographically sealed)
+   Deletion certificate: /tmp/gdpr-deletion-cert-user-12345.pdf
 ```
 
 **Tombstone Approach:**
@@ -4867,8 +4867,8 @@ Retention Policy Dashboard:
   Compliance Score: 98.7%
 
   Warnings:
-  ⚠️  234 capsules exceed max_days (manual review required)
-  ⚠️  12 litigation holds older than 5 years (stale?)
+  [WARN]  234 capsules exceed max_days (manual review required)
+  [WARN]  12 litigation holds older than 5 years (stale?)
 ```
 
 **Deletion Verification:**
@@ -4880,12 +4880,12 @@ $ uatp retention verify-deletion \
     --check-replicas
 
 Output:
-  ✅ Primary database: DELETED (secure overwrite verified)
-  ✅ Backup 1 (hourly): DELETED (pruned from backup chain)
-  ✅ Backup 2 (daily): DELETED (pruned from backup chain)
-  ✅ Backup 3 (weekly): DELETED (pruned from backup chain)
-  ✅ DR replica (us-west): DELETED
-  ✅ Archive storage: DELETED
+  [OK] Primary database: DELETED (secure overwrite verified)
+  [OK] Backup 1 (hourly): DELETED (pruned from backup chain)
+  [OK] Backup 2 (daily): DELETED (pruned from backup chain)
+  [OK] Backup 3 (weekly): DELETED (pruned from backup chain)
+  [OK] DR replica (us-west): DELETED
+  [OK] Archive storage: DELETED
 
   Tombstone: PRESENT (chain integrity maintained)
   Certificate: /audit/deletion-certs/abc-123.pdf
@@ -5120,9 +5120,9 @@ Capsule 2:
   - previous_capsule_logical_clock: 1001
 
 Verification:
-  ✅ logical_clock must be strictly increasing
-  ✅ Wall clock can drift, doesn't matter for chain integrity
-  ⚠️  If wall_clock_timestamp < previous capsule timestamp by >5 minutes → warning (clock badly skewed)
+  [OK] logical_clock must be strictly increasing
+  [OK] Wall clock can drift, doesn't matter for chain integrity
+  [WARN]  If wall_clock_timestamp < previous capsule timestamp by >5 minutes → warning (clock badly skewed)
 ```
 
 **Solution 2: Trusted Timestamp Authority (TTA)**
@@ -5203,9 +5203,9 @@ Example Verification:
   Capsule N: timestamp = 14:30:00, logical_clock = 1001
   Capsule N+1: timestamp = 14:29:55, logical_clock = 1002
 
-  Check 1: logical_clock increasing? YES (1002 > 1001) ✅
+  Check 1: logical_clock increasing? YES (1002 > 1001) [OK]
   Check 2: Wall clock drift = -5 seconds
-  Check 3: Drift within tolerance (<5 seconds)? YES ✅
+  Check 3: Drift within tolerance (<5 seconds)? YES [OK]
   Result: Chain valid, minor warning logged
 ```
 
@@ -5292,12 +5292,12 @@ What Happens:
 Decision: Favor availability over perfect auditability
 
 Behavior:
-  ✅ Your app receives OpenAI response (request not blocked)
-  ⚠️  Capsule write failed (logged as ERROR)
-  🔄 Retry: UATP buffers capsule, retries write every 10 seconds
-  💾 Persistence: Capsule buffered to disk (survives UATP restart)
-  ⏰ Timeout: After 5 minutes, alert ops team
-  📊 Monitoring: "Capsule write failure rate" metric tracked
+  [OK] Your app receives OpenAI response (request not blocked)
+  [WARN]  Capsule write failed (logged as ERROR)
+   Retry: UATP buffers capsule, retries write every 10 seconds
+   Persistence: Capsule buffered to disk (survives UATP restart)
+   Timeout: After 5 minutes, alert ops team
+   Monitoring: "Capsule write failure rate" metric tracked
 
 Why:
   - We don't want to block your production AI requests due to UATP DB issues
@@ -5315,10 +5315,10 @@ What Happens:
   4. Question: Do we create output capsule? NO
 
 Behavior:
-  ✅ Input capsule written (documents request was made)
-  ✅ Failure capsule written (documents OpenAI error)
-  ❌ Output capsule NOT created (no response to record)
-  🔍 Audit trail: Shows request → failure (complete picture)
+  [OK] Input capsule written (documents request was made)
+  [OK] Failure capsule written (documents OpenAI error)
+  [ERROR] Output capsule NOT created (no response to record)
+   Audit trail: Shows request → failure (complete picture)
 
 Failure Capsule Format:
   {
@@ -5397,9 +5397,9 @@ UATP Behavior:
   4. If NO: Process normally, cache response + capsule IDs
 
 Benefits:
-  ✅ Safe retries (network failures, timeouts)
-  ✅ No duplicate capsules for same logical request
-  ✅ Audit trail accurate (one capsule chain per logical request, not per retry)
+  [OK] Safe retries (network failures, timeouts)
+  [OK] No duplicate capsules for same logical request
+  [OK] Audit trail accurate (one capsule chain per logical request, not per retry)
 
 Example:
   Request 1: Idempotency key = "req_12345", creates capsule chain [cap_001, cap_002]
@@ -5538,7 +5538,7 @@ Verification:
   2. Apply Merkle proof path → compute root
   3. Verify: Computed root matches signed root
   4. Verify: Root signature is valid
-  Result: Capsule is part of attested batch ✅
+  Result: Capsule is part of attested batch [OK]
 ```
 
 **External Timestamping (RFC 3161):**
@@ -5547,10 +5547,10 @@ Verification:
 Integration with Timestamp Authority (TSA):
 
 Supported TSAs:
-  ✅ NIST Internet Time Service
-  ✅ Bundesdruckerei (Germany)
-  ✅ DigiCert TSA
-  ✅ Custom RFC 3161-compliant TSAs
+  [OK] NIST Internet Time Service
+  [OK] Bundesdruckerei (Germany)
+  [OK] DigiCert TSA
+  [OK] Custom RFC 3161-compliant TSAs
 
 Process:
   1. Generate Merkle root (batch of 1,000 capsules)
@@ -5627,40 +5627,40 @@ Limitation:
 ```yaml
 Individual Signatures (Current Default):
   Pros:
-    ✅ Immediate verification (no batch wait time)
-    ✅ Simple (each capsule self-contained)
+    [OK] Immediate verification (no batch wait time)
+    [OK] Simple (each capsule self-contained)
   Cons:
-    ❌ Storage overhead (3.3 KB signature per capsule)
-    ❌ Signing overhead (5ms per capsule)
+    [ERROR] Storage overhead (3.3 KB signature per capsule)
+    [ERROR] Signing overhead (5ms per capsule)
 
 Merkle Batch Attestation:
   Pros:
-    ✅ Efficient storage (1 signature per batch, not per capsule)
-    ✅ Efficient signing (1 signing operation per batch)
+    [OK] Efficient storage (1 signature per batch, not per capsule)
+    [OK] Efficient signing (1 signing operation per batch)
   Cons:
-    ❌ Delayed attestation (wait for batch to fill)
-    ❌ Requires Merkle proof storage (extra data per capsule)
-    ❌ If root signature lost, entire batch unverifiable
+    [ERROR] Delayed attestation (wait for batch to fill)
+    [ERROR] Requires Merkle proof storage (extra data per capsule)
+    [ERROR] If root signature lost, entire batch unverifiable
 
 External Timestamping (TSA):
   Pros:
-    ✅ Legal non-repudiation (trusted third party)
-    ✅ Independent verification (TSA is neutral)
-    ✅ Standards-compliant (RFC 3161)
+    [OK] Legal non-repudiation (trusted third party)
+    [OK] Independent verification (TSA is neutral)
+    [OK] Standards-compliant (RFC 3161)
   Cons:
-    ❌ Cost (small fee per timestamp)
-    ❌ Latency (+100-300ms per batch)
-    ❌ Dependency (TSA must remain operational)
+    [ERROR] Cost (small fee per timestamp)
+    [ERROR] Latency (+100-300ms per batch)
+    [ERROR] Dependency (TSA must remain operational)
 
 Blockchain Anchoring:
   Pros:
-    ✅ Public verifiability (no trust in UATP required)
-    ✅ Immutable (blockchain consensus)
-    ✅ Long-term preservation (decades+)
+    [OK] Public verifiability (no trust in UATP required)
+    [OK] Immutable (blockchain consensus)
+    [OK] Long-term preservation (decades+)
   Cons:
-    ❌ Latency (10+ minutes for confirmation)
-    ❌ Cost (blockchain transaction fees)
-    ❌ Not real-time (unsuitable for immediate verification)
+    [ERROR] Latency (10+ minutes for confirmation)
+    [ERROR] Cost (blockchain transaction fees)
+    [ERROR] Not real-time (unsuitable for immediate verification)
 ```
 
 **Hybrid Approach (Recommended for Enterprise):**
@@ -5765,7 +5765,7 @@ Example:
 Verification (Legitimate):
   1. Retrieve salt from capsule
   2. Re-compute: sha256(salt + claimed_content)
-  3. Compare: Does it match stored hash? ✅
+  3. Compare: Does it match stored hash? [OK]
 
 Attack Attempt (Illegitimate):
   1. Attacker has hash + salt
@@ -5805,8 +5805,8 @@ Capsule stores:
   }
 
 Privacy preserved:
-  ❌ Cannot reconstruct: "Patient John Smith has diabetes"
-  ✅ Can know: "This was a medical query with PHI"
+  [ERROR] Cannot reconstruct: "Patient John Smith has diabetes"
+  [OK] Can know: "This was a medical query with PHI"
 ```
 
 **Solution 3: HMAC (Keyed Hashing)**
@@ -5833,7 +5833,7 @@ Example:
 Verification:
   1. You provide content for verification
   2. Recompute HMAC using same secret key
-  3. Compare: Does it match? ✅
+  3. Compare: Does it match? [OK]
 
 Attack Resistance:
   - Attacker has HMAC output but not secret key
@@ -5865,7 +5865,7 @@ Capsule stores:
 
 Verification:
   1. Verify ZK proof (cryptographic verification)
-  2. Result: "Yes, content contained PHI" ✅
+  2. Result: "Yes, content contained PHI" [OK]
   3. Actual content: Unknown (zero knowledge)
 
 Status in UATP:
@@ -5884,7 +5884,7 @@ Hash Function Choice:
 SHA-256:
   - Collision resistance: 2^128 operations to find collision
   - Estimated time: Billions of years (even with quantum computers)
-  - Verdict: Practically collision-resistant ✅
+  - Verdict: Practically collision-resistant [OK]
 
 SHA-384 (For Chain Hashing):
   - Collision resistance: 2^192 operations
@@ -5908,18 +5908,18 @@ If SHA-256 Breaks:
 
 ```yaml
 DO:
-  ✅ Store content categories ("medical_query", not "diabetes diagnosis")
-  ✅ Store sensitivity flags ("PHI_DETECTED", not actual PHI)
-  ✅ Store counts ("6 words", not the actual words)
-  ✅ Store types ("PERSON entity detected", not "John Smith")
-  ✅ Use salted hashes for integrity (not content recovery)
+  [OK] Store content categories ("medical_query", not "diabetes diagnosis")
+  [OK] Store sensitivity flags ("PHI_DETECTED", not actual PHI)
+  [OK] Store counts ("6 words", not the actual words)
+  [OK] Store types ("PERSON entity detected", not "John Smith")
+  [OK] Use salted hashes for integrity (not content recovery)
 
 DON'T:
-  ❌ Store actual user names in metadata
-  ❌ Store actual diagnoses in summaries
-  ❌ Store email addresses, phone numbers in logs
-  ❌ Store full queries in "content_summary" field
-  ❌ Use unsalted hashes of sensitive data
+  [ERROR] Store actual user names in metadata
+  [ERROR] Store actual diagnoses in summaries
+  [ERROR] Store email addresses, phone numbers in logs
+  [ERROR] Store full queries in "content_summary" field
+  [ERROR] Use unsalted hashes of sensitive data
 
 Example Configuration:
   # Good: Privacy-preserving
@@ -5933,10 +5933,10 @@ Example Configuration:
 
   # Bad: Leaks data
   capsule_metadata:
-    content_summary_mode: "full_text"  # ❌ Stores actual content
-    include_entity_values: true  # ❌ Stores actual names
+    content_summary_mode: "full_text"  # [ERROR] Stores actual content
+    include_entity_values: true  # [ERROR] Stores actual names
     hashing:
-      method: "sha256"  # ❌ No salt (vulnerable to rainbow tables)
+      method: "sha256"  # [ERROR] No salt (vulnerable to rainbow tables)
 ```
 
 **Automated PII/PHI Detection:**
@@ -5971,4 +5971,3 @@ Original content:
 ```
 
 ---
-

@@ -535,7 +535,7 @@ class MetaLearningSystem:
 
 # Example usage
 if __name__ == "__main__":
-    print("✅ Meta-Learning System Ready")
+    print("[OK] Meta-Learning System Ready")
     print("\nCapabilities:")
     print("  - Learn reasoning strategies from successful capsules")
     print("  - Refine strategies with new evidence")

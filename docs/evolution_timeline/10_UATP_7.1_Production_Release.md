@@ -204,18 +204,18 @@ Historical Accuracy → Risk Assessment → Confidence Adjustment
 ```
 Component                    Status
 ─────────────────────────────────────
-Capsule Creation             ✅ Production
-Ed25519 Signing              ✅ Production
-ML-DSA-65 Signing            ✅ Production (Feb 2026)
-RFC 3161 Timestamps          ✅ Production
-Merkle Tree Integrity        ✅ Production
-Live Claude Code Capture     ✅ Production
-ML Calibration               ✅ Production
-Outcome Inference            ✅ Production
-Historical Accuracy          ✅ Production
-Court-Admissible Enrichment  ✅ Production
-REST API                     ✅ Production
-Web Dashboard                ✅ Production
+Capsule Creation             [OK] Production
+Ed25519 Signing              [OK] Production
+ML-DSA-65 Signing            [OK] Production (Feb 2026)
+RFC 3161 Timestamps          [OK] Production
+Merkle Tree Integrity        [OK] Production
+Live Claude Code Capture     [OK] Production
+ML Calibration               [OK] Production
+Outcome Inference            [OK] Production
+Historical Accuracy          [OK] Production
+Court-Admissible Enrichment  [OK] Production
+REST API                     [OK] Production
+Web Dashboard                [OK] Production
 ```
 
 ---
@@ -241,7 +241,7 @@ Every AI decision now comes with:
 
 ## Resources
 
-- **Repository**: github.com/uatp/capsule-engine
+- **Repository**: github.com/KayronCalloway/capsule-engine
 - **API Docs**: /api/docs
 - **Dashboard**: localhost:3000
 - **White Papers**: /docs/evolution_timeline/

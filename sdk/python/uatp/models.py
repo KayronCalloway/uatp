@@ -222,7 +222,7 @@ def create_simple_reasoning_step(
         "step": step,
         "thought": thought,
         "confidence": confidence,
-        "_note": "⚠️ Using simple format. Upgrade to ReasoningStep for court admissibility.",
+        "_note": "[WARN] Using simple format. Upgrade to ReasoningStep for court admissibility.",
     }
 
 

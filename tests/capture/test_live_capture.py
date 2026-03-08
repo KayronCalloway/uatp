@@ -15,19 +15,19 @@ def test_server_connection():
     try:
         response = requests.get("http://localhost:8000/health")
         if response.status_code == 200:
-            print("✅ Server is running")
+            print("[OK] Server is running")
             return True
         else:
-            print(f"❌ Server returned status {response.status_code}")
+            print(f"[ERROR] Server returned status {response.status_code}")
             return False
     except Exception as e:
-        print(f"❌ Cannot connect to server: {e}")
+        print(f"[ERROR] Cannot connect to server: {e}")
         return False
 
 
 def test_capture_endpoints():
     """Test the live capture endpoints."""
-    print("\n🧪 Testing capture endpoints...")
+    print("\n Testing capture endpoints...")
 
     # Test OpenAI capture
     print("1. Testing OpenAI capture...")
@@ -51,7 +51,7 @@ def test_capture_endpoints():
         if response.status_code == 200:
             result = response.json()
             if result.get("success"):
-                print("   ✅ OpenAI capture successful")
+                print("   [OK] OpenAI capture successful")
                 session_id = result.get("session_id")
 
                 # Test conversation status
@@ -61,22 +61,22 @@ def test_capture_endpoints():
                 if status_response.status_code == 200:
                     status_result = status_response.json()
                     if status_result.get("success"):
-                        print("   ✅ Conversation status retrieval successful")
+                        print("   [OK] Conversation status retrieval successful")
                         conv = status_result.get("conversation", {})
                         print(f"      Messages: {conv.get('message_count', 0)}")
                         print(
                             f"      Significance: {conv.get('significance_score', 0):.2f}"
                         )
                     else:
-                        print("   ❌ Conversation status retrieval failed")
+                        print("   [ERROR] Conversation status retrieval failed")
                 else:
-                    print("   ❌ Conversation status endpoint failed")
+                    print("   [ERROR] Conversation status endpoint failed")
             else:
-                print(f"   ❌ OpenAI capture failed: {result.get('error')}")
+                print(f"   [ERROR] OpenAI capture failed: {result.get('error')}")
         else:
-            print(f"   ❌ OpenAI endpoint returned status {response.status_code}")
+            print(f"   [ERROR] OpenAI endpoint returned status {response.status_code}")
     except Exception as e:
-        print(f"   ❌ OpenAI capture error: {e}")
+        print(f"   [ERROR] OpenAI capture error: {e}")
 
     # Test Claude capture
     print("\n2. Testing Claude capture...")
@@ -94,13 +94,13 @@ def test_capture_endpoints():
         if response.status_code == 200:
             result = response.json()
             if result.get("success"):
-                print("   ✅ Claude capture successful")
+                print("   [OK] Claude capture successful")
             else:
-                print(f"   ❌ Claude capture failed: {result.get('error')}")
+                print(f"   [ERROR] Claude capture failed: {result.get('error')}")
         else:
-            print(f"   ❌ Claude endpoint returned status {response.status_code}")
+            print(f"   [ERROR] Claude endpoint returned status {response.status_code}")
     except Exception as e:
-        print(f"   ❌ Claude capture error: {e}")
+        print(f"   [ERROR] Claude capture error: {e}")
 
     # Test active conversations list
     print("\n3. Testing active conversations list...")
@@ -112,24 +112,24 @@ def test_capture_endpoints():
             result = response.json()
             if result.get("success"):
                 conversations = result.get("conversations", [])
-                print(f"   ✅ Active conversations: {len(conversations)}")
+                print(f"   [OK] Active conversations: {len(conversations)}")
                 for conv in conversations[:3]:  # Show first 3
                     print(
                         f"      - {conv.get('session_id')} ({conv.get('platform')}) - {conv.get('message_count')} messages"
                     )
             else:
-                print(f"   ❌ Conversations list failed: {result.get('error')}")
+                print(f"   [ERROR] Conversations list failed: {result.get('error')}")
         else:
             print(
-                f"   ❌ Conversations endpoint returned status {response.status_code}"
+                f"   [ERROR] Conversations endpoint returned status {response.status_code}"
             )
     except Exception as e:
-        print(f"   ❌ Conversations list error: {e}")
+        print(f"   [ERROR] Conversations list error: {e}")
 
 
 def test_capsule_creation():
     """Test if capsules are being created from the captured conversations."""
-    print("\n🎯 Testing capsule creation...")
+    print("\n Testing capsule creation...")
 
     # Check if capsules were created
     import os
@@ -141,7 +141,7 @@ def test_capsule_creation():
         with open(capsule_file) as f:
             lines = f.readlines()
 
-        print(f"✅ Capsule chain file exists with {len(lines)} capsules")
+        print(f"[OK] Capsule chain file exists with {len(lines)} capsules")
 
         # Check for recent capsules
         recent_capsules = []
@@ -161,25 +161,25 @@ def test_capsule_creation():
                 continue
 
         if recent_capsules:
-            print(f"✅ Found {len(recent_capsules)} recent capsules")
+            print(f"[OK] Found {len(recent_capsules)} recent capsules")
             for capsule in recent_capsules[:3]:
                 print(f"   - {capsule.get('capsule_id')} ({capsule.get('type')})")
         else:
             print(
-                "⚠️  No recent capsules found (may need to wait for significance analysis)"
+                "[WARN]  No recent capsules found (may need to wait for significance analysis)"
             )
     else:
-        print("❌ Capsule chain file not found")
+        print("[ERROR] Capsule chain file not found")
 
 
 def main():
     """Run the test suite."""
-    print("🧪 UATP Live Capture System Test Suite")
+    print(" UATP Live Capture System Test Suite")
     print("=" * 50)
 
     # Test server connection
     if not test_server_connection():
-        print("\n❌ Server is not running. Please start the server first:")
+        print("\n[ERROR] Server is not running. Please start the server first:")
         print("   python src/api/server.py")
         return
 
@@ -193,7 +193,7 @@ def main():
     # Test capsule creation
     test_capsule_creation()
 
-    print("\n✅ Test suite completed!")
+    print("\n[OK] Test suite completed!")
     print("\nNext steps:")
     print("1. Run the live capture client: python live_capture_client.py")
     print("2. Open the visualizer: python -m streamlit run visualizer/app.py")

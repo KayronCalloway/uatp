@@ -175,7 +175,7 @@ export default function SystemGraphPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="max-w-full mx-auto">
         <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
-          🌐 Complete UATP System Network
+           Complete UATP System Network
         </h1>
 
         <div className="mb-6 bg-gray-900 rounded-lg p-6 border border-gray-800">
@@ -184,11 +184,11 @@ export default function SystemGraphPage() {
             <div>
               <h3 className="font-semibold text-blue-400 mb-2">Node Types:</h3>
               <ul className="space-y-1 text-gray-300">
-                <li>🔴 <span className="text-red-400">Core Engine</span> - UATP Capsule Engine</li>
-                <li>🟢 <span className="text-green-400">LLM Providers</span> - OpenAI, Anthropic, Claude</li>
-                <li>🔵 <span className="text-blue-400">Spatial Providers</span> - Cameras, LiDAR, Controllers</li>
-                <li>🟦 <span className="text-cyan-400">Capsule Types</span> - All capsule types</li>
-                <li>🔶 <span className="text-orange-400">System Components</span> - Trust, FCDE, Insurance, etc.</li>
+                <li> <span className="text-red-400">Core Engine</span> - UATP Capsule Engine</li>
+                <li> <span className="text-green-400">LLM Providers</span> - OpenAI, Anthropic, Claude</li>
+                <li> <span className="text-blue-400">Spatial Providers</span> - Cameras, LiDAR, Controllers</li>
+                <li> <span className="text-cyan-400">Capsule Types</span> - All capsule types</li>
+                <li> <span className="text-orange-400">System Components</span> - Trust, FCDE, Insurance, etc.</li>
               </ul>
             </div>
             <div>
@@ -226,7 +226,7 @@ export default function SystemGraphPage() {
         </div>
 
         <div className="mt-6 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg p-6 border border-blue-800/50">
-          <h3 className="text-lg font-semibold mb-2">💡 Interaction Tips</h3>
+          <h3 className="text-lg font-semibold mb-2"> Interaction Tips</h3>
           <ul className="space-y-1 text-sm text-gray-300">
             <li>• <strong>Drag nodes</strong> to rearrange the graph layout</li>
             <li>• <strong>Scroll</strong> to zoom in/out</li>

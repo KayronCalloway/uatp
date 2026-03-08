@@ -28,13 +28,13 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from src.security.timestamp_authority import TimestampAuthority
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,11 @@ async def backfill_timestamps(dry_run: bool = False, limit: int = None):
             capsule_id = row["capsule_id"]
 
             try:
-                verification = json.loads(row["verification"]) if isinstance(row["verification"], str) else row["verification"]
+                verification = (
+                    json.loads(row["verification"])
+                    if isinstance(row["verification"], str)
+                    else row["verification"]
+                )
             except (json.JSONDecodeError, TypeError):
                 logger.warning(f"Invalid verification JSON for {capsule_id}")
                 stats["failed"] += 1
@@ -116,14 +120,16 @@ async def backfill_timestamps(dry_run: bool = False, limit: int = None):
             try:
                 hash_bytes = bytes.fromhex(content_hash)
             except ValueError:
-                logger.warning(f"Invalid hash format for {capsule_id}: {content_hash[:20]}...")
+                logger.warning(
+                    f"Invalid hash format for {capsule_id}: {content_hash[:20]}..."
+                )
                 stats["failed"] += 1
                 continue
 
             logger.info(f"Timestamping {capsule_id} (hash: {content_hash[:16]}...)")
 
             if dry_run:
-                logger.info(f"  [DRY RUN] Would request RFC 3161 timestamp")
+                logger.info("  [DRY RUN] Would request RFC 3161 timestamp")
                 stats["upgraded"] += 1
                 continue
 
@@ -136,24 +142,30 @@ async def backfill_timestamps(dry_run: bool = False, limit: int = None):
                     verification["timestamp"] = new_timestamp
 
                     # Also add upgrade metadata
-                    verification["timestamp"]["upgraded_from"] = ts_info.get("method", "unknown")
-                    verification["timestamp"]["upgrade_time"] = datetime.now(timezone.utc).isoformat()
+                    verification["timestamp"]["upgraded_from"] = ts_info.get(
+                        "method", "unknown"
+                    )
+                    verification["timestamp"]["upgrade_time"] = datetime.now(
+                        timezone.utc
+                    ).isoformat()
 
                     # Update database
                     await db.execute(
                         "UPDATE capsules SET verification = ? WHERE id = ?",
-                        (json.dumps(verification), row["id"])
+                        (json.dumps(verification), row["id"]),
                     )
                     await db.commit()
 
-                    logger.info(f"  ✅ Upgraded to RFC 3161 (TSA: {new_timestamp.get('tsa_url')})")
+                    logger.info(
+                        f"  [OK] Upgraded to RFC 3161 (TSA: {new_timestamp.get('tsa_url')})"
+                    )
                     stats["upgraded"] += 1
                 else:
-                    logger.warning(f"  ❌ TSA returned untrusted timestamp")
+                    logger.warning("  [ERROR] TSA returned untrusted timestamp")
                     stats["failed"] += 1
 
             except Exception as e:
-                logger.error(f"  ❌ Timestamp request failed: {e}")
+                logger.error(f"  [ERROR] Timestamp request failed: {e}")
                 stats["failed"] += 1
 
     # Print summary
@@ -174,8 +186,14 @@ async def backfill_timestamps(dry_run: bool = False, limit: int = None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Backfill RFC 3161 timestamps for existing capsules")
-    parser.add_argument("--dry-run", action="store_true", help="Preview changes without modifying database")
+    parser = argparse.ArgumentParser(
+        description="Backfill RFC 3161 timestamps for existing capsules"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without modifying database",
+    )
     parser.add_argument("--limit", type=int, help="Limit number of capsules to process")
     args = parser.parse_args()
 

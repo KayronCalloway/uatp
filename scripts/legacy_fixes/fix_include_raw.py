@@ -19,7 +19,9 @@ def fix_include_raw_parameter():
     get_capsule_start = get_capsule_pattern.search(server_content)
 
     if not get_capsule_start:
-        print("❌ Could not find get_capsule function with correct decorator pattern")
+        print(
+            "[ERROR] Could not find get_capsule function with correct decorator pattern"
+        )
         return False
 
     # Now find the raw data handling section
@@ -29,7 +31,9 @@ def fix_include_raw_parameter():
     )
 
     if not raw_data_section:
-        print("❌ Could not find the raw data handling section in get_capsule function")
+        print(
+            "[ERROR] Could not find the raw data handling section in get_capsule function"
+        )
         return False
 
     # Get the current raw data handling code
@@ -53,7 +57,7 @@ def fix_include_raw_parameter():
     )
 
     if updated_server_content == server_content:
-        print("❌ Failed to replace raw data handling code")
+        print("[ERROR] Failed to replace raw data handling code")
         return False
 
     # Write the updated content back
@@ -61,7 +65,7 @@ def fix_include_raw_parameter():
         file.write(updated_server_content)
 
     print(
-        "✅ Successfully updated raw_data handling in get_capsule function with a guaranteed fix"
+        "[OK] Successfully updated raw_data handling in get_capsule function with a guaranteed fix"
     )
     return True
 

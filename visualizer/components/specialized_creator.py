@@ -33,7 +33,7 @@ def render_specialized_creator(engine):
 
     if not is_specialized:
         st.warning(
-            "⚠️ Standard capsule engine detected. Advanced capsule types are not supported."
+            "[WARN] Standard capsule engine detected. Advanced capsule types are not supported."
         )
         st.info("Please restart the application to use the specialized engine.")
         return
@@ -115,9 +115,11 @@ def create_refusal_form(engine, confidence, reasoning_list):
                         "alternative_suggestions": alt_suggestions_list,
                     },
                 )
-                st.success(f"✅ Refusal Capsule created with ID: {capsule.capsule_id}")
+                st.success(
+                    f"[OK] Refusal Capsule created with ID: {capsule.capsule_id}"
+                )
             except Exception as e:
-                st.error(f"❌ Error creating capsule: {str(e)}")
+                st.error(f"[ERROR] Error creating capsule: {str(e)}")
 
 
 def create_introspective_form(engine, confidence, reasoning_list):
@@ -159,10 +161,10 @@ def create_introspective_form(engine, confidence, reasoning_list):
                     },
                 )
                 st.success(
-                    f"✅ Introspective Capsule created with ID: {capsule.capsule_id}"
+                    f"[OK] Introspective Capsule created with ID: {capsule.capsule_id}"
                 )
             except Exception as e:
-                st.error(f"❌ Error creating capsule: {str(e)}")
+                st.error(f"[ERROR] Error creating capsule: {str(e)}")
 
 
 def create_joint_form(engine, confidence, reasoning_list):
@@ -208,9 +210,9 @@ def create_joint_form(engine, confidence, reasoning_list):
                         "human_signature": human_signature,
                     },
                 )
-                st.success(f"✅ Joint Capsule created with ID: {capsule.capsule_id}")
+                st.success(f"[OK] Joint Capsule created with ID: {capsule.capsule_id}")
             except Exception as e:
-                st.error(f"❌ Error creating capsule: {str(e)}")
+                st.error(f"[ERROR] Error creating capsule: {str(e)}")
 
 
 def create_meta_form(engine, confidence, reasoning_list):
@@ -249,7 +251,7 @@ def create_meta_form(engine, confidence, reasoning_list):
 
         if st.form_submit_button("Create Meta Capsule"):
             if not target_ids_list:
-                st.error("❌ At least one target capsule ID is required")
+                st.error("[ERROR] At least one target capsule ID is required")
                 return
 
             try:
@@ -278,9 +280,9 @@ def create_meta_form(engine, confidence, reasoning_list):
                             "suggested_resolutions": resolutions_list,
                         },
                     )
-                st.success(f"✅ Meta Capsule created with ID: {capsule.capsule_id}")
+                st.success(f"[OK] Meta Capsule created with ID: {capsule.capsule_id}")
             except Exception as e:
-                st.error(f"❌ Error creating capsule: {str(e)}")
+                st.error(f"[ERROR] Error creating capsule: {str(e)}")
 
 
 def create_influence_form(engine, confidence, reasoning_list):
@@ -348,9 +350,11 @@ def create_influence_form(engine, confidence, reasoning_list):
                             "influence_measurement": measurements_dict,
                         },
                     )
-                st.success(f"✅ Influence Capsule created with ID: {capsule.capsule_id}")
+                st.success(
+                    f"[OK] Influence Capsule created with ID: {capsule.capsule_id}"
+                )
             except Exception as e:
-                st.error(f"❌ Error creating capsule: {str(e)}")
+                st.error(f"[ERROR] Error creating capsule: {str(e)}")
 
 
 def create_perspective_form(engine, confidence, reasoning_list):
@@ -427,7 +431,7 @@ def create_perspective_form(engine, confidence, reasoning_list):
                         },
                     )
                 st.success(
-                    f"✅ Perspective Capsule created with ID: {capsule.capsule_id}"
+                    f"[OK] Perspective Capsule created with ID: {capsule.capsule_id}"
                 )
 
                 # If this is a fork, offer to simulate a perspective fork
@@ -443,11 +447,11 @@ def create_perspective_form(engine, confidence, reasoning_list):
                             perspective_description=description,
                         )
                         st.success(
-                            f"✅ Perspective fork chain simulated with ID: {fork_capsule.capsule_id}"
+                            f"[OK] Perspective fork chain simulated with ID: {fork_capsule.capsule_id}"
                         )
 
             except Exception as e:
-                st.error(f"❌ Error creating capsule: {str(e)}")
+                st.error(f"[ERROR] Error creating capsule: {str(e)}")
 
 
 def create_lifecycle_form(engine, confidence, reasoning_list):
@@ -518,9 +522,11 @@ def create_lifecycle_form(engine, confidence, reasoning_list):
                             "expected_duration": duration,
                         },
                     )
-                st.success(f"✅ Lifecycle Capsule created with ID: {capsule.capsule_id}")
+                st.success(
+                    f"[OK] Lifecycle Capsule created with ID: {capsule.capsule_id}"
+                )
             except Exception as e:
-                st.error(f"❌ Error creating capsule: {str(e)}")
+                st.error(f"[ERROR] Error creating capsule: {str(e)}")
 
 
 def create_embodied_form(engine, confidence, reasoning_list):
@@ -627,9 +633,11 @@ def create_embodied_form(engine, confidence, reasoning_list):
                             "spatial_reference": spatial_reference,
                         },
                     )
-                st.success(f"✅ Embodied Capsule created with ID: {capsule.capsule_id}")
+                st.success(
+                    f"[OK] Embodied Capsule created with ID: {capsule.capsule_id}"
+                )
             except Exception as e:
-                st.error(f"❌ Error creating capsule: {str(e)}")
+                st.error(f"[ERROR] Error creating capsule: {str(e)}")
 
 
 def create_ancestral_knowledge_form(engine, confidence, reasoning_list):
@@ -705,7 +713,7 @@ def create_ancestral_knowledge_form(engine, confidence, reasoning_list):
                         },
                     )
                 st.success(
-                    f"✅ Ancestral Knowledge Capsule created with ID: {capsule.capsule_id}"
+                    f"[OK] Ancestral Knowledge Capsule created with ID: {capsule.capsule_id}"
                 )
             except Exception as e:
-                st.error(f"❌ Error creating capsule: {str(e)}")
+                st.error(f"[ERROR] Error creating capsule: {str(e)}")

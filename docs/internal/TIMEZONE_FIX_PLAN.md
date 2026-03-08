@@ -18,15 +18,15 @@ $ grep -r "datetime.utcnow()" src/ --include="*.py" | wc -l
 ```
 
 ### Critical Files Affected:
-- ✅ `src/api/capsules_fastapi_router.py` (FIXED - main capsule creation)
-- ❌ `src/api/health_routes.py` (health checks)
-- ❌ `src/api/federation_fastapi_router.py` (federation)
-- ❌ `src/api/economics_fastapi_router.py` (economics)
-- ❌ `src/api/governance_fastapi_router.py` (governance)
-- ❌ `src/insurance/risk_assessor.py` (insurance timestamps)
-- ❌ `src/compliance/reporting_engine.py` (compliance reports)
-- ❌ `src/auth/jwt_auth.py` (JWT token expiration - CRITICAL!)
-- ❌ And 89 more...
+- [OK] `src/api/capsules_fastapi_router.py` (FIXED - main capsule creation)
+- [ERROR] `src/api/health_routes.py` (health checks)
+- [ERROR] `src/api/federation_fastapi_router.py` (federation)
+- [ERROR] `src/api/economics_fastapi_router.py` (economics)
+- [ERROR] `src/api/governance_fastapi_router.py` (governance)
+- [ERROR] `src/insurance/risk_assessor.py` (insurance timestamps)
+- [ERROR] `src/compliance/reporting_engine.py` (compliance reports)
+- [ERROR] `src/auth/jwt_auth.py` (JWT token expiration - CRITICAL!)
+- [ERROR] And 89 more...
 
 ---
 
@@ -198,16 +198,16 @@ def main():
             total_files += 1
             total_replacements += count
             modified_files.append((py_file, count))
-            print(f"✅ Fixed {count} instances in {py_file}")
+            print(f"[OK] Fixed {count} instances in {py_file}")
 
     print("\n" + "="*70)
-    print(f"📊 Summary:")
+    print(f" Summary:")
     print(f"   Files modified: {total_files}")
     print(f"   Total replacements: {total_replacements}")
     print("="*70)
 
     if modified_files:
-        print("\n🔍 Modified files:")
+        print("\n Modified files:")
         for file_path, count in sorted(modified_files, key=lambda x: x[1], reverse=True):
             print(f"   {file_path}: {count} replacements")
 
@@ -390,11 +390,11 @@ bad-functions=
 ```markdown
 ## Timestamp Policy
 
-❌ **NEVER use:**
+[ERROR] **NEVER use:**
 - `datetime.utcnow()` - Creates naive datetime
 - `datetime.now()` - Uses local timezone
 
-✅ **ALWAYS use:**
+[OK] **ALWAYS use:**
 - `from src.utils.timezone_utils import utc_now`
 - `timestamp = utc_now()`
 
@@ -483,9 +483,9 @@ def validate_timestamp(timestamp: datetime, context: str = "") -> bool:
 - **JWT Risk**: Token expiration times 8 hours off (security issue!)
 
 ### After Fix:
-- ✅ All new data has correct timestamps
-- ✅ Old data can be migrated
-- ✅ Prevention mechanisms in place
+- [OK] All new data has correct timestamps
+- [OK] Old data can be migrated
+- [OK] Prevention mechanisms in place
 
 ---
 

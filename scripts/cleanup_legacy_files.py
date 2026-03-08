@@ -132,18 +132,18 @@ def create_cleanup_plan(analysis: Dict) -> Dict:
 def execute_cleanup(plan: Dict, dry_run: bool = True):
     """Execute the cleanup plan."""
 
-    print(f"🧹 Executing cleanup plan (dry_run={dry_run})")
+    print(f" Executing cleanup plan (dry_run={dry_run})")
     print("=" * 60)
 
     # Remove legacy files
-    print(f"\n📁 Removing {len(plan['remove'])} legacy files:")
+    print(f"\n Removing {len(plan['remove'])} legacy files:")
     for file_path in plan["remove"]:
         print(f"   - {file_path.name}")
         if not dry_run:
             file_path.unlink()
 
     # Move demo files
-    print(f"\n📦 Moving {len(plan['move_to_examples'])} demo files to examples/:")
+    print(f"\n Moving {len(plan['move_to_examples'])} demo files to examples/:")
     examples_dir = Path("/Users/kay/uatp-capsule-engine/examples")
     examples_dir.mkdir(exist_ok=True)
 
@@ -154,7 +154,7 @@ def execute_cleanup(plan: Dict, dry_run: bool = True):
             shutil.move(str(file_path), str(dest))
 
     # Move test files
-    print(f"\n🧪 Moving {len(plan['move_to_tests'])} test files to tests/:")
+    print(f"\n Moving {len(plan['move_to_tests'])} test files to tests/:")
     tests_dir = Path("/Users/kay/uatp-capsule-engine/tests")
     tests_dir.mkdir(exist_ok=True)
 
@@ -244,13 +244,13 @@ def main():
 
     args = parser.parse_args()
 
-    print("🔍 UATP Codebase Cleanup Analysis")
+    print(" UATP Codebase Cleanup Analysis")
     print("=" * 60)
 
     # Analyze current state
     analysis = analyze_codebase()
 
-    print("📊 Analysis Results:")
+    print(" Analysis Results:")
     print(f"   - Total Python files: {analysis['total_python_files']}")
     print(f"   - Properly organized: {analysis['src_files']}")
     print(f"   - Root clutter: {analysis['root_clutter']} files")
@@ -268,13 +268,13 @@ def main():
         with open("docs/CODEBASE_CLEANUP_REPORT.md", "w") as f:
             f.write(report)
 
-        print("\n📋 Cleanup report generated: docs/CODEBASE_CLEANUP_REPORT.md")
+        print("\n Cleanup report generated: docs/CODEBASE_CLEANUP_REPORT.md")
 
     # Execute cleanup
     execute_cleanup(plan, dry_run=not args.execute)
 
     if not args.execute:
-        print("\n💡 This was a dry run. Use --execute to actually perform cleanup.")
+        print("\n This was a dry run. Use --execute to actually perform cleanup.")
         print("   Use --report to generate detailed cleanup report.")
 
     return True

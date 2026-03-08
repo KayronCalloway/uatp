@@ -462,14 +462,14 @@ After line 256 (in the reasoning steps map), add:
 {/* Bottleneck indicator */}
 {capsule.payload?.critical_path_analysis?.bottleneck_steps?.includes(step.step_id) && (
   <div className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded mt-1">
-    ⚠️ Bottleneck - Consider improving this step
+    [WARN] Bottleneck - Consider improving this step
   </div>
 )}
 
 {/* Decision point indicator */}
 {capsule.payload?.critical_path_analysis?.key_decision_points?.includes(step.step_id) && (
   <div className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded mt-1">
-    🔀 Key Decision Point
+     Key Decision Point
   </div>
 )}
 ```
@@ -486,7 +486,7 @@ Add after line 272 (confidence badge):
     {/* Boosting factors */}
     {step.measurements.confidence_explanation.boosting_factors?.length > 0 && (
       <div className="mb-2">
-        <div className="text-green-700 font-medium">✓ Boosting factors:</div>
+        <div className="text-green-700 font-medium"> Boosting factors:</div>
         <ul className="text-green-600 list-disc list-inside ml-2">
           {step.measurements.confidence_explanation.boosting_factors.map((factor: string, i: number) => (
             <li key={i}>{factor}</li>
@@ -498,7 +498,7 @@ Add after line 272 (confidence badge):
     {/* Limiting factors */}
     {step.measurements.confidence_explanation.limiting_factors?.length > 0 && (
       <div className="mb-2">
-        <div className="text-red-700 font-medium">⚠ Limiting factors:</div>
+        <div className="text-red-700 font-medium">[WARN] Limiting factors:</div>
         <ul className="text-red-600 list-disc list-inside ml-2">
           {step.measurements.confidence_explanation.limiting_factors.map((factor: string, i: number) => (
             <li key={i}>{factor}</li>
@@ -510,7 +510,7 @@ Add after line 272 (confidence badge):
     {/* Improvement suggestions */}
     {step.measurements.confidence_explanation.improvement_suggestions?.length > 0 && (
       <div>
-        <div className="text-blue-700 font-medium">💡 To improve:</div>
+        <div className="text-blue-700 font-medium"> To improve:</div>
         <ul className="text-blue-600 list-disc list-inside ml-2">
           {step.measurements.confidence_explanation.improvement_suggestions.map((suggestion: string, i: number) => (
             <li key={i}>{suggestion}</li>
@@ -532,7 +532,7 @@ Add after line 386 (session metadata display):
   <div className="space-y-3">
     {capsule.payload.session_metadata.user_goal && (
       <div className="bg-blue-50 border border-blue-200 rounded p-3">
-        <div className="text-sm font-medium text-blue-900">🎯 User Goal</div>
+        <div className="text-sm font-medium text-blue-900"> User Goal</div>
         <div className="text-sm text-blue-700 mt-1">{capsule.payload.session_metadata.user_goal}</div>
       </div>
     )}
@@ -551,14 +551,14 @@ Add after line 386 (session metadata display):
 
     {capsule.payload.session_metadata.success_criteria && (
       <div className="bg-green-50 border border-green-200 rounded p-3 mt-2">
-        <div className="text-sm font-medium text-green-900">✓ Success Criteria</div>
+        <div className="text-sm font-medium text-green-900"> Success Criteria</div>
         <div className="text-sm text-green-700 mt-1">{capsule.payload.session_metadata.success_criteria}</div>
       </div>
     )}
 
     {capsule.payload.session_metadata.constraints && Object.keys(capsule.payload.session_metadata.constraints).length > 0 && (
       <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mt-2">
-        <div className="text-sm font-medium text-yellow-900">⚠️ Constraints</div>
+        <div className="text-sm font-medium text-yellow-900">[WARN] Constraints</div>
         <div className="text-sm text-yellow-700 mt-1">
           {Object.entries(capsule.payload.session_metadata.constraints).map(([key, value]: [string, any]) => (
             <div key={key}>• {key.replace(/_/g, ' ')}: {String(value)}</div>
@@ -578,7 +578,7 @@ Add after line 367 (confidence methodology):
 {/* Critical path analysis summary */}
 {capsule.payload?.critical_path_analysis && (
   <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
-    <div className="text-sm font-medium text-orange-900 mb-3">🎯 Critical Path Analysis</div>
+    <div className="text-sm font-medium text-orange-900 mb-3"> Critical Path Analysis</div>
 
     <div className="grid grid-cols-2 gap-4 text-sm">
       <div>
@@ -598,7 +598,7 @@ Add after line 367 (confidence methodology):
 
     {capsule.payload.critical_path_analysis.weakest_link && (
       <div className="mt-3 bg-red-50 border border-red-200 rounded p-2">
-        <div className="text-xs font-medium text-red-800">⚠️ Weakest Link:</div>
+        <div className="text-xs font-medium text-red-800">[WARN] Weakest Link:</div>
         <div className="text-xs text-red-700 mt-1">
           Step {capsule.payload.critical_path_analysis.weakest_link.step_id}
           ({(capsule.payload.critical_path_analysis.weakest_link.confidence * 100).toFixed(1)}% confidence)
@@ -704,11 +704,11 @@ Add after line 367 (confidence methodology):
 
 After implementing these enhancements:
 
-✅ **Context Completeness**: +40% - We'll know WHY conversations happened
-✅ **Decision Clarity**: +35% - Critical path shows what mattered most
-✅ **Confidence Understanding**: +50% - Users can see why confidence is what it is
-✅ **Debugging Speed**: +30% - Easier to identify weak points in reasoning
-✅ **Trust**: +25% - More transparency builds trust
+[OK] **Context Completeness**: +40% - We'll know WHY conversations happened
+[OK] **Decision Clarity**: +35% - Critical path shows what mattered most
+[OK] **Confidence Understanding**: +50% - Users can see why confidence is what it is
+[OK] **Debugging Speed**: +30% - Easier to identify weak points in reasoning
+[OK] **Trust**: +25% - More transparency builds trust
 
 These improvements require minimal code changes but provide substantial value in understanding and improving reasoning quality.
 

@@ -10,8 +10,7 @@ performance metrics with historical baselines.
 import json
 import os
 import sys
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List
 
 # Performance thresholds
 PERFORMANCE_THRESHOLDS = {
@@ -40,7 +39,7 @@ def load_performance_data(reports_dir: str = "reports") -> List[Dict[str, Any]]:
     performance_data = []
 
     if not os.path.exists(reports_dir):
-        print(f"⚠️ Reports directory not found: {reports_dir}")
+        print(f"[WARN] Reports directory not found: {reports_dir}")
         return performance_data
 
     # Find all performance report files
@@ -49,12 +48,12 @@ def load_performance_data(reports_dir: str = "reports") -> List[Dict[str, Any]]:
             filepath = os.path.join(reports_dir, filename)
 
             try:
-                with open(filepath, "r") as f:
+                with open(filepath) as f:
                     data = json.load(f)
                     data["filename"] = filename
                     performance_data.append(data)
             except Exception as e:
-                print(f"❌ Error loading {filename}: {e}")
+                print(f"[ERROR] Error loading {filename}: {e}")
 
     # Sort by timestamp
     performance_data.sort(key=lambda x: x.get("timestamp", ""))
@@ -193,23 +192,23 @@ def check_regression(
 def main():
     """Main performance regression check."""
 
-    print("📊 UATP Performance Regression Check")
+    print(" UATP Performance Regression Check")
     print("=" * 50)
 
     # Load performance data
     performance_data = load_performance_data()
 
     if not performance_data:
-        print("❌ No performance data found")
+        print("[ERROR] No performance data found")
         sys.exit(1)
 
-    print(f"📈 Found {len(performance_data)} performance reports")
+    print(f" Found {len(performance_data)} performance reports")
 
     # Get current (latest) metrics
     current_report = performance_data[-1]
     current_metrics = extract_key_metrics(current_report)
 
-    print(f"\\n🔍 Current Performance Metrics:")
+    print("\\n Current Performance Metrics:")
     for metric, value in current_metrics.items():
         print(f"   {metric}: {value:.3f}")
 
@@ -217,11 +216,11 @@ def main():
     threshold_violations = check_thresholds(current_metrics)
 
     if threshold_violations:
-        print(f"\\n⚠️ Threshold Violations:")
+        print("\\n[WARN] Threshold Violations:")
         for violation in threshold_violations:
             print(f"   - {violation}")
     else:
-        print(f"\\n✅ All performance thresholds met")
+        print("\\n[OK] All performance thresholds met")
 
     # Check for regressions
     if len(performance_data) > 1:
@@ -231,13 +230,13 @@ def main():
         regressions = check_regression(current_metrics, historical_data)
 
         if regressions:
-            print(f"\\n🔴 Performance Regressions Detected:")
+            print("\\n Performance Regressions Detected:")
             for regression in regressions:
                 print(f"   - {regression}")
         else:
-            print(f"\\n✅ No performance regressions detected")
+            print("\\n[OK] No performance regressions detected")
     else:
-        print(f"\\n🔄 Not enough historical data for regression analysis")
+        print("\\n Not enough historical data for regression analysis")
 
     # Generate summary
     total_issues = (
@@ -247,10 +246,10 @@ def main():
     )
 
     if total_issues == 0:
-        print(f"\\n🎉 Performance check passed!")
+        print("\\n Performance check passed!")
         sys.exit(0)
     else:
-        print(f"\\n❌ Performance check failed with {total_issues} issues")
+        print(f"\\n[ERROR] Performance check failed with {total_issues} issues")
         sys.exit(1)
 
 

@@ -41,19 +41,19 @@ def main():
 
     for file_path in files_to_fix:
         if not file_path.exists():
-            print(f"⚠️  File not found: {file_path}")
+            print(f"[WARN]  File not found: {file_path}")
             continue
 
         modified, count = fix_file(file_path)
         if modified:
-            print(f"✅ Fixed {count} import(s) in {file_path.name}")
+            print(f"[OK] Fixed {count} import(s) in {file_path.name}")
             total_fixes += count
         else:
             print(f"  No changes needed in {file_path.name}")
 
-    print(f"\n📊 Total imports fixed: {total_fixes}")
+    print(f"\n Total imports fixed: {total_fixes}")
     if total_fixes > 0:
-        print("✅ All import paths corrected!")
+        print("[OK] All import paths corrected!")
 
 
 if __name__ == "__main__":

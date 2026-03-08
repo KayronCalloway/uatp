@@ -362,7 +362,7 @@ async def forgot_password(
                     f"No email provider configured. Password reset token: {reset_token}"
                 )
                 logger.info(
-                    f"Add SENDGRID_API_KEY to enable email delivery in production"
+                    "Add SENDGRID_API_KEY to enable email delivery in production"
                 )
 
         except ImportError:
@@ -530,7 +530,7 @@ async def verify_token_endpoint(
 
 # Example usage and testing
 if __name__ == "__main__":
-    print("🔐 Authentication routes module loaded")
+    print(" Authentication routes module loaded")
     print("Available endpoints:")
     print("  POST /api/v1/auth/register")
     print("  POST /api/v1/auth/login")

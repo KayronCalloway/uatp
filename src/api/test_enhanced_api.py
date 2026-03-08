@@ -71,19 +71,19 @@ class UATAPITester:
         response = requests.get(f"{self.base_url}/capsules", headers=headers)
 
         if response.status_code == 200:
-            print("✅ Authentication successful with API key")
+            print("[OK] Authentication successful with API key")
         else:
-            print(f"❌ Authentication failed with API key: {response.status_code}")
+            print(f"[ERROR] Authentication failed with API key: {response.status_code}")
             print(f"Response: {response.text}")
 
         # Test without API key (should fail if auth is enabled)
         if self.api_key:
             response_no_key = requests.get(f"{self.base_url}/capsules")
             if response_no_key.status_code == 401:
-                print("✅ Authentication correctly rejected request without API key")
+                print("[OK] Authentication correctly rejected request without API key")
             else:
                 print(
-                    f"⚠️ Request without API key returned status {response_no_key.status_code}"
+                    f"[WARN] Request without API key returned status {response_no_key.status_code}"
                 )
 
     def test_rate_limiting(self):
@@ -124,10 +124,10 @@ class UATAPITester:
         limited_count = sum(1 for r in results if r["limited"])
         if limited_count > 0:
             print(
-                f"✅ Rate limiting working: {limited_count} of {request_count} requests were limited"
+                f"[OK] Rate limiting working: {limited_count} of {request_count} requests were limited"
             )
         else:
-            print("⚠️ No rate limiting detected, all requests succeeded")
+            print("[WARN] No rate limiting detected, all requests succeeded")
 
     def test_compression(self):
         """Test compression of the full capsule list."""
@@ -136,7 +136,9 @@ class UATAPITester:
         # Get uncompressed list size
         response_normal = self.session.get(f"{self.base_url}/capsules?compress=false")
         if response_normal.status_code != 200:
-            print(f"❌ Failed to get normal capsule list: {response_normal.status_code}")
+            print(
+                f"[ERROR] Failed to get normal capsule list: {response_normal.status_code}"
+            )
             return
         normal_size = len(response_normal.content)
 
@@ -146,7 +148,7 @@ class UATAPITester:
         )
         if response_compressed.status_code != 200:
             print(
-                f"❌ Failed to get compressed capsule list: {response_compressed.status_code}"
+                f"[ERROR] Failed to get compressed capsule list: {response_compressed.status_code}"
             )
             return
 
@@ -154,20 +156,20 @@ class UATAPITester:
         compressed_data = response_compressed.json()
 
         if compressed_data.get("compressed") and "data" in compressed_data:
-            print("✅ Received correctly formatted compressed response.")
+            print("[OK] Received correctly formatted compressed response.")
             # To verify, we decompress and check the data, but for size comparison,
             # we use the raw response sizes.
             try:
                 decompressed_data = self.decompress_data(compressed_data["data"])
                 print(
-                    f"✅ Decompressed data successfully. (contains {len(decompressed_data)} capsules)"
+                    f"[OK] Decompressed data successfully. (contains {len(decompressed_data)} capsules)"
                 )
             except Exception as e:
-                print(f"❌ Failed to decompress data: {e}")
+                print(f"[ERROR] Failed to decompress data: {e}")
 
         if compressed_response_size < normal_size:
             ratio = (1 - compressed_response_size / normal_size) * 100
-            print(f"✅ Compression successful! Ratio: {ratio:.1f}%")
+            print(f"[OK] Compression successful! Ratio: {ratio:.1f}%")
         else:
             ratio = (
                 (compressed_response_size / normal_size - 1) * 100
@@ -177,7 +179,7 @@ class UATAPITester:
             print(f"Normal response size: {normal_size} bytes")
             print(f"Compressed response size: {compressed_response_size} bytes")
             print(f"Compression ratio: {ratio:.1f}%")
-            print("⚠️ Compression was not effective.")
+            print("[WARN] Compression was not effective.")
 
     def test_chain_sealing(self):
         """Test chain sealing functionality"""
@@ -187,7 +189,7 @@ class UATAPITester:
         response = self.session.get(f"{self.base_url}/chain/seals")
 
         if response.status_code != 200:
-            print(f"❌ Failed to list chain seals: {response.status_code}")
+            print(f"[ERROR] Failed to list chain seals: {response.status_code}")
             print(f"Response: {response.text}")
             return
 
@@ -205,17 +207,17 @@ class UATAPITester:
         response = self.session.post(f"{self.base_url}/chain/seal", json=seal_data)
 
         if response.status_code != 200:
-            print(f"❌ Failed to create chain seal: {response.status_code}")
+            print(f"[ERROR] Failed to create chain seal: {response.status_code}")
             print(f"Response: {response.text}")
             return
 
         new_seal = response.json().get("seal", {})
-        print(f"✅ Created new chain seal: {new_seal.get('seal_id')}")
+        print(f"[OK] Created new chain seal: {new_seal.get('seal_id')}")
 
         # Verify the seal
         verify_key = new_seal.get("verify_key")
         if not verify_key:
-            print("❌ No verify key in seal response")
+            print("[ERROR] No verify key in seal response")
             return
 
         response = self.session.get(
@@ -224,15 +226,17 @@ class UATAPITester:
         )
 
         if response.status_code != 200:
-            print(f"❌ Failed to verify chain seal: {response.status_code}")
+            print(f"[ERROR] Failed to verify chain seal: {response.status_code}")
             print(f"Response: {response.text}")
             return
 
         verify_result = response.json()
         if verify_result.get("verified"):
-            print("✅ Chain seal verified successfully")
+            print("[OK] Chain seal verified successfully")
         else:
-            print(f"❌ Chain seal verification failed: {verify_result.get('error')}")
+            print(
+                f"[ERROR] Chain seal verification failed: {verify_result.get('error')}"
+            )
 
     def test_capsule_stats(self):
         """Test capsule statistics endpoint"""
@@ -241,7 +245,7 @@ class UATAPITester:
         response = self.session.get(f"{self.base_url}/capsules/stats")
 
         if response.status_code != 200:
-            print(f"❌ Failed to get capsule statistics: {response.status_code}")
+            print(f"[ERROR] Failed to get capsule statistics: {response.status_code}")
             print(f"Response: {response.text}")
             return
 
@@ -267,11 +271,11 @@ class UATAPITester:
         try:
             response = requests.get(f"{self.base_url}/health")
             if response.status_code == 200:
-                print(f"✅ Server is running on {self.base_url}")
+                print(f"[OK] Server is running on {self.base_url}")
             else:
                 raise ConnectionError(f"Server responded with {response.status_code}")
         except requests.ConnectionError as e:
-            print("❌ Server failed to start.")
+            print("[ERROR] Server failed to start.")
             self.stop_server()
             raise e
 
@@ -281,7 +285,7 @@ class UATAPITester:
             print("\nShutting down server...")
             os.killpg(os.getpgid(self.server_process.pid), signal.SIGTERM)
             self.server_process.wait()
-            print("✅ Server shut down.")
+            print("[OK] Server shut down.")
 
     def run_all_tests(self):
         """Run all test cases, managing the server lifecycle."""
@@ -300,7 +304,7 @@ class UATAPITester:
 
             print("\n===== All Tests Completed =====")
         except Exception as e:
-            print(f"❌ A critical error occurred during testing: {e}")
+            print(f"[ERROR] A critical error occurred during testing: {e}")
         finally:
             self.stop_server()
 

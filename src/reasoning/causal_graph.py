@@ -498,7 +498,7 @@ class CausalGraphBuilder:
 
 # Example usage
 if __name__ == "__main__":
-    print("✅ Causal Graph Construction Ready")
+    print("[OK] Causal Graph Construction Ready")
     print("\nCapabilities:")
     print("  - Build causal DAGs from reasoning capsules")
     print("  - Extract causal variables and relationships")

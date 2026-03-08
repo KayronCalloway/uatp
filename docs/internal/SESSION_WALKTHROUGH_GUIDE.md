@@ -1,20 +1,20 @@
-# 📚 Session Walkthrough System - Token-Saving Guide
+#  Session Walkthrough System - Token-Saving Guide
 
 ## Purpose
 Automatically generate session documentation to avoid wasting tokens on "what did we do last time?" recaps.
 
 ## How It Works
 
-### 🔄 Automatic Generation
+###  Automatic Generation
 When you end a session, a walkthrough is **automatically created** with:
-- ✅ Key accomplishments
-- 🎯 Important decisions made
-- 📝 Next steps / TODOs
-- 💬 Conversation summary
-- 🏷️ Topics covered
-- 📊 Token usage stats
+- [OK] Key accomplishments
+-  Important decisions made
+-  Next steps / TODOs
+-  Conversation summary
+-  Topics covered
+-  Token usage stats
 
-### 📁 Storage Location
+###  Storage Location
 ```
 ~/.uatp/session_walkthroughs/
 ```
@@ -30,12 +30,12 @@ Each walkthrough is named: `session_YYYYMMDD_HHMMSS_<session_id>.md`
 
 **Output:**
 ```
-🏁 Ending Claude Code session and creating final RICH capsule...
-✨ Created RICH capsule caps_2025_12_06_...
-📝 Generating session walkthrough documentation...
-✅ Walkthrough saved: ~/.uatp/session_walkthroughs/session_20251206_175501_0ae4f5a2.md
-✅ Session ended. You can start a new session on your next message.
-💡 Tip: Run './show_last_session.sh' at next session start to avoid recap!
+ Ending Claude Code session and creating final RICH capsule...
+ Created RICH capsule caps_2025_12_06_...
+ Generating session walkthrough documentation...
+[OK] Walkthrough saved: ~/.uatp/session_walkthroughs/session_20251206_175501_0ae4f5a2.md
+[OK] Session ended. You can start a new session on your next message.
+ Tip: Run './show_last_session.sh' at next session start to avoid recap!
 ```
 
 ### 2️⃣ Start New Session (Show last walkthrough)
@@ -72,27 +72,27 @@ python3 generate_session_walkthrough.py --latest
 **Messages:** 23
 **Tokens Used:** ~5,234
 **Significance:** 0.85
-**Capsule Created:** ✅ Yes
+**Capsule Created:** [OK] Yes
 
 ---
 
-## 📋 Topics Covered
+##  Topics Covered
 - Python Programming
 - API Development
 - UATP System Integration
 
 ---
 
-## ✅ Key Accomplishments
+## [OK] Key Accomplishments
 
-- ✅ Implemented rich capture system for Claude Code
-- ✅ Integrated Antigravity with uniform metadata
-- ✅ Created automatic walkthrough generator
-- ✅ Set up global hooks for all projects
+- [OK] Implemented rich capture system for Claude Code
+- [OK] Integrated Antigravity with uniform metadata
+- [OK] Created automatic walkthrough generator
+- [OK] Set up global hooks for all projects
 
 ---
 
-## 🎯 Important Decisions
+##  Important Decisions
 
 - Decided to use hook-based capture instead of background service
 - Chose to store walkthroughs in ~/.uatp/session_walkthroughs/
@@ -100,7 +100,7 @@ python3 generate_session_walkthrough.py --latest
 
 ---
 
-## 📝 Next Steps / TODO
+##  Next Steps / TODO
 
 - [ ] Test walkthrough generation with longer sessions
 - [ ] Add support for searching past walkthroughs
@@ -109,15 +109,15 @@ python3 generate_session_walkthrough.py --latest
 
 ---
 
-## 💬 Conversation Summary
+##  Conversation Summary
 
 Total exchanges: 12
 
 ### Flow:
-1. 👤 Can you create an automatic walkthrough system?
-2. 🤖 Absolutely! I'll create a system that generates session docs...
-3. 👤 Make it extract key accomplishments and decisions
-4. 🤖 Done! Here's the walkthrough generator with...
+1.  Can you create an automatic walkthrough system?
+2.  Absolutely! I'll create a system that generates session docs...
+3.  Make it extract key accomplishments and decisions
+4.  Done! Here's the walkthrough generator with...
 ... and 19 more messages
 ```
 
@@ -184,7 +184,7 @@ sqlite3 /Users/kay/uatp-capsule-engine/live_capture.db \
 
 ---
 
-## 🎯 Best Practices
+##  Best Practices
 
 1. **End sessions properly** - Always run `./end_claude_session.sh`
 2. **Review walkthrough** - Glance at it before starting new work
@@ -193,4 +193,4 @@ sqlite3 /Users/kay/uatp-capsule-engine/live_capture.db \
 
 ---
 
-**Token savings add up!** Over 20 sessions, you'll save **3,000-9,000 tokens** 💰
+**Token savings add up!** Over 20 sessions, you'll save **3,000-9,000 tokens**

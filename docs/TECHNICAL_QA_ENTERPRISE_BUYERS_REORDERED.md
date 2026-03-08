@@ -5,34 +5,34 @@
 
 ## How to Read This Document
 
-📖 **New to UATP?** Start with Sections 1-2 (Product overview, pricing)
-🔧 **Evaluating integration?** Jump to Sections 3-4 (APIs, policies)  
-⚙️ **Preparing for production?** Read Sections 5-6 (Ops, security)
-🔬 **Need technical validation?** Deep dive into Sections 7-8 (Data, crypto)
+ **New to UATP?** Start with Sections 1-2 (Product overview, pricing)
+ **Evaluating integration?** Jump to Sections 3-4 (APIs, policies)
+ **Preparing for production?** Read Sections 5-6 (Ops, security)
+ **Need technical validation?** Deep dive into Sections 7-8 (Data, crypto)
 
 ---
 
 ## Table of Contents
 
-### 📘 Understanding UATP (Start Here)
+###  Understanding UATP (Start Here)
 1. [Product Experience](#1-product-experience)
 2. [Commercials & Risk](#2-commercials--risk)
 
-### 🔧 Using UATP (Integration)
+###  Using UATP (Integration)
 3. [Integration Surface](#3-integration-surface)
 4. [Enforcement & Governance](#4-enforcement--governance)
 
-### ⚙️ Operating UATP (Production)
+###  Operating UATP (Production)
 5. [Deployment, Reliability & Ops](#5-deployment-reliability--ops)
 
-### 🔬 Technical Deep Dives (Advanced)
+###  Technical Deep Dives (Advanced)
 6. [Security & Compliance](#6-security--compliance)
 7. [Data Handling Nuances](#7-data-handling-nuances)
 8. [Capsule Integrity & Crypto Details](#8-capsule-integrity--crypto-details)
 
 ---
 
-## ✅ Summary
+## [OK] Summary
 
 This Q&A document covers the 8 major categories of questions that enterprise buyers, security teams, compliance officers, and engineering teams typically ask:
 
@@ -46,11 +46,11 @@ This Q&A document covers the 8 major categories of questions that enterprise buy
 8. **Commercials & Risk** - Pricing, references, pilot milestones, offboarding
 
 **Key Themes:**
-- ✅ **Transparency**: Honest about what works, what's early-stage, what's theoretical
-- ✅ **Flexibility**: Multiple options for deployment, pricing, data handling
-- ✅ **No Lock-In**: Full data export, verification scripts, self-hosted option
-- ✅ **Enterprise-Ready**: RBAC, SSO, multi-region, compliance templates
-- ✅ **Pragmatic**: We provide 80% out-of-box, you customize the 20%
+- [OK] **Transparency**: Honest about what works, what's early-stage, what's theoretical
+- [OK] **Flexibility**: Multiple options for deployment, pricing, data handling
+- [OK] **No Lock-In**: Full data export, verification scripts, self-hosted option
+- [OK] **Enterprise-Ready**: RBAC, SSO, multi-region, compliance templates
+- [OK] **Pragmatic**: We provide 80% out-of-box, you customize the 20%
 
 **How to Use This Document:**
 - Send to prospects during discovery

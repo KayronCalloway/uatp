@@ -8,7 +8,7 @@ This is a condensed version for experienced DevOps engineers. For complete detai
 
 ---
 
-## Prerequisites ✅
+## Prerequisites [OK]
 
 - Kubernetes cluster (1.25+, 3+ nodes)
 - kubectl configured
@@ -19,7 +19,7 @@ This is a condensed version for experienced DevOps engineers. For complete detai
 
 ---
 
-## 🚀 Deploy in 5 Steps
+##  Deploy in 5 Steps
 
 ### 1️⃣ Build & Push Image
 
@@ -98,7 +98,7 @@ kubectl logs -f -l app=uatp-api -n uatp-production
 
 ---
 
-## 📊 Key Metrics
+##  Key Metrics
 
 **Default Configuration:**
 - **Replicas:** 3 (min) → 20 (max)
@@ -109,7 +109,7 @@ kubectl logs -f -l app=uatp-api -n uatp-production
 
 ---
 
-## 🔧 Common Operations
+##  Common Operations
 
 ### Scale Manually
 ```bash
@@ -140,7 +140,7 @@ kubectl exec -it <pod-name> -n uatp-production -- /bin/bash
 
 ---
 
-## 🐛 Quick Troubleshooting
+##  Quick Troubleshooting
 
 ### Pods Not Starting
 ```bash
@@ -170,7 +170,7 @@ kubectl top pods -n uatp-production
 
 ---
 
-## 📋 Pre-Deployment Checklist
+##  Pre-Deployment Checklist
 
 - [ ] Docker image built and pushed
 - [ ] Secrets configured and applied
@@ -184,7 +184,7 @@ kubectl top pods -n uatp-production
 
 ---
 
-## 🔒 Security Essentials
+##  Security Essentials
 
 1. **Never commit secrets.yaml** - Add to .gitignore
 2. **Use strong signing key** - 64-character hex
@@ -196,7 +196,7 @@ kubectl top pods -n uatp-production
 
 ---
 
-## 📈 Monitoring Endpoints
+##  Monitoring Endpoints
 
 | Endpoint | Purpose |
 |----------|---------|
@@ -215,12 +215,12 @@ kubectl top pods -n uatp-production
 3. Rollback if needed: `kubectl rollout undo deployment/uatp-api -n uatp-production`
 
 **Support:**
-- GitHub Issues: [github.com/uatp/capsule-engine/issues](https://github.com/uatp/capsule-engine/issues)
-- Email: support@uatp.app
+- GitHub Issues: [github.com/KayronCalloway/capsule-engine/issues](https://github.com/KayronCalloway/capsule-engine/issues)
+- Email: Kayron@houseofcalloway.com
 
 ---
 
-## 📚 Additional Resources
+##  Additional Resources
 
 - **Full Deployment Guide:** `k8s/production/README.md`
 - **Complete Checklist:** `PRODUCTION_DEPLOYMENT_CHECKLIST.md`

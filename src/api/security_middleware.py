@@ -5,23 +5,22 @@ This middleware provides automatic security enforcement across all API routes,
 integrating the 9 AI-centric security systems into every API request/response cycle.
 """
 
-import asyncio
 import logging
 import time
 from datetime import datetime, timezone
 from functools import wraps
-from typing import Dict, List, Any, Optional, Callable
+from typing import Any, Callable, Dict
 
-from quart import request, g, jsonify, Response, current_app
+from quart import Response, current_app, g, jsonify, request
 from quart.wrappers import Response as QuartResponse
 
+from ..attribution.gaming_detector import gaming_detector
+from ..economic.circuit_breakers import circuit_breaker_manager
+from ..security.memory_timing_protection import SecurityLevel, protected_operation
 from ..security.security_manager import (
     get_security_manager,
     get_unified_security_status,
 )
-from ..security.memory_timing_protection import protected_operation, SecurityLevel
-from ..attribution.gaming_detector import gaming_detector
-from ..economic.circuit_breakers import circuit_breaker_manager
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +69,7 @@ class SecurityMiddleware:
         # Add security configuration to app config
         app.config.setdefault("SECURITY_MIDDLEWARE_CONFIG", self.config)
 
-        logger.info("🛡️ Security Middleware initialized and registered")
+        logger.info(" Security Middleware initialized and registered")
 
     async def before_request(self):
         """Security checks before processing each request."""
@@ -98,9 +97,9 @@ class SecurityMiddleware:
                 # 1. Gaming detection check
                 if self.config["enable_gaming_detection"]:
                     gaming_result = await self._check_gaming_patterns()
-                    g.security_context["security_checks"][
-                        "gaming_detection"
-                    ] = gaming_result
+                    g.security_context["security_checks"]["gaming_detection"] = (
+                        gaming_result
+                    )
 
                     if not gaming_result["allowed"]:
                         return await self._block_request(
@@ -110,9 +109,9 @@ class SecurityMiddleware:
                 # 2. Circuit breaker checks
                 if self.config["enable_circuit_breaker_checks"]:
                     circuit_result = await self._check_circuit_breakers()
-                    g.security_context["security_checks"][
-                        "circuit_breakers"
-                    ] = circuit_result
+                    g.security_context["security_checks"]["circuit_breakers"] = (
+                        circuit_result
+                    )
 
                     if not circuit_result["allowed"]:
                         return await self._block_request(
@@ -122,9 +121,9 @@ class SecurityMiddleware:
                 # 3. Request verification with security manager
                 if self.config["enable_request_verification"]:
                     verification_result = await self._verify_request_security()
-                    g.security_context["security_checks"][
-                        "request_verification"
-                    ] = verification_result
+                    g.security_context["security_checks"]["request_verification"] = (
+                        verification_result
+                    )
 
                     if not verification_result["allowed"]:
                         return await self._block_request(
@@ -134,9 +133,9 @@ class SecurityMiddleware:
                 # 4. Threat detection
                 if self.config["enable_threat_detection"]:
                     threat_result = await self._detect_threats()
-                    g.security_context["security_checks"][
-                        "threat_detection"
-                    ] = threat_result
+                    g.security_context["security_checks"]["threat_detection"] = (
+                        threat_result
+                    )
 
                     if threat_result["threats_detected"] > 0:
                         self.security_stats["threats_detected"] += threat_result[
@@ -160,13 +159,13 @@ class SecurityMiddleware:
 
                 # Log security check success
                 logger.info(
-                    f"✅ Security checks passed for {request.method} {request.path} in {security_overhead:.1f}ms"
+                    f"[OK] Security checks passed for {request.method} {request.path} in {security_overhead:.1f}ms"
                 )
 
                 return None
 
         except Exception as e:
-            logger.error(f"❌ Security middleware error: {e}")
+            logger.error(f"[ERROR] Security middleware error: {e}")
             self.security_stats["security_checks_failed"] += 1
 
             # In production, you might want to block on security errors
@@ -188,9 +187,9 @@ class SecurityMiddleware:
             # Response verification with security manager
             if self.config["enable_response_verification"]:
                 response_verification = await self._verify_response_security(response)
-                g.security_context["security_checks"][
-                    "response_verification"
-                ] = response_verification
+                g.security_context["security_checks"]["response_verification"] = (
+                    response_verification
+                )
 
                 if not response_verification["allowed"]:
                     # Replace response with security error
@@ -204,13 +203,13 @@ class SecurityMiddleware:
             # Log final security context
             total_time = (time.time() - g.security_start_time) * 1000
             logger.info(
-                f"🔒 Request completed with security: {request.method} {request.path} ({total_time:.1f}ms total)"
+                f" Request completed with security: {request.method} {request.path} ({total_time:.1f}ms total)"
             )
 
             return response
 
         except Exception as e:
-            logger.error(f"❌ After-request security error: {e}")
+            logger.error(f"[ERROR] After-request security error: {e}")
             return response
 
     def _should_skip_security_checks(self) -> bool:
@@ -403,7 +402,7 @@ class SecurityMiddleware:
 
             if sensitive_found:
                 logger.warning(
-                    f"⚠️ Potential sensitive data detected in response for {request.path}"
+                    f"[WARN] Potential sensitive data detected in response for {request.path}"
                 )
 
             return {
@@ -422,7 +421,7 @@ class SecurityMiddleware:
         self.security_stats["security_checks_failed"] += 1
 
         logger.warning(
-            f"🚫 Request blocked: {reason} for {request.method} {request.path}"
+            f" Request blocked: {reason} for {request.method} {request.path}"
         )
 
         return (
@@ -458,9 +457,9 @@ class SecurityMiddleware:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers[
-            "Strict-Transport-Security"
-        ] = "max-age=31536000; includeSubDomains"
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains"
+        )
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Content-Security-Policy"] = "default-src 'self'"
 
@@ -474,9 +473,9 @@ class SecurityMiddleware:
             passed_checks = sum(
                 1 for check in security_checks.values() if check.get("allowed", True)
             )
-            response.headers[
-                "X-UATP-Security-Checks"
-            ] = f"{passed_checks}/{len(security_checks)}"
+            response.headers["X-UATP-Security-Checks"] = (
+                f"{passed_checks}/{len(security_checks)}"
+            )
 
     def _update_security_overhead(self, overhead_ms: float) -> None:
         """Update average security overhead metrics."""
@@ -494,7 +493,7 @@ class SecurityMiddleware:
         # Log performance warning if overhead is too high
         if overhead_ms > self.config["max_security_overhead_ms"]:
             logger.warning(
-                f"⚠️ High security overhead: {overhead_ms:.1f}ms (threshold: {self.config['max_security_overhead_ms']}ms)"
+                f"[WARN] High security overhead: {overhead_ms:.1f}ms (threshold: {self.config['max_security_overhead_ms']}ms)"
             )
 
     def get_security_statistics(self) -> Dict[str, Any]:

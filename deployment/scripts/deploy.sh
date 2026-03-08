@@ -315,7 +315,7 @@ main() {
     health_check
     show_status
 
-    log "🎉 UATP production deployment completed successfully!"
+    log " UATP production deployment completed successfully!"
     log "Application is running at: https://api.uatp.example.com"
     log "Monitoring dashboard: http://localhost:3000 (port-forward required)"
 }

@@ -37,7 +37,7 @@ class ChatGPTCaptureAddon:
         self.pending_requests = {}
         self.conversations = {}
         self.loop = None
-        print("🔍 ChatGPT Capture Addon initialized")
+        print(" ChatGPT Capture Addon initialized")
 
     def load(self, loader):
         """Called when addon is loaded."""
@@ -45,9 +45,9 @@ class ChatGPTCaptureAddon:
         print("  ChatGPT Auto-Capture Proxy")
         print("=" * 70)
         print()
-        print("✅ Proxy server running on http://localhost:8888")
+        print("[OK] Proxy server running on http://localhost:8888")
         print()
-        print("📋 Configure ChatGPT Desktop App:")
+        print(" Configure ChatGPT Desktop App:")
         print("   If the app has proxy settings:")
         print("   - Go to Settings → Network/Advanced")
         print("   - Set HTTP Proxy: localhost:8888")
@@ -56,14 +56,14 @@ class ChatGPTCaptureAddon:
         print("   - Use system-wide proxy (System Preferences → Network)")
         print("   - Or the app might use system proxy automatically")
         print()
-        print("🔒 SSL Certificate:")
+        print(" SSL Certificate:")
         print("   The app might reject the proxy's SSL cert")
         print("   Install cert from: ~/.mitmproxy/mitmproxy-ca-cert.pem")
         print("   (macOS: Open file, add to Keychain, trust for SSL)")
         print()
         print("=" * 70)
         print()
-        print("🎯 Listening for ChatGPT traffic...")
+        print(" Listening for ChatGPT traffic...")
         print()
 
         # Initialize database connection in background
@@ -74,9 +74,9 @@ class ChatGPTCaptureAddon:
         try:
             self.db = DatabaseManager()
             await self.db.connect()
-            print("✅ Database connected - ready to capture!")
+            print("[OK] Database connected - ready to capture!")
         except Exception as e:
-            print(f"❌ Database connection failed: {e}")
+            print(f"[ERROR] Database connection failed: {e}")
 
     def request(self, flow: http.HTTPFlow):
         """Intercept outgoing requests."""
@@ -99,7 +99,7 @@ class ChatGPTCaptureAddon:
                     body = json.loads(flow.request.content.decode("utf-8"))
                     self.pending_requests[flow_id]["request_body"] = body
                     model = body.get("model", "unknown")
-                    print(f"🔍 Intercepted chat request → {model}")
+                    print(f" Intercepted chat request → {model}")
                 except Exception:
                     pass
 
@@ -138,7 +138,7 @@ class ChatGPTCaptureAddon:
                 conversation_id = request_body.get("conversation_id", str(uuid.uuid4()))
 
                 if user_message and assistant_message:
-                    print(f"✅ Captured exchange ({model})")
+                    print(f"[OK] Captured exchange ({model})")
                     print(f"   User: {user_message[:60]}...")
                     print(f"   AI: {assistant_message[:60]}...")
 
@@ -154,7 +154,7 @@ class ChatGPTCaptureAddon:
                     )
 
             except Exception as e:
-                print(f"⚠️ Error processing response: {e}")
+                print(f"[WARN] Error processing response: {e}")
 
         # Clean up
         del self.pending_requests[flow_id]
@@ -172,7 +172,7 @@ class ChatGPTCaptureAddon:
         if not self.db:
             await self._init_db()
             if not self.db:
-                print("❌ Cannot capture - database not connected")
+                print("[ERROR] Cannot capture - database not connected")
                 return
 
         try:
@@ -250,10 +250,10 @@ class ChatGPTCaptureAddon:
 
             if result:
                 msg_count = len(self.conversations[conversation_id])
-                print(f"💾 Saved to UATP! (Conversation has {msg_count} messages)")
+                print(f" Saved to UATP! (Conversation has {msg_count} messages)")
 
         except Exception as e:
-            print(f"❌ Error saving to database: {e}")
+            print(f"[ERROR] Error saving to database: {e}")
             import traceback
 
             traceback.print_exc()

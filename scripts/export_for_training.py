@@ -18,7 +18,6 @@ import argparse
 import asyncio
 import json
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -29,7 +28,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.models.capsule import CapsuleModel
-
 
 DATABASE_URL = "postgresql+asyncpg://uatp_user@localhost:5432/uatp_capsule_engine"
 
@@ -322,10 +320,10 @@ Examples:
         platform_filter=args.platform,
     )
 
-    print(f"\n✅ Exported {count} examples to {args.output}")
+    print(f"\n[OK] Exported {count} examples to {args.output}")
 
     # Show sample
-    print("\n📄 Sample (first 3 lines):")
+    print("\n Sample (first 3 lines):")
     with open(args.output) as f:
         for i, line in enumerate(f):
             if i >= 3:

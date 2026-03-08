@@ -19,7 +19,7 @@ src.app_factory:create_app()
     ↓
 FastAPI Application Instance
     ↓
-Router: src/api/capsules_fastapi_router.py ✅ ACTIVE
+Router: src/api/capsules_fastapi_router.py [OK] ACTIVE
     ↓
 Database: PostgreSQL (async via SQLAlchemy)
 ```
@@ -29,7 +29,7 @@ Database: PostgreSQL (async via SQLAlchemy)
 ### Active Router (USE THIS)
 - **File**: `/src/api/capsules_fastapi_router.py`
 - **Framework**: FastAPI
-- **Status**: ✅ **ACTIVE - This is the router being used**
+- **Status**: [OK] **ACTIVE - This is the router being used**
 - **Features**:
   - Demo mode filtering (`demo_mode=false` excludes 'demo-*' capsules)
   - Environment filtering (`include_test` parameter)
@@ -40,7 +40,7 @@ Database: PostgreSQL (async via SQLAlchemy)
 ### Deprecated Router (DO NOT EDIT)
 - **File**: `/src/api/DEPRECATED_capsule_routes.py.old`
 - **Framework**: Quart (Async Flask)
-- **Status**: ⚠️ **DEPRECATED - Not used by application**
+- **Status**: [WARN] **DEPRECATED - Not used by application**
 - **Note**: This file exists for reference but is NOT loaded by the application
 
 ## Application Entry Points
@@ -198,7 +198,7 @@ curl "http://localhost:8000/capsules?include_test=true&per_page=10"
 
 ## Common Pitfalls
 
-### ⚠️ Editing the Wrong Router
+### [WARN] Editing the Wrong Router
 **Problem**: Multiple router implementations exist in the codebase (FastAPI and Quart versions).
 
 **Solution**: Always edit `src/api/capsules_fastapi_router.py`. The Quart router (`DEPRECATED_capsule_routes.py.old`) is not loaded by the application.
@@ -207,12 +207,12 @@ curl "http://localhost:8000/capsules?include_test=true&per_page=10"
 1. Check `src/app_factory.py` for which router is imported
 2. Look for the file with clear "ACTIVE ROUTER" documentation header
 
-### ⚠️ Cache Confusion
+### [WARN] Cache Confusion
 **Problem**: Response caching middleware might appear to interfere with requests.
 
 **Reality**: The cache system only sets HTTP headers, it doesn't cache actual responses at the router level.
 
-### ⚠️ Server Restarts
+### [WARN] Server Restarts
 **Problem**: Changes not applying after code edits.
 
 **Solution**:

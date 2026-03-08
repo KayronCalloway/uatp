@@ -1,11 +1,11 @@
 # UATP Documentation - Start Here
 
-## 📚 Reading Order
+##  Reading Order
 
 ### **New to UATP?**
 Start with these in order:
 
-1. **[UATP_COMPLETE_VISION.md](./UATP_COMPLETE_VISION.md)** ⭐ **START HERE**
+1. **[UATP_COMPLETE_VISION.md](./UATP_COMPLETE_VISION.md)**  **START HERE**
    - The complete chronological vision
    - Why trust → automation → attribution
    - 3 phases explained
@@ -29,7 +29,7 @@ Start with these in order:
 
 ### **2025 Market Intelligence** (NEW)
 
-5. **[UATP_2025_MARKET_ANALYSIS.md](./UATP_2025_MARKET_ANALYSIS.md)** ⭐ **READ FOR CONTEXT**
+5. **[UATP_2025_MARKET_ANALYSIS.md](./UATP_2025_MARKET_ANALYSIS.md)**  **READ FOR CONTEXT**
    - Current market conditions (late 2025)
    - AI insurance crisis analysis
    - Legal precedents (Anthropic $1.5B, chatbot lawsuits)
@@ -47,7 +47,7 @@ Start with these in order:
 
 ---
 
-## 🎯 Quick Reference by Audience
+##  Quick Reference by Audience
 
 ### **Investors:**
 Read: `UATP_COMPLETE_VISION.md` → Section "Business Models" for each phase
@@ -75,15 +75,15 @@ Then: `UATP_2025_MARKET_ANALYSIS.md` → "EU AI Act Audit Requirements"
 ### **Strategists:**
 Read all documents in order:
 1. Vision (the "why") - `UATP_COMPLETE_VISION.md`
-2. Market Analysis (the "context") - `UATP_2025_MARKET_ANALYSIS.md` ⭐ NEW
+2. Market Analysis (the "context") - `UATP_2025_MARKET_ANALYSIS.md`  NEW
 3. Roadmap (the "how") - `PHASE_1_IMPLEMENTATION_ROADMAP.md`
-4. Data Marketplace (the "opportunity") - `DATA_MARKETPLACE_IMPLEMENTATION.md` ⭐ NEW
+4. Data Marketplace (the "opportunity") - `DATA_MARKETPLACE_IMPLEMENTATION.md`  NEW
 5. VSM (the "systems thinking") - `CYBERNETIC_VSM_INTEGRATION.md`
 6. Manual (the "current state") - `COMPREHENSIVE_SYSTEM_MANUAL.md`
 
 ---
 
-## 🔑 Key Concepts
+##  Key Concepts
 
 ### **The Core Idea:**
 AI decisions can be MORE trustworthy than human decisions - IF we can provide cryptographic proof of the entire thought chain.
@@ -102,15 +102,15 @@ Phase 3: Economic Attribution
 You CANNOT skip phases. Each unlocks the next.
 
 ### **Current Status:**
-- ✅ Phase 1 tech: Built (capsules, crypto, ethics)
-- ❌ Phase 1 adoption: Missing (71 capsules, no users)
-- 📦 Phase 2/3 tech: Archived (ready when needed)
+- [OK] Phase 1 tech: Built (capsules, crypto, ethics)
+- [ERROR] Phase 1 adoption: Missing (71 capsules, no users)
+-  Phase 2/3 tech: Archived (ready when needed)
 
 **Focus:** 100% on Phase 1 adoption
 
 ---
 
-## 📋 Action Items by Role
+##  Action Items by Role
 
 ### **For Engineers:**
 1. Read `PHASE_1_IMPLEMENTATION_ROADMAP.md`
@@ -132,7 +132,7 @@ You CANNOT skip phases. Each unlocks the next.
 
 ---
 
-## ⚠️ Important Decisions Made
+## [WARN] Important Decisions Made
 
 ### **Decision 1: Phase 1 Only**
 - Archive all Phase 2/3 code
@@ -157,21 +157,21 @@ You CANNOT skip phases. Each unlocks the next.
 
 ---
 
-## 🎖️ Success Metrics
+## ️ Success Metrics
 
 ### **Phase 1 Complete When:**
-- ✅ 100 developers integrated UATP SDK
-- ✅ 1,000 end users viewing audit trails
-- ✅ 10,000 auditable decisions captured
-- ✅ 5 paying customers
-- ✅ 99.9% uptime
+- [OK] 100 developers integrated UATP SDK
+- [OK] 1,000 end users viewing audit trails
+- [OK] 10,000 auditable decisions captured
+- [OK] 5 paying customers
+- [OK] 99.9% uptime
 
 ### **Then Activate Phase 2:**
 Only after hitting Phase 1 metrics.
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### **Right Now:**
 1. Read `UATP_COMPLETE_VISION.md` (20 minutes)
@@ -195,16 +195,16 @@ Only after hitting Phase 1 metrics.
 
 ---
 
-## 🔗 External Links
+##  External Links
 
 - **Website:** https://uatp.ai (to be launched)
-- **GitHub:** https://github.com/uatp/capsule-engine
+- **GitHub:** https://github.com/KayronCalloway/capsule-engine
 - **Docs:** https://docs.uatp.ai (to be launched)
 - **Discord:** https://discord.gg/uatp (to be launched)
 
 ---
 
-## 📞 Questions?
+##  Questions?
 
 If after reading these docs you still have questions:
 
@@ -214,7 +214,7 @@ If after reading these docs you still have questions:
 
 ---
 
-## 💡 The Mental Model
+##  The Mental Model
 
 Think of UATP like **HTTP for the internet:**
 
@@ -238,7 +238,7 @@ We're building HTTP first. Everything else waits.
 
 ---
 
-## 🎯 TL;DR
+##  TL;DR
 
 1. **Read:** `UATP_COMPLETE_VISION.md` first
 2. **Understand:** Trust → Automation → Attribution (chronological)

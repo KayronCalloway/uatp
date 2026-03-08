@@ -331,4 +331,4 @@ if __name__ == "__main__":
     test_privacy_report()
     test_unauthorized_access()
     test_proof_serialization()
-    print("✅ All ZK-proof tests passed!")
+    print("[OK] All ZK-proof tests passed!")

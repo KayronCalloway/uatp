@@ -427,7 +427,7 @@ class EnhancedContextExtractor:
 
 # Example usage
 if __name__ == "__main__":
-    print("✅ Enhanced Context Extractor Ready")
+    print("[OK] Enhanced Context Extractor Ready")
     print("\nCapabilities:")
     print("  - User goal inference")
     print("  - Problem domain/type classification")

@@ -34,10 +34,10 @@ log_error() {
 }
 
 # Banner
-echo "════════════════════════════════════════════════════════════════"
-echo "   🚀 UATP Capsule Engine Installation"
+echo "================================================================"
+echo "    UATP Capsule Engine Installation"
 echo "   Unified Agent Trust Protocol - Enterprise AI Attribution"
-echo "════════════════════════════════════════════════════════════════"
+echo "================================================================"
 echo ""
 
 # Check Python version
@@ -53,9 +53,9 @@ check_python_version() {
     PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
 
     if python3 -c "import sys; exit(0 if sys.version_info >= (3, 11) else 1)"; then
-        log_success "Python $PYTHON_VERSION detected (✓ >= $PYTHON_MIN_VERSION)"
+        log_success "Python $PYTHON_VERSION detected ( >= $PYTHON_MIN_VERSION)"
     else
-        log_error "Python $PYTHON_VERSION detected (✗ < $PYTHON_MIN_VERSION required)"
+        log_error "Python $PYTHON_VERSION detected ( < $PYTHON_MIN_VERSION required)"
         log_error "Please upgrade to Python 3.11 or higher"
         exit 1
     fi
@@ -207,7 +207,7 @@ PROMETHEUS_METRICS_PORT=9090
 EOF
 
     log_success "Environment file created at $ENV_FILE"
-    log_warn "⚠️  Please edit .env file and add your API keys and configuration"
+    log_warn "[WARN]  Please edit .env file and add your API keys and configuration"
 }
 
 # Generate cryptographic keys
@@ -246,9 +246,9 @@ if os.path.exists(env_file):
     with open(env_file, 'w') as f:
         f.write(content)
 
-    print("✅ Updated .env file with generated keys")
+    print("[OK] Updated .env file with generated keys")
 else:
-    print("⚠️  .env file not found - please add keys manually")
+    print("[WARN]  .env file not found - please add keys manually")
 EOF
 
     log_success "Cryptographic keys generated"
@@ -269,24 +269,24 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "🚀 Starting UATP Capsule Engine (Development Mode)"
+echo " Starting UATP Capsule Engine (Development Mode)"
 echo "=================================================="
 
 # Activate virtual environment
 if [ -d "venv" ]; then
     source venv/bin/activate
-    echo "✅ Virtual environment activated"
+    echo "[OK] Virtual environment activated"
 else
-    echo "❌ Virtual environment not found. Run ./install.sh first"
+    echo "[ERROR] Virtual environment not found. Run ./install.sh first"
     exit 1
 fi
 
 # Load environment variables
 if [ -f ".env" ]; then
     export $(cat .env | grep -v '^#' | xargs)
-    echo "✅ Environment variables loaded"
+    echo "[OK] Environment variables loaded"
 else
-    echo "⚠️  .env file not found - using defaults"
+    echo "[WARN]  .env file not found - using defaults"
 fi
 
 # Start services in parallel
@@ -294,17 +294,17 @@ echo ""
 echo "Starting services..."
 
 # Start API server
-echo "🌐 Starting API server on port ${API_PORT:-5006}..."
+echo " Starting API server on port ${API_PORT:-5006}..."
 python -m src.api.server &
 API_PID=$!
 
 # Start visualizer (optional)
 if command -v streamlit &> /dev/null; then
-    echo "📊 Starting visualizer on port 8501..."
+    echo " Starting visualizer on port 8501..."
     streamlit run visualizer/app.py --server.headless true --server.port 8501 &
     VIZ_PID=$!
 else
-    echo "⚠️  Streamlit not installed - visualizer not started"
+    echo "[WARN]  Streamlit not installed - visualizer not started"
     VIZ_PID=""
 fi
 
@@ -315,7 +315,7 @@ if [ -n "$VIZ_PID" ]; then
 fi
 
 echo ""
-echo "🎉 UATP Capsule Engine started successfully!"
+echo " UATP Capsule Engine started successfully!"
 echo "   API: http://localhost:${API_PORT:-5006}"
 echo "   Visualizer: http://localhost:8501"
 echo "   Docs: http://localhost:${API_PORT:-5006}/docs"
@@ -323,7 +323,7 @@ echo ""
 echo "Press Ctrl+C to stop all services"
 
 # Wait for interrupt
-trap 'echo ""; echo "🛑 Stopping services..."; kill $API_PID 2>/dev/null || true; [ -n "$VIZ_PID" ] && kill $VIZ_PID 2>/dev/null || true; exit 0' INT
+trap 'echo ""; echo " Stopping services..."; kill $API_PID 2>/dev/null || true; [ -n "$VIZ_PID" ] && kill $VIZ_PID 2>/dev/null || true; exit 0' INT
 wait
 EOF
 
@@ -338,7 +338,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "🚀 Starting UATP Capsule Engine (Production Mode)"
+echo " Starting UATP Capsule Engine (Production Mode)"
 echo "================================================="
 
 # Activate virtual environment
@@ -348,7 +348,7 @@ source venv/bin/activate
 export $(cat .env | grep -v '^#' | xargs)
 
 # Start with gunicorn for production
-echo "🌐 Starting production server..."
+echo " Starting production server..."
 gunicorn --bind 0.0.0.0:${API_PORT:-5006} \
          --workers 4 \
          --worker-class uvicorn.workers.UvicornWorker \
@@ -363,14 +363,14 @@ EOF
 
 # UATP Capsule Engine - Stop Services
 
-echo "🛑 Stopping UATP Capsule Engine services..."
+echo " Stopping UATP Capsule Engine services..."
 
 # Kill API server
 if [ -f ".api.pid" ]; then
     API_PID=$(cat .api.pid)
     kill $API_PID 2>/dev/null || true
     rm .api.pid
-    echo "✅ API server stopped"
+    echo "[OK] API server stopped"
 fi
 
 # Kill visualizer
@@ -378,14 +378,14 @@ if [ -f ".viz.pid" ]; then
     VIZ_PID=$(cat .viz.pid)
     kill $VIZ_PID 2>/dev/null || true
     rm .viz.pid
-    echo "✅ Visualizer stopped"
+    echo "[OK] Visualizer stopped"
 fi
 
 # Kill any remaining processes
 pkill -f "src.api.server" 2>/dev/null || true
 pkill -f "streamlit.*visualizer" 2>/dev/null || true
 
-echo "🎉 All services stopped"
+echo " All services stopped"
 EOF
 
     # Make scripts executable
@@ -410,71 +410,71 @@ help:
 	@echo "UATP Capsule Engine - Available Commands"
 	@echo "========================================"
 	@echo ""
-	@echo "🔧 Setup & Installation:"
+	@echo " Setup & Installation:"
 	@echo "  install     Install dependencies and setup environment"
 	@echo "  clean       Clean up generated files and caches"
 	@echo ""
-	@echo "🚀 Running:"
+	@echo " Running:"
 	@echo "  dev         Start development server"
 	@echo "  prod        Start production server"
 	@echo "  stop        Stop all services"
 	@echo ""
-	@echo "🧪 Development:"
+	@echo " Development:"
 	@echo "  test        Run test suite"
 	@echo "  lint        Run code linting"
 	@echo "  format      Format code"
 	@echo ""
-	@echo "📚 Documentation:"
+	@echo " Documentation:"
 	@echo "  docs        Generate documentation"
 	@echo ""
 
 # Installation
 install:
-	@echo "📦 Installing UATP Capsule Engine..."
+	@echo " Installing UATP Capsule Engine..."
 	./install.sh
 
 # Development server
 dev:
-	@echo "🚀 Starting development server..."
+	@echo " Starting development server..."
 	./start-dev.sh
 
 # Production server
 prod:
-	@echo "🚀 Starting production server..."
+	@echo " Starting production server..."
 	./start-prod.sh
 
 # Stop services
 stop:
-	@echo "🛑 Stopping services..."
+	@echo " Stopping services..."
 	./stop.sh
 
 # Run tests
 test:
-	@echo "🧪 Running tests..."
+	@echo " Running tests..."
 	source venv/bin/activate && python -m pytest tests/ -v
 
 # Lint code
 lint:
-	@echo "🔍 Running linters..."
+	@echo " Running linters..."
 	source venv/bin/activate && \
 	flake8 src/ --max-line-length=100 --ignore=E203,W503 && \
 	mypy src/ --ignore-missing-imports
 
 # Format code
 format:
-	@echo "✨ Formatting code..."
+	@echo " Formatting code..."
 	source venv/bin/activate && \
 	black src/ tests/ --line-length=100 && \
 	isort src/ tests/
 
 # Generate documentation
 docs:
-	@echo "📚 Generating documentation..."
+	@echo " Generating documentation..."
 	python3 create_manual_formats.py
 
 # Clean up
 clean:
-	@echo "🧹 Cleaning up..."
+	@echo " Cleaning up..."
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
@@ -504,23 +504,23 @@ main() {
     create_makefile
 
     echo ""
-    echo "════════════════════════════════════════════════════════════════"
-    log_success "🎉 UATP Capsule Engine installation completed!"
-    echo "════════════════════════════════════════════════════════════════"
+    echo "================================================================"
+    log_success " UATP Capsule Engine installation completed!"
+    echo "================================================================"
     echo ""
-    echo "📋 Next Steps:"
+    echo " Next Steps:"
     echo "   1. Edit .env file with your API keys and configuration"
     echo "   2. Start development server: make dev"
     echo "   3. View API docs: http://localhost:5006/docs"
     echo "   4. View visualizer: http://localhost:8501"
     echo ""
-    echo "🔧 Available Commands:"
+    echo " Available Commands:"
     echo "   make help    - Show all available commands"
     echo "   make dev     - Start development server"
     echo "   make test    - Run test suite"
     echo "   make docs    - Generate documentation"
     echo ""
-    log_warn "⚠️  Don't forget to add your API keys to .env file!"
+    log_warn "[WARN]  Don't forget to add your API keys to .env file!"
 }
 
 # Run main function

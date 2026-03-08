@@ -17,7 +17,6 @@ import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -629,17 +628,17 @@ AI System: {ai_system}
 {'-'*70}
  CHAIN INTEGRITY
 {'-'*70}
-{'✅' if chain_integrity == 'VERIFIED' else '⚠️'} Chain Status: {chain_integrity}
-{'✅' if verified_capsules == total_capsules else '⚠️'} Capsules Traced: {verified_capsules} of {total_capsules}
-✅ Cryptographic Proofs: All Valid
-✅ Tampering Detected: None
+{'[OK]' if chain_integrity == 'VERIFIED' else '[WARN]'} Chain Status: {chain_integrity}
+{'[OK]' if verified_capsules == total_capsules else '[WARN]'} Capsules Traced: {verified_capsules} of {total_capsules}
+[OK] Cryptographic Proofs: All Valid
+[OK] Tampering Detected: None
 """
 
         # Compliance section
         summary += f"\n{'-'*70}\n COMPLIANCE CHECK\n{'-'*70}\n"
 
         for framework, status in compliance_status.items():
-            icon = "✅" if status == "compliant" else "⚠️"
+            icon = "[OK]" if status == "compliant" else "[WARN]"
             summary += f"{icon} {framework}: {status.upper()}\n"
 
             # Add details for specific frameworks
@@ -658,24 +657,24 @@ AI System: {ai_system}
 
         # Risk assessment
         summary += f"\n{'-'*70}\n RISK ASSESSMENT\n{'-'*70}\n"
-        summary += f"{'✅' if operational_risk == 'LOW' else '⚠️'} Operational Risk: {operational_risk}\n"
+        summary += f"{'[OK]' if operational_risk == 'LOW' else '[WARN]'} Operational Risk: {operational_risk}\n"
 
         if policy_violations == 0:
             summary += "   - No policy violations detected\n"
         else:
-            summary += f"   - {policy_violations} policy violation(s) detected ⚠️\n"
+            summary += f"   - {policy_violations} policy violation(s) detected [WARN]\n"
 
         if refusal_triggered:
-            summary += "   - Refusal mechanisms functional ✅\n"
+            summary += "   - Refusal mechanisms functional [OK]\n"
 
-        summary += f"   - Attribution chain complete ✅\n\n"
+        summary += "   - Attribution chain complete [OK]\n\n"
 
-        summary += f"{'✅' if liability == 'MINIMAL' or liability == 'LOW' else '⚠️'} Liability Exposure: {liability}\n"
+        summary += f"{'[OK]' if liability == 'MINIMAL' or liability == 'LOW' else '[WARN]'} Liability Exposure: {liability}\n"
 
         if avg_confidence > 0:
             summary += f"   - Average confidence: {avg_confidence:.1%}\n"
         if refusal_triggered:
-            summary += "   - Proper refusal mechanisms active ✅\n"
+            summary += "   - Proper refusal mechanisms active [OK]\n"
 
         # Key decision points
         summary += f"\n{'-'*70}\n KEY DECISION POINTS\n{'-'*70}\n"
@@ -691,9 +690,9 @@ AI System: {ai_system}
                 summary += f"   Sensitivity: {flags}\n"
 
             if capsule.get("verification_status") == "VERIFIED":
-                summary += "   Verification: ✅\n"
+                summary += "   Verification: [OK]\n"
             else:
-                summary += "   Verification: ⚠️\n"
+                summary += "   Verification: [WARN]\n"
 
             summary += "\n"
 
@@ -703,11 +702,11 @@ AI System: {ai_system}
         # Auditor assessment
         summary += f"\n{'-'*70}\n AUDITOR ASSESSMENT\n{'-'*70}\n"
         summary += "This AI interaction demonstrates:\n\n"
-        summary += f"✅ Complete audit trail from input to output\n"
-        summary += f"{'✅' if len(frameworks) > 0 else '⚠️'} All regulatory checks performed and documented\n"
-        summary += f"{'✅' if operational_risk == 'LOW' else '⚠️'} Appropriate risk mitigation applied\n"
-        summary += f"✅ Cryptographic proof of chain integrity\n"
-        summary += f"{'✅' if policy_violations == 0 else '⚠️'} No evidence of policy violations or overrides\n"
+        summary += "[OK] Complete audit trail from input to output\n"
+        summary += f"{'[OK]' if len(frameworks) > 0 else '[WARN]'} All regulatory checks performed and documented\n"
+        summary += f"{'[OK]' if operational_risk == 'LOW' else '[WARN]'} Appropriate risk mitigation applied\n"
+        summary += "[OK] Cryptographic proof of chain integrity\n"
+        summary += f"{'[OK]' if policy_violations == 0 else '[WARN]'} No evidence of policy violations or overrides\n"
 
         summary += f"\nAudit Grade: {grade}\n"
 
@@ -722,9 +721,9 @@ AI System: {ai_system}
         summary += f"\n{'-'*70}\n VERIFICATION DETAILS\n{'-'*70}\n"
         summary += "Cryptographic Standard: Dilithium3 (post-quantum)\n"
         summary += "Hash Function: SHA-256\n"
-        summary += "Signature Verification: ✅ All Valid\n"
-        summary += "Chain Verification: ✅ Complete\n"
-        summary += "Tamper Evidence: ✅ None Detected\n"
+        summary += "Signature Verification: [OK] All Valid\n"
+        summary += "Chain Verification: [OK] Complete\n"
+        summary += "Tamper Evidence: [OK] None Detected\n"
 
         # Bottom line
         summary += f"\n{'-'*70}\n BOTTOM LINE FOR RISK OFFICER\n{'-'*70}\n"
@@ -854,7 +853,6 @@ AI System: {ai_system}
     ):
         """Save both artifacts to files"""
 
-        import os
         from pathlib import Path
 
         # Create output directory

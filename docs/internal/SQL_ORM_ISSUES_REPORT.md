@@ -4,7 +4,7 @@
 
 ---
 
-## ⚠️ **Critical Issue: SQLAlchemy ORM Query Problems**
+## [WARN] **Critical Issue: SQLAlchemy ORM Query Problems**
 
 ### **Problem Summary**
 
@@ -110,11 +110,11 @@ Enrichment script reports successful updates but changes don't persist in databa
 ### Evidence:
 ```bash
 # Script output
-📦 Processing: caps_2025_12_04_69a818b7636743e2
+ Processing: caps_2025_12_04_69a818b7636743e2
   → Adding critical path analysis...
   → Adding trust score to verification...
-  ✅ Enrichment complete!
-  💾 Updated in database
+  [OK] Enrichment complete!
+   Updated in database
 
 # But database query shows old data
 SELECT payload FROM capsules WHERE capsule_id = 'caps_2025_12_04_69a818b7636743e2';
@@ -149,10 +149,10 @@ SELECT payload FROM capsules WHERE capsule_id = 'caps_2025_12_04_69a818b7636743e
    - Connection pooling issue?
 
 ### Attempted Fixes:
-- ✅ Removed `::jsonb` casting → Fixed syntax error
-- ✅ Explicit `await session.commit()` → Still no persistence
-- ✅ Verified `session.execute()` completes without error
-- ❌ Data still not persisting
+- [OK] Removed `::jsonb` casting → Fixed syntax error
+- [OK] Explicit `await session.commit()` → Still no persistence
+- [OK] Verified `session.execute()` completes without error
+- [ERROR] Data still not persisting
 
 ---
 
@@ -183,16 +183,16 @@ for row in rows:
 ```
 
 ### Status:
-- ✅ Query works
-- ✅ Data fetched correctly
-- ✅ Enrichment logic runs
-- ❌ Updates don't persist
+- [OK] Query works
+- [OK] Data fetched correctly
+- [OK] Enrichment logic runs
+- [ERROR] Updates don't persist
 
 ---
 
 ## **Working vs Non-Working Patterns**
 
-### ✅ WORKS: FastAPI Routes
+### [OK] WORKS: FastAPI Routes
 ```python
 # In src/api/capsules_fastapi_router.py
 @router.get("")
@@ -205,7 +205,7 @@ async def list_capsules(session: AsyncSession = Depends(get_db_session)):
 
 **Why it works:** FastAPI dependency injection handles session lifecycle correctly
 
-### ❌ DOESN'T WORK: Standalone Script
+### [ERROR] DOESN'T WORK: Standalone Script
 ```python
 # In enrich_existing_capsules.py
 async with db.get_session() as session:
@@ -245,9 +245,9 @@ async with db.get_session() as session:
 ## **Recommendations**
 
 ### Short-Term (Current):
-1. ✅ **Keep using direct SQL** for enrichment script
-2. ✅ **New capsules work fine** - they use the working code paths
-3. ⚠️ **Accept that 6 old capsules remain simple** - minimal impact
+1. [OK] **Keep using direct SQL** for enrichment script
+2. [OK] **New capsules work fine** - they use the working code paths
+3. [WARN] **Accept that 6 old capsules remain simple** - minimal impact
 
 ### Medium-Term (If needed):
 1. **Debug ORM in standalone context:**

@@ -96,11 +96,11 @@ See: `OPENAI_CAPTURE_GUIDE.md`
 
 | Method | Ease of Setup | Real-time | Works with Desktop App |
 |--------|---------------|-----------|------------------------|
-| Chrome Extension | ⭐⭐⭐ Easy (once built) | ✅ Yes | ❓ Maybe (if web-based) |
-| Network Proxy | ⭐⭐ Moderate | ✅ Yes | ✅ Yes |
-| System Proxy | ⭐ Complex | ✅ Yes | ✅ Yes |
-| API Wrapper | ⭐⭐⭐ Easy | ✅ Yes | ❌ No (new interface) |
-| Web Export | ⭐⭐⭐ Easy | ❌ No (historical) | ✅ Yes |
+| Chrome Extension |  Easy (once built) | [OK] Yes |  Maybe (if web-based) |
+| Network Proxy |  Moderate | [OK] Yes | [OK] Yes |
+| System Proxy |  Complex | [OK] Yes | [OK] Yes |
+| API Wrapper |  Easy | [OK] Yes | [ERROR] No (new interface) |
+| Web Export |  Easy | [ERROR] No (historical) | [OK] Yes |
 
 ## What I Recommend
 
@@ -119,11 +119,11 @@ See: `OPENAI_CAPTURE_GUIDE.md`
 
 ## Status of Each Method
 
-✅ **Web Export Import** - Ready to use now
-✅ **OpenAI API Wrapper** - Ready to use now
-✅ **Network Proxy** - Ready to use now (needs mitmproxy)
-⚠️ **Chrome Extension** - Need to build (30 min)
-⚠️ **System Proxy** - Works but affects all traffic
+[OK] **Web Export Import** - Ready to use now
+[OK] **OpenAI API Wrapper** - Ready to use now
+[OK] **Network Proxy** - Ready to use now (needs mitmproxy)
+[WARN] **Chrome Extension** - Need to build (30 min)
+[WARN] **System Proxy** - Works but affects all traffic
 
 ## Next Steps
 

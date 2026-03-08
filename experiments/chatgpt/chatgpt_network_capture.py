@@ -48,7 +48,7 @@ class ChatGPTNetworkCapture:
         """Initialize database connection."""
         self.db = DatabaseManager()
         await self.db.connect()
-        print("✅ Database connected")
+        print("[OK] Database connected")
 
     async def capture_conversation(
         self,
@@ -136,12 +136,12 @@ class ChatGPTNetworkCapture:
 
             if result:
                 print(
-                    f"✅ Captured: {conversation_id[:20]}... ({len(self.conversations[conversation_id])} messages)"
+                    f"[OK] Captured: {conversation_id[:20]}... ({len(self.conversations[conversation_id])} messages)"
                 )
                 return capsule_id
 
         except Exception as e:
-            print(f"❌ Error capturing conversation: {e}")
+            print(f"[ERROR] Error capturing conversation: {e}")
 
         return None
 
@@ -174,7 +174,7 @@ class OpenAIInterceptor:
                     body = json.loads(flow.request.content.decode("utf-8"))
                     self.pending_requests[id(flow)]["request_body"] = body
                     print(
-                        f"🔍 Intercepted chat request: {body.get('model', 'unknown model')}"
+                        f" Intercepted chat request: {body.get('model', 'unknown model')}"
                     )
                 except:
                     pass
@@ -227,7 +227,7 @@ class OpenAIInterceptor:
                         )
 
                 except Exception as e:
-                    print(f"⚠️ Error processing response: {e}")
+                    print(f"[WARN] Error processing response: {e}")
 
             # Clean up
             del self.pending_requests[flow_id]
@@ -237,7 +237,7 @@ async def start_proxy_server():
     """Start the proxy server for intercepting ChatGPT traffic."""
 
     if not MITMPROXY_AVAILABLE:
-        print("❌ mitmproxy not installed")
+        print("[ERROR] mitmproxy not installed")
         print("\nInstall with:")
         print("  pip install mitmproxy")
         print("\nOR use alternative method: Chrome extension")
@@ -247,15 +247,15 @@ async def start_proxy_server():
     print("  ChatGPT Desktop App - Network Capture")
     print("=" * 70)
     print()
-    print("🌐 Starting proxy server on http://localhost:8888")
+    print(" Starting proxy server on http://localhost:8888")
     print()
-    print("📋 Setup Instructions:")
+    print(" Setup Instructions:")
     print("   1. Open ChatGPT desktop app")
     print("   2. Go to Settings → Advanced")
     print("   3. Set HTTP Proxy: localhost:8888")
     print("   4. Start chatting - all conversations auto-captured!")
     print()
-    print("⚠️  Note: You may need to install mitmproxy certificate")
+    print("[WARN]  Note: You may need to install mitmproxy certificate")
     print("   Run: mitmproxy (then press 'q' to quit)")
     print("   Install cert from: ~/.mitmproxy/mitmproxy-ca-cert.pem")
     print()
@@ -267,7 +267,7 @@ async def start_proxy_server():
 
     # Start mitmproxy
     # This would normally run mitmdump with the addon
-    print("✅ Proxy server ready - listening for ChatGPT traffic...")
+    print("[OK] Proxy server ready - listening for ChatGPT traffic...")
     print("   Press Ctrl+C to stop")
     print()
 
@@ -275,7 +275,7 @@ async def start_proxy_server():
     try:
         await asyncio.Event().wait()
     except KeyboardInterrupt:
-        print("\n\n👋 Shutting down proxy server...")
+        print("\n\n Shutting down proxy server...")
         if capture.db:
             await capture.db.disconnect()
 
@@ -288,12 +288,12 @@ def main():
         print("  ChatGPT Network Capture - Installation Required")
         print("=" * 70)
         print()
-        print("❌ mitmproxy is not installed")
+        print("[ERROR] mitmproxy is not installed")
         print()
-        print("📦 Install with:")
+        print(" Install with:")
         print("   pip install mitmproxy")
         print()
-        print("🔧 Alternative: Use browser extension method")
+        print(" Alternative: Use browser extension method")
         print("   See: CHATGPT_AUTO_CAPTURE_ALTERNATIVES.md")
         print()
         return

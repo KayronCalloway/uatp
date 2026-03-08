@@ -1,21 +1,21 @@
-# UATP Integration Bounty Program 🏆
+# UATP Integration Bounty Program
 
 > Accelerate UATP adoption with financial incentives for developers building attribution-enabled applications
 
-## 🎯 Program Overview
+##  Program Overview
 
 The UATP Integration Bounty Program rewards developers who create innovative applications using UATP's attribution infrastructure. We're committed to **$2.5M in bounties** over the next 18 months to accelerate ecosystem growth.
 
-### 💰 Bounty Tiers
+###  Bounty Tiers
 
 | Tier | Reward | Requirements |
 |------|--------|-------------|
-| 🥉 **Bronze** | $1,000 - $5,000 | Basic integration, working prototype |
-| 🥈 **Silver** | $5,000 - $25,000 | Production app with users, advanced features |
-| 🥇 **Gold** | $25,000 - $100,000 | Major platform integration, significant adoption |
-| 💎 **Diamond** | $100,000+ | Ecosystem-defining applications, massive impact |
+|  **Bronze** | $1,000 - $5,000 | Basic integration, working prototype |
+|  **Silver** | $5,000 - $25,000 | Production app with users, advanced features |
+|  **Gold** | $25,000 - $100,000 | Major platform integration, significant adoption |
+|  **Diamond** | $100,000+ | Ecosystem-defining applications, massive impact |
 
-## 🚀 Active Bounties
+##  Active Bounties
 
 ### **Tier 1: Foundation Integrations** (Total: $150K)
 
@@ -36,10 +36,10 @@ Build a browser extension that automatically tracks AI interactions across web p
 - User guide video
 
 **Evaluation Criteria:**
-- ✅ Technical implementation (25%)
-- ✅ User experience design (25%)
-- ✅ Privacy and security (25%)
-- ✅ Documentation quality (25%)
+- [OK] Technical implementation (25%)
+- [OK] User experience design (25%)
+- [OK] Privacy and security (25%)
+- [OK] Documentation quality (25%)
 
 ---
 
@@ -421,7 +421,7 @@ Create global federation infrastructure for planetary-scale attribution.
 
 ---
 
-## 🎯 How to Apply
+##  How to Apply
 
 ### **Step 1: Proposal Submission**
 
@@ -492,7 +492,7 @@ Selected projects receive:
 
 **Submission Channels:**
 - Email: bounties@uatp.org
-- GitHub: [uatp/bounty-submissions](https://github.com/uatp/bounty-submissions)
+- GitHub: [uatp/bounty-submissions](https://github.com/KayronCalloway/bounty-submissions)
 - Discord: #bounty-program channel
 
 **Review Timeline:**
@@ -508,7 +508,7 @@ Selected projects receive:
 
 ---
 
-## 💡 Submission Guidelines
+##  Submission Guidelines
 
 ### **Code Requirements**
 
@@ -566,7 +566,7 @@ Selected projects receive:
 
 ---
 
-## 🏆 Success Stories
+##  Success Stories
 
 ### **Previous Winners**
 
@@ -575,7 +575,7 @@ Discord bot with AI attribution that grew to 10,000+ servers in 6 months.
 
 > "The UATP bounty program gave us the resources to build something we're passionate about. The mentorship was invaluable." - Sarah Chen, Lead Developer
 
-#### **"EduTrace" by Academic Innovation Labs** - $45,000 (Gold Tier)  
+#### **"EduTrace" by Academic Innovation Labs** - $45,000 (Gold Tier)
 Educational attribution platform now used by 25+ universities.
 
 > "We went from prototype to production thanks to UATP's support. Now we're processing 100K+ attributed interactions daily." - Dr. Michael Rodriguez, Founder
@@ -587,7 +587,7 @@ GitHub integration that's become the standard for AI coding attribution.
 
 ---
 
-## 🎓 Resources for Bounty Hunters
+##  Resources for Bounty Hunters
 
 ### **Technical Resources**
 - [Complete SDK Documentation](./api-reference.md)
@@ -615,7 +615,7 @@ GitHub integration that's become the standard for AI coding attribution.
 
 ---
 
-## 📞 Contact and Support
+##  Contact and Support
 
 ### **Program Team**
 
@@ -624,7 +624,7 @@ GitHub integration that's become the standard for AI coding attribution.
 - Calendly: [calendly.com/elena-uatp](https://calendly.com/elena-uatp)
 - Expertise: Technical architecture, AI integration
 
-**Marcus Chen** - Developer Relations Manager  
+**Marcus Chen** - Developer Relations Manager
 - Email: marcus@uatp.org
 - Discord: @marcus_uatp
 - Expertise: Community building, go-to-market strategy
@@ -636,32 +636,32 @@ GitHub integration that's become the standard for AI coding attribution.
 
 ### **Office Hours**
 - **Technical Questions**: Tuesdays 2-4 PM PST
-- **Business Strategy**: Thursdays 10 AM-12 PM PST  
+- **Business Strategy**: Thursdays 10 AM-12 PM PST
 - **Open Discussion**: Fridays 3-5 PM PST
 
 ### **Communication Channels**
-- 📧 **General Inquiries**: bounties@uatp.org
-- 💬 **Real-time Chat**: Discord #bounty-program
-- 🐛 **Technical Issues**: GitHub Issues
-- 📅 **1:1 Meetings**: [calendly.com/uatp-bounty](https://calendly.com/uatp-bounty)
+-  **General Inquiries**: bounties@uatp.org
+-  **Real-time Chat**: Discord #bounty-program
+-  **Technical Issues**: GitHub Issues
+-  **1:1 Meetings**: [calendly.com/uatp-bounty](https://calendly.com/uatp-bounty)
 
 ---
 
-## 🌟 Ready to Build the Future?
+##  Ready to Build the Future?
 
 The UATP Integration Bounty Program is more than funding - it's an invitation to help shape the future of AI attribution and human-AI collaboration.
 
 **Your next step:**
 1. Review the active bounties above
 2. Join our Discord community
-3. Attend virtual office hours  
+3. Attend virtual office hours
 4. Submit your proposal
 5. Start building the future
 
-**The attribution economy is here. Be part of it.** 🚀
+**The attribution economy is here. Be part of it.**
 
 ---
 
-*Application deadline: Rolling basis until funds are allocated*  
-*Program duration: 18 months from launch*  
+*Application deadline: Rolling basis until funds are allocated*
+*Program duration: 18 months from launch*
 *Total bounty pool: $2.5M USD*

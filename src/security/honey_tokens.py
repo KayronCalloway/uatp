@@ -27,14 +27,14 @@ Usage:
         manager.trigger_honey_token_alert(api_key, request_context)
 """
 
-import secrets
 import hashlib
 import json
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
-from pathlib import Path
 import logging
+import secrets
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +111,7 @@ class HoneyTokenManager:
         if not registry_file.exists():
             return
 
-        with open(registry_file, "r") as f:
+        with open(registry_file) as f:
             for line in f:
                 token_dict = json.loads(line)
                 token = HoneyToken(**token_dict)
@@ -341,7 +341,7 @@ class HoneyTokenManager:
 
         # Emit critical security alert
         logger.critical(
-            f"🚨 INTRUSION DETECTED 🚨 "
+            f" INTRUSION DETECTED  "
             f"Honey token accessed: {honey_token.token_type} "
             f"from IP: {alert.accessor_ip} "
             f"by user: {alert.accessor_user_id}"
@@ -381,7 +381,7 @@ class HoneyTokenManager:
         if not alerts_file.exists():
             return []
 
-        with open(alerts_file, "r") as f:
+        with open(alerts_file) as f:
             lines = f.readlines()
 
         recent_lines = lines[-count:]
@@ -422,7 +422,7 @@ class HoneypotEndpoints:
 
         Returns list of (path, handler) tuples.
         """
-        from quart import request, jsonify
+        from quart import jsonify, request
 
         honey_manager = HoneyTokenManager()
 

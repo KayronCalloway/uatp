@@ -4,14 +4,14 @@ Production Database Setup Script
 Sets up PostgreSQL database for UATP production deployment
 """
 
+import argparse
+import asyncio
 import os
 import sys
-import asyncio
+
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from sqlalchemy.ext.asyncio import create_async_engine
-import argparse
-from typing import Optional
 
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -30,7 +30,7 @@ async def setup_production_database(
 ):
     """Setup PostgreSQL database for production."""
 
-    print("🚀 Setting up UATP Production Database...")
+    print(" Setting up UATP Production Database...")
     print("=" * 60)
 
     if not admin_password:
@@ -43,7 +43,7 @@ async def setup_production_database(
 
     try:
         # Connect to PostgreSQL as admin
-        print(f"🔌 Connecting to PostgreSQL as {admin_user}...")
+        print(f" Connecting to PostgreSQL as {admin_user}...")
         admin_conn = psycopg2.connect(
             host=db_host,
             port=db_port,
@@ -56,12 +56,12 @@ async def setup_production_database(
 
         # Create database user if needed
         if create_user:
-            print(f"👤 Creating database user '{db_user}'...")
+            print(f" Creating database user '{db_user}'...")
             try:
                 cursor.execute(
                     f"CREATE USER {db_user} WITH PASSWORD %s;", (db_password,)
                 )
-                print(f"✅ User '{db_user}' created successfully")
+                print(f"[OK] User '{db_user}' created successfully")
             except psycopg2.Error as e:
                 if "already exists" in str(e):
                     print(f"ℹ️ User '{db_user}' already exists")
@@ -69,16 +69,16 @@ async def setup_production_database(
                     cursor.execute(
                         f"ALTER USER {db_user} WITH PASSWORD %s;", (db_password,)
                     )
-                    print(f"✅ Password updated for user '{db_user}'")
+                    print(f"[OK] Password updated for user '{db_user}'")
                 else:
                     raise
 
         # Create database if needed
         if create_database:
-            print(f"🗄️ Creating database '{db_name}'...")
+            print(f"️ Creating database '{db_name}'...")
             try:
                 cursor.execute(f"CREATE DATABASE {db_name} OWNER {db_user};")
-                print(f"✅ Database '{db_name}' created successfully")
+                print(f"[OK] Database '{db_name}' created successfully")
             except psycopg2.Error as e:
                 if "already exists" in str(e):
                     print(f"ℹ️ Database '{db_name}' already exists")
@@ -86,16 +86,16 @@ async def setup_production_database(
                     raise
 
         # Grant permissions
-        print(f"🔐 Granting permissions to user '{db_user}'...")
+        print(f" Granting permissions to user '{db_user}'...")
         cursor.execute(f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO {db_user};")
-        print(f"✅ Permissions granted")
+        print("[OK] Permissions granted")
 
         # Close admin connection
         cursor.close()
         admin_conn.close()
 
         # Test connection with new user
-        print(f"🧪 Testing connection as '{db_user}'...")
+        print(f" Testing connection as '{db_user}'...")
         test_conn = psycopg2.connect(
             host=db_host,
             port=db_port,
@@ -104,10 +104,10 @@ async def setup_production_database(
             database=db_name,
         )
         test_conn.close()
-        print(f"✅ Connection test successful")
+        print("[OK] Connection test successful")
 
         # Create SQLAlchemy engine and run migrations
-        print("🔄 Running database migrations...")
+        print(" Running database migrations...")
         database_url = f"postgresql+asyncpg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
         engine = create_async_engine(database_url, echo=False)
@@ -129,29 +129,29 @@ async def setup_production_database(
         db.init_app(mock_app)
         await db.create_all()
 
-        print("✅ Database migrations completed")
+        print("[OK] Database migrations completed")
 
         # Create database extensions if needed
-        print("🔧 Setting up database extensions...")
+        print(" Setting up database extensions...")
         async with engine.begin() as conn:
             # Enable UUID extension
             await conn.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'))
             # Enable cryptographic extensions
             await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pgcrypto;"))
-            print("✅ Database extensions configured")
+            print("[OK] Database extensions configured")
 
         await engine.dispose()
 
         print("\n" + "=" * 60)
-        print("🎉 Production Database Setup Complete!")
+        print(" Production Database Setup Complete!")
         print("=" * 60)
-        print(f"📊 Database: {db_name}")
-        print(f"👤 User: {db_user}")
-        print(f"🏠 Host: {db_host}:{db_port}")
+        print(f" Database: {db_name}")
+        print(f" User: {db_user}")
+        print(f" Host: {db_host}:{db_port}")
         print(
-            f"🔗 Connection URL: postgresql+asyncpg://{db_user}:***@{db_host}:{db_port}/{db_name}"
+            f" Connection URL: postgresql+asyncpg://{db_user}:***@{db_host}:{db_port}/{db_name}"
         )
-        print("\n💡 Next Steps:")
+        print("\n Next Steps:")
         print(
             "1. Update your .env.production file with the database connection details"
         )
@@ -162,7 +162,7 @@ async def setup_production_database(
         return True
 
     except Exception as e:
-        print(f"❌ Database setup failed: {e}")
+        print(f"[ERROR] Database setup failed: {e}")
         return False
 
 

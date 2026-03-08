@@ -49,7 +49,7 @@ class CaptureOrchestrator:
         self.user_id = user_id
         self._hooks: Dict[str, Any] = {}
 
-        logger.info(f"🎭 Capture Orchestrator initialized for user: {user_id}")
+        logger.info(f" Capture Orchestrator initialized for user: {user_id}")
 
     def _get_hook(self, platform: str, **kwargs) -> Any:
         """
@@ -78,32 +78,32 @@ class CaptureOrchestrator:
         if platform_lower in ["openai", "openai_api", "gpt"]:
             hook = OpenAILiveCapture(
                 user_id=kwargs.get("user_id", self.user_id),
-                api_key=kwargs.get("api_key")
+                api_key=kwargs.get("api_key"),
             )
 
         elif platform_lower in ["anthropic", "claude", "claude_api"]:
             hook = AnthropicLiveCapture(
                 user_id=kwargs.get("user_id", self.user_id),
-                api_key=kwargs.get("api_key")
+                api_key=kwargs.get("api_key"),
             )
 
         elif platform_lower in ["cursor", "cursor_ide"]:
             hook = CursorLiveCapture(
                 user_id=kwargs.get("user_id", self.user_id),
-                workspace_path=kwargs.get("workspace_path")
+                workspace_path=kwargs.get("workspace_path"),
             )
 
         elif platform_lower in ["windsurf", "windsurf_ide"]:
             hook = WindsurfLiveCapture(
                 user_id=kwargs.get("user_id", self.user_id),
-                workspace_path=kwargs.get("workspace_path")
+                workspace_path=kwargs.get("workspace_path"),
             )
 
         elif platform_lower in ["antigravity", "gemini", "google_antigravity"]:
             hook = AntigravityLiveCapture(
                 user_id=kwargs.get("user_id", self.user_id),
                 session_id=kwargs.get("session_id"),
-                model=kwargs.get("model", "gemini-2.5-pro")
+                model=kwargs.get("model", "gemini-2.5-pro"),
             )
 
         elif platform_lower in ["claude_code", "claudecode"]:
@@ -129,7 +129,7 @@ class CaptureOrchestrator:
         assistant_response: str,
         model: str = None,
         interaction_type: str = "general",
-        **platform_kwargs
+        **platform_kwargs,
     ) -> Optional[str]:
         """
         Capture an interaction from any platform.
@@ -174,7 +174,7 @@ class CaptureOrchestrator:
                     assistant_response=assistant_response,
                     model=model or "gpt-4",
                     interaction_type=interaction_type,
-                    **platform_kwargs
+                    **platform_kwargs,
                 )
 
             elif platform_lower in ["anthropic", "claude", "claude_api"]:
@@ -183,7 +183,7 @@ class CaptureOrchestrator:
                     assistant_response=assistant_response,
                     model=model or "claude-3-sonnet-20240229",
                     interaction_type=interaction_type,
-                    **platform_kwargs
+                    **platform_kwargs,
                 )
 
             elif platform_lower in ["cursor", "cursor_ide"]:
@@ -192,7 +192,7 @@ class CaptureOrchestrator:
                     assistant_response=assistant_response,
                     cursor_model=model or "claude-3.5-sonnet",
                     interaction_type=interaction_type,
-                    **platform_kwargs
+                    **platform_kwargs,
                 )
 
             elif platform_lower in ["windsurf", "windsurf_ide"]:
@@ -201,7 +201,7 @@ class CaptureOrchestrator:
                     assistant_response=assistant_response,
                     windsurf_model=model or "windsurf-ai",
                     interaction_type=interaction_type,
-                    **platform_kwargs
+                    **platform_kwargs,
                 )
 
             elif platform_lower in ["antigravity", "gemini", "google_antigravity"]:
@@ -209,17 +209,16 @@ class CaptureOrchestrator:
                     user_input=user_input,
                     assistant_response=assistant_response,
                     interaction_type=interaction_type,
-                    **platform_kwargs
+                    **platform_kwargs,
                 )
 
             elif platform_lower in ["claude_code", "claudecode"]:
                 return await hook.capture_current_conversation(
-                    user_message=user_input,
-                    ai_response=assistant_response
+                    user_message=user_input, ai_response=assistant_response
                 )
 
         except Exception as e:
-            logger.error(f"❌ Capture failed for platform {platform}: {e}")
+            logger.error(f"[ERROR] Capture failed for platform {platform}: {e}")
             return None
 
     def get_supported_platforms(self) -> list[str]:
@@ -235,7 +234,7 @@ class CaptureOrchestrator:
             "cursor",
             "windsurf",
             "antigravity",
-            "claude_code"
+            "claude_code",
         ]
 
     def get_platform_info(self, platform: str) -> Dict[str, Any]:
@@ -251,40 +250,40 @@ class CaptureOrchestrator:
         platform_info = {
             "openai": {
                 "name": "OpenAI",
-                "emoji": "🤖",
+                "emoji": "",
                 "models": ["gpt-4", "gpt-3.5-turbo"],
-                "type": "api"
+                "type": "api",
             },
             "anthropic": {
                 "name": "Anthropic Claude",
-                "emoji": "🧠",
+                "emoji": "",
                 "models": ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku"],
-                "type": "api"
+                "type": "api",
             },
             "cursor": {
                 "name": "Cursor IDE",
-                "emoji": "🎯",
+                "emoji": "",
                 "models": ["claude-3.5-sonnet"],
-                "type": "ide"
+                "type": "ide",
             },
             "windsurf": {
                 "name": "Windsurf IDE",
-                "emoji": "🌊",
+                "emoji": "",
                 "models": ["windsurf-ai"],
-                "type": "ide"
+                "type": "ide",
             },
             "antigravity": {
                 "name": "Google Gemini (Antigravity)",
-                "emoji": "✨",
+                "emoji": "",
                 "models": ["gemini-2.5-pro", "gemini-pro"],
-                "type": "api"
+                "type": "api",
             },
             "claude_code": {
                 "name": "Claude Code",
-                "emoji": "🎯",
+                "emoji": "",
                 "models": ["claude-sonnet-4"],
-                "type": "cli"
-            }
+                "type": "cli",
+            },
         }
 
         platform_lower = platform.lower().replace("-", "_").replace(" ", "_")
@@ -299,7 +298,7 @@ class CaptureOrchestrator:
             "windsurf_ide": "windsurf",
             "gemini": "antigravity",
             "google_antigravity": "antigravity",
-            "claudecode": "claude_code"
+            "claudecode": "claude_code",
         }
 
         canonical = aliases.get(platform_lower, platform_lower)
@@ -316,7 +315,7 @@ class CaptureOrchestrator:
             platform: {
                 "platform": hook.platform,
                 "user_id": hook.user_id,
-                "session_id": hook.session_id
+                "session_id": hook.session_id,
             }
             for platform, hook in self._hooks.items()
         }
@@ -324,7 +323,7 @@ class CaptureOrchestrator:
     def clear_hooks(self):
         """Clear all cached hook instances."""
         self._hooks.clear()
-        logger.info("🧹 Cleared all cached hooks")
+        logger.info(" Cleared all cached hooks")
 
 
 # Global orchestrator instance
@@ -354,7 +353,7 @@ async def capture(
     model: str = None,
     interaction_type: str = "general",
     user_id: str = "default_user",
-    **platform_kwargs
+    **platform_kwargs,
 ) -> Optional[str]:
     """
     Convenience function for capturing interactions.
@@ -388,5 +387,5 @@ async def capture(
         assistant_response=assistant_response,
         model=model,
         interaction_type=interaction_type,
-        **platform_kwargs
+        **platform_kwargs,
     )

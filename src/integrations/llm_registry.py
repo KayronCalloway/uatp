@@ -558,37 +558,39 @@ if __name__ == "__main__":
         """Test the LLM registry with multiple providers."""
         registry = setup_example_registry()
 
-        print("🤖 LLM Registry Test")
+        print(" LLM Registry Test")
         print("=" * 50)
 
         # Show registry stats
         stats = registry.get_registry_stats()
-        print("📊 Registry Stats:")
+        print(" Registry Stats:")
         for key, value in stats.items():
             print(f"  {key}: {value}")
 
-        print(f"\n📋 Available configs: {registry.list_configs()}")
+        print(f"\n Available configs: {registry.list_configs()}")
 
         # Test with local provider (always available)
         try:
-            print("\n🔧 Testing local provider...")
+            print("\n Testing local provider...")
             response = await registry.generate_completion(
                 "What is the capital of France?", "local_llama"
             )
-            print(f"✅ Response: {response.content}")
-            print(f"✅ Tokens used: {response.tokens_used}")
-            print(f"✅ Cost: ${response.cost_usd:.4f}")
-            print(f"✅ Response time: {response.response_time:.2f}s")
+            print(f"[OK] Response: {response.content}")
+            print(f"[OK] Tokens used: {response.tokens_used}")
+            print(f"[OK] Cost: ${response.cost_usd:.4f}")
+            print(f"[OK] Response time: {response.response_time:.2f}s")
 
         except Exception as e:
-            print(f"❌ Local provider test failed: {e}")
+            print(f"[ERROR] Local provider test failed: {e}")
 
         # Test configuration listing
-        print("\n📝 Testing configuration management...")
+        print("\n Testing configuration management...")
         config = registry.get_config("local_llama")
         if config:
-            print(f"✅ Retrieved config: {config.model_name} ({config.provider.value})")
+            print(
+                f"[OK] Retrieved config: {config.model_name} ({config.provider.value})"
+            )
 
-        print("\n🎉 LLM Registry test complete!")
+        print("\n LLM Registry test complete!")
 
     asyncio.run(test_llm_registry())

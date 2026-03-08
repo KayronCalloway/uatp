@@ -5,7 +5,7 @@
 
 ---
 
-## 🎯 Tier 1 - TARGET FIRST (Next 48 Hours)
+##  Tier 1 - TARGET FIRST (Next 48 Hours)
 
 ### Target #1: Munich Re Digital Partners
 **Why First:**
@@ -61,7 +61,7 @@
 
 ---
 
-## 🔄 Tier 2 - ONLY AFTER ONE Tier 1 RESPONDS (Week 3-4)
+##  Tier 2 - ONLY AFTER ONE Tier 1 RESPONDS (Week 3-4)
 
 ### Target #4: Swiss Re
 - Similar to Munich Re
@@ -73,7 +73,7 @@
 
 ---
 
-## ❌ DEPRIORITIZE FOR NOW
+## [ERROR] DEPRIORITIZE FOR NOW
 
 **Do NOT contact yet:**
 - Big 4 audit firms (wait until you have insurance validation)
@@ -84,7 +84,7 @@
 
 ---
 
-## 📧 Outreach Sequence (First 7 Days)
+##  Outreach Sequence (First 7 Days)
 
 ### Day 1 (Tomorrow):
 **Munich Re Digital Partners**
@@ -118,7 +118,7 @@
 
 ---
 
-## 🎣 The Hook for Each Target
+##  The Hook for Each Target
 
 ### For Munich Re:
 > "Reinsurers carry the ultimate AI liability risk. Your cedents can't give you runtime visibility into AI controls. UATP provides the cryptographic evidence layer that lets you validate AI risk management before claims happen."
@@ -131,7 +131,7 @@
 
 ---
 
-## 📊 Success Metrics (First 30 Days)
+##  Success Metrics (First 30 Days)
 
 **Week 1:**
 - [ ] 3 emails sent (Munich Re, Coalition, Lloyd's)
@@ -155,7 +155,7 @@
 
 ---
 
-## 🚨 Red Lines - What NOT To Do
+##  Red Lines - What NOT To Do
 
 1. **DON'T** spray emails to 20 companies
    - Focus = 3 carefully researched targets
@@ -175,7 +175,7 @@
 
 ---
 
-## 💰 What You're Really Selling
+##  What You're Really Selling
 
 **Not:** "Audit trails for AI"
 **But:** "Insurability for AI systems"
@@ -185,7 +185,7 @@
 
 ---
 
-## 📞 Discovery Call Goal (When You Get One)
+##  Discovery Call Goal (When You Get One)
 
 **PRIMARY GOAL:**
 Understand their current AI liability pain so deeply that you can position UATP as the obvious solution.
@@ -202,7 +202,7 @@ Get them to say "we would pay for this" before discussing pricing.
 
 ---
 
-## 🎯 Day 60 Goal: ONE VALIDATION LETTER
+##  Day 60 Goal: ONE VALIDATION LETTER
 
 **From: [Munich Re / Coalition / Lloyd's]**
 
@@ -210,15 +210,15 @@ Get them to say "we would pay for this" before discussing pricing.
 > "We have evaluated UATP's capsule chain audit artifacts. This evidence standard is sufficient for [underwriting / risk assessment / compliance validation] of AI systems. We recommend adoption as part of AI risk management frameworks."
 
 **That single letter:**
-- ✅ Unlocks all other insurance companies
-- ✅ Gives credibility with Big 4
-- ✅ Enables standards contribution
-- ✅ Justifies premium pricing
-- ✅ Positions you as category creator
+- [OK] Unlocks all other insurance companies
+- [OK] Gives credibility with Big 4
+- [OK] Enables standards contribution
+- [OK] Justifies premium pricing
+- [OK] Positions you as category creator
 
 ---
 
-## 📋 Current Status
+##  Current Status
 
 **Strength:** Materials ready
 **Weakness:** Target focus
@@ -233,4 +233,4 @@ Get them to say "we would pay for this" before discussing pricing.
 - Deep personalization > spray and pray
 - Patient persistence > desperate volume
 
-**Go get that validation letter.** 🎯
+**Go get that validation letter.**

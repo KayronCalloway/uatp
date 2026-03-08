@@ -8,14 +8,14 @@
     <p>Click the button below to enable creator mode for Kay.</p>
     <button onclick="enableCreatorMode()">Enable Creator Mode</button>
     <div id="status"></div>
-    
+
     <script>
         function enableCreatorMode() {
             // Set creator credentials for Kay
             localStorage.setItem('uatp_creator_key', 'kay-creator-key');
             localStorage.setItem('uatp_creator_id', 'kay');
-            
-            document.getElementById('status').innerHTML = '<p style="color: green;">✅ Creator mode enabled for Kay! Go to <a href="http://localhost:3000">http://localhost:3000</a> to see the Creator Dashboard.</p>';
+
+            document.getElementById('status').innerHTML = '<p style="color: green;">[OK] Creator mode enabled for Kay! Go to <a href="http://localhost:3000">http://localhost:3000</a> to see the Creator Dashboard.</p>';
         }
     </script>
 </body>

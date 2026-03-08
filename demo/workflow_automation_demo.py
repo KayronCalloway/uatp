@@ -18,29 +18,29 @@ Features Demonstrated:
 import asyncio
 import logging
 import sys
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.events.event_system import initialize_event_system
 from src.events.event_handlers import setup_event_handlers
+from src.events.event_system import initialize_event_system
 from src.events.service_integration import get_service_integrator
 from src.workflows import (
+    AnalyticsService,
+    ComplianceService,
+    NotificationService,
+    RiskAssessmentService,
+    ValidationService,
     initialize_workflow_engine,
     register_predefined_workflows,
-    ValidationService,
-    RiskAssessmentService,
-    ComplianceService,
-    AnalyticsService,
-    NotificationService,
 )
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="⚙️ %(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format=" %(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("workflow_demo")
 
@@ -62,7 +62,7 @@ class WorkflowAutomationDemo:
 
     async def setup(self):
         """Set up the workflow automation system."""
-        logger.info("🚀 Setting up workflow automation system")
+        logger.info(" Setting up workflow automation system")
 
         # Initialize event system
         self.event_bus = await initialize_event_system()
@@ -83,11 +83,11 @@ class WorkflowAutomationDemo:
         register_predefined_workflows()
 
         self.demo_stats["start_time"] = datetime.now(timezone.utc)
-        logger.info("✅ Workflow automation system ready")
+        logger.info("[OK] Workflow automation system ready")
 
     async def _register_workflow_services(self):
         """Register all workflow services with the engine."""
-        logger.info("📋 Registering workflow services")
+        logger.info(" Registering workflow services")
 
         # Create service instances
         self.workflow_services = {
@@ -113,12 +113,12 @@ class WorkflowAutomationDemo:
             self.workflow_engine.register_service(service_name, service_instance)
             self.demo_stats["services_registered"] += 1
 
-        logger.info(f"✅ Registered {len(self.workflow_services)} workflow services")
+        logger.info(f"[OK] Registered {len(self.workflow_services)} workflow services")
 
     async def run_demo(self):
         """Run the complete workflow automation demo."""
         logger.info("=" * 70)
-        logger.info("⚙️ UATP Workflow Automation Demo")
+        logger.info(" UATP Workflow Automation Demo")
         logger.info("=" * 70)
 
         await self.setup()
@@ -140,14 +140,14 @@ class WorkflowAutomationDemo:
             await self.demo_summary()
 
         except Exception as e:
-            logger.error(f"❌ Demo failed: {e}")
+            logger.error(f"[ERROR] Demo failed: {e}")
             raise
 
-        logger.info("🎉 Workflow automation demo completed!")
+        logger.info(" Workflow automation demo completed!")
 
     async def scenario_1_agent_onboarding_workflow(self):
         """Scenario 1: Complete agent onboarding with parallel assessments."""
-        logger.info("\n👥 SCENARIO 1: Agent Onboarding Workflow")
+        logger.info("\n SCENARIO 1: Agent Onboarding Workflow")
         logger.info("-" * 60)
 
         # Execute agent onboarding workflow
@@ -178,7 +178,7 @@ class WorkflowAutomationDemo:
             },
         )
 
-        logger.info(f"🚀 Started agent onboarding workflow: {execution_id}")
+        logger.info(f" Started agent onboarding workflow: {execution_id}")
 
         # Monitor workflow execution
         await self._monitor_workflow_execution(execution_id, "Agent Onboarding")
@@ -186,7 +186,7 @@ class WorkflowAutomationDemo:
 
     async def scenario_2_bond_issuance_workflow(self):
         """Scenario 2: Bond issuance with eligibility verification."""
-        logger.info("\n💳 SCENARIO 2: Bond Issuance Workflow")
+        logger.info("\n SCENARIO 2: Bond Issuance Workflow")
         logger.info("-" * 60)
 
         # First, ensure we have an agent with assets for bond issuance
@@ -212,7 +212,7 @@ class WorkflowAutomationDemo:
             },
         )
 
-        logger.info(f"🚀 Started bond issuance workflow: {execution_id}")
+        logger.info(f" Started bond issuance workflow: {execution_id}")
 
         # Monitor workflow execution
         await self._monitor_workflow_execution(execution_id, "Bond Issuance")
@@ -220,7 +220,7 @@ class WorkflowAutomationDemo:
 
     async def scenario_3_compliance_review_workflow(self):
         """Scenario 3: Automated compliance review and remediation."""
-        logger.info("\n⚖️ SCENARIO 3: Compliance Review Workflow")
+        logger.info("\n SCENARIO 3: Compliance Review Workflow")
         logger.info("-" * 60)
 
         # Execute compliance review workflow
@@ -233,7 +233,7 @@ class WorkflowAutomationDemo:
             },
         )
 
-        logger.info(f"🚀 Started compliance review workflow: {execution_id}")
+        logger.info(f" Started compliance review workflow: {execution_id}")
 
         # Monitor workflow execution
         await self._monitor_workflow_execution(execution_id, "Compliance Review")
@@ -241,7 +241,7 @@ class WorkflowAutomationDemo:
 
     async def scenario_4_asset_monitoring_workflow(self):
         """Scenario 4: Asset performance monitoring and optimization."""
-        logger.info("\n📊 SCENARIO 4: Asset Performance Monitoring Workflow")
+        logger.info("\n SCENARIO 4: Asset Performance Monitoring Workflow")
         logger.info("-" * 60)
 
         # Execute asset monitoring workflow
@@ -259,7 +259,7 @@ class WorkflowAutomationDemo:
             },
         )
 
-        logger.info(f"🚀 Started asset monitoring workflow: {execution_id}")
+        logger.info(f" Started asset monitoring workflow: {execution_id}")
 
         # Monitor workflow execution
         await self._monitor_workflow_execution(
@@ -269,7 +269,7 @@ class WorkflowAutomationDemo:
 
     async def _monitor_workflow_execution(self, execution_id: str, workflow_name: str):
         """Monitor workflow execution and display progress."""
-        logger.info(f"👀 Monitoring {workflow_name} execution...")
+        logger.info(f" Monitoring {workflow_name} execution...")
 
         max_wait_time = 60  # Maximum wait time in seconds
         wait_time = 0
@@ -279,7 +279,7 @@ class WorkflowAutomationDemo:
             status = self.workflow_engine.get_execution_status(execution_id)
 
             if not status:
-                logger.warning(f"⚠️ Execution status not found: {execution_id}")
+                logger.warning(f"[WARN] Execution status not found: {execution_id}")
                 break
 
             current_status = status["status"]
@@ -289,18 +289,18 @@ class WorkflowAutomationDemo:
             total_steps = len(status["steps"])
 
             logger.info(
-                f"📊 {workflow_name}: {current_status.upper()} - {completed_steps}/{total_steps} steps completed"
+                f" {workflow_name}: {current_status.upper()} - {completed_steps}/{total_steps} steps completed"
             )
 
             # Show step progress
             for step in status["steps"]:
                 if step["status"] == "running":
-                    logger.info(f"   🔄 Running: {step['name']}")
+                    logger.info(f"    Running: {step['name']}")
                 elif step["status"] == "completed":
                     self.demo_stats["steps_completed"] += 1
                 elif step["status"] == "failed":
                     logger.warning(
-                        f"   ❌ Failed: {step['name']} - {step.get('error', 'Unknown error')}"
+                        f"   [ERROR] Failed: {step['name']} - {step.get('error', 'Unknown error')}"
                     )
 
             if current_status in ["completed", "failed", "cancelled"]:
@@ -312,26 +312,24 @@ class WorkflowAutomationDemo:
         final_status = self.workflow_engine.get_execution_status(execution_id)
         if final_status:
             if final_status["status"] == "completed":
-                logger.info(f"✅ {workflow_name} completed successfully!")
+                logger.info(f"[OK] {workflow_name} completed successfully!")
             else:
                 logger.warning(
-                    f"⚠️ {workflow_name} finished with status: {final_status['status']}"
+                    f"[WARN] {workflow_name} finished with status: {final_status['status']}"
                 )
                 if final_status.get("error"):
                     logger.error(f"   Error: {final_status['error']}")
 
-        logger.info(f"🏁 {workflow_name} monitoring finished\n")
+        logger.info(f" {workflow_name} monitoring finished\n")
 
     async def scenario_5_custom_workflow_demo(self):
         """Bonus scenario: Demonstrate custom workflow creation."""
-        logger.info("\n🛠️ SCENARIO 5: Custom Workflow Creation")
+        logger.info("\n SCENARIO 5: Custom Workflow Creation")
         logger.info("-" * 60)
 
         from src.workflows.workflow_engine import (
             WorkflowDefinition,
             WorkflowStep,
-            WorkflowCondition,
-            ConditionOperator,
         )
 
         # Create a custom workflow for agent portfolio review
@@ -405,7 +403,7 @@ class WorkflowAutomationDemo:
 
         # Register the custom workflow
         self.workflow_engine.define_workflow(portfolio_review_workflow)
-        logger.info("✅ Registered custom portfolio review workflow")
+        logger.info("[OK] Registered custom portfolio review workflow")
 
         # Execute the custom workflow
         execution_id = await self.workflow_engine.execute_workflow(
@@ -416,7 +414,7 @@ class WorkflowAutomationDemo:
             },
         )
 
-        logger.info(f"🚀 Started custom portfolio review workflow: {execution_id}")
+        logger.info(f" Started custom portfolio review workflow: {execution_id}")
 
         # Monitor execution
         await self._monitor_workflow_execution(execution_id, "Portfolio Review")
@@ -424,7 +422,7 @@ class WorkflowAutomationDemo:
 
     async def demo_summary(self):
         """Display comprehensive demo summary."""
-        logger.info("\n📊 WORKFLOW AUTOMATION DEMO SUMMARY")
+        logger.info("\n WORKFLOW AUTOMATION DEMO SUMMARY")
         logger.info("=" * 60)
 
         # Calculate demo duration
@@ -435,56 +433,56 @@ class WorkflowAutomationDemo:
         # Get workflow engine metrics
         workflow_metrics = self.workflow_engine.get_workflow_metrics()
 
-        logger.info(f"⏱️ Demo Duration: {duration:.1f} seconds")
-        logger.info(f"⚙️ Workflows Executed: {self.demo_stats['workflows_executed']}")
-        logger.info(f"✅ Steps Completed: {self.demo_stats['steps_completed']}")
-        logger.info(f"🔧 Services Registered: {self.demo_stats['services_registered']}")
+        logger.info(f" Demo Duration: {duration:.1f} seconds")
+        logger.info(f" Workflows Executed: {self.demo_stats['workflows_executed']}")
+        logger.info(f"[OK] Steps Completed: {self.demo_stats['steps_completed']}")
+        logger.info(f" Services Registered: {self.demo_stats['services_registered']}")
         logger.info(
-            f"📋 Total Workflow Definitions: {workflow_metrics['total_workflows']}"
+            f" Total Workflow Definitions: {workflow_metrics['total_workflows']}"
         )
-        logger.info(f"🏃 Active Executions: {workflow_metrics['active_executions']}")
+        logger.info(f" Active Executions: {workflow_metrics['active_executions']}")
         logger.info(
-            f"🏁 Completed Executions: {workflow_metrics['completed_executions']}"
+            f" Completed Executions: {workflow_metrics['completed_executions']}"
         )
 
         # Status distribution
         if workflow_metrics.get("status_distribution"):
-            logger.info("\n📈 Execution Status Distribution:")
+            logger.info("\n Execution Status Distribution:")
             for status, count in workflow_metrics["status_distribution"].items():
                 logger.info(f"   {status}: {count}")
 
-        logger.info("\n🎯 Workflow Automation Features Demonstrated:")
-        logger.info("   ✅ Declarative workflow definitions")
-        logger.info("   ✅ Conditional branching and logic")
-        logger.info("   ✅ Parallel step execution")
-        logger.info("   ✅ Service orchestration")
-        logger.info("   ✅ Error handling and retries")
-        logger.info("   ✅ Real-time monitoring")
-        logger.info("   ✅ Context variable substitution")
-        logger.info("   ✅ Dependency management")
-        logger.info("   ✅ Timeout handling")
-        logger.info("   ✅ Custom workflow creation")
+        logger.info("\n Workflow Automation Features Demonstrated:")
+        logger.info("   [OK] Declarative workflow definitions")
+        logger.info("   [OK] Conditional branching and logic")
+        logger.info("   [OK] Parallel step execution")
+        logger.info("   [OK] Service orchestration")
+        logger.info("   [OK] Error handling and retries")
+        logger.info("   [OK] Real-time monitoring")
+        logger.info("   [OK] Context variable substitution")
+        logger.info("   [OK] Dependency management")
+        logger.info("   [OK] Timeout handling")
+        logger.info("   [OK] Custom workflow creation")
 
-        logger.info("\n💼 Business Process Automation:")
-        logger.info("   🏢 Agent onboarding with parallel assessments")
-        logger.info("   💳 Bond issuance with eligibility verification")
-        logger.info("   ⚖️ Compliance review with automated remediation")
-        logger.info("   📊 Asset performance monitoring and optimization")
-        logger.info("   📈 Custom portfolio analysis workflows")
+        logger.info("\n Business Process Automation:")
+        logger.info("    Agent onboarding with parallel assessments")
+        logger.info("    Bond issuance with eligibility verification")
+        logger.info("    Compliance review with automated remediation")
+        logger.info("    Asset performance monitoring and optimization")
+        logger.info("    Custom portfolio analysis workflows")
 
-        logger.info("\n🚀 Production Benefits:")
-        logger.info("   💡 Reduced manual intervention")
-        logger.info("   ⚡ Consistent process execution")
-        logger.info("   🛡️ Automated compliance and risk management")
-        logger.info("   📈 Scalable business process automation")
-        logger.info("   🔍 Comprehensive audit trails")
-        logger.info("   ⚙️ Flexible workflow composition")
+        logger.info("\n Production Benefits:")
+        logger.info("    Reduced manual intervention")
+        logger.info("    Consistent process execution")
+        logger.info("    Automated compliance and risk management")
+        logger.info("    Scalable business process automation")
+        logger.info("    Comprehensive audit trails")
+        logger.info("    Flexible workflow composition")
 
         # Show notification summary
         notification_service = self.workflow_services.get("notification_service")
         if notification_service and notification_service.notifications_sent:
             logger.info(
-                f"\n📬 Notifications Sent: {len(notification_service.notifications_sent)}"
+                f"\n Notifications Sent: {len(notification_service.notifications_sent)}"
             )
             for notification in notification_service.notifications_sent[
                 -3:

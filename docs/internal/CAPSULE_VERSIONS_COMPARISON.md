@@ -18,7 +18,7 @@ You now have **THREE generations** of capsules:
 - Score: 6.2/10 - "Impressive prototype"
 - **Status**: Currently in database
 
-### v2.0 - Expert Panel Approved Format ⭐ NEW!
+### v2.0 - Expert Panel Approved Format  NEW!
 - **ALL 6 expert panel fixes integrated**
 - Chain of custody with cryptographic receipts
 - Calibrated confidence (not raw)
@@ -257,12 +257,12 @@ python3 sdk/python/examples/expert_panel_v2_example.py
 ```
 
 This creates capsules with:
-- ✅ Chain of custody receipts
-- ✅ Calibrated confidence
-- ✅ Schema versioning
-- ✅ Human oversight flags
-- ✅ Historical accuracy integration
-- ✅ Query-optimized structure
+- [OK] Chain of custody receipts
+- [OK] Calibrated confidence
+- [OK] Schema versioning
+- [OK] Human oversight flags
+- [OK] Historical accuracy integration
+- [OK] Query-optimized structure
 
 ---
 
@@ -319,16 +319,16 @@ def migrate_v1_to_v2(capsule_v1):
 ## Which Version Should You Use?
 
 ### Use v1.0 if:
-- ❌ You're still prototyping
-- ❌ You don't need insurance underwriting
-- ❌ You're okay with "impressive prototype" status
+- [ERROR] You're still prototyping
+- [ERROR] You don't need insurance underwriting
+- [ERROR] You're okay with "impressive prototype" status
 
-### Use v2.0 if: ⭐
-- ✅ You're seeking pilot customers
-- ✅ You need insurance underwriting
-- ✅ You need court-grade chain of custody
-- ✅ You want "ready for production" status
-- ✅ You plan to scale to 100K+ capsules
+### Use v2.0 if:
+- [OK] You're seeking pilot customers
+- [OK] You need insurance underwriting
+- [OK] You need court-grade chain of custody
+- [OK] You want "ready for production" status
+- [OK] You plan to scale to 100K+ capsules
 
 ---
 
@@ -337,7 +337,7 @@ def migrate_v1_to_v2(capsule_v1):
 **Yes, there are new versions!**
 
 - **v1.0**: What you had before (court-admissible, 6.2/10)
-- **v2.0**: What you have now (expert panel approved, 8.5/10) ⭐
+- **v2.0**: What you have now (expert panel approved, 8.5/10)
 
 **Key improvements in v2.0**:
 1. Chain of custody - Cryptographic proof

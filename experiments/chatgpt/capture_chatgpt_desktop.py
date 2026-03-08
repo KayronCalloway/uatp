@@ -41,7 +41,7 @@ def find_chatgpt_desktop_data():
 
     for path in possible_paths:
         if path.exists():
-            print(f"✅ Found ChatGPT app data: {path}")
+            print(f"[OK] Found ChatGPT app data: {path}")
             return path
 
     return None
@@ -53,7 +53,7 @@ def read_chatgpt_conversations(data_path: Path):
     conversations = []
 
     # Look for conversation files
-    print(f"\n🔍 Searching for conversations in: {data_path}")
+    print(f"\n Searching for conversations in: {data_path}")
 
     # Common storage patterns
     storage_patterns = [
@@ -80,7 +80,7 @@ def read_chatgpt_conversations(data_path: Path):
                     elif "chats" in data:
                         conversations.extend(data["chats"])
         except Exception as e:
-            print(f"   ⚠️  Couldn't read {json_file.name}: {e}")
+            print(f"   [WARN]  Couldn't read {json_file.name}: {e}")
 
     # Search for SQLite databases
     for db_file in data_path.rglob("*.db"):
@@ -100,7 +100,7 @@ def read_chatgpt_conversations(data_path: Path):
 
             conn.close()
         except Exception as e:
-            print(f"   ⚠️  Couldn't read {db_file.name}: {e}")
+            print(f"   [WARN]  Couldn't read {db_file.name}: {e}")
 
     return conversations
 
@@ -109,10 +109,10 @@ async def import_desktop_conversations(conversations: list):
     """Import conversations to UATP."""
 
     if not conversations:
-        print("\n❌ No conversations found to import")
+        print("\n[ERROR] No conversations found to import")
         return False
 
-    print(f"\n📦 Importing {len(conversations)} conversations...")
+    print(f"\n Importing {len(conversations)} conversations...")
 
     db = DatabaseManager()
     await db.connect()
@@ -195,18 +195,18 @@ async def import_desktop_conversations(conversations: list):
 
             if result:
                 created_count += 1
-                print(f"✅ Imported: {title[:60]}")
+                print(f"[OK] Imported: {title[:60]}")
 
         except Exception as e:
-            print(f"⚠️  Error importing conversation: {e}")
+            print(f"[WARN]  Error importing conversation: {e}")
             continue
 
     await db.disconnect()
 
     print(f"\n{'='*70}")
-    print(f"✅ Import Complete: {created_count} conversations imported")
+    print(f"[OK] Import Complete: {created_count} conversations imported")
     print(f"{'='*70}")
-    print("\n🎯 View in frontend: http://localhost:3000")
+    print("\n View in frontend: http://localhost:3000")
 
     return True
 
@@ -222,12 +222,12 @@ async def main():
     data_path = find_chatgpt_desktop_data()
 
     if not data_path:
-        print("\n❌ Could not find ChatGPT desktop app data")
-        print("\n📋 Possible reasons:")
+        print("\n[ERROR] Could not find ChatGPT desktop app data")
+        print("\n Possible reasons:")
         print("   1. ChatGPT desktop app not installed")
         print("   2. App stores data in different location")
         print("   3. No permissions to access app data")
-        print("\n💡 Alternatives:")
+        print("\n Alternatives:")
         print("   - Export from ChatGPT app if it has export feature")
         print("   - Use network proxy to capture API calls")
         print("   - Check: ~/Library/Application Support/ for ChatGPT folders")
@@ -237,10 +237,10 @@ async def main():
     conversations = read_chatgpt_conversations(data_path)
 
     if not conversations:
-        print("\n⚠️  No conversations found in standard format")
-        print("\n📋 The app might use a different storage format")
-        print(f"\n🔍 Data location: {data_path}")
-        print("\n💡 You can:")
+        print("\n[WARN]  No conversations found in standard format")
+        print("\n The app might use a different storage format")
+        print(f"\n Data location: {data_path}")
+        print("\n You can:")
         print("   1. Manually explore the data directory")
         print("   2. Look for .json or .db files")
         print("   3. Check app settings for export feature")

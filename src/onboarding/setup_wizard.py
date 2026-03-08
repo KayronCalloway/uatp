@@ -7,16 +7,16 @@ with minimal user input required.
 """
 
 import asyncio
+import json
 import logging
 import os
-import sys
 import platform
 import subprocess
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+import sys
 from dataclasses import dataclass, field
 from enum import Enum
-import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,7 @@ class InteractiveSetupWizard:
         """
 
         self.current_stage = SetupStage.DETECTING
-        logger.info("🔍 Detecting environment...")
+        logger.info(" Detecting environment...")
 
         env_info = EnvironmentInfo(
             operating_system=platform.system(),
@@ -114,7 +114,7 @@ class InteractiveSetupWizard:
         self.environment_info = env_info
 
         logger.info(
-            f"✅ Environment detection complete: {env_info.operating_system} with Python {env_info.python_version}"
+            f"[OK] Environment detection complete: {env_info.operating_system} with Python {env_info.python_version}"
         )
 
         return env_info
@@ -137,7 +137,7 @@ class InteractiveSetupWizard:
         preferences = preferences or {}
 
         logger.info(
-            f"🚀 Starting quick setup for {user_type.value if hasattr(user_type, 'value') else str(user_type)}"
+            f" Starting quick setup for {user_type.value if hasattr(user_type, 'value') else str(user_type)}"
         )
 
         try:
@@ -162,7 +162,7 @@ class InteractiveSetupWizard:
                 # Add next steps based on user type
                 result.next_steps = self._generate_setup_next_steps(user_type, config)
 
-                logger.info("✅ Quick setup completed successfully")
+                logger.info("[OK] Quick setup completed successfully")
                 return result
             else:
                 return SetupResult(
@@ -173,7 +173,7 @@ class InteractiveSetupWizard:
                 )
 
         except Exception as e:
-            logger.error(f"❌ Quick setup failed: {e}")
+            logger.error(f"[ERROR] Quick setup failed: {e}")
             return SetupResult(
                 success=False, stage=SetupStage.CONFIGURING, errors=[str(e)]
             )
@@ -251,7 +251,7 @@ class InteractiveSetupWizard:
         """Initialize UATP system with configuration"""
 
         self.current_stage = SetupStage.INITIALIZING
-        logger.info("⚙️ Initializing UATP system...")
+        logger.info(" Initializing UATP system...")
 
         try:
             # Create storage directories
@@ -268,11 +268,11 @@ class InteractiveSetupWizard:
             # Initialize core systems based on configuration
             await self._initialize_core_systems(config)
 
-            logger.info("✅ System initialization complete")
+            logger.info("[OK] System initialization complete")
             return True
 
         except Exception as e:
-            logger.error(f"❌ System initialization failed: {e}")
+            logger.error(f"[ERROR] System initialization failed: {e}")
             return False
 
     async def _initialize_core_systems(self, config: Dict[str, Any]):
@@ -294,9 +294,9 @@ class InteractiveSetupWizard:
         for system in systems_to_init:
             try:
                 await self._initialize_system_component(system, config)
-                logger.info(f"✅ Initialized {system} system")
+                logger.info(f"[OK] Initialized {system} system")
             except Exception as e:
-                logger.warning(f"⚠️ Failed to initialize {system}: {e}")
+                logger.warning(f"[WARN] Failed to initialize {system}: {e}")
 
     async def _initialize_system_component(
         self, component: str, config: Dict[str, Any]
@@ -335,7 +335,7 @@ class InteractiveSetupWizard:
         """Validate that setup was successful"""
 
         self.current_stage = SetupStage.VALIDATING
-        logger.info("🔍 Validating setup...")
+        logger.info(" Validating setup...")
 
         validation_checks = [
             self._validate_storage_access(config),
@@ -350,9 +350,9 @@ class InteractiveSetupWizard:
         )
 
         if success:
-            logger.info("✅ Setup validation successful")
+            logger.info("[OK] Setup validation successful")
         else:
-            logger.warning("⚠️ Setup validation found issues")
+            logger.warning("[WARN] Setup validation found issues")
 
         return success
 
@@ -418,9 +418,9 @@ class InteractiveSetupWizard:
         """Generate next steps based on setup configuration"""
 
         steps = [
-            "🚀 Start the UATP API server",
-            "🌐 Open the web dashboard",
-            "🧪 Create your first capsule",
+            " Start the UATP API server",
+            " Open the web dashboard",
+            " Create your first capsule",
         ]
 
         # Add user-type specific steps
@@ -428,26 +428,26 @@ class InteractiveSetupWizard:
             if user_type.value == "developer":
                 steps.extend(
                     [
-                        "📚 Explore the API documentation",
-                        "🔧 Set up your development environment",
-                        "🧪 Try the example code snippets",
+                        " Explore the API documentation",
+                        " Set up your development environment",
+                        " Try the example code snippets",
                     ]
                 )
             elif user_type.value == "enterprise":
                 steps.extend(
                     [
-                        "👥 Configure team access",
-                        "🔒 Review security settings",
-                        "📊 Set up monitoring and alerts",
+                        " Configure team access",
+                        " Review security settings",
+                        " Set up monitoring and alerts",
                     ]
                 )
 
         # Add integration-specific steps
         if config.get("integrations", {}).get("openai", {}).get("enabled"):
-            steps.append("🤖 Test OpenAI integration")
+            steps.append(" Test OpenAI integration")
 
         if config.get("integrations", {}).get("anthropic", {}).get("enabled"):
-            steps.append("🤖 Test Anthropic integration")
+            steps.append(" Test Anthropic integration")
 
         return steps
 

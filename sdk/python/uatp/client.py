@@ -464,7 +464,7 @@ class UATP:
 
             # Note: Backend doesn't support updates yet, so this is a placeholder
             # In production, you'd POST to /capsules/{id}/outcome
-            print("⚠️  Outcome tracking not yet implemented in backend API")
+            print("[WARN]  Outcome tracking not yet implemented in backend API")
             print(f"   Outcome for {capsule_id}: {outcome.get('result', 'unknown')}")
             print(
                 "   This will be stored once backend supports /capsules/{id}/outcome endpoint"

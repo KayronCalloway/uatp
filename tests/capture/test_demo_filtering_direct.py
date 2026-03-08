@@ -29,7 +29,7 @@ async def test_filtering():
     print(f"   Real: {real_count}")
     print("   Expected: 0 demo, ~83 real")
     print(
-        f"   Result: {'✅ PASS' if demo_count == 0 else '❌ FAIL (contains demo capsules!)'}"
+        f"   Result: {'[OK] PASS' if demo_count == 0 else '[ERROR] FAIL (contains demo capsules!)'}"
     )
 
     if demo_count > 0:
@@ -48,7 +48,7 @@ async def test_filtering():
     print(f"   Real: {real_count_all}")
     print("   Expected: 5 demo, ~83 real (88 total)")
     print(
-        f"   Result: {'✅ PASS' if demo_count_all == 5 else '⚠️  PARTIAL (expected 5 demo)'}"
+        f"   Result: {'[OK] PASS' if demo_count_all == 5 else '[WARN]  PARTIAL (expected 5 demo)'}"
     )
 
     # Cleanup

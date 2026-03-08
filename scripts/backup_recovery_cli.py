@@ -8,9 +8,8 @@ Command-line interface for database backup and recovery operations.
 
 import argparse
 import asyncio
-import json
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add project root to path
@@ -24,32 +23,32 @@ async def cmd_backup(args):
 
     backup_manager = DatabaseBackupManager(args.backup_dir)
 
-    print("📦 Creating database backup...")
+    print(" Creating database backup...")
     backup_result = await backup_manager.create_sqlite_backup()
 
     if backup_result["status"] == "completed":
-        print(f"✅ Backup created successfully!")
+        print("[OK] Backup created successfully!")
         print(f"   File: {backup_result['backup_file']}")
         print(f"   Size: {backup_result['backup_size'] / 1024 / 1024:.1f} MB")
         print(f"   Files: {len(backup_result['files'])}")
 
         if args.verify:
-            print("\n🔍 Verifying backup...")
+            print("\n Verifying backup...")
             verification_result = await backup_manager.verify_backup(
                 backup_result["backup_file"]
             )
 
             if verification_result["status"] == "passed":
-                print("✅ Backup verification passed")
+                print("[OK] Backup verification passed")
             else:
-                print(f"❌ Backup verification failed")
+                print("[ERROR] Backup verification failed")
                 if args.verbose:
                     print(
                         f"   Error: {verification_result.get('error', 'Unknown error')}"
                     )
                 return 1
     else:
-        print(f"❌ Backup failed: {backup_result.get('error', 'Unknown error')}")
+        print(f"[ERROR] Backup failed: {backup_result.get('error', 'Unknown error')}")
         return 1
 
     return 0
@@ -61,31 +60,31 @@ async def cmd_restore(args):
     backup_manager = DatabaseBackupManager(args.backup_dir)
 
     if not args.backup_file:
-        print("❌ Backup file required for restore operation")
+        print("[ERROR] Backup file required for restore operation")
         return 1
 
     if not Path(args.backup_file).exists():
-        print(f"❌ Backup file not found: {args.backup_file}")
+        print(f"[ERROR] Backup file not found: {args.backup_file}")
         return 1
 
     if not args.force:
         response = input(
-            f"⚠️ This will overwrite the current database. Continue? (y/N): "
+            "[WARN] This will overwrite the current database. Continue? (y/N): "
         )
         if response.lower() != "y":
             print("Restore cancelled")
             return 0
 
-    print(f"🔄 Restoring database from: {args.backup_file}")
+    print(f" Restoring database from: {args.backup_file}")
     restore_result = await backup_manager.restore_from_backup(args.backup_file)
 
     if restore_result["status"] == "completed":
-        print("✅ Database restored successfully!")
+        print("[OK] Database restored successfully!")
         print(f"   Files restored: {len(restore_result['restored_files'])}")
         for file in restore_result["restored_files"]:
             print(f"   • {file}")
     else:
-        print(f"❌ Restore failed: {restore_result.get('error', 'Unknown error')}")
+        print(f"[ERROR] Restore failed: {restore_result.get('error', 'Unknown error')}")
         return 1
 
     return 0
@@ -101,7 +100,7 @@ async def cmd_list(args):
         print("No backups found")
         return 0
 
-    print(f"📋 Available backups ({len(backups)}):")
+    print(f" Available backups ({len(backups)}):")
     print()
 
     for i, backup in enumerate(backups, 1):
@@ -126,26 +125,26 @@ async def cmd_verify(args):
     backup_manager = DatabaseBackupManager(args.backup_dir)
 
     if not args.backup_file:
-        print("❌ Backup file required for verification")
+        print("[ERROR] Backup file required for verification")
         return 1
 
     if not Path(args.backup_file).exists():
-        print(f"❌ Backup file not found: {args.backup_file}")
+        print(f"[ERROR] Backup file not found: {args.backup_file}")
         return 1
 
-    print(f"🔍 Verifying backup: {args.backup_file}")
+    print(f" Verifying backup: {args.backup_file}")
     verification_result = await backup_manager.verify_backup(args.backup_file)
 
     if verification_result["status"] == "passed":
-        print("✅ Backup verification passed")
+        print("[OK] Backup verification passed")
 
         if args.verbose:
             print(f"   Checks performed: {len(verification_result['checks'])}")
             for check in verification_result["checks"]:
-                status_emoji = "✅" if check["status"] == "passed" else "❌"
+                status_emoji = "[OK]" if check["status"] == "passed" else "[ERROR]"
                 print(f"   {status_emoji} {check['check']}")
     else:
-        print(f"❌ Backup verification failed")
+        print("[ERROR] Backup verification failed")
 
         if args.verbose:
             failed_checks = [
@@ -153,7 +152,9 @@ async def cmd_verify(args):
             ]
             print(f"   Failed checks: {len(failed_checks)}")
             for check in failed_checks:
-                print(f"   ❌ {check['check']}: {check.get('error', 'Unknown error')}")
+                print(
+                    f"   [ERROR] {check['check']}: {check.get('error', 'Unknown error')}"
+                )
 
         return 1
 
@@ -170,17 +171,17 @@ async def cmd_cleanup(args):
 
     if not args.force:
         response = input(
-            f"⚠️ This will delete backups older than {backup_manager.retention_days} days. Continue? (y/N): "
+            f"[WARN] This will delete backups older than {backup_manager.retention_days} days. Continue? (y/N): "
         )
         if response.lower() != "y":
             print("Cleanup cancelled")
             return 0
 
-    print(f"🗑️ Cleaning up backups older than {backup_manager.retention_days} days...")
+    print(f"️ Cleaning up backups older than {backup_manager.retention_days} days...")
     cleanup_result = backup_manager.cleanup_old_backups()
 
     if cleanup_result["status"] == "completed":
-        print(f"✅ Cleanup completed!")
+        print("[OK] Cleanup completed!")
         print(f"   Deleted: {len(cleanup_result['deleted_files'])} files")
         print(f"   Kept: {len(cleanup_result['kept_files'])} files")
 
@@ -190,7 +191,7 @@ async def cmd_cleanup(args):
                 for file_info in cleanup_result["deleted_files"]:
                     print(f"   • {file_info['name']} ({file_info['date']})")
     else:
-        print(f"❌ Cleanup failed: {cleanup_result.get('error', 'Unknown error')}")
+        print(f"[ERROR] Cleanup failed: {cleanup_result.get('error', 'Unknown error')}")
         return 1
 
     return 0
@@ -259,10 +260,10 @@ def main():
     try:
         return asyncio.run(args.func(args))
     except KeyboardInterrupt:
-        print("\n⏹️ Operation cancelled by user")
+        print("\n Operation cancelled by user")
         return 1
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERROR] Error: {e}")
         if args.verbose:
             import traceback
 

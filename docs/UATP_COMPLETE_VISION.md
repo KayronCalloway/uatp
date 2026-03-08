@@ -343,10 +343,10 @@ Phase 3 (Attribution) MUST come last:
 ## The Current State Assessment
 
 **Where UATP Is Now:**
-- ✅ Phase 1 core tech: Built (capsules, signatures, ethics)
-- ⚠️ Phase 1 adoption: Missing (71 capsules, no real users)
-- 🔧 Phase 2 tech: Partially built (insurance, compliance modules)
-- 📦 Phase 3 tech: Prototyped (attribution, economics modules)
+- [OK] Phase 1 core tech: Built (capsules, signatures, ethics)
+- [WARN] Phase 1 adoption: Missing (71 capsules, no real users)
+-  Phase 2 tech: Partially built (insurance, compliance modules)
+-  Phase 3 tech: Prototyped (attribution, economics modules)
 
 **The Problem:**
 We have tech for all three phases, but ZERO adoption in Phase 1.

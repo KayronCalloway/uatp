@@ -11,16 +11,14 @@ import asyncio
 import json
 import logging
 import os
-import sys
-import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, asdict
-from statistics import mean, median, stdev
-import threading
 import random
-import string
+import sys
+import threading
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from statistics import mean, median
+from typing import Any, Dict, List, Optional
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -94,12 +92,12 @@ class LoadTestRunner:
         self.end_time = None
         self.lock = threading.Lock()
 
-        logger.info("🔥 Load Test Runner initialized")
+        logger.info(" Load Test Runner initialized")
 
     async def run_load_test(self, config: LoadTestConfig) -> LoadTestReport:
         """Run a load test with the given configuration."""
 
-        logger.info(f"🚀 Starting load test: {config.name}")
+        logger.info(f" Starting load test: {config.name}")
         logger.info(f"   Target: {config.target_url}")
         logger.info(f"   Concurrent users: {config.concurrent_users}")
         logger.info(f"   Duration: {config.duration_seconds}s")
@@ -141,7 +139,7 @@ class LoadTestRunner:
             # Generate report
             report = self._generate_report(config)
 
-            logger.info(f"✅ Load test completed: {config.name}")
+            logger.info(f"[OK] Load test completed: {config.name}")
             logger.info(f"   Total requests: {report.total_requests}")
             logger.info(f"   Success rate: {(1 - report.error_rate) * 100:.1f}%")
             logger.info(f"   RPS: {report.requests_per_second:.1f}")
@@ -150,7 +148,7 @@ class LoadTestRunner:
             return report
 
         except Exception as e:
-            logger.error(f"❌ Load test failed: {e}")
+            logger.error(f"[ERROR] Load test failed: {e}")
             raise
 
     async def _user_simulation(
@@ -381,12 +379,12 @@ class BenchmarkSuite:
         self.base_url = base_url
         self.runner = LoadTestRunner()
 
-        logger.info("🏃 Benchmark Suite initialized")
+        logger.info(" Benchmark Suite initialized")
 
     async def run_quick_benchmark(self) -> Dict[str, LoadTestReport]:
         """Run quick benchmark tests."""
 
-        logger.info("⚡ Running quick benchmark suite...")
+        logger.info(" Running quick benchmark suite...")
 
         tests = [
             LoadTestConfig(
@@ -425,7 +423,7 @@ class BenchmarkSuite:
     async def run_stress_test(self) -> Dict[str, LoadTestReport]:
         """Run stress test to find breaking points."""
 
-        logger.info("💪 Running stress test suite...")
+        logger.info(" Running stress test suite...")
 
         tests = [
             LoadTestConfig(
@@ -461,7 +459,9 @@ class BenchmarkSuite:
 
             # Check if system is failing
             if report.error_rate > 0.1:  # 10% error rate
-                logger.warning(f"⚠️ High error rate detected: {report.error_rate:.1%}")
+                logger.warning(
+                    f"[WARN] High error rate detected: {report.error_rate:.1%}"
+                )
                 logger.warning("Stopping stress test to prevent system damage")
                 break
 
@@ -470,7 +470,7 @@ class BenchmarkSuite:
     async def run_endurance_test(self) -> LoadTestReport:
         """Run endurance test for sustained load."""
 
-        logger.info("🏃‍♂️ Running endurance test...")
+        logger.info("‍️ Running endurance test...")
 
         config = LoadTestConfig(
             name="endurance_test",
@@ -486,7 +486,7 @@ class BenchmarkSuite:
     async def run_spike_test(self) -> LoadTestReport:
         """Run spike test with sudden load increases."""
 
-        logger.info("⚡ Running spike test...")
+        logger.info(" Running spike test...")
 
         config = LoadTestConfig(
             name="spike_test",
@@ -556,13 +556,13 @@ class BenchmarkSuite:
         with open(filepath, "w") as f:
             json.dump(report, f, indent=2)
 
-        logger.info(f"📊 Benchmark report saved to {filepath}")
+        logger.info(f" Benchmark report saved to {filepath}")
 
 
 async def main():
     """Run load testing and benchmarks."""
 
-    print("🔥 UATP Load Testing & Benchmarks")
+    print(" UATP Load Testing & Benchmarks")
     print("=" * 50)
 
     # Check if server is running
@@ -574,36 +574,36 @@ async def main():
         async with aiohttp.ClientSession() as session:
             async with session.get(f"{base_url}/health", timeout=5) as response:
                 if response.status != 200:
-                    print("❌ Server not responding properly")
+                    print("[ERROR] Server not responding properly")
                     return
     except Exception as e:
-        print(f"❌ Server not reachable at {base_url}: {e}")
+        print(f"[ERROR] Server not reachable at {base_url}: {e}")
         print("Please start the UATP server first:")
         print("python3 src/api/server.py")
         return
 
-    print(f"✅ Server is running at {base_url}")
+    print(f"[OK] Server is running at {base_url}")
 
     # Initialize benchmark suite
     benchmark = BenchmarkSuite(base_url)
 
     # Run quick benchmark
-    print("\n⚡ Running quick benchmark...")
+    print("\n Running quick benchmark...")
     quick_results = await benchmark.run_quick_benchmark()
 
     # Run stress test
-    print("\n💪 Running stress test...")
+    print("\n Running stress test...")
     stress_results = await benchmark.run_stress_test()
 
     # Combine results
     all_results = {**quick_results, **stress_results}
 
     # Generate comprehensive report
-    print("\n📊 Generating benchmark report...")
+    print("\n Generating benchmark report...")
     report = benchmark.generate_benchmark_report(all_results)
 
     # Display summary
-    print("\n🎯 Benchmark Summary:")
+    print("\n Benchmark Summary:")
     print(f"   Total tests: {report['summary']['total_tests']}")
     print(f"   Total requests: {report['summary']['total_requests']}")
     print(f"   Overall success rate: {report['summary']['overall_success_rate']:.1%}")
@@ -613,7 +613,7 @@ async def main():
     )
 
     # Show individual test results
-    print("\n📋 Individual Test Results:")
+    print("\n Individual Test Results:")
     for test_name, test_result in report["test_results"].items():
         print(f"   {test_name}:")
         print(f"     Requests: {test_result['total_requests']}")
@@ -630,8 +630,8 @@ async def main():
     filename = f"benchmark_report_{timestamp}.json"
     benchmark.save_report(report, filename)
 
-    print(f"\n✅ Load testing and benchmarking completed!")
-    print(f"📄 Full report saved to reports/{filename}")
+    print("\n[OK] Load testing and benchmarking completed!")
+    print(f" Full report saved to reports/{filename}")
 
 
 if __name__ == "__main__":

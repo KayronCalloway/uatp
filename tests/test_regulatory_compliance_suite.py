@@ -16,62 +16,56 @@ Production-grade compliance testing covering:
 
 import asyncio
 import json
-import pytest
 import time
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from typing import Dict, List, Any, Tuple
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-import tempfile
-import os
+from typing import Any, Dict, List
 
-# Import compliance modules
-from src.compliance.financial_compliance import (
-    KYCAMLEngine,
-    TransactionMonitor,
-    SuspiciousActivityReporter,
-    TransactionType,
-    RiskLevel,
-    ComplianceStatus,
-)
-from src.compliance.data_retention_enforcer import (
-    DataRetentionEnforcer,
-    RetentionPolicy,
-    RetentionPeriod,
-    ErasureRequest,
-    LitigationHold,
-)
-from src.compliance.transfer_compliance import (
-    CrossBorderTransferValidator,
-    TransferMechanism,
-    AdequacyDecision,
-    TransferImpactAssessment,
-    DataTransferRequest,
-)
+import pytest
+
 from src.compliance.breach_notification import (
-    BreachNotificationSystem,
-    DataBreach,
-    BreachSeverity,
     BreachCategory,
-    NotificationStatus,
-)
-from src.compliance.regulatory_frameworks import (
-    RegulatoryComplianceFramework,
-    ComplianceFramework,
-    ComplianceRequirement,
-    ValidationResult,
+    BreachNotificationSystem,
+    BreachSeverity,
+    DataBreach,
 )
 from src.compliance.compliance_monitor import (
-    ComplianceMonitor,
-    ComplianceMetric,
     AlertRule,
     AlertSeverity,
+    ComplianceMetric,
+    ComplianceMonitor,
 )
 from src.compliance.compliance_reporting import (
     ComplianceReportingSystem,
-    ReportType,
     ReportFormat,
     ReportFrequency,
+    ReportType,
+)
+from src.compliance.data_retention_enforcer import (
+    DataRetentionEnforcer,
+    ErasureRequest,
+    LitigationHold,
+    RetentionPeriod,
+    RetentionPolicy,
+)
+
+# Import compliance modules
+from src.compliance.financial_compliance import (
+    ComplianceStatus,
+    KYCAMLEngine,
+    RiskLevel,
+    SuspiciousActivityReporter,
+    TransactionMonitor,
+    TransactionType,
+)
+from src.compliance.regulatory_frameworks import (
+    ComplianceFramework,
+    RegulatoryComplianceFramework,
+)
+from src.compliance.transfer_compliance import (
+    CrossBorderTransferValidator,
+    DataTransferRequest,
+    TransferMechanism,
 )
 
 
@@ -91,7 +85,7 @@ class ComplianceTestSuite:
 
     async def run_all_compliance_tests(self) -> Dict[str, Any]:
         """Run complete compliance test suite."""
-        print("🛡️  Starting Comprehensive Compliance Test Suite")
+        print("  Starting Comprehensive Compliance Test Suite")
         print("=" * 70)
 
         # Test KYC/AML financial compliance
@@ -130,7 +124,7 @@ class ComplianceTestSuite:
 
     async def test_kyc_aml_compliance(self) -> Dict[str, Any]:
         """Test KYC/AML financial compliance system."""
-        print("💰 Testing KYC/AML Financial Compliance...")
+        print(" Testing KYC/AML Financial Compliance...")
 
         # Initialize KYC/AML engine
         kyc_engine = KYCAMLEngine()
@@ -231,16 +225,16 @@ class ComplianceTestSuite:
             >= self.compliance_targets["kyc_aml_compliance_score"]
         )
 
-        print(f"   ✓ KYC verification: {'PASSED' if kyc_passed else 'FAILED'}")
-        print(f"   ✓ Transactions monitored: {total_transactions}")
-        print(f"   ✓ Detection rate: {detection_rate:.1f}%")
-        print(f"   ✓ Compliance score: {result['compliance_score']}/100")
+        print(f"    KYC verification: {'PASSED' if kyc_passed else 'FAILED'}")
+        print(f"    Transactions monitored: {total_transactions}")
+        print(f"    Detection rate: {detection_rate:.1f}%")
+        print(f"    Compliance score: {result['compliance_score']}/100")
 
         return result
 
     async def test_data_retention_compliance(self) -> Dict[str, Any]:
         """Test automated data retention and GDPR Article 17 compliance."""
-        print("🗂️  Testing Data Retention Compliance...")
+        print("  Testing Data Retention Compliance...")
 
         # Initialize retention enforcer
         retention_enforcer = DataRetentionEnforcer()
@@ -358,18 +352,16 @@ class ComplianceTestSuite:
             >= self.compliance_targets["data_retention_compliance"]
         )
 
-        print(f"   ✓ Policies registered: {len(test_policies)}")
-        print(
-            f"   ✓ Erasure requests processed: {'YES' if erasure_processed else 'NO'}"
-        )
-        print(f"   ✓ Scheduled deletions: {scheduled_deletions}")
-        print(f"   ✓ Compliance score: {result['compliance_score']}/100")
+        print(f"    Policies registered: {len(test_policies)}")
+        print(f"    Erasure requests processed: {'YES' if erasure_processed else 'NO'}")
+        print(f"    Scheduled deletions: {scheduled_deletions}")
+        print(f"    Compliance score: {result['compliance_score']}/100")
 
         return result
 
     async def test_transfer_compliance(self) -> Dict[str, Any]:
         """Test cross-border data transfer compliance."""
-        print("🌍 Testing Cross-Border Transfer Compliance...")
+        print(" Testing Cross-Border Transfer Compliance...")
 
         # Initialize transfer validator
         transfer_validator = CrossBorderTransferValidator()
@@ -466,16 +458,16 @@ class ComplianceTestSuite:
             >= self.compliance_targets["transfer_compliance_score"]
         )
 
-        print(f"   ✓ Transfers validated: {total_transfers}")
-        print(f"   ✓ Approval rate: {approval_rate:.1f}%")
-        print(f"   ✓ TIA completed: {'YES' if tia_completed else 'NO'}")
-        print(f"   ✓ Compliance score: {result['compliance_score']}/100")
+        print(f"    Transfers validated: {total_transfers}")
+        print(f"    Approval rate: {approval_rate:.1f}%")
+        print(f"    TIA completed: {'YES' if tia_completed else 'NO'}")
+        print(f"    Compliance score: {result['compliance_score']}/100")
 
         return result
 
     async def test_breach_notification_compliance(self) -> Dict[str, Any]:
         """Test automated breach notification system."""
-        print("🚨 Testing Breach Notification Compliance...")
+        print(" Testing Breach Notification Compliance...")
 
         # Initialize breach notification system
         breach_system = BreachNotificationSystem()
@@ -604,16 +596,16 @@ class ComplianceTestSuite:
             >= self.compliance_targets["breach_notification_compliance"]
         )
 
-        print(f"   ✓ Breaches processed: {len(test_breaches)}")
-        print(f"   ✓ 72-hour compliance: {sum(within_72_hours)}/{len(within_72_hours)}")
-        print(f"   ✓ Complete notifications: {complete_notifications}")
-        print(f"   ✓ Compliance score: {result['compliance_score']:.1f}/100")
+        print(f"    Breaches processed: {len(test_breaches)}")
+        print(f"    72-hour compliance: {sum(within_72_hours)}/{len(within_72_hours)}")
+        print(f"    Complete notifications: {complete_notifications}")
+        print(f"    Compliance score: {result['compliance_score']:.1f}/100")
 
         return result
 
     async def test_regulatory_frameworks(self) -> Dict[str, Any]:
         """Test HIPAA, PCI DSS, and ISO 27001 compliance frameworks."""
-        print("📋 Testing Regulatory Framework Compliance...")
+        print(" Testing Regulatory Framework Compliance...")
 
         # Initialize regulatory framework
         compliance_framework = RegulatoryComplianceFramework()
@@ -713,16 +705,16 @@ class ComplianceTestSuite:
             "target_met": overall_compliance_rate >= 85,
         }
 
-        print(f"   ✓ HIPAA compliant: {'YES' if hipaa_compliant else 'NO'}")
-        print(f"   ✓ PCI DSS compliant: {'YES' if pci_compliant else 'NO'}")
-        print(f"   ✓ ISO 27001 compliant: {'YES' if iso_compliant else 'NO'}")
-        print(f"   ✓ Overall compliance rate: {overall_compliance_rate:.1f}%")
+        print(f"    HIPAA compliant: {'YES' if hipaa_compliant else 'NO'}")
+        print(f"    PCI DSS compliant: {'YES' if pci_compliant else 'NO'}")
+        print(f"    ISO 27001 compliant: {'YES' if iso_compliant else 'NO'}")
+        print(f"    Overall compliance rate: {overall_compliance_rate:.1f}%")
 
         return result
 
     async def test_compliance_monitoring(self) -> Dict[str, Any]:
         """Test continuous compliance monitoring system."""
-        print("👁️  Testing Compliance Monitoring System...")
+        print("️  Testing Compliance Monitoring System...")
 
         # Initialize compliance monitor
         compliance_monitor = ComplianceMonitor()
@@ -811,7 +803,7 @@ class ComplianceTestSuite:
             "dashboard_data_available": bool(dashboard_data),
             "remediation_suggestions": len(remediation_actions),
             "monitoring_categories": len(
-                set(m.category for m in test_metrics + violation_metrics)
+                {m.category for m in test_metrics + violation_metrics}
             ),
             "real_time_monitoring_active": True,
             "compliance_score": self._calculate_monitoring_compliance_score(
@@ -822,16 +814,16 @@ class ComplianceTestSuite:
 
         result["target_met"] = result["compliance_score"] >= 85
 
-        print(f"   ✓ Metrics monitored: {result['metrics_recorded']}")
-        print(f"   ✓ Alerts triggered: {alerts_triggered}")
-        print(f"   ✓ Remediation suggestions: {len(remediation_actions)}")
-        print(f"   ✓ Compliance score: {result['compliance_score']}/100")
+        print(f"    Metrics monitored: {result['metrics_recorded']}")
+        print(f"    Alerts triggered: {alerts_triggered}")
+        print(f"    Remediation suggestions: {len(remediation_actions)}")
+        print(f"    Compliance score: {result['compliance_score']}/100")
 
         return result
 
     async def test_compliance_reporting(self) -> Dict[str, Any]:
         """Test automated compliance reporting system."""
-        print("📊 Testing Compliance Reporting System...")
+        print(" Testing Compliance Reporting System...")
 
         # Initialize reporting system
         reporting_system = ComplianceReportingSystem()
@@ -922,16 +914,16 @@ class ComplianceTestSuite:
 
         result["target_met"] = result["compliance_score"] >= 85
 
-        print(f"   ✓ Reports generated: {successful_generations}/{total_reports}")
-        print(f"   ✓ Reports scheduled: {successful_schedules}")
-        print(f"   ✓ Reports validated: {successful_validations}")
-        print(f"   ✓ Compliance score: {result['compliance_score']:.1f}/100")
+        print(f"    Reports generated: {successful_generations}/{total_reports}")
+        print(f"    Reports scheduled: {successful_schedules}")
+        print(f"    Reports validated: {successful_validations}")
+        print(f"    Compliance score: {result['compliance_score']:.1f}/100")
 
         return result
 
     def generate_compliance_report(self) -> Dict[str, Any]:
         """Generate comprehensive compliance assessment report."""
-        print("📋 Generating Compliance Assessment Report...")
+        print(" Generating Compliance Assessment Report...")
 
         # Calculate individual compliance scores
         scores = {}
@@ -995,12 +987,10 @@ class ComplianceTestSuite:
             },
         }
 
-        print(f"   ✓ Overall Compliance Score: {overall_score:.1f}/100")
-        print(f"   ✓ Compliance Grade: {compliance_grade}")
-        print(f"   ✓ Targets Met: {targets_met}/{total_targets}")
-        print(
-            f"   ✓ Production Ready: {'YES' if summary['production_ready'] else 'NO'}"
-        )
+        print(f"    Overall Compliance Score: {overall_score:.1f}/100")
+        print(f"    Compliance Grade: {compliance_grade}")
+        print(f"    Targets Met: {targets_met}/{total_targets}")
+        print(f"    Production Ready: {'YES' if summary['production_ready'] else 'NO'}")
 
         return summary
 
@@ -1284,7 +1274,7 @@ if __name__ == "__main__":
             json.dump(results, f, indent=2, default=str)
 
         print("\n" + "=" * 70)
-        print("🛡️  COMPLIANCE TEST SUITE COMPLETE!")
+        print("  COMPLIANCE TEST SUITE COMPLETE!")
         print("=" * 70)
 
         summary = results.get("summary", {})

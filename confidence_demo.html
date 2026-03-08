@@ -177,7 +177,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎯 Per-Step Confidence Tracking Demo</h1>
+            <h1> Per-Step Confidence Tracking Demo</h1>
             <p class="subtitle">UATP 7.0 - Transparent Multi-Decision Reasoning with Uncertainty Analysis</p>
         </header>
 
@@ -201,7 +201,7 @@
         </div>
 
         <div class="card">
-            <div class="card-title">📊 Reasoning Trace: Performance Analysis</div>
+            <div class="card-title"> Reasoning Trace: Performance Analysis</div>
 
             <!-- Step 1 -->
             <div class="step">
@@ -213,7 +213,7 @@
                     Measured current system latency at 45ms average over 1000 requests
                 </div>
                 <div class="info-box measurements-box">
-                    <div class="info-box-title">📊 Measurements (5 data points):</div>
+                    <div class="info-box-title"> Measurements (5 data points):</div>
                     <ul>
                         <li>avg_latency_ms: 45.2</li>
                         <li>p50_ms: 42.0</li>
@@ -237,7 +237,7 @@
                     Estimated system can handle 2000 RPS with caching enabled
                 </div>
                 <div class="info-box uncertainty-box">
-                    <div class="info-box-title">⚠️ Uncertainty Sources:</div>
+                    <div class="info-box-title">[WARN] Uncertainty Sources:</div>
                     <ul>
                         <li>Cache hit rate variability (65-85%)</li>
                         <li>Database query performance under load</li>
@@ -245,7 +245,7 @@
                     </ul>
                 </div>
                 <div class="info-box alternatives-box">
-                    <div class="info-box-title">🔀 Alternatives Considered:</div>
+                    <div class="info-box-title"> Alternatives Considered:</div>
                     <ul>
                         <li>Load balancing across 3 servers (est. 2500 RPS)</li>
                         <li>Database read replicas (est. 2200 RPS)</li>
@@ -267,7 +267,7 @@
                     Recommend implementing Redis caching layer as the primary optimization
                 </div>
                 <div class="info-box uncertainty-box">
-                    <div class="info-box-title">⚠️ Uncertainty Sources:</div>
+                    <div class="info-box-title">[WARN] Uncertainty Sources:</div>
                     <ul>
                         <li>Redis memory requirements unclear</li>
                         <li>Cache invalidation strategy complexity</li>
@@ -275,7 +275,7 @@
                     </ul>
                 </div>
                 <div class="info-box alternatives-box">
-                    <div class="info-box-title">🔀 Alternatives Considered:</div>
+                    <div class="info-box-title"> Alternatives Considered:</div>
                     <ul>
                         <li>In-memory application cache (simpler but less effective)</li>
                         <li>CDN caching (effective but limited to static content)</li>
@@ -297,7 +297,7 @@
                     Redis caching poses minimal security risk with proper network isolation
                 </div>
                 <div class="info-box uncertainty-box">
-                    <div class="info-box-title">⚠️ Uncertainty Sources:</div>
+                    <div class="info-box-title">[WARN] Uncertainty Sources:</div>
                     <ul>
                         <li>Potential data leakage if cache keys predictable</li>
                         <li>Redis AUTH strength depends on password complexity</li>
@@ -324,7 +324,7 @@
 
             <!-- Methodology -->
             <div class="methodology">
-                <div class="card-title">📈 Confidence Computation Method</div>
+                <div class="card-title"> Confidence Computation Method</div>
                 <p style="margin-bottom: 10px;">
                     <strong>Method:</strong> <span class="methodology-badge">weakest critical link</span>
                 </p>
@@ -338,7 +338,7 @@
         </div>
 
         <div class="card">
-            <div class="card-title">✨ Key Features Demonstrated</div>
+            <div class="card-title"> Key Features Demonstrated</div>
             <ul style="padding-left: 20px;">
                 <li style="margin-bottom: 10px;"><strong>Per-Step Confidence:</strong> Each reasoning step has its own confidence level (95%, 72%, 68%, 82%, 68%)</li>
                 <li style="margin-bottom: 10px;"><strong>Confidence Basis:</strong> Clear explanation of how confidence was determined (measured, estimated, expert judgment, etc.)</li>

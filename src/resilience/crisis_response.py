@@ -5,15 +5,15 @@ This module implements crisis resilience mechanisms that ensure UATP continues
 functioning during global disruptions, natural disasters, economic crises,
 political upheavals, and other civilization-threatening events.
 
-🚨 CRISIS RESPONSE CAPABILITIES:
+ CRISIS RESPONSE CAPABILITIES:
 - Automatic failover to redundant nodes
-- Emergency governance protocols 
+- Emergency governance protocols
 - Economic circuit breakers and safeguards
 - Distributed data preservation
 - Cross-jurisdictional coordination during crises
 - AI safety emergency procedures
 
-🛡️ RESILIENCE MECHANISMS:
+ RESILIENCE MECHANISMS:
 - Byzantine fault tolerance for up to 33% node failures
 - Epidemic-resistant network topology
 - Economic shock absorption through commons fund
@@ -27,16 +27,14 @@ democratic governance when they're needed most.
 """
 
 import asyncio
-import hashlib
-import json
 import logging
 import secrets
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple, Any, Callable
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -215,7 +213,7 @@ class CrisisResilienceInfrastructure:
         self._initialize_crisis_protocols()
 
         logger.info(
-            f"🛡️ Crisis Resilience Infrastructure initialized for {local_jurisdiction}"
+            f" Crisis Resilience Infrastructure initialized for {local_jurisdiction}"
         )
 
     def _initialize_crisis_protocols(self):
@@ -269,7 +267,7 @@ class CrisisResilienceInfrastructure:
             CrisisType.AI_SAFETY_INCIDENT: self._recover_from_ai_safety_incident,
         }
 
-        logger.info("✅ Crisis response protocols initialized")
+        logger.info("[OK] Crisis response protocols initialized")
 
     def detect_crisis(
         self,
@@ -367,7 +365,7 @@ class CrisisResilienceInfrastructure:
         asyncio.create_task(self._activate_crisis_response(crisis_event))
 
         logger.critical(
-            f"🚨 CRISIS DECLARED: {crisis_type.value} ({severity.value}) by {declaring_authority}"
+            f" CRISIS DECLARED: {crisis_type.value} ({severity.value}) by {declaring_authority}"
         )
         return crisis_event
 
@@ -398,7 +396,7 @@ class CrisisResilienceInfrastructure:
         self.active_crises[crisis_id] = crisis_event
 
         logger.warning(
-            f"🚨 Crisis event created: {crisis_id} ({crisis_type.value}, {severity.value})"
+            f" Crisis event created: {crisis_id} ({crisis_type.value}, {severity.value})"
         )
         return crisis_event
 
@@ -426,10 +424,12 @@ class CrisisResilienceInfrastructure:
                 crisis_event.activated_protocols.add(protocol)
 
             except Exception as e:
-                logger.error(f"❌ Failed to activate protocol {protocol.value}: {e}")
+                logger.error(
+                    f"[ERROR] Failed to activate protocol {protocol.value}: {e}"
+                )
 
         logger.info(
-            f"✅ Activated {len(crisis_event.activated_protocols)} response protocols for {crisis_event.crisis_id}"
+            f"[OK] Activated {len(crisis_event.activated_protocols)} response protocols for {crisis_event.crisis_id}"
         )
 
     def _determine_response_protocols(
@@ -486,14 +486,14 @@ class CrisisResilienceInfrastructure:
                 # 3. Synchronize data from replicas
                 # 4. Update DNS and routing tables
 
-                logger.info(f"🔄 Activated backup node: {backup_node}")
+                logger.info(f" Activated backup node: {backup_node}")
 
         # Ensure data replication is functioning
         for replication_site in self.data_replication_sites:
             # Verify data integrity and availability
-            logger.info(f"✅ Verified data replication site: {replication_site}")
+            logger.info(f"[OK] Verified data replication site: {replication_site}")
 
-        logger.info(f"🛡️ Standard failover activated for {crisis_event.crisis_id}")
+        logger.info(f" Standard failover activated for {crisis_event.crisis_id}")
 
     async def _activate_emergency_governance(self, crisis_event: CrisisEvent):
         """Activate emergency governance protocols."""
@@ -524,10 +524,8 @@ class CrisisResilienceInfrastructure:
             f"emergency_coordinator_{self.local_jurisdiction}"
         )
 
-        logger.critical(
-            f"🚨 EMERGENCY GOVERNANCE ACTIVATED for {crisis_event.crisis_id}"
-        )
-        logger.critical(f"🏛️ Emergency council: {list(emergency_council)}")
+        logger.critical(f" EMERGENCY GOVERNANCE ACTIVATED for {crisis_event.crisis_id}")
+        logger.critical(f" Emergency council: {list(emergency_council)}")
 
     async def _activate_economic_circuit_breakers(self, crisis_event: CrisisEvent):
         """Activate economic circuit breakers to protect funds and prevent manipulation."""
@@ -553,10 +551,10 @@ class CrisisResilienceInfrastructure:
                 breaker.active = True
                 breaker.activation_timestamp = datetime.now(timezone.utc)
 
-                logger.warning(f"⚡ Economic circuit breaker activated: {breaker_id}")
+                logger.warning(f" Economic circuit breaker activated: {breaker_id}")
 
         self.economic_safeguards_active = True
-        logger.info(f"🛡️ Economic safeguards activated for {crisis_event.crisis_id}")
+        logger.info(f" Economic safeguards activated for {crisis_event.crisis_id}")
 
     async def _activate_cultural_preservation(self, crisis_event: CrisisEvent):
         """Activate cultural knowledge preservation protocols."""
@@ -577,10 +575,10 @@ class CrisisResilienceInfrastructure:
             # 3. Activate emergency cultural preservation funding
             # 4. Contact cultural preservation organizations
 
-            logger.info(f"📚 Activated preservation protocol for: {priority}")
+            logger.info(f" Activated preservation protocol for: {priority}")
 
         logger.info(
-            f"🏛️ Cultural preservation protocols activated for {crisis_event.crisis_id}"
+            f" Cultural preservation protocols activated for {crisis_event.crisis_id}"
         )
 
     async def _activate_democratic_safeguards(self, crisis_event: CrisisEvent):
@@ -602,10 +600,10 @@ class CrisisResilienceInfrastructure:
             # 3. Preserve voting records with extra redundancy
             # 4. Activate constitutional compliance monitoring
 
-            logger.info(f"🗳️ Activated democratic safeguard: {safeguard}")
+            logger.info(f"️ Activated democratic safeguard: {safeguard}")
 
         logger.critical(
-            f"🛡️ Democratic safeguards activated for {crisis_event.crisis_id}"
+            f" Democratic safeguards activated for {crisis_event.crisis_id}"
         )
 
     async def _activate_existential_protocol(self, crisis_event: CrisisEvent):
@@ -621,14 +619,14 @@ class CrisisResilienceInfrastructure:
         ]
 
         for measure in existential_measures:
-            logger.critical(f"🌍 EXISTENTIAL PROTOCOL: {measure}")
+            logger.critical(f" EXISTENTIAL PROTOCOL: {measure}")
 
         # Set very long resolution expectation for existential crises
         crisis_event.resolution_expected = datetime.now(timezone.utc) + timedelta(
             days=365
         )
 
-        logger.critical(f"🚨 EXISTENTIAL PROTOCOL ACTIVATED: {crisis_event.crisis_id}")
+        logger.critical(f" EXISTENTIAL PROTOCOL ACTIVATED: {crisis_event.crisis_id}")
 
     async def _recover_from_network_partition(self, crisis_event: CrisisEvent):
         """Recovery procedure for network partition events."""
@@ -644,10 +642,10 @@ class CrisisResilienceInfrastructure:
         for step in recovery_steps:
             # Simulate recovery step
             await asyncio.sleep(0.1)
-            logger.info(f"🔧 Network partition recovery: {step}")
+            logger.info(f" Network partition recovery: {step}")
 
         logger.info(
-            f"✅ Network partition recovery completed for {crisis_event.crisis_id}"
+            f"[OK] Network partition recovery completed for {crisis_event.crisis_id}"
         )
 
     async def _recover_from_economic_collapse(self, crisis_event: CrisisEvent):
@@ -663,10 +661,10 @@ class CrisisResilienceInfrastructure:
 
         for step in recovery_steps:
             await asyncio.sleep(0.1)
-            logger.info(f"💰 Economic collapse recovery: {step}")
+            logger.info(f" Economic collapse recovery: {step}")
 
         logger.info(
-            f"✅ Economic collapse recovery completed for {crisis_event.crisis_id}"
+            f"[OK] Economic collapse recovery completed for {crisis_event.crisis_id}"
         )
 
     async def _recover_from_government_collapse(self, crisis_event: CrisisEvent):
@@ -682,10 +680,10 @@ class CrisisResilienceInfrastructure:
 
         for step in recovery_steps:
             await asyncio.sleep(0.1)
-            logger.info(f"🏛️ Government collapse recovery: {step}")
+            logger.info(f" Government collapse recovery: {step}")
 
         logger.info(
-            f"✅ Government collapse recovery completed for {crisis_event.crisis_id}"
+            f"[OK] Government collapse recovery completed for {crisis_event.crisis_id}"
         )
 
     async def _recover_from_cyberattack(self, crisis_event: CrisisEvent):
@@ -701,9 +699,9 @@ class CrisisResilienceInfrastructure:
 
         for step in recovery_steps:
             await asyncio.sleep(0.1)
-            logger.info(f"🛡️ Cyberattack recovery: {step}")
+            logger.info(f" Cyberattack recovery: {step}")
 
-        logger.info(f"✅ Cyberattack recovery completed for {crisis_event.crisis_id}")
+        logger.info(f"[OK] Cyberattack recovery completed for {crisis_event.crisis_id}")
 
     async def _recover_from_ai_safety_incident(self, crisis_event: CrisisEvent):
         """Recovery procedure for AI safety incidents."""
@@ -718,10 +716,10 @@ class CrisisResilienceInfrastructure:
 
         for step in recovery_steps:
             await asyncio.sleep(0.1)
-            logger.info(f"🤖 AI safety incident recovery: {step}")
+            logger.info(f" AI safety incident recovery: {step}")
 
         logger.info(
-            f"✅ AI safety incident recovery completed for {crisis_event.crisis_id}"
+            f"[OK] AI safety incident recovery completed for {crisis_event.crisis_id}"
         )
 
     def resolve_crisis(
@@ -750,8 +748,8 @@ class CrisisResilienceInfrastructure:
         if not self.active_crises:
             self._deactivate_emergency_protocols(crisis_event)
 
-        logger.info(f"✅ Crisis resolved: {crisis_id} by {resolver_authority}")
-        logger.info(f"📝 Resolution notes: {resolution_notes}")
+        logger.info(f"[OK] Crisis resolved: {crisis_id} by {resolver_authority}")
+        logger.info(f" Resolution notes: {resolution_notes}")
 
         return True
 
@@ -765,7 +763,7 @@ class CrisisResilienceInfrastructure:
                 datetime.now(timezone.utc) - self.emergency_state.activation_timestamp
             )
 
-            logger.info(f"🏛️ Emergency governance deactivated after {duration}")
+            logger.info(f" Emergency governance deactivated after {duration}")
             self.emergency_state = None
 
         # Deactivate economic circuit breakers
@@ -775,14 +773,12 @@ class CrisisResilienceInfrastructure:
                     breaker.active = False
                     duration = datetime.now(timezone.utc) - breaker.activation_timestamp
                     logger.info(
-                        f"⚡ Circuit breaker {breaker.breaker_id} deactivated after {duration}"
+                        f" Circuit breaker {breaker.breaker_id} deactivated after {duration}"
                     )
 
             self.economic_safeguards_active = False
 
-        logger.info(
-            "🔄 Emergency protocols deactivated - returning to normal operations"
-        )
+        logger.info(" Emergency protocols deactivated - returning to normal operations")
 
     def get_crisis_status(self) -> Dict[str, Any]:
         """Get comprehensive status of crisis resilience infrastructure."""
@@ -827,7 +823,7 @@ class CrisisResilienceInfrastructure:
                 if recent_crises
                 else 0,
                 "crisis_types_handled": list(
-                    set(c.crisis_type.value for c in self.resolved_crises.values())
+                    {c.crisis_type.value for c in self.resolved_crises.values()}
                 ),
             },
         }

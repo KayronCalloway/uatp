@@ -34,7 +34,7 @@ def make_auditable_decision_with_gpt(task: str, model: str = "gpt-4"):
     print("=" * 60)
 
     # Get GPT's response
-    print(f"🤖 Asking {model}...")
+    print(f" Asking {model}...")
     response = openai_client.chat.completions.create(
         model=model, messages=[{"role": "user", "content": task}]
     )
@@ -43,7 +43,7 @@ def make_auditable_decision_with_gpt(task: str, model: str = "gpt-4"):
     print(f"\nGPT's Response:\n{decision[:200]}...\n")
 
     # Certify with UATP
-    print("🔒 Certifying with UATP...")
+    print(" Certifying with UATP...")
     result = uatp_client.certify(
         task=task,
         decision=decision,
@@ -70,7 +70,7 @@ def make_auditable_decision_with_gpt(task: str, model: str = "gpt-4"):
         },
     )
 
-    print("✅ Decision certified!")
+    print("[OK] Decision certified!")
     print(f"   Capsule ID: {result.capsule_id}")
     print(f"   Proof URL: {result.proof_url}")
     print(f"   Timestamp: {result.timestamp}")
@@ -90,13 +90,13 @@ if os.getenv("OPENAI_API_KEY"):
         model="gpt-4",
     )
 
-    print(f"\n💡 Proof available at: {proof}")
+    print(f"\n Proof available at: {proof}")
     print("   This proof satisfies:")
     print("   - CFPB adverse action requirements")
     print("   - Fair lending documentation")
     print("   - ECOA compliance (Equal Credit Opportunity Act)")
 else:
-    print("\n⚠️  OPENAI_API_KEY not set. Skipping live example.")
+    print("\n[WARN]  OPENAI_API_KEY not set. Skipping live example.")
     print("   Set it with: export OPENAI_API_KEY='your-key-here'")
 
 
@@ -112,13 +112,13 @@ if os.getenv("OPENAI_API_KEY"):
         model="gpt-4",
     )
 
-    print(f"\n💡 Proof available at: {proof}")
+    print(f"\n Proof available at: {proof}")
     print("   This proof provides:")
     print("   - HIPAA-compliant audit trail")
     print("   - Medical liability documentation")
     print("   - Professional standard of care evidence")
 else:
-    print("\n⚠️  OPENAI_API_KEY not set. Skipping live example.")
+    print("\n[WARN]  OPENAI_API_KEY not set. Skipping live example.")
 
 
 # Example 3: HR decision (bias prevention)
@@ -134,13 +134,13 @@ if os.getenv("OPENAI_API_KEY"):
         model="gpt-4",
     )
 
-    print(f"\n💡 Proof available at: {proof}")
+    print(f"\n Proof available at: {proof}")
     print("   This proof ensures:")
     print("   - EEOC compliance documentation")
     print("   - Protection against discrimination claims")
     print("   - Defensible hiring process")
 else:
-    print("\n⚠️  OPENAI_API_KEY not set. Skipping live example.")
+    print("\n[WARN]  OPENAI_API_KEY not set. Skipping live example.")
 
 
 # Example 4: Using with streaming (advanced)
@@ -149,7 +149,7 @@ print("Example 4: Streaming Response (Advanced)")
 print("=" * 60)
 
 if os.getenv("OPENAI_API_KEY"):
-    print("🤖 Asking GPT with streaming...")
+    print(" Asking GPT with streaming...")
     openai_client = OpenAI()
     uatp_client = UATP()
 
@@ -172,7 +172,7 @@ if os.getenv("OPENAI_API_KEY"):
     print("\n")
 
     # Certify the complete response
-    print("🔒 Certifying streamed response...")
+    print(" Certifying streamed response...")
     result = uatp_client.certify(
         task=task,
         decision=decision,
@@ -184,18 +184,18 @@ if os.getenv("OPENAI_API_KEY"):
         metadata={"model": "gpt-4", "streaming": True},
     )
 
-    print("✅ Streamed decision certified!")
+    print("[OK] Streamed decision certified!")
     print(f"   Proof URL: {result.proof_url}")
 else:
-    print("\n⚠️  OPENAI_API_KEY not set. Skipping live example.")
+    print("\n[WARN]  OPENAI_API_KEY not set. Skipping live example.")
 
 
 print("\n" + "=" * 60)
-print("✨ Integration Complete!")
+print(" Integration Complete!")
 print("=" * 60)
 print("\nEvery GPT decision is now:")
-print("  ✅ Cryptographically signed (Ed25519)")
-print("  ✅ Immutably stored")
-print("  ✅ Court-admissible")
-print("  ✅ Auditable")
-print("\nShip auditable AI with confidence! 🚀")
+print("  [OK] Cryptographically signed (Ed25519)")
+print("  [OK] Immutably stored")
+print("  [OK] Court-admissible")
+print("  [OK] Auditable")
+print("\nShip auditable AI with confidence! ")

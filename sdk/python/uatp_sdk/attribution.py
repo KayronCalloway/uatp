@@ -4,13 +4,12 @@ UATP Python SDK - Attribution Tracking Module
 Provides attribution tracking functionality for AI interactions and content generation.
 """
 
-import asyncio
+import hashlib
+import json
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
-import json
-import hashlib
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +47,7 @@ class AttributionTracker:
     def __init__(self, client):
         self.client = client
         self.attribution_cache = {}
-        logger.info("🔍 Attribution Tracker initialized")
+        logger.info(" Attribution Tracker initialized")
 
     async def track_interaction(
         self,
@@ -149,15 +148,17 @@ class AttributionTracker:
             )
 
             # Cache the result
-            self.attribution_cache[
-                attribution_result.attribution_id
-            ] = attribution_result
+            self.attribution_cache[attribution_result.attribution_id] = (
+                attribution_result
+            )
 
-            logger.info(f"✅ Tracked attribution: {attribution_result.attribution_id}")
+            logger.info(
+                f"[OK] Tracked attribution: {attribution_result.attribution_id}"
+            )
             return attribution_result
 
         except Exception as e:
-            logger.error(f"❌ Attribution tracking failed: {e}")
+            logger.error(f"[ERROR] Attribution tracking failed: {e}")
 
             # Return fallback attribution result
             return AttributionResult(
@@ -214,7 +215,7 @@ class AttributionTracker:
             return attribution_result
 
         except Exception as e:
-            logger.error(f"❌ Failed to get attribution {attribution_id}: {e}")
+            logger.error(f"[ERROR] Failed to get attribution {attribution_id}: {e}")
             return None
 
     async def update_attribution(
@@ -232,11 +233,11 @@ class AttributionTracker:
             if attribution_id in self.attribution_cache:
                 del self.attribution_cache[attribution_id]
 
-            logger.info(f"✅ Updated attribution: {attribution_id}")
+            logger.info(f"[OK] Updated attribution: {attribution_id}")
             return True
 
         except Exception as e:
-            logger.error(f"❌ Failed to update attribution {attribution_id}: {e}")
+            logger.error(f"[ERROR] Failed to update attribution {attribution_id}: {e}")
             return False
 
     async def get_user_attributions(
@@ -269,12 +270,12 @@ class AttributionTracker:
                 attributions.append(attribution)
 
             logger.info(
-                f"📊 Retrieved {len(attributions)} attributions for user {user_id}"
+                f" Retrieved {len(attributions)} attributions for user {user_id}"
             )
             return attributions
 
         except Exception as e:
-            logger.error(f"❌ Failed to get user attributions for {user_id}: {e}")
+            logger.error(f"[ERROR] Failed to get user attributions for {user_id}: {e}")
             return []
 
     async def verify_attribution(self, attribution_id: str) -> Dict[str, Any]:
@@ -287,11 +288,13 @@ class AttributionTracker:
             response.raise_for_status()
 
             verification_result = response.json()
-            logger.info(f"🔒 Verified attribution: {attribution_id}")
+            logger.info(f" Verified attribution: {attribution_id}")
             return verification_result
 
         except Exception as e:
-            logger.error(f"❌ Attribution verification failed for {attribution_id}: {e}")
+            logger.error(
+                f"[ERROR] Attribution verification failed for {attribution_id}: {e}"
+            )
             return {
                 "verified": False,
                 "error": str(e),
@@ -320,7 +323,7 @@ class AttributionTracker:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ Attribution value estimation failed: {e}")
+            logger.error(f"[ERROR] Attribution value estimation failed: {e}")
             return {
                 "estimated_value": 0.0,
                 "creator_reward": 0.0,
@@ -336,4 +339,4 @@ class AttributionTracker:
     def clear_cache(self):
         """Clear the attribution cache."""
         self.attribution_cache.clear()
-        logger.info("🧹 Attribution cache cleared")
+        logger.info(" Attribution cache cleared")

@@ -795,7 +795,7 @@ async def demo_cross_provider_validation():
     print(f"Consensus score: {validation_result.consensus_score:.2f}")
     print("Provider results:")
     for provider, result in validation_result.provider_results.items():
-        print(f"  - {provider}: {'✓' if result.get('valid', False) else '✗'}")
+        print(f"  - {provider}: {'' if result.get('valid', False) else ''}")
         if "error" in result:
             print(f"    Error: {result['error']}")
 

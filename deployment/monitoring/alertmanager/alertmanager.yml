@@ -17,7 +17,7 @@ route:
   group_interval: 10s
   repeat_interval: 12h
   receiver: 'web.hook'
-  
+
   routes:
   # Critical alerts go to multiple channels
   - match:
@@ -25,22 +25,22 @@ route:
     receiver: 'critical-alerts'
     group_wait: 5s
     repeat_interval: 5m
-    
+
   # Database alerts
   - match:
       component: database
     receiver: 'database-team'
-    
+
   # Security alerts
   - match:
       component: security
     receiver: 'security-team'
-    
+
   # Attribution system alerts
   - match:
       component: attribution
     receiver: 'attribution-team'
-    
+
   # Payment system alerts
   - match:
       component: payments
@@ -81,7 +81,7 @@ receivers:
         {{ end }}
       headers:
         priority: 'high'
-    
+
     slack_configs:
     - api_url: '${SLACK_WEBHOOK_URL}'
       channel: '#critical-alerts'
@@ -94,7 +94,7 @@ receivers:
         {{ end }}
       color: 'danger'
       send_resolved: true
-    
+
     pagerduty_configs:
     - routing_key: '${PAGERDUTY_ROUTING_KEY}'
       description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
@@ -107,14 +107,14 @@ receivers:
       subject: '[DATABASE] UATP Alert: {{ .GroupLabels.alertname }}'
       body: |
         Database Alert Triggered
-        
+
         {{ range .Alerts }}
         Alert: {{ .Annotations.summary }}
         Description: {{ .Annotations.description }}
         Instance: {{ .Labels.instance }}
         Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
         {{ end }}
-    
+
     slack_configs:
     - api_url: '${SLACK_WEBHOOK_URL}'
       channel: '#database-alerts'
@@ -133,23 +133,23 @@ receivers:
       subject: '[SECURITY] UATP Alert: {{ .GroupLabels.alertname }}'
       body: |
         Security Alert - Immediate Attention Required
-        
+
         {{ range .Alerts }}
         Alert: {{ .Annotations.summary }}
         Description: {{ .Annotations.description }}
         Source: {{ .Labels.instance }}
         Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
-        
+
         Please investigate immediately.
         {{ end }}
       headers:
         priority: 'high'
         x-priority: '1'
-    
+
     slack_configs:
     - api_url: '${SLACK_WEBHOOK_URL}'
       channel: '#security-alerts'
-      title: '🚨 Security Alert: {{ .GroupLabels.alertname }}'
+      title: ' Security Alert: {{ .GroupLabels.alertname }}'
       text: |
         {{ range .Alerts }}
         *{{ .Annotations.summary }}*
@@ -166,14 +166,14 @@ receivers:
       subject: '[ATTRIBUTION] UATP Alert: {{ .GroupLabels.alertname }}'
       body: |
         Attribution System Alert
-        
+
         {{ range .Alerts }}
         Alert: {{ .Annotations.summary }}
         Description: {{ .Annotations.description }}
         Component: {{ .Labels.component }}
         Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
         {{ end }}
-    
+
     slack_configs:
     - api_url: '${SLACK_WEBHOOK_URL}'
       channel: '#attribution-alerts'
@@ -187,22 +187,22 @@ receivers:
       subject: '[PAYMENTS] UATP Alert: {{ .GroupLabels.alertname }}'
       body: |
         Payment System Alert - Requires Investigation
-        
+
         {{ range .Alerts }}
         Alert: {{ .Annotations.summary }}
         Description: {{ .Annotations.description }}
         Component: {{ .Labels.component }}
         Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
-        
+
         This may affect user payouts. Please investigate promptly.
         {{ end }}
       headers:
         priority: 'high'
-    
+
     slack_configs:
     - api_url: '${SLACK_WEBHOOK_URL}'
       channel: '#payments-alerts'
-      title: '💰 Payment Alert: {{ .GroupLabels.alertname }}'
+      title: ' Payment Alert: {{ .GroupLabels.alertname }}'
       text: |
         {{ range .Alerts }}
         {{ .Annotations.summary }}

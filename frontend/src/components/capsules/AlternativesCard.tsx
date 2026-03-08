@@ -60,7 +60,7 @@ export function AlternativesCard({ alternatives }: AlternativesCardProps) {
                       </div>
                       {isSelected && (
                         <div className="text-xs text-green-700 font-medium mt-1">
-                          ✓ Selected Option
+                           Selected Option
                         </div>
                       )}
                     </div>

@@ -20,7 +20,7 @@ def fix_get_capsule():
     match = re.search(get_capsule_pattern, content, re.DOTALL)
 
     if not match:
-        print("❌ Could not find get_capsule function.")
+        print("[ERROR] Could not find get_capsule function.")
         return False
 
     # Extract the function body
@@ -50,7 +50,7 @@ def fix_get_capsule():
     with open(server_path, "w") as f:
         f.write(new_content)
 
-    print("✅ Successfully fixed get_capsule endpoint.")
+    print("[OK] Successfully fixed get_capsule endpoint.")
     return True
 
 

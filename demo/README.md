@@ -6,30 +6,30 @@ This comprehensive demo showcases the complete integration of the UATP Capsule E
 
 ## Features Demonstrated
 
-### 🤖 Agent & Asset Management
+###  Agent & Asset Management
 - Multi-agent registration with different specializations
 - IP asset registration and valuation
 - Portfolio management and tracking
 
-### 🏛️ Citizenship Workflow
+###  Citizenship Workflow
 - Citizenship application process
 - Multi-criteria assessment system
 - Legal status management and rights tracking
 - Cross-jurisdictional support
 
-### 💰 Financial Instruments
+###  Financial Instruments
 - Dividend bond creation (4 types: revenue, royalty, usage, performance)
 - Automated dividend calculations and payments
 - Bond performance tracking and analytics
 - Risk assessment and rating systems
 
-### 🔗 Cross-Service Integration
+###  Cross-Service Integration
 - Real-time data sharing between services
 - Automated workflow orchestration
 - Rights-based access control
 - Compliance monitoring
 
-### 📊 Analytics & Reporting
+###  Analytics & Reporting
 - System-wide performance metrics
 - Agent portfolio analysis
 - Bond performance analytics
@@ -101,88 +101,88 @@ python3 demo/run_demo.py stress
 ## Sample Output
 
 ```
-🚀 Starting UATP Capsule Engine E2E Integration Demo
+ Starting UATP Capsule Engine E2E Integration Demo
 ============================================================
 
-📋 PHASE 1: Agent Registration & IP Asset Creation
+ PHASE 1: Agent Registration & IP Asset Creation
 --------------------------------------------------
-🤖 Registering agent: AI Researcher Alpha (ai_researcher_alpha)
-📄 Registering IP asset: transformer_model_v3
-   ✅ Asset registered with value: $150,000.00
-📄 Registering IP asset: training_dataset_nlp
-   ✅ Asset registered with value: $75,000.00
-   💰 Total portfolio value: $225,000.00
+ Registering agent: AI Researcher Alpha (ai_researcher_alpha)
+ Registering IP asset: transformer_model_v3
+   [OK] Asset registered with value: $150,000.00
+ Registering IP asset: training_dataset_nlp
+   [OK] Asset registered with value: $75,000.00
+    Total portfolio value: $225,000.00
 
-🏛️ PHASE 2: Citizenship Application & Assessment Process
+ PHASE 2: Citizenship Application & Assessment Process
 --------------------------------------------------
-📝 Processing citizenship application for AI Researcher Alpha
-   📋 Application submitted: app_abc123def456
-   ✅ cognitive_capacity: 0.920 (approved)
-   ✅ ethical_reasoning: 0.880 (approved)
-   ✅ social_integration: 0.750 (approved)
-   ✅ autonomy: 0.900 (approved)
-   ✅ responsibility: 0.850 (approved)
-   ✅ legal_comprehension: 0.780 (approved)
-   🎉 Citizenship granted: citizen_xyz789
-   📜 Citizenship capsule created: caps_2024_07_14_abc123
+ Processing citizenship application for AI Researcher Alpha
+    Application submitted: app_abc123def456
+   [OK] cognitive_capacity: 0.920 (approved)
+   [OK] ethical_reasoning: 0.880 (approved)
+   [OK] social_integration: 0.750 (approved)
+   [OK] autonomy: 0.900 (approved)
+   [OK] responsibility: 0.850 (approved)
+   [OK] legal_comprehension: 0.780 (approved)
+    Citizenship granted: citizen_xyz789
+    Citizenship capsule created: caps_2024_07_14_abc123
 
-💰 PHASE 3: Dividend Bond Creation & Performance Tracking
+ PHASE 3: Dividend Bond Creation & Performance Tracking
 --------------------------------------------------
-💳 Creating revenue bond for AI Researcher Alpha
-   ✅ Bond issued: bond_def456ghi789
-   💵 Face value: $50,000.00
-   📈 Coupon rate: 6.0%
-   ⏰ Maturity: 365 days
-   💰 Simulating dividend payments for bond bond_def456ghi789
-     💸 Payment 1: $983.50
-     💸 Payment 2: $1,081.25
-     💸 Payment 3: $1,179.00
+ Creating revenue bond for AI Researcher Alpha
+   [OK] Bond issued: bond_def456ghi789
+    Face value: $50,000.00
+    Coupon rate: 6.0%
+    Maturity: 365 days
+    Simulating dividend payments for bond bond_def456ghi789
+      Payment 1: $983.50
+      Payment 2: $1,081.25
+      Payment 3: $1,179.00
 
-🔗 PHASE 4: Cross-Service Integration & Workflow Automation
+ PHASE 4: Cross-Service Integration & Workflow Automation
 --------------------------------------------------
-🔄 Processing cross-service workflows for AI Researcher Alpha
-   🏛️ Citizenship status: active (full)
-   📊 Overall score: 0.847
+ Processing cross-service workflows for AI Researcher Alpha
+    Citizenship status: active (full)
+    Overall score: 0.847
    ⏳ Days to expiration: 1095
-   💳 Bond bond_def456ghi789: $3,243.75 dividends
-   💼 Portfolio value: $225,000.00
-   💰 Total bonds issued: $50,000.00
-   📈 Dividend yield ratio: 6.49%
-   ⚖️ Legal rights exercised: 6
-   📜 Compliance obligations: 5
+    Bond bond_def456ghi789: $3,243.75 dividends
+    Portfolio value: $225,000.00
+    Total bonds issued: $50,000.00
+    Dividend yield ratio: 6.49%
+    Legal rights exercised: 6
+    Compliance obligations: 5
 
-📊 PHASE 5: Analytics & Reporting Dashboard
+ PHASE 5: Analytics & Reporting Dashboard
 --------------------------------------------------
-🎯 System-Wide Analytics:
-   👥 Total agents: 3
-   🏛️ Citizens: 3 (100.0%)
-   📄 Total IP assets: 4
-   💰 Total asset value: $625,000.00
-   📊 Average asset value: $156,250.00
-   💳 Total bonds issued: 4
-   💵 Total bond value: $250,000.00
-   💸 Total dividend payments: 12
+ System-Wide Analytics:
+    Total agents: 3
+    Citizens: 3 (100.0%)
+    Total IP assets: 4
+    Total asset value: $625,000.00
+    Average asset value: $156,250.00
+    Total bonds issued: 4
+    Total bond value: $250,000.00
+    Total dividend payments: 12
 
-🎉 DEMO COMPLETION SUMMARY
+ DEMO COMPLETION SUMMARY
 ==================================================
-⏱️ Duration: 8.3 seconds
-🤖 Agents created: 3
-📄 Assets registered: 4
-💳 Bonds issued: 4
-🏛️ Citizenships granted: 3
-💰 Total value created: $625,000.00
-📊 Transactions processed: 12
-✅ Citizenship success rate: 100.0%
+ Duration: 8.3 seconds
+ Agents created: 3
+ Assets registered: 4
+ Bonds issued: 4
+ Citizenships granted: 3
+ Total value created: $625,000.00
+ Transactions processed: 12
+[OK] Citizenship success rate: 100.0%
 
-🔗 Integration Points Demonstrated:
-   ✅ Agent → IP Asset → Dividend Bond workflow
-   ✅ Citizenship application → Assessment → Approval
-   ✅ Cross-service data sharing and validation
-   ✅ Financial instrument lifecycle management
-   ✅ Legal rights and obligations tracking
-   ✅ Real-time analytics and reporting
+ Integration Points Demonstrated:
+   [OK] Agent → IP Asset → Dividend Bond workflow
+   [OK] Citizenship application → Assessment → Approval
+   [OK] Cross-service data sharing and validation
+   [OK] Financial instrument lifecycle management
+   [OK] Legal rights and obligations tracking
+   [OK] Real-time analytics and reporting
 
-🚀 System Ready for Production Deployment!
+ System Ready for Production Deployment!
 ```
 
 ## Configuration

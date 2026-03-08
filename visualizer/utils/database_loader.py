@@ -8,21 +8,18 @@ import datetime
 import json
 import logging
 import os
-import sqlite3
 import sys
-from typing import List, Dict, Optional, Any, Union
+from typing import Any, Dict, List, Optional
 
 import streamlit as st
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
+
 from src.filters.sqlite_capsule_creator import (
-    get_sqlite_capsule_creator,
     initialize_sqlite_capsule_creator,
 )
-from src.core.database import db
-from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +66,9 @@ class DatabaseCapsuleLoader:
         try:
             self.capsule_creator = await initialize_sqlite_capsule_creator()
             self._initialized = True
-            logger.info("✅ Database capsule loader initialized")
+            logger.info("[OK] Database capsule loader initialized")
         except Exception as e:
-            logger.error(f"❌ Database initialization failed: {e}")
+            logger.error(f"[ERROR] Database initialization failed: {e}")
             self._initialized = False
 
     def _load_from_jsonl(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -79,7 +76,7 @@ class DatabaseCapsuleLoader:
         capsules = []
 
         try:
-            with open(self.jsonl_path, "r", encoding="utf-8") as f:
+            with open(self.jsonl_path, encoding="utf-8") as f:
                 for line in f:
                     if line.strip():
                         try:
@@ -93,12 +90,12 @@ class DatabaseCapsuleLoader:
 
             # Sort by timestamp (most recent first)
             capsules.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
-            logger.info(f"📄 Loaded {len(capsules)} capsules from JSONL")
+            logger.info(f" Loaded {len(capsules)} capsules from JSONL")
 
         except FileNotFoundError:
-            logger.warning(f"⚠️ JSONL file not found: {self.jsonl_path}")
+            logger.warning(f"[WARN] JSONL file not found: {self.jsonl_path}")
         except Exception as e:
-            logger.error(f"❌ Error loading JSONL: {e}")
+            logger.error(f"[ERROR] Error loading JSONL: {e}")
 
         return capsules
 
@@ -110,7 +107,7 @@ class DatabaseCapsuleLoader:
             await self.initialize()
 
         if not self.capsule_creator or not self.capsule_creator._db_connected:
-            logger.warning("⚠️ Database not connected, using JSONL fallback")
+            logger.warning("[WARN] Database not connected, using JSONL fallback")
             return self._load_from_jsonl(limit)
 
         try:
@@ -141,11 +138,11 @@ class DatabaseCapsuleLoader:
                 }
                 formatted_capsules.append(formatted_capsule)
 
-            logger.info(f"💾 Loaded {len(formatted_capsules)} capsules from database")
+            logger.info(f" Loaded {len(formatted_capsules)} capsules from database")
             return formatted_capsules
 
         except Exception as e:
-            logger.error(f"❌ Database loading failed: {e}")
+            logger.error(f"[ERROR] Database loading failed: {e}")
             return self._load_from_jsonl(limit)
 
     async def load_capsules(
@@ -166,7 +163,7 @@ class DatabaseCapsuleLoader:
             try:
                 return await self.capsule_creator.get_capsule_stats()
             except Exception as e:
-                logger.error(f"❌ Database stats failed: {e}")
+                logger.error(f"[ERROR] Database stats failed: {e}")
 
         # Fallback to JSONL stats
         capsules = self._load_from_jsonl()
@@ -319,18 +316,18 @@ def get_storage_backend() -> str:
 # Test function
 async def test_database_loader():
     """Test the database loader functionality."""
-    print("🧪 Testing Database Capsule Loader")
+    print(" Testing Database Capsule Loader")
     print("=" * 40)
 
     loader = DatabaseCapsuleLoader()
 
     # Test initialization
     await loader.initialize()
-    print(f"✅ Initialization: {'Success' if loader._initialized else 'Failed'}")
+    print(f"[OK] Initialization: {'Success' if loader._initialized else 'Failed'}")
 
     # Test loading capsules
     capsules = await loader.load_capsules(limit=5)
-    print(f"📦 Loaded capsules: {len(capsules)}")
+    print(f" Loaded capsules: {len(capsules)}")
 
     if capsules:
         print(f"   Latest: {capsules[0].get('capsule_id', 'unknown')}")
@@ -339,15 +336,15 @@ async def test_database_loader():
 
     # Test stats
     stats = await loader.get_capsule_stats()
-    print(f"📊 Stats: {stats.get('total_capsules', 0)} capsules")
+    print(f" Stats: {stats.get('total_capsules', 0)} capsules")
     print(f"   Backend: {stats.get('storage_backend', 'unknown')}")
     print(f"   Platforms: {list(stats.get('platforms', {}).keys())}")
 
     # Test search
     search_results = await loader.search_capsules(query="code", limit=3)
-    print(f"🔍 Search results: {len(search_results)}")
+    print(f" Search results: {len(search_results)}")
 
-    print("\n✅ Database loader test completed!")
+    print("\n[OK] Database loader test completed!")
 
 
 if __name__ == "__main__":

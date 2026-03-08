@@ -49,14 +49,13 @@ Usage:
     )
 """
 
-import asyncio
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict, field
-from decimal import Decimal
-from pathlib import Path
 import json
 import logging
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from decimal import Decimal
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -158,7 +157,7 @@ class AgentSpendingManager:
         if not budget_file.exists():
             return
 
-        with open(budget_file, "r") as f:
+        with open(budget_file) as f:
             for line in f:
                 budget_dict = json.loads(line)
                 # Convert string to Decimal
@@ -301,7 +300,7 @@ class AgentSpendingManager:
 
         total_spending = Decimal("0")
 
-        with open(spending_file, "r") as f:
+        with open(spending_file) as f:
             for line in f:
                 record_dict = json.loads(line)
 
@@ -367,7 +366,7 @@ class AgentSpendingManager:
                 agent_id=agent_id,
                 alert_type="limit_exceeded",
                 severity="critical",
-                message=f"Daily spending limit exceeded",
+                message="Daily spending limit exceeded",
                 current_spending=daily_spending + amount_decimal,
                 limit=budget.daily_limit,
                 period="daily",
@@ -391,7 +390,7 @@ class AgentSpendingManager:
                 agent_id=agent_id,
                 alert_type="limit_exceeded",
                 severity="critical",
-                message=f"Monthly spending limit exceeded",
+                message="Monthly spending limit exceeded",
                 current_spending=monthly_spending + amount_decimal,
                 limit=budget.monthly_limit,
                 period="monthly",
@@ -412,7 +411,7 @@ class AgentSpendingManager:
                 agent_id=agent_id,
                 alert_type="approaching_limit",
                 severity="warning",
-                message=f"Approaching daily spending limit",
+                message="Approaching daily spending limit",
                 current_spending=daily_spending + amount_decimal,
                 limit=budget.daily_limit,
                 period="daily",
@@ -528,12 +527,12 @@ class AgentSpendingManager:
         # Log critical alerts
         if severity == "critical":
             logger.critical(
-                f"🚨 BUDGET ALERT: Agent {agent_id} - {message} "
+                f" BUDGET ALERT: Agent {agent_id} - {message} "
                 f"(${current_spending} / ${limit} {period})"
             )
         else:
             logger.warning(
-                f"⚠️ Budget Warning: Agent {agent_id} - {message} "
+                f"[WARN] Budget Warning: Agent {agent_id} - {message} "
                 f"(${current_spending} / ${limit} {period})"
             )
 

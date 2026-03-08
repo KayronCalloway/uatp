@@ -3,12 +3,12 @@ Complete UATP System Network Graph Visualization
 Shows all providers, capsule types, system components, and their relationships
 """
 
-import streamlit as st
-from pyvis.network import Network
-import streamlit.components.v1 as components
-from typing import Dict, List, Any
-import tempfile
 import os
+import tempfile
+
+import streamlit as st
+import streamlit.components.v1 as components
+from pyvis.network import Network
 
 
 class UATPSystemGraph:
@@ -270,7 +270,7 @@ class UATPSystemGraph:
         temp_file.close()
 
         # Read and display
-        with open(temp_file.name, "r", encoding="utf-8") as f:
+        with open(temp_file.name, encoding="utf-8") as f:
             html_content = f.read()
 
         components.html(html_content, height=int(height.replace("px", "")))
@@ -281,18 +281,18 @@ class UATPSystemGraph:
 
 def render_system_graph():
     """Main function to render the UATP system graph"""
-    st.title("🌐 Complete UATP System Network")
+    st.title(" Complete UATP System Network")
 
     st.markdown(
         """
     This interactive graph shows the entire UATP ecosystem:
 
     **Node Types:**
-    - 🔴 **Core Engine** (red star) - The UATP Capsule Engine
-    - 🟢 **LLM Providers** (green dots) - OpenAI, Anthropic, Claude
-    - 🔵 **Spatial AI Providers** (blue dots) - Cameras, LiDAR, planners, controllers
-    - 🟦 **Capsule Types** (colored boxes) - All capsule types (chat, spatial_perception, etc.)
-    - 🔶 **System Components** (orange diamonds) - Trust scorer, FCDE, insurance, verification, governance
+    -  **Core Engine** (red star) - The UATP Capsule Engine
+    -  **LLM Providers** (green dots) - OpenAI, Anthropic, Claude
+    -  **Spatial AI Providers** (blue dots) - Cameras, LiDAR, planners, controllers
+    -  **Capsule Types** (colored boxes) - All capsule types (chat, spatial_perception, etc.)
+    -  **System Components** (orange diamonds) - Trust scorer, FCDE, insurance, verification, governance
 
     **Edge Types:**
     - **Solid lines** - Direct relationships (integrates, creates, uses)

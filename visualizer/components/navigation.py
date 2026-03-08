@@ -66,7 +66,9 @@ def render_navigation():
             with col1:
                 st.markdown(f"`{pin_id[:8]}...`")
             with col2:
-                if st.button("❌", key=f"unpin_{pin_id}", help="Unpin this capsule"):
+                if st.button(
+                    "[ERROR]", key=f"unpin_{pin_id}", help="Unpin this capsule"
+                ):
                     pinned.remove(pin_id)
                     st.session_state["pinned_capsules"] = pinned
                     st.rerun()

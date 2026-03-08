@@ -5,14 +5,12 @@ Handles one-click setup and management of AI platform integrations.
 Provides guided connection flows, auto-discovery, and testing capabilities.
 """
 
-import asyncio
 import logging
 import os
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
-import json
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -180,7 +178,7 @@ class IntegrationManager:
     async def auto_discover_integrations(self) -> Dict[str, bool]:
         """Auto-discover available integrations based on environment"""
 
-        logger.info("🔍 Auto-discovering available integrations...")
+        logger.info(" Auto-discovering available integrations...")
 
         discovered = {}
 
@@ -196,9 +194,9 @@ class IntegrationManager:
             discovered[platform_id] = has_credentials
 
             if has_credentials:
-                logger.info(f"✅ {platform.name} credentials detected")
+                logger.info(f"[OK] {platform.name} credentials detected")
             else:
-                logger.info(f"⚪ {platform.name} credentials not found")
+                logger.info(f" {platform.name} credentials not found")
 
         return discovered
 
@@ -231,7 +229,7 @@ class IntegrationManager:
             )
 
         platform_info = self.available_platforms[platform]
-        logger.info(f"🔧 Setting up {platform_info.name} integration...")
+        logger.info(f" Setting up {platform_info.name} integration...")
 
         try:
             # Check/set credentials
@@ -274,7 +272,7 @@ class IntegrationManager:
                 # Store active integration
                 self.active_integrations[platform] = result
 
-                logger.info(f"✅ {platform_info.name} integration successful")
+                logger.info(f"[OK] {platform_info.name} integration successful")
                 return result
             else:
                 return IntegrationResult(
@@ -287,7 +285,7 @@ class IntegrationManager:
                 )
 
         except Exception as e:
-            logger.error(f"❌ {platform_info.name} integration failed: {e}")
+            logger.error(f"[ERROR] {platform_info.name} integration failed: {e}")
             return IntegrationResult(
                 platform=platform,
                 status=IntegrationStatus.ERROR,
@@ -383,7 +381,7 @@ class IntegrationManager:
     ) -> Dict[str, Any]:
         """Test connection to AI platform"""
 
-        logger.info(f"🧪 Testing {platform} connection...")
+        logger.info(f" Testing {platform} connection...")
 
         try:
             if platform == "openai":
@@ -519,7 +517,7 @@ class IntegrationManager:
         context = context or {}
         start_time = datetime.now(timezone.utc)
 
-        logger.info(f"🧪 Guiding first capsule creation for {user_type}")
+        logger.info(f" Guiding first capsule creation for {user_type}")
 
         try:
             # Select best available platform
@@ -548,7 +546,7 @@ class IntegrationManager:
 
             if capsule_result["success"]:
                 logger.info(
-                    f"✅ First capsule created successfully in {creation_time:.1f}s"
+                    f"[OK] First capsule created successfully in {creation_time:.1f}s"
                 )
 
                 return CapsuleCreationResult(
@@ -577,7 +575,7 @@ class IntegrationManager:
                 )
 
         except Exception as e:
-            logger.error(f"❌ First capsule creation failed: {e}")
+            logger.error(f"[ERROR] First capsule creation failed: {e}")
             return CapsuleCreationResult(
                 capsule_id="",
                 success=False,

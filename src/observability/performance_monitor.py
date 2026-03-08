@@ -127,7 +127,7 @@ class PerformanceMonitor:
     def _alert_slow_query(self, metric: QueryMetrics):
         """Log alert for slow queries."""
         print(
-            f"⚠️  SLOW QUERY: {metric.query_name} took {metric.duration_ms:.2f}ms "
+            f"[WARN]  SLOW QUERY: {metric.query_name} took {metric.duration_ms:.2f}ms "
             f"(threshold: {self.slow_query_threshold_ms}ms)"
         )
 
@@ -186,7 +186,7 @@ class PerformanceMonitor:
         # Alert on high pool utilization
         if self.stats.pool_utilization > 80:
             print(
-                f"⚠️  HIGH POOL UTILIZATION: {self.stats.pool_utilization:.1f}% "
+                f"[WARN]  HIGH POOL UTILIZATION: {self.stats.pool_utilization:.1f}% "
                 f"({active_connections}/{pool_size} connections)"
             )
 

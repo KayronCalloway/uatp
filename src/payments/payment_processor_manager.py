@@ -9,7 +9,7 @@ import asyncio
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional, Protocol, Set
@@ -667,15 +667,15 @@ if __name__ == "__main__":
         # Wait for initialization
         await asyncio.sleep(1)
 
-        print("🔄 Payment Processor Manager Demo")
-        print("\n📊 Processor Status:")
+        print(" Payment Processor Manager Demo")
+        print("\n Processor Status:")
         status = manager.get_processor_status()
         for processor_id, info in status.items():
             print(
                 f"  {processor_id}: {info['status']} (Success Rate: {info['success_rate']:.1%})"
             )
 
-        print("\n💳 Processing Test Payment:")
+        print("\n Processing Test Payment:")
         result = await manager.process_payment(
             amount=Decimal("25.00"),
             currency="USD",
@@ -684,13 +684,13 @@ if __name__ == "__main__":
         )
         print(f"  Result: {result}")
 
-        print("\n📋 Routing Recommendations:")
+        print("\n Routing Recommendations:")
         recommendations = manager.get_routing_recommendation(Decimal("100.00"), "USD")
         for strategy, rec in recommendations.items():
             print(
                 f"  {strategy}: {rec['processor_id']} (Fee: ${rec['estimated_fee']:.2f})"
             )
 
-        print("\n✅ Demo completed!")
+        print("\n[OK] Demo completed!")
 
     asyncio.run(demo_payment_processor_manager())

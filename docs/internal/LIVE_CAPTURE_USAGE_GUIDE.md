@@ -4,11 +4,11 @@
 
 The live capture system now automatically generates **REAL rich metadata** from Claude Code conversations. Every conversation meeting significance criteria will be captured with:
 
-- ✅ **Per-step confidence** calculated from message characteristics
-- ✅ **Uncertainty sources** detected from language patterns
-- ✅ **Real measurements** (token counts, response times, content metrics)
-- ✅ **Alternatives considered** extracted from conversation content
-- ✅ **Confidence methodology** explaining overall confidence calculation
+- [OK] **Per-step confidence** calculated from message characteristics
+- [OK] **Uncertainty sources** detected from language patterns
+- [OK] **Real measurements** (token counts, response times, content metrics)
+- [OK] **Alternatives considered** extracted from conversation content
+- [OK] **Confidence methodology** explaining overall confidence calculation
 
 ## How It Works
 
@@ -120,10 +120,10 @@ After a significant Claude Code session:
 
 ### Confidence Color Coding
 
-- 🟢 **Green (0.9-1.0)**: High confidence - measured data, code provided
-- 🔵 **Blue (0.75-0.89)**: Medium-high confidence - detailed analysis
-- 🟡 **Yellow (0.6-0.74)**: Medium confidence - some uncertainty
-- 🔴 **Red (0.0-0.59)**: Low confidence - speculative or unclear
+-  **Green (0.9-1.0)**: High confidence - measured data, code provided
+-  **Blue (0.75-0.89)**: Medium-high confidence - detailed analysis
+-  **Yellow (0.6-0.74)**: Medium confidence - some uncertainty
+-  **Red (0.0-0.59)**: Low confidence - speculative or unclear
 
 ## Real vs Demo Data
 
@@ -141,7 +141,7 @@ After a significant Claude Code session:
 
 ### What's Real in Live Capture
 
-✅ **Definitely Real**:
+[OK] **Definitely Real**:
 - Token counts (from API responses)
 - Content lengths (measured)
 - Response times (calculated)
@@ -149,7 +149,7 @@ After a significant Claude Code session:
 - Uncertainty detection (pattern matching)
 - Alternative detection (keyword analysis)
 
-⚠️ **Estimated but Grounded**:
+[WARN] **Estimated but Grounded**:
 - Confidence scores (calculated from real characteristics)
 - Confidence basis (derived from analysis)
 - Operation types (inferred from content)
@@ -160,7 +160,7 @@ After a significant Claude Code session:
 
 1. **Check database**: `psql -d uatp_capsule_engine -c "SELECT COUNT(*) FROM capsules;"`
 2. **Verify API**: `curl http://localhost:8000/capsules`
-3. **Check API logs**: Look for "✨ Created RICH capsule" message
+3. **Check API logs**: Look for " Created RICH capsule" message
 4. **Restart frontend**: `cd frontend && npm run dev`
 
 ### Missing Rich Metadata
@@ -303,7 +303,7 @@ reasoning_steps = [
 
 ## Summary
 
-🎉 **You're all set!** The system is now capturing rich metadata automatically. Every significant Claude Code conversation will generate capsules with:
+ **You're all set!** The system is now capturing rich metadata automatically. Every significant Claude Code conversation will generate capsules with:
 
 - Real confidence scores
 - Detected uncertainty

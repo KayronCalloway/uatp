@@ -11,7 +11,6 @@ import os
 import subprocess
 import sys
 import time
-from typing import Optional
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -42,12 +41,12 @@ def check_postgresql_running():
 def start_postgresql():
     """Start PostgreSQL using Docker Compose."""
 
-    print("🐘 Starting PostgreSQL with Docker Compose...")
+    print(" Starting PostgreSQL with Docker Compose...")
 
     try:
         # Check if docker-compose.postgresql.yml exists
         if not os.path.exists("docker-compose.postgresql.yml"):
-            print("❌ docker-compose.postgresql.yml not found")
+            print("[ERROR] docker-compose.postgresql.yml not found")
             return False
 
         # Start services
@@ -65,7 +64,7 @@ def start_postgresql():
         )
 
         if result.returncode != 0:
-            print(f"❌ Failed to start PostgreSQL: {result.stderr}")
+            print(f"[ERROR] Failed to start PostgreSQL: {result.stderr}")
             return False
 
         # Wait for PostgreSQL to be ready
@@ -90,23 +89,23 @@ def start_postgresql():
                 )
 
                 if test_result.returncode == 0:
-                    print("✅ PostgreSQL is ready!")
+                    print("[OK] PostgreSQL is ready!")
                     return True
 
             time.sleep(2)
 
-        print("❌ PostgreSQL failed to start within timeout")
+        print("[ERROR] PostgreSQL failed to start within timeout")
         return False
 
     except Exception as e:
-        print(f"❌ Error starting PostgreSQL: {e}")
+        print(f"[ERROR] Error starting PostgreSQL: {e}")
         return False
 
 
 def stop_postgresql():
     """Stop PostgreSQL Docker containers."""
 
-    print("🛑 Stopping PostgreSQL...")
+    print(" Stopping PostgreSQL...")
 
     try:
         result = subprocess.run(
@@ -116,21 +115,21 @@ def stop_postgresql():
         )
 
         if result.returncode == 0:
-            print("✅ PostgreSQL stopped")
+            print("[OK] PostgreSQL stopped")
             return True
         else:
-            print(f"❌ Failed to stop PostgreSQL: {result.stderr}")
+            print(f"[ERROR] Failed to stop PostgreSQL: {result.stderr}")
             return False
 
     except Exception as e:
-        print(f"❌ Error stopping PostgreSQL: {e}")
+        print(f"[ERROR] Error stopping PostgreSQL: {e}")
         return False
 
 
 def show_connection_info():
     """Show PostgreSQL connection information."""
 
-    print("\n📋 PostgreSQL Connection Information")
+    print("\n PostgreSQL Connection Information")
     print("=" * 40)
     print("Host: localhost")
     print("Port: 5432")
@@ -175,14 +174,14 @@ DEBUG=True
     with open(env_file, "w") as f:
         f.write(env_content)
 
-    print(f"✅ Created {env_file}")
-    print("💡 Copy this to .env to use PostgreSQL configuration")
+    print(f"[OK] Created {env_file}")
+    print(" Copy this to .env to use PostgreSQL configuration")
 
 
 async def setup_database_schema():
     """Set up database schema."""
 
-    print("\n🏗️ Setting up database schema...")
+    print("\n Setting up database schema...")
 
     try:
         # Import and run schema setup
@@ -202,7 +201,7 @@ async def setup_database_schema():
         # Create functions
         await pg_manager.create_functions()
 
-        print("✅ Database schema created successfully")
+        print("[OK] Database schema created successfully")
 
         # Close connection
         await pg_manager.close_connection_pool()
@@ -210,30 +209,30 @@ async def setup_database_schema():
         return True
 
     except Exception as e:
-        print(f"❌ Failed to set up database schema: {e}")
+        print(f"[ERROR] Failed to set up database schema: {e}")
         return False
 
 
 def main():
     """Main setup function."""
 
-    print("🐘 PostgreSQL Setup for UATP")
+    print(" PostgreSQL Setup for UATP")
     print("=" * 40)
 
     # Check Docker
     if not check_docker():
-        print("❌ Docker not found. Please install Docker first.")
+        print("[ERROR] Docker not found. Please install Docker first.")
         return
 
-    print("✅ Docker is available")
+    print("[OK] Docker is available")
 
     # Check current status
     if check_postgresql_running():
-        print("✅ PostgreSQL is already running")
+        print("[OK] PostgreSQL is already running")
     else:
         # Start PostgreSQL
         if not start_postgresql():
-            print("❌ Failed to start PostgreSQL")
+            print("[ERROR] Failed to start PostgreSQL")
             return
 
     # Show connection info
@@ -243,15 +242,15 @@ def main():
     create_env_file()
 
     # Set up database schema
-    print("\n🔧 Setting up database schema...")
+    print("\n Setting up database schema...")
     try:
         asyncio.run(setup_database_schema())
     except Exception as e:
-        print(f"❌ Schema setup failed: {e}")
+        print(f"[ERROR] Schema setup failed: {e}")
         print("You can run this manually later with:")
         print("python3 src/database/postgresql_schema.py")
 
-    print("\n✅ PostgreSQL setup completed!")
+    print("\n[OK] PostgreSQL setup completed!")
     print("\nNext steps:")
     print("1. Copy .env.postgresql to .env")
     print("2. Run the migration script: python3 scripts/migrate_to_postgresql.py")

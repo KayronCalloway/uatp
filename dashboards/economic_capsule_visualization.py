@@ -12,12 +12,13 @@ import streamlit as st
 
 # Import required modules from the project
 from capsules.specialized_capsules import EconomicCapsule
+
 from visualizer.components.uatp7_inspector import render_uatp7_content
 
 # Set page configuration
 st.set_page_config(
     page_title="Economic Capsule Visualization Test",
-    page_icon="💰",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -186,7 +187,7 @@ def create_test_economic_capsule():
 
 def main():
     """Main function to run the visualization test."""
-    st.title("💰 Economic Capsule Visualization Test")
+    st.title(" Economic Capsule Visualization Test")
 
     st.markdown(
         """

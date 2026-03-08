@@ -298,15 +298,15 @@ def render_protocol_guidelines():
             st.markdown("#### Do")
             st.markdown(
                 """
-            ✅ Validate all inputs before creating capsules\n
-            ✅ Include detailed reasoning traces\n
-            ✅ Use proper cryptographic signatures\n
-            ✅ Handle verification errors gracefully\n
-            ✅ Document confidence levels explicitly\n
-            ✅ Use appropriate specialized capsule types\n
-            ✅ Maintain proper chain linkage\n
-            ✅ Follow ethical policy guidelines\n
-            ✅ Use standardized timestamp formats
+            [OK] Validate all inputs before creating capsules\n
+            [OK] Include detailed reasoning traces\n
+            [OK] Use proper cryptographic signatures\n
+            [OK] Handle verification errors gracefully\n
+            [OK] Document confidence levels explicitly\n
+            [OK] Use appropriate specialized capsule types\n
+            [OK] Maintain proper chain linkage\n
+            [OK] Follow ethical policy guidelines\n
+            [OK] Use standardized timestamp formats
             """
             )
 
@@ -314,15 +314,15 @@ def render_protocol_guidelines():
             st.markdown("#### Don't")
             st.markdown(
                 """
-            ❌ Modify capsules after creation\n
-            ❌ Use weak or predictable IDs\n
-            ❌ Skip signature verification\n
-            ❌ Hardcode cryptographic keys\n
-            ❌ Claim high confidence without evidence\n
-            ❌ Ignore attribution requirements\n
-            ❌ Create disconnected capsule chains\n
-            ❌ Implement custom crypto algorithms\n
-            ❌ Skip input validation
+            [ERROR] Modify capsules after creation\n
+            [ERROR] Use weak or predictable IDs\n
+            [ERROR] Skip signature verification\n
+            [ERROR] Hardcode cryptographic keys\n
+            [ERROR] Claim high confidence without evidence\n
+            [ERROR] Ignore attribution requirements\n
+            [ERROR] Create disconnected capsule chains\n
+            [ERROR] Implement custom crypto algorithms\n
+            [ERROR] Skip input validation
             """
             )
 

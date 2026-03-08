@@ -393,17 +393,17 @@ if __name__ == "__main__":
 
     def test_observability_integration():
         """Test observability integration."""
-        print("🔗 Observability Integration Test")
+        print(" Observability Integration Test")
         print("=" * 40)
 
         # Test health status
         health = observability_integration.get_health_status()
-        print("📊 Health Status:")
+        print(" Health Status:")
         for key, value in health.items():
             print(f"  {key}: {value}")
 
         # Test system health update
-        print("\n🔄 Updating system health metrics...")
+        print("\n Updating system health metrics...")
         observability_integration.update_system_health()
 
         # Test decorators
@@ -420,21 +420,21 @@ if __name__ == "__main__":
             return "async_result"
 
         # Run tests
-        print("\n🧪 Testing decorated operations...")
+        print("\n Testing decorated operations...")
         result1 = sync_test()
-        print(f"✅ Sync operation result: {result1}")
+        print(f"[OK] Sync operation result: {result1}")
 
         import asyncio
 
         result2 = asyncio.run(async_test())
-        print(f"✅ Async operation result: {result2}")
+        print(f"[OK] Async operation result: {result2}")
 
         # Get metrics summary
         summary = telemetry.get_metrics_summary()
-        print("\n📈 Final Metrics Summary:")
+        print("\n Final Metrics Summary:")
         print(f"  Total traces: {summary['recent_traces']}")
         print(f"  Fallback metrics: {len(summary.get('fallback_metrics', {}))}")
 
-        print("\n✅ Observability integration test complete!")
+        print("\n[OK] Observability integration test complete!")
 
     test_observability_integration()

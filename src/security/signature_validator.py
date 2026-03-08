@@ -496,7 +496,7 @@ if __name__ == "__main__":
 
     def test_signature_validator():
         """Test the signature validator."""
-        print("🔐 UATP Signature Validator Test")
+        print(" UATP Signature Validator Test")
         print("=" * 40)
 
         from src.security.replay_protection_policy import RealReplayProtectionPolicy
@@ -517,8 +517,8 @@ if __name__ == "__main__":
             invalid_ed25519, SignatureType.ED25519
         )
 
-        print(f"✅ Valid Ed25519: {valid_result} - {valid_msg}")
-        print(f"✅ Invalid Ed25519: {not invalid_result} - {invalid_msg}")
+        print(f"[OK] Valid Ed25519: {valid_result} - {valid_msg}")
+        print(f"[OK] Invalid Ed25519: {not invalid_result} - {invalid_msg}")
 
         # Test public key validation
         print("\nTesting public key validation...")
@@ -528,7 +528,7 @@ if __name__ == "__main__":
         key_valid, key_msg = validator.validate_public_key_format(
             valid_ed25519_key, SignatureType.ED25519
         )
-        print(f"✅ Ed25519 public key: {key_valid} - {key_msg}")
+        print(f"[OK] Ed25519 public key: {key_valid} - {key_msg}")
 
         # Test replay protection
         print("\nTesting replay protection...")
@@ -540,23 +540,23 @@ if __name__ == "__main__":
             test_sig, SignatureType.ED25519, "test_capsule", "test_signer"
         )
 
-        print(f"✅ First signature: {first_check} - {first_msg}")
-        print(f"✅ Replay attempt: {not second_check} - {second_msg}")
+        print(f"[OK] First signature: {first_check} - {first_msg}")
+        print(f"[OK] Replay attempt: {not second_check} - {second_msg}")
 
         # Get statistics
         stats = validator.get_validation_statistics()
-        print(f"\n📊 Validation Statistics: {stats}")
+        print(f"\n Validation Statistics: {stats}")
 
-        print("\n🎯 Signature Validator Capabilities:")
-        print("   ✅ Comprehensive signature format validation")
-        print("   ✅ Type-specific length and pattern checking")
-        print("   ✅ Public key format validation")
-        print("   ✅ Replay attack protection")
-        print("   ✅ Hybrid signature validation")
-        print("   ✅ Timestamp freshness checking")
-        print("   ✅ Suspicious character detection")
-        print("   ✅ Automatic cleanup of expired records")
+        print("\n Signature Validator Capabilities:")
+        print("   [OK] Comprehensive signature format validation")
+        print("   [OK] Type-specific length and pattern checking")
+        print("   [OK] Public key format validation")
+        print("   [OK] Replay attack protection")
+        print("   [OK] Hybrid signature validation")
+        print("   [OK] Timestamp freshness checking")
+        print("   [OK] Suspicious character detection")
+        print("   [OK] Automatic cleanup of expired records")
 
-        print("\n✅ Signature validator test complete!")
+        print("\n[OK] Signature validator test complete!")
 
     test_signature_validator()

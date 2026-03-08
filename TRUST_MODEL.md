@@ -2,6 +2,8 @@
 
 > This document defines what UATP can and cannot do, cryptographically enforced.
 
+**Implementation Status:** Partial - see checklist at bottom for what's shipped vs. in progress.
+
 ## Core Principle
 
 **UATP operates on a zero-knowledge, user-sovereign architecture.**

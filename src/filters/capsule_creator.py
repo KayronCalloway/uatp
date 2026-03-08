@@ -34,7 +34,7 @@ class FilterCapsuleCreator:
         os.makedirs(os.path.dirname(self.chain_file), exist_ok=True)
 
         logger.info(
-            f"🔗 FilterCapsuleCreator initialized with chain file: {self.chain_file}"
+            f" FilterCapsuleCreator initialized with chain file: {self.chain_file}"
         )
 
     async def create_capsule_from_filter_result(
@@ -108,7 +108,7 @@ class FilterCapsuleCreator:
         # Add to chain file
         await self._append_to_chain(capsule_data)
 
-        logger.info(f"📦 Created filter capsule: {capsule_id}")
+        logger.info(f" Created filter capsule: {capsule_id}")
         logger.info(f"   Platform: {platform}")
         logger.info(
             f"   Significance: {filter_result.get('significance_score', 0.0):.2f}"
@@ -165,7 +165,7 @@ class FilterCapsuleCreator:
             with open(self.chain_file, "a", encoding="utf-8") as f:
                 f.write(json_line + "\n")
 
-            logger.debug(f"✅ Appended capsule to chain: {self.chain_file}")
+            logger.debug(f"[OK] Appended capsule to chain: {self.chain_file}")
 
             # Write to SQLite database (backup)
             try:
@@ -198,10 +198,10 @@ class FilterCapsuleCreator:
 
                 conn.commit()
                 conn.close()
-                logger.debug("✅ Saved to SQLite")
+                logger.debug("[OK] Saved to SQLite")
 
             except Exception as sqlite_error:
-                logger.warning(f"⚠️ SQLite save failed: {sqlite_error}")
+                logger.warning(f"[WARN] SQLite save failed: {sqlite_error}")
 
             # ALSO write to PostgreSQL for frontend visibility (primary database)
             try:
@@ -253,7 +253,7 @@ class FilterCapsuleCreator:
                                     json.dumps(capsule_data),
                                 )
                                 logger.info(
-                                    "✅ Saved to PostgreSQL for frontend visibility"
+                                    "[OK] Saved to PostgreSQL for frontend visibility"
                                 )
                         finally:
                             await conn.close()
@@ -267,11 +267,11 @@ class FilterCapsuleCreator:
 
             except Exception as pg_error:
                 logger.warning(
-                    f"⚠️ PostgreSQL save failed (JSONL/SQLite still saved): {pg_error}"
+                    f"[WARN] PostgreSQL save failed (JSONL/SQLite still saved): {pg_error}"
                 )
 
         except Exception as e:
-            logger.error(f"❌ Error appending to chain file: {e}")
+            logger.error(f"[ERROR] Error appending to chain file: {e}")
             raise
 
     def create_capsule_sync(

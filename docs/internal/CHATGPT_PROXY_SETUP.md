@@ -16,14 +16,14 @@ You should see:
   ChatGPT Auto-Capture Proxy
 ======================================================================
 
-✅ Proxy server running on http://localhost:8888
+[OK] Proxy server running on http://localhost:8888
 
-📋 Configure ChatGPT Desktop App:
+ Configure ChatGPT Desktop App:
    ...
 
-🎯 Listening for ChatGPT traffic...
+ Listening for ChatGPT traffic...
 
-✅ Database connected - ready to capture!
+[OK] Database connected - ready to capture!
 ```
 
 Keep this terminal open while using ChatGPT.
@@ -46,8 +46,8 @@ If the app doesn't have proxy settings:
 3. Click **Advanced**
 4. Go to **Proxies** tab
 5. Check these boxes:
-   - ☑️ Web Proxy (HTTP)
-   - ☑️ Secure Web Proxy (HTTPS)
+   - ️ Web Proxy (HTTP)
+   - ️ Secure Web Proxy (HTTPS)
 6. For both, set:
    - **Web Proxy Server**: `localhost`
    - **Port**: `8888`
@@ -89,11 +89,11 @@ The ChatGPT app will likely reject the proxy's SSL certificate. You need to trus
 3. Send a message
 4. Watch the proxy terminal - you should see:
    ```
-   🔍 Intercepted chat request → gpt-4
-   ✅ Captured exchange (gpt-4)
+    Intercepted chat request → gpt-4
+   [OK] Captured exchange (gpt-4)
       User: What is quantum computing...
       AI: Quantum computing is...
-   💾 Saved to UATP! (Conversation has 2 messages)
+    Saved to UATP! (Conversation has 2 messages)
    ```
 
 5. View in frontend: http://localhost:3000

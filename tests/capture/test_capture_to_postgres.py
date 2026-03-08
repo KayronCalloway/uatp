@@ -29,7 +29,7 @@ async def test_capture_flow():
 
     # Check which database we're using
     db_url = str(db.engine.url) if db.engine else "not initialized"
-    print("\n📊 Database Configuration:")
+    print("\n Database Configuration:")
     print(f"   Engine: {db_url[:80]}")
 
     # Create test capsule
@@ -52,7 +52,7 @@ async def test_capture_flow():
         "verification": {"verified": True, "trust_score": 0.9, "method": "test"},
     }
 
-    print("\n✅ Creating test capsule:")
+    print("\n[OK] Creating test capsule:")
     print(f"   ID: {test_id}")
 
     async with db.get_session() as session:
@@ -68,10 +68,10 @@ async def test_capture_flow():
         session.add(capsule_model)
         await session.commit()
 
-    print("   ✓ Saved to database via ORM")
+    print("    Saved to database via ORM")
 
     # Step 2: Verify it's in PostgreSQL (not SQLite)
-    print("\n🔍 Verifying in PostgreSQL...")
+    print("\n Verifying in PostgreSQL...")
 
     try:
         import asyncpg
@@ -89,19 +89,19 @@ async def test_capture_flow():
         )
 
         if result:
-            print(f'   ✓ Found in PostgreSQL: {result["capsule_id"]}')
+            print(f'    Found in PostgreSQL: {result["capsule_id"]}')
         else:
-            print("   ✗ NOT FOUND in PostgreSQL - WRONG DATABASE!")
+            print("    NOT FOUND in PostgreSQL - WRONG DATABASE!")
             await conn.close()
             return False
 
         await conn.close()
     except Exception as e:
-        print(f"   ✗ PostgreSQL check failed: {e}")
+        print(f"    PostgreSQL check failed: {e}")
         return False
 
     # Step 3: Verify it's accessible via API (what frontend uses)
-    print("\n🌐 Verifying via API (frontend access)...")
+    print("\n Verifying via API (frontend access)...")
 
     import requests
 
@@ -109,24 +109,24 @@ async def test_capture_flow():
         response = requests.get(f"http://localhost:8000/capsules/{test_id}")
         if response.status_code == 200:
             data = response.json()
-            print(f'   ✓ Accessible via API: {data["capsule"]["capsule_id"]}')
+            print(f'    Accessible via API: {data["capsule"]["capsule_id"]}')
         else:
-            print(f"   ✗ API returned: {response.status_code}")
+            print(f"    API returned: {response.status_code}")
             return False
     except Exception as e:
-        print(f"   ✗ API check failed: {e}")
+        print(f"    API check failed: {e}")
         return False
 
     # Step 4: Summary
     print(f'\n{"="*80}')
-    print("  ✅ END-TO-END TEST PASSED")
+    print("  [OK] END-TO-END TEST PASSED")
     print(f'{"="*80}')
-    print("\n📋 Test Results:")
-    print("   ✓ Capsule created via ORM")
-    print("   ✓ Stored in PostgreSQL (not SQLite)")
-    print("   ✓ Accessible via API")
-    print("   ✓ Frontend will be able to see it")
-    print(f"\n🎯 Test Capsule ID: {test_id}")
+    print("\n Test Results:")
+    print("    Capsule created via ORM")
+    print("    Stored in PostgreSQL (not SQLite)")
+    print("    Accessible via API")
+    print("    Frontend will be able to see it")
+    print(f"\n Test Capsule ID: {test_id}")
     print(f"   View in frontend: http://localhost:3000 → Capsules → {test_id}")
 
     return True

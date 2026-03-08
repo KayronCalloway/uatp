@@ -82,7 +82,7 @@ class AntigravityRichCaptureService:
             self.crypto_sealer = None
             self.signing_enabled = False
 
-        logger.info("✨ Antigravity Rich Capture Service initialized")
+        logger.info(" Antigravity Rich Capture Service initialized")
         logger.info(f"   Monitoring: {self.brain_dir}")
         logger.info(f"   API: {self.api_base}")
         logger.info(f"   Signing: {'enabled' if self.signing_enabled else 'disabled'}")
@@ -163,7 +163,7 @@ class AntigravityRichCaptureService:
                 if current_option and (
                     "chosen" in line_lower
                     or "selected" in line_lower
-                    or "✓" in line
+                    or "" in line
                     or "[x]" in line_lower
                 ):
                     if alternatives:
@@ -410,7 +410,7 @@ class AntigravityRichCaptureService:
             if artifact_alternatives:
                 flat_capsule["alternatives_considered"] = artifact_alternatives
                 logger.info(
-                    f"   ✓ Extracted {len(artifact_alternatives)} alternatives from artifacts"
+                    f"    Extracted {len(artifact_alternatives)} alternatives from artifacts"
                 )
 
             return flat_capsule
@@ -473,7 +473,7 @@ class AntigravityRichCaptureService:
                             "trust_score": 0.75,  # Default trust for automated capture
                         }
                     )
-                    logger.info("🔐 Capsule signed with Ed25519 (V7.0 format)")
+                    logger.info(" Capsule signed with Ed25519 (V7.0 format)")
                 except Exception as sign_error:
                     logger.warning(
                         f"Signing failed (capsule will be unsigned): {sign_error}"
@@ -500,16 +500,18 @@ class AntigravityRichCaptureService:
                 result = response.json()
                 created_id = result.get("capsule_id", capsule_id)
                 signed_status = "signed" if "signature" in verification else "unsigned"
-                logger.info(f"✅ Created rich capsule ({signed_status}): {created_id}")
+                logger.info(
+                    f"[OK] Created rich capsule ({signed_status}): {created_id}"
+                )
                 return created_id
             else:
                 logger.error(
-                    f"❌ API error {response.status_code}: {response.text[:200]}"
+                    f"[ERROR] API error {response.status_code}: {response.text[:200]}"
                 )
                 return None
 
         except Exception as e:
-            logger.error(f"❌ Failed to post capsule: {e}")
+            logger.error(f"[ERROR] Failed to post capsule: {e}")
             return None
 
     def capture_session(self, session_dir: Path, user_id: str = "kay") -> Optional[str]:
@@ -532,7 +534,7 @@ class AntigravityRichCaptureService:
             logger.debug(f"Session {session_id} unchanged")
             return self.session_capsule_map.get(session_id)
 
-        logger.info(f"✨ Capturing Antigravity session: {session_id}")
+        logger.info(f" Capturing Antigravity session: {session_id}")
         logger.info(f"   Artifacts: {list(artifacts.keys())}")
 
         # Convert to ConversationSession
@@ -549,17 +551,17 @@ class AntigravityRichCaptureService:
         if capsule_id:
             self.captured_sessions[session_id] = current_hash
             self.session_capsule_map[session_id] = capsule_id
-            logger.info(f"🎉 Rich capsule created: {capsule_id}")
+            logger.info(f" Rich capsule created: {capsule_id}")
 
             # Log richness indicators
             if "critical_path_analysis" in capsule_data:
-                logger.info("   ✓ Critical path analysis included")
+                logger.info("    Critical path analysis included")
             if "uncertainty_analysis" in capsule_data:
-                logger.info("   ✓ Uncertainty analysis included")
+                logger.info("    Uncertainty analysis included")
             if "risk_assessment" in capsule_data:
-                logger.info("   ✓ Risk assessment included")
+                logger.info("    Risk assessment included")
             if "plain_language_summary" in capsule_data:
-                logger.info("   ✓ Plain language summary included")
+                logger.info("    Plain language summary included")
 
         return capsule_id
 
@@ -572,7 +574,7 @@ class AntigravityRichCaptureService:
         capsule_ids = []
 
         sessions = self.get_active_sessions()
-        logger.info(f"📂 Found {len(sessions)} Antigravity sessions")
+        logger.info(f" Found {len(sessions)} Antigravity sessions")
 
         for session_dir in sessions:
             try:
@@ -592,13 +594,13 @@ class AntigravityRichCaptureService:
             user_id: User identifier
             interval: Seconds between scans
         """
-        logger.info(f"👀 Starting watch mode (interval: {interval}s)")
+        logger.info(f" Starting watch mode (interval: {interval}s)")
 
         while True:
             try:
                 capsule_ids = self.scan_and_capture(user_id)
                 if capsule_ids:
-                    logger.info(f"📦 Captured {len(capsule_ids)} capsules this cycle")
+                    logger.info(f" Captured {len(capsule_ids)} capsules this cycle")
             except Exception as e:
                 logger.error(f"Watch cycle error: {e}")
 
@@ -622,30 +624,30 @@ async def watch_antigravity(user_id: str = "kay", interval: int = 30):
 
 async def main():
     """Test the rich antigravity capture."""
-    print("✨ Antigravity Rich Capture Integration")
+    print(" Antigravity Rich Capture Integration")
     print("=" * 60)
 
     service = AntigravityRichCaptureService()
 
     # Check for sessions
     sessions = service.get_active_sessions()
-    print(f"\n📂 Found {len(sessions)} Antigravity sessions:")
+    print(f"\n Found {len(sessions)} Antigravity sessions:")
     for s in sessions:
         print(f"   - {s.name}")
 
     # Capture them
     if sessions:
-        print("\n🔄 Capturing with rich metadata...")
+        print("\n Capturing with rich metadata...")
         capsule_ids = service.scan_and_capture()
 
-        print(f"\n✅ Created {len(capsule_ids)} rich capsules:")
+        print(f"\n[OK] Created {len(capsule_ids)} rich capsules:")
         for cid in capsule_ids:
             print(f"   - {cid}")
     else:
-        print("\n⚠️  No Antigravity sessions found")
+        print("\n[WARN]  No Antigravity sessions found")
         print(f"   Expected location: {service.brain_dir}")
 
-    print("\n✨ Done!")
+    print("\n Done!")
 
 
 if __name__ == "__main__":

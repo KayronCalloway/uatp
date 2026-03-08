@@ -9,16 +9,17 @@ Usage:
     python scripts/check_honey_token_alerts.py --count 50  # Check last 50 alerts
 """
 
+import argparse
 import sys
 from pathlib import Path
-import argparse
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.security.honey_tokens import HoneyTokenManager
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
+from src.security.honey_tokens import HoneyTokenManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,13 +35,13 @@ def check_alerts(count: int = 100, hours: int = 24):
     """
     manager = HoneyTokenManager()
 
-    logger.info(f"🔍 Checking last {count} honey token alerts (last {hours} hours)...")
+    logger.info(f" Checking last {count} honey token alerts (last {hours} hours)...")
 
     # Get recent alerts
     alerts = manager.get_recent_alerts(count=count)
 
     if not alerts:
-        logger.info("✅ No honey token alerts found. System appears secure.")
+        logger.info("[OK] No honey token alerts found. System appears secure.")
         return
 
     # Filter by time window
@@ -53,12 +54,12 @@ def check_alerts(count: int = 100, hours: int = 24):
             recent_alerts.append(alert)
 
     if not recent_alerts:
-        logger.info(f"✅ No alerts in the last {hours} hours. System appears secure.")
+        logger.info(f"[OK] No alerts in the last {hours} hours. System appears secure.")
         logger.info(f"   Total historical alerts: {len(alerts)}")
         return
 
     # Display alerts
-    logger.critical(f"\n🚨 INTRUSION DETECTED 🚨")
+    logger.critical("\n INTRUSION DETECTED ")
     logger.critical(
         f"   {len(recent_alerts)} honey token alert(s) in the last {hours} hours!\n"
     )
@@ -76,7 +77,7 @@ def check_alerts(count: int = 100, hours: int = 24):
         logger.critical("")
 
     # Provide remediation advice
-    logger.critical("⚠️  IMMEDIATE ACTIONS REQUIRED:")
+    logger.critical("[WARN]  IMMEDIATE ACTIONS REQUIRED:")
     logger.critical("   1. Investigate the source IP addresses")
     logger.critical("   2. Review access logs for these time periods")
     logger.critical("   3. Check if legitimate users were compromised")
@@ -93,7 +94,7 @@ def check_alerts(count: int = 100, hours: int = 24):
             ips[ip] = 0
         ips[ip] += 1
 
-    logger.critical(f"\n📊 Attacks by IP:")
+    logger.critical("\n Attacks by IP:")
     for ip, count in sorted(ips.items(), key=lambda x: x[1], reverse=True):
         logger.critical(f"   {ip}: {count} attempt(s)")
 

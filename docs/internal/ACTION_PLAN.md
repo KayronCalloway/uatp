@@ -1,18 +1,18 @@
 # UATP Capsule Engine - Action Plan
 **Date**: 2025-12-03
-**Status**: ARM64 Migration Complete ✅
+**Status**: ARM64 Migration Complete [OK]
 **Current State**: System Operational
 
 ---
 
-## 🎯 IMMEDIATE PRIORITIES (Today)
+##  IMMEDIATE PRIORITIES (Today)
 
 ### Priority 1: Verify Production Readiness
 **Goal**: Ensure system is ready for real-world use
 **Time**: 30 minutes
 
 **Steps**:
-1. ✅ ARM64 migration complete
+1. [OK] ARM64 migration complete
 2. ⏳ Start API server and verify all endpoints respond
 3. ⏳ Run comprehensive test suite (not just basic tests)
 4. ⏳ Check database connectivity (PostgreSQL)
@@ -37,7 +37,7 @@ python3 -m pytest tests/test_basic_functionality.py tests/test_improvements.py -
 
 ---
 
-## 📋 SHORT TERM (This Week)
+##  SHORT TERM (This Week)
 
 ### Priority 2: Fix Test Infrastructure
 **Goal**: Get full test suite running
@@ -92,7 +92,7 @@ lipo -info $HOME/_oqs/lib/liboqs.dylib
 **Verification**:
 ```bash
 export DYLD_LIBRARY_PATH=$HOME/_oqs/lib:$DYLD_LIBRARY_PATH
-python3 -c "import oqs; print('✓ liboqs:', oqs.oqs_version())"
+python3 -c "import oqs; print(' liboqs:', oqs.oqs_version())"
 ```
 
 ---
@@ -125,7 +125,7 @@ python3 -c "import oqs; print('✓ liboqs:', oqs.oqs_version())"
 
 ---
 
-## 🚀 MEDIUM TERM (Next 2 Weeks)
+##  MEDIUM TERM (Next 2 Weeks)
 
 ### Priority 5: Code Quality Improvements
 **Goal**: Clean up deprecation warnings and technical debt
@@ -237,7 +237,7 @@ class Settings(BaseSettings):
 
 ---
 
-## 🎨 LONG TERM (Next Month)
+##  LONG TERM (Next Month)
 
 ### Priority 8: Frontend Development
 **Goal**: Build production-ready web interface
@@ -336,7 +336,7 @@ class Settings(BaseSettings):
 
 ---
 
-## 📊 SUCCESS METRICS
+##  SUCCESS METRICS
 
 ### Technical Metrics
 - **Test Coverage**: 90%+ (currently ~95%)
@@ -353,7 +353,7 @@ class Settings(BaseSettings):
 
 ---
 
-## 🔄 WEEKLY WORKFLOW
+##  WEEKLY WORKFLOW
 
 ### Monday: Planning
 - Review last week's progress
@@ -377,7 +377,7 @@ class Settings(BaseSettings):
 
 ---
 
-## 🚨 BLOCKERS & DEPENDENCIES
+##  BLOCKERS & DEPENDENCIES
 
 ### Current Blockers
 None! System is operational.
@@ -399,10 +399,10 @@ None! System is operational.
 
 ---
 
-## 📈 MILESTONE TIMELINE
+##  MILESTONE TIMELINE
 
 **Week 1** (This Week):
-- ✅ ARM64 migration complete
+- [OK] ARM64 migration complete
 - ⏳ Test infrastructure fixed
 - ⏳ Database setup complete
 - ⏳ API server running stably
@@ -429,7 +429,7 @@ None! System is operational.
 
 ---
 
-## 🎯 TODAY'S ACTION ITEMS
+##  TODAY'S ACTION ITEMS
 
 **Right Now** (30 min):
 1. Start API server: `python3 run.py`
@@ -448,7 +448,7 @@ None! System is operational.
 
 ---
 
-## 📞 SUPPORT & RESOURCES
+##  SUPPORT & RESOURCES
 
 ### Documentation
 - `README.md` - Getting started
@@ -480,4 +480,4 @@ pip3 install -r requirements.txt
 ---
 
 **Last Updated**: 2025-12-03
-**Status**: Ready to Execute ✅
+**Status**: Ready to Execute [OK]

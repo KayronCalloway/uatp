@@ -7,13 +7,10 @@ governance policies, compliance reporting, and rate limiting management.
 """
 
 import asyncio
-import json
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
 
 import httpx
-from pydantic import BaseModel
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -33,7 +30,7 @@ class EnterpriseIntegrationDemo:
     async def run_complete_demo(self):
         """Run complete enterprise integration demo."""
 
-        logger.info("🚀 Starting UATP Enterprise Integration Demo")
+        logger.info(" Starting UATP Enterprise Integration Demo")
 
         try:
             # 1. System Health Check
@@ -60,10 +57,10 @@ class EnterpriseIntegrationDemo:
             # 8. Show Analytics and Reporting
             await self.show_analytics_and_reporting()
 
-            logger.info("✅ Enterprise Integration Demo completed successfully!")
+            logger.info("[OK] Enterprise Integration Demo completed successfully!")
 
         except Exception as e:
-            logger.error(f"❌ Demo failed: {e}")
+            logger.error(f"[ERROR] Demo failed: {e}")
             raise
         finally:
             await self.client.aclose()
@@ -71,7 +68,7 @@ class EnterpriseIntegrationDemo:
     async def check_system_health(self):
         """Check enterprise system health."""
 
-        logger.info("🔍 Checking system health...")
+        logger.info(" Checking system health...")
 
         response = await self.client.get(
             f"{self.base_url}/enterprise/health/enterprise"
@@ -89,7 +86,7 @@ class EnterpriseIntegrationDemo:
     async def configure_enterprise_sso(self):
         """Configure enterprise SSO integration."""
 
-        logger.info("🔐 Configuring Enterprise SSO...")
+        logger.info(" Configuring Enterprise SSO...")
 
         # Configure Azure AD SSO
         azure_config = {
@@ -107,9 +104,9 @@ class EnterpriseIntegrationDemo:
         )
 
         if response.status_code == 200:
-            logger.info("✅ Azure AD SSO configured successfully")
+            logger.info("[OK] Azure AD SSO configured successfully")
         else:
-            logger.warning(f"⚠️ SSO configuration response: {response.status_code}")
+            logger.warning(f"[WARN] SSO configuration response: {response.status_code}")
 
         # Configure Okta SSO
         okta_config = {
@@ -127,10 +124,10 @@ class EnterpriseIntegrationDemo:
         )
 
         if response.status_code == 200:
-            logger.info("✅ Okta SSO configured successfully")
+            logger.info("[OK] Okta SSO configured successfully")
         else:
             logger.warning(
-                f"⚠️ Okta SSO configuration response: {response.status_code}"
+                f"[WARN] Okta SSO configuration response: {response.status_code}"
             )
 
         # Test SSO login initiation
@@ -141,7 +138,7 @@ class EnterpriseIntegrationDemo:
         if response.status_code == 200:
             login_data = response.json()
             logger.info(
-                f"✅ SSO login URL generated: {login_data.get('redirect_url', 'N/A')[:100]}..."
+                f"[OK] SSO login URL generated: {login_data.get('redirect_url', 'N/A')[:100]}..."
             )
 
         return True
@@ -149,7 +146,7 @@ class EnterpriseIntegrationDemo:
     async def setup_governance_policies(self):
         """Set up comprehensive governance policies."""
 
-        logger.info("📋 Setting up Governance Policies...")
+        logger.info(" Setting up Governance Policies...")
 
         policies = []
 
@@ -196,7 +193,9 @@ class EnterpriseIntegrationDemo:
         if response.status_code == 200:
             policy_data = response.json()
             policies.append(policy_data["policy_id"])
-            logger.info(f"✅ Data Protection Policy created: {policy_data['policy_id']}")
+            logger.info(
+                f"[OK] Data Protection Policy created: {policy_data['policy_id']}"
+            )
 
         # Access Control Policy
         access_control_policy = {
@@ -241,7 +240,9 @@ class EnterpriseIntegrationDemo:
         if response.status_code == 200:
             policy_data = response.json()
             policies.append(policy_data["policy_id"])
-            logger.info(f"✅ Access Control Policy created: {policy_data['policy_id']}")
+            logger.info(
+                f"[OK] Access Control Policy created: {policy_data['policy_id']}"
+            )
 
         # Security Policy
         security_policy = {
@@ -277,7 +278,7 @@ class EnterpriseIntegrationDemo:
         if response.status_code == 200:
             policy_data = response.json()
             policies.append(policy_data["policy_id"])
-            logger.info(f"✅ Security Policy created: {policy_data['policy_id']}")
+            logger.info(f"[OK] Security Policy created: {policy_data['policy_id']}")
 
         # Test policy evaluation
         test_context = {
@@ -300,11 +301,11 @@ class EnterpriseIntegrationDemo:
         if response.status_code == 200:
             evaluation_result = response.json()
             logger.info(
-                f"✅ Policy evaluation completed - Compliant: {evaluation_result['compliant']}"
+                f"[OK] Policy evaluation completed - Compliant: {evaluation_result['compliant']}"
             )
             if evaluation_result.get("violations"):
                 logger.warning(
-                    f"⚠️ Found {len(evaluation_result['violations'])} violations"
+                    f"[WARN] Found {len(evaluation_result['violations'])} violations"
                 )
 
         return policies
@@ -312,7 +313,7 @@ class EnterpriseIntegrationDemo:
     async def configure_rate_limiting(self):
         """Configure enterprise rate limiting and quotas."""
 
-        logger.info("⚡ Configuring Rate Limiting...")
+        logger.info(" Configuring Rate Limiting...")
 
         # Configure enterprise plan
         enterprise_plan = {
@@ -375,10 +376,10 @@ class EnterpriseIntegrationDemo:
         )
 
         if response.status_code == 200:
-            logger.info("✅ Enterprise rate limiting plan configured")
+            logger.info("[OK] Enterprise rate limiting plan configured")
         else:
             logger.warning(
-                f"⚠️ Rate limiting configuration response: {response.status_code}"
+                f"[WARN] Rate limiting configuration response: {response.status_code}"
             )
 
         # Check quota status
@@ -386,7 +387,7 @@ class EnterpriseIntegrationDemo:
 
         if response.status_code == 200:
             quota_data = response.json()
-            logger.info("📊 Current Quota Status:")
+            logger.info(" Current Quota Status:")
             for quota_type, status in quota_data.get("quotas", {}).items():
                 logger.info(f"  {quota_type}: {status['usage_percent']:.1f}% used")
 
@@ -395,7 +396,7 @@ class EnterpriseIntegrationDemo:
     async def generate_compliance_reports(self):
         """Generate comprehensive compliance reports."""
 
-        logger.info("📊 Generating Compliance Reports...")
+        logger.info(" Generating Compliance Reports...")
 
         reports = []
 
@@ -420,7 +421,7 @@ class EnterpriseIntegrationDemo:
         if response.status_code == 200:
             report_data = response.json()
             reports.append(report_data["report_id"])
-            logger.info(f"✅ GDPR Report generated: {report_data['report_id']}")
+            logger.info(f"[OK] GDPR Report generated: {report_data['report_id']}")
             logger.info(f"   Compliance Score: {report_data['compliance_score']:.1f}%")
 
         # Generate SOX Compliance Report
@@ -443,7 +444,7 @@ class EnterpriseIntegrationDemo:
         if response.status_code == 200:
             report_data = response.json()
             reports.append(report_data["report_id"])
-            logger.info(f"✅ SOX Report generated: {report_data['report_id']}")
+            logger.info(f"[OK] SOX Report generated: {report_data['report_id']}")
             logger.info(f"   Compliance Score: {report_data['compliance_score']:.1f}%")
 
         # List all available compliance frameworks
@@ -453,7 +454,7 @@ class EnterpriseIntegrationDemo:
 
         if response.status_code == 200:
             frameworks_data = response.json()
-            logger.info(f"📋 Available Compliance Frameworks:")
+            logger.info(" Available Compliance Frameworks:")
             for framework in frameworks_data.get("frameworks", []):
                 logger.info(f"  {framework['name']} ({framework['framework_id']})")
 
@@ -464,28 +465,28 @@ class EnterpriseIntegrationDemo:
 
         if response.status_code == 200:
             reports_data = response.json()
-            logger.info(f"📊 Generated Reports: {reports_data.get('total_count', 0)}")
+            logger.info(f" Generated Reports: {reports_data.get('total_count', 0)}")
 
         return reports
 
     async def demonstrate_multi_tenant_management(self):
         """Demonstrate multi-tenant organization management."""
 
-        logger.info("🏢 Demonstrating Multi-Tenant Management...")
+        logger.info(" Demonstrating Multi-Tenant Management...")
 
         # List all organizations (requires super admin)
         response = await self.client.get(f"{self.base_url}/enterprise/organizations")
 
         if response.status_code == 200:
             orgs_data = response.json()
-            logger.info(f"🏢 Total Organizations: {orgs_data.get('total_count', 0)}")
+            logger.info(f" Total Organizations: {orgs_data.get('total_count', 0)}")
 
             for org in orgs_data.get("organizations", []):
                 logger.info(
                     f"  {org['organization_id']} ({org['tier']}) - ${org['price_per_month']}/month"
                 )
         elif response.status_code == 403:
-            logger.info("⚠️ Organization listing requires super admin privileges")
+            logger.info("[WARN] Organization listing requires super admin privileges")
 
         # Get usage analytics for demonstration
         end_date = datetime.utcnow()
@@ -503,7 +504,7 @@ class EnterpriseIntegrationDemo:
         if response.status_code == 200:
             analytics_data = response.json()
             summary = analytics_data.get("summary", {})
-            logger.info("📈 Usage Analytics (30 days):")
+            logger.info(" Usage Analytics (30 days):")
             logger.info(f"  Total Requests: {summary.get('total_requests', 0):,}")
             logger.info(
                 f"  Data Transfer: {summary.get('total_data_transfer_bytes', 0):,} bytes"
@@ -515,7 +516,7 @@ class EnterpriseIntegrationDemo:
     async def test_security_monitoring(self):
         """Test security and monitoring features."""
 
-        logger.info("🔒 Testing Security and Monitoring...")
+        logger.info(" Testing Security and Monitoring...")
 
         # Get audit events
         params = {
@@ -529,7 +530,7 @@ class EnterpriseIntegrationDemo:
 
         if response.status_code == 200:
             audit_data = response.json()
-            logger.info(f"📋 Recent Audit Events: {audit_data.get('total_count', 0)}")
+            logger.info(f" Recent Audit Events: {audit_data.get('total_count', 0)}")
 
             for event in audit_data.get("events", [])[:5]:
                 logger.info(
@@ -544,7 +545,7 @@ class EnterpriseIntegrationDemo:
         if response.status_code == 200:
             violations_data = response.json()
             logger.info(
-                f"⚠️ Policy Violations: {violations_data.get('total_count', 0)}"
+                f"[WARN] Policy Violations: {violations_data.get('total_count', 0)}"
             )
 
             for violation in violations_data.get("violations", [])[:5]:
@@ -562,7 +563,7 @@ class EnterpriseIntegrationDemo:
 
         if response.status_code == 200:
             sla_data = response.json()
-            logger.info("📊 SLA Metrics (7 days):")
+            logger.info(" SLA Metrics (7 days):")
             metrics = sla_data.get("metrics", {})
 
             if "availability" in metrics:
@@ -582,7 +583,7 @@ class EnterpriseIntegrationDemo:
     async def show_analytics_and_reporting(self):
         """Show analytics and reporting capabilities."""
 
-        logger.info("📈 Showing Analytics and Reporting...")
+        logger.info(" Showing Analytics and Reporting...")
 
         # Get dashboard summary
         response = await self.client.get(
@@ -592,7 +593,7 @@ class EnterpriseIntegrationDemo:
         if response.status_code == 200:
             dashboard_data = response.json()
 
-            logger.info("🎯 Enterprise Dashboard Summary:")
+            logger.info(" Enterprise Dashboard Summary:")
             logger.info(f"  Organization: {dashboard_data['organization']['name']}")
             logger.info(f"  Tier: {dashboard_data['organization']['tier']}")
 
@@ -620,7 +621,7 @@ class EnterpriseIntegrationDemo:
 
         if response.status_code == 200:
             policies_data = response.json()
-            logger.info(f"📋 Active Policies: {policies_data.get('total_count', 0)}")
+            logger.info(f" Active Policies: {policies_data.get('total_count', 0)}")
 
             for policy in policies_data.get("policies", []):
                 logger.info(
@@ -643,7 +644,7 @@ class EnterpriseClientDemo:
     async def demonstrate_user_operations(self):
         """Demonstrate typical user operations under enterprise policies."""
 
-        logger.info("👤 Demonstrating User Operations...")
+        logger.info(" Demonstrating User Operations...")
 
         try:
             # Create a capsule with compliance context
@@ -681,26 +682,28 @@ class EnterpriseClientDemo:
             if response.status_code == 201:
                 capsule = response.json()
                 logger.info(
-                    f"✅ Capsule created successfully: {capsule.get('capsule_id', 'N/A')}"
+                    f"[OK] Capsule created successfully: {capsule.get('capsule_id', 'N/A')}"
                 )
             elif response.status_code == 403:
-                logger.info("⚠️ Capsule creation blocked by governance policy")
+                logger.info("[WARN] Capsule creation blocked by governance policy")
             else:
-                logger.warning(f"⚠️ Capsule creation response: {response.status_code}")
+                logger.warning(
+                    f"[WARN] Capsule creation response: {response.status_code}"
+                )
 
             # Check rate limiting headers
             if response.headers.get("X-RateLimit-Requests-Per-Minute-Remaining"):
                 remaining = response.headers[
                     "X-RateLimit-Requests-Per-Minute-Remaining"
                 ]
-                logger.info(f"📊 Rate Limit Remaining: {remaining} requests/minute")
+                logger.info(f" Rate Limit Remaining: {remaining} requests/minute")
 
             # Get user's quota status
             response = await self.client.get(f"{self.base_url}/enterprise/usage/quotas")
 
             if response.status_code == 200:
                 quota_data = response.json()
-                logger.info("📊 User Quota Status:")
+                logger.info(" User Quota Status:")
                 for quota_type, status in quota_data.get("quotas", {}).items():
                     if status["usage_percent"] > 0:
                         logger.info(
@@ -721,7 +724,7 @@ async def main():
     ADMIN_TOKEN = "your-admin-jwt-token"  # Update with actual admin token
     USER_TOKEN = "your-user-jwt-token"  # Update with actual user token
 
-    logger.info("🌟 UATP Capsule Engine - Enterprise Integration Demo")
+    logger.info(" UATP Capsule Engine - Enterprise Integration Demo")
     logger.info("=" * 60)
 
     # Run admin demonstrations
@@ -742,7 +745,7 @@ async def main():
     except Exception as e:
         logger.error(f"User demo failed: {e}")
 
-    logger.info("\n🎉 Enterprise Integration Demo completed!")
+    logger.info("\n Enterprise Integration Demo completed!")
     logger.info("Check the logs above for detailed results and any issues.")
 
 

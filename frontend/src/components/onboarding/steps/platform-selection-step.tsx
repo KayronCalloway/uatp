@@ -11,11 +11,11 @@ interface PlatformSelectionStepProps {
   error: string | null;
 }
 
-export function PlatformSelectionStep({ 
-  onComplete, 
-  availablePlatforms, 
-  isLoading, 
-  error 
+export function PlatformSelectionStep({
+  onComplete,
+  availablePlatforms,
+  isLoading,
+  error
 }: PlatformSelectionStepProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
@@ -26,7 +26,7 @@ export function PlatformSelectionStep({
     const availablePlatformIds = Object.entries(availablePlatforms)
       .filter(([_, platform]) => platform.available)
       .map(([id]) => id);
-    
+
     if (availablePlatformIds.length === 1 && !selectedPlatform) {
       setSelectedPlatform(availablePlatformIds[0]);
     }
@@ -35,7 +35,7 @@ export function PlatformSelectionStep({
   const handlePlatformSelect = (platformId: string) => {
     setSelectedPlatform(platformId);
     const platform = availablePlatforms[platformId];
-    
+
     if (platform.requires_api_key && !platform.available) {
       setShowApiKeyInput(true);
     } else {
@@ -61,19 +61,19 @@ export function PlatformSelectionStep({
     if (platform.available) {
       return (
         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          ✅ Ready to use
+          [OK] Ready to use
         </span>
       );
     } else if (platform.requires_api_key) {
       return (
         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-          🔑 API Key needed
+           API Key needed
         </span>
       );
     } else {
       return (
         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-          ⚙️ Setup needed
+           Setup needed
         </span>
       );
     }
@@ -86,7 +86,7 @@ export function PlatformSelectionStep({
 
     // Otherwise, recommend OpenAI as most user-friendly
     if (availablePlatforms.openai) return 'openai';
-    
+
     // Return first platform if no OpenAI
     return Object.keys(availablePlatforms)[0] || null;
   };
@@ -97,7 +97,7 @@ export function PlatformSelectionStep({
   if (platformsArray.length === 0) {
     return (
       <div className="text-center py-8">
-        <div className="text-4xl mb-4">⚠️</div>
+        <div className="text-4xl mb-4">[WARN]</div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">No AI Platforms Detected</h3>
         <p className="text-gray-600 mb-4">
           We couldn't detect any compatible AI platforms. You can still continue and set this up later.
@@ -114,7 +114,7 @@ export function PlatformSelectionStep({
       {/* Header */}
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Connect Your AI Platform 🤖
+          Connect Your AI Platform
         </h2>
         <p className="text-gray-600">
           Choose your preferred AI platform. We'll set up the integration with optimal configuration.
@@ -125,13 +125,13 @@ export function PlatformSelectionStep({
       {recommendedPlatform && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center">
-            <span className="text-blue-500 mr-2">💡</span>
+            <span className="text-blue-500 mr-2"></span>
             <span className="text-blue-800 font-medium">
               Recommended: {availablePlatforms[recommendedPlatform].name}
             </span>
           </div>
           <p className="text-blue-700 text-sm mt-1">
-            {availablePlatforms[recommendedPlatform].available 
+            {availablePlatforms[recommendedPlatform].available
               ? 'This platform is ready to use immediately.'
               : 'This platform is the most popular and user-friendly option.'
             }
@@ -147,8 +147,8 @@ export function PlatformSelectionStep({
             className={`
               border-2 rounded-lg p-4 cursor-pointer transition-all duration-200
               hover:border-blue-300 hover:bg-blue-50
-              ${selectedPlatform === platformId 
-                ? 'border-blue-500 bg-blue-50' 
+              ${selectedPlatform === platformId
+                ? 'border-blue-500 bg-blue-50'
                 : 'border-gray-200 bg-white'
               }
               ${!platform.available ? 'opacity-75' : ''}
@@ -166,13 +166,13 @@ export function PlatformSelectionStep({
                     </span>
                   )}
                 </div>
-                
+
                 <p className="text-gray-600 text-sm mb-3">{platform.description}</p>
-                
+
                 <div className="flex items-center space-x-4 text-xs text-gray-500">
-                  <span>⏱️ ~{platform.estimated_setup_time} min setup</span>
+                  <span> ~{platform.estimated_setup_time} min setup</span>
                   {platform.requires_api_key && (
-                    <span>🔑 API key required</span>
+                    <span> API key required</span>
                   )}
                 </div>
 
@@ -195,8 +195,8 @@ export function PlatformSelectionStep({
               <div className="ml-4">
                 <div className={`
                   w-5 h-5 rounded-full border-2 transition-colors
-                  ${selectedPlatform === platformId 
-                    ? 'border-blue-500 bg-blue-500' 
+                  ${selectedPlatform === platformId
+                    ? 'border-blue-500 bg-blue-500'
                     : 'border-gray-300'
                   }
                 `}>
@@ -214,10 +214,10 @@ export function PlatformSelectionStep({
       {showApiKeyInput && selectedPlatform && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <h4 className="font-medium text-yellow-900 mb-2">
-            🔑 API Key Required for {availablePlatforms[selectedPlatform].name}
+             API Key Required for {availablePlatforms[selectedPlatform].name}
           </h4>
           <p className="text-yellow-800 text-sm mb-3">
-            Enter your API key to connect to {availablePlatforms[selectedPlatform].name}. 
+            Enter your API key to connect to {availablePlatforms[selectedPlatform].name}.
             This will be stored securely on your local system.
           </p>
           <input
@@ -249,7 +249,7 @@ export function PlatformSelectionStep({
             `Connect ${selectedPlatform ? availablePlatforms[selectedPlatform].name : 'Platform'}`
           )}
         </Button>
-        
+
         <Button
           onClick={() => onComplete({ skip_platform: true })}
           variant="outline"
@@ -262,7 +262,7 @@ export function PlatformSelectionStep({
       {/* Help Text */}
       <div className="text-center text-sm text-gray-500">
         <p>
-          🔒 Your API keys are encrypted and stored locally. They never leave your system.
+           Your API keys are encrypted and stored locally. They never leave your system.
         </p>
         <p className="mt-1">
           You can add more platforms later from the dashboard.

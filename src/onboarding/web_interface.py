@@ -8,17 +8,14 @@ technologies for maximum accessibility and user experience.
 
 import asyncio
 import logging
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
-from pathlib import Path
+from datetime import datetime
 
-from quart import Blueprint, render_template_string, jsonify, request, websocket
+from quart import Blueprint, jsonify, render_template_string, request, websocket
 from quart_cors import cors
 
-from .onboarding_orchestrator import OnboardingOrchestrator, UserType, OnboardingStage
 from .health_monitor import SystemHealthMonitor
-from .support_assistant import SupportAssistant, IssueType
+from .onboarding_orchestrator import OnboardingOrchestrator, OnboardingStage, UserType
+from .support_assistant import SupportAssistant
 
 logger = logging.getLogger(__name__)
 
@@ -319,7 +316,7 @@ ONBOARDING_HTML_TEMPLATE = """
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -329,7 +326,7 @@ ONBOARDING_HTML_TEMPLATE = """
             justify-content: center;
             color: #333;
         }
-        
+
         .container {
             background: white;
             border-radius: 20px;
@@ -338,31 +335,31 @@ ONBOARDING_HTML_TEMPLATE = """
             max-width: 800px;
             overflow: hidden;
         }
-        
+
         .header {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
             padding: 2rem;
             text-align: center;
         }
-        
+
         .header h1 {
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
             font-weight: 700;
         }
-        
+
         .header p {
             font-size: 1.2rem;
             opacity: 0.9;
         }
-        
+
         .progress-container {
             padding: 1rem 2rem;
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
         }
-        
+
         .progress-bar {
             background: #e9ecef;
             border-radius: 10px;
@@ -370,54 +367,54 @@ ONBOARDING_HTML_TEMPLATE = """
             overflow: hidden;
             margin-bottom: 1rem;
         }
-        
+
         .progress-fill {
             background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
             height: 100%;
             width: 0%;
             transition: width 0.5s ease;
         }
-        
+
         .progress-text {
             text-align: center;
             color: #6c757d;
             font-size: 0.9rem;
         }
-        
+
         .content {
             padding: 2rem;
         }
-        
+
         .step-card {
             display: none;
             animation: fadeIn 0.5s ease-in-out;
         }
-        
+
         .step-card.active {
             display: block;
         }
-        
+
         .step-title {
             font-size: 1.8rem;
             font-weight: 600;
             margin-bottom: 1rem;
             color: #2c3e50;
         }
-        
+
         .step-description {
             font-size: 1.1rem;
             color: #6c757d;
             margin-bottom: 2rem;
             line-height: 1.6;
         }
-        
+
         .user-type-selector {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
             margin-bottom: 2rem;
         }
-        
+
         .user-type-card {
             border: 2px solid #e9ecef;
             border-radius: 12px;
@@ -426,42 +423,42 @@ ONBOARDING_HTML_TEMPLATE = """
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .user-type-card:hover {
             border-color: #4facfe;
             transform: translateY(-2px);
             box-shadow: 0 8px 16px rgba(79, 172, 254, 0.2);
         }
-        
+
         .user-type-card.selected {
             border-color: #4facfe;
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
         }
-        
+
         .user-type-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
         }
-        
+
         .user-type-title {
             font-size: 1.2rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
-        
+
         .user-type-desc {
             font-size: 0.9rem;
             opacity: 0.8;
         }
-        
+
         .platform-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1rem;
             margin-bottom: 2rem;
         }
-        
+
         .platform-card {
             border: 2px solid #e9ecef;
             border-radius: 12px;
@@ -469,23 +466,23 @@ ONBOARDING_HTML_TEMPLATE = """
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .platform-card:hover {
             border-color: #28a745;
             transform: translateY(-2px);
         }
-        
+
         .platform-card.available {
             border-color: #28a745;
             background: #f8fff9;
         }
-        
+
         .platform-card.selected {
             border-color: #28a745;
             background: #28a745;
             color: white;
         }
-        
+
         .platform-status {
             display: inline-block;
             padding: 0.25rem 0.5rem;
@@ -494,17 +491,17 @@ ONBOARDING_HTML_TEMPLATE = """
             font-weight: 500;
             margin-bottom: 1rem;
         }
-        
+
         .platform-status.available {
             background: #d4edda;
             color: #155724;
         }
-        
+
         .platform-status.setup-needed {
             background: #fff3cd;
             color: #856404;
         }
-        
+
         .btn {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
@@ -517,38 +514,38 @@ ONBOARDING_HTML_TEMPLATE = """
             transition: all 0.3s ease;
             width: 100%;
         }
-        
+
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 16px rgba(79, 172, 254, 0.3);
         }
-        
+
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
-        
+
         .btn-secondary {
             background: #6c757d;
         }
-        
+
         .btn-success {
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
         }
-        
+
         .success-animation {
             text-align: center;
             padding: 2rem;
         }
-        
+
         .success-icon {
             font-size: 4rem;
             color: #28a745;
             margin-bottom: 1rem;
             animation: bounce 1s ease-in-out infinite alternate;
         }
-        
+
         .loading-spinner {
             display: inline-block;
             width: 20px;
@@ -559,7 +556,7 @@ ONBOARDING_HTML_TEMPLATE = """
             animation: spin 1s ease-in-out infinite;
             margin-right: 0.5rem;
         }
-        
+
         .health-indicator {
             position: fixed;
             top: 1rem;
@@ -572,17 +569,17 @@ ONBOARDING_HTML_TEMPLATE = """
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .health-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
             background: #28a745;
         }
-        
+
         .health-dot.warning { background: #ffc107; }
         .health-dot.critical { background: #dc3545; }
-        
+
         .support-fab {
             position: fixed;
             bottom: 2rem;
@@ -598,47 +595,47 @@ ONBOARDING_HTML_TEMPLATE = """
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             transition: all 0.3s ease;
         }
-        
+
         .support-fab:hover {
             transform: scale(1.1);
         }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
+
         @keyframes bounce {
             from { transform: translateY(0px); }
             to { transform: translateY(-10px); }
         }
-        
+
         .hidden {
             display: none !important;
         }
-        
+
         @media (max-width: 768px) {
             .container {
                 width: 95%;
                 margin: 1rem;
             }
-            
+
             .header h1 {
                 font-size: 2rem;
             }
-            
+
             .content {
                 padding: 1rem;
             }
-            
+
             .user-type-selector {
                 grid-template-columns: 1fr;
             }
-            
+
             .platform-grid {
                 grid-template-columns: 1fr;
             }
@@ -648,17 +645,17 @@ ONBOARDING_HTML_TEMPLATE = """
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 Welcome to UATP</h1>
+            <h1> Welcome to UATP</h1>
             <p>Universal AI Trust Protocol - Get started in minutes</p>
         </div>
-        
+
         <div class="progress-container">
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
             <div class="progress-text" id="progressText">Step 1 of 5</div>
         </div>
-        
+
         <div class="content">
             <!-- Welcome Step -->
             <div class="step-card active" id="step-welcome">
@@ -666,116 +663,116 @@ ONBOARDING_HTML_TEMPLATE = """
                 <div class="step-description">
                     Tell us about yourself so we can personalize your onboarding experience.
                 </div>
-                
+
                 <div class="user-type-selector">
                     <div class="user-type-card" data-type="casual_user">
-                        <div class="user-type-icon">👋</div>
+                        <div class="user-type-icon"></div>
                         <div class="user-type-title">Just Getting Started</div>
                         <div class="user-type-desc">I want to try UATP with minimal setup</div>
                     </div>
-                    
+
                     <div class="user-type-card" data-type="developer">
-                        <div class="user-type-icon">👨‍💻</div>
+                        <div class="user-type-icon">‍</div>
                         <div class="user-type-title">Developer</div>
                         <div class="user-type-desc">I want to integrate UATP into my applications</div>
                     </div>
-                    
+
                     <div class="user-type-card" data-type="business_user">
-                        <div class="user-type-icon">💼</div>
+                        <div class="user-type-icon"></div>
                         <div class="user-type-title">Business User</div>
                         <div class="user-type-desc">I need AI attribution for business use</div>
                     </div>
-                    
+
                     <div class="user-type-card" data-type="researcher">
-                        <div class="user-type-icon">🔬</div>
+                        <div class="user-type-icon"></div>
                         <div class="user-type-title">Researcher</div>
                         <div class="user-type-desc">I need transparent AI for research</div>
                     </div>
-                    
+
                     <div class="user-type-card" data-type="enterprise">
-                        <div class="user-type-icon">🏢</div>
+                        <div class="user-type-icon"></div>
                         <div class="user-type-title">Enterprise</div>
                         <div class="user-type-desc">I need enterprise-grade AI governance</div>
                     </div>
                 </div>
-                
+
                 <button class="btn" id="startBtn" disabled>Get Started</button>
             </div>
-            
+
             <!-- Environment Detection Step -->
             <div class="step-card" id="step-environment">
                 <div class="step-title">Detecting Your Environment</div>
                 <div class="step-description">
                     We're automatically detecting your system configuration to optimize your setup.
                 </div>
-                
+
                 <div style="text-align: center; padding: 2rem;">
                     <div class="loading-spinner"></div>
                     <div>Analyzing your environment...</div>
                 </div>
             </div>
-            
+
             <!-- Platform Selection Step -->
             <div class="step-card" id="step-platforms">
                 <div class="step-title">Connect Your AI Platform</div>
                 <div class="step-description">
                     Choose your preferred AI platform. We've detected which ones you can connect to immediately.
                 </div>
-                
+
                 <div class="platform-grid" id="platformGrid">
                     <!-- Platforms will be loaded dynamically -->
                 </div>
-                
+
                 <button class="btn" id="connectPlatformBtn" disabled>Connect Platform</button>
             </div>
-            
+
             <!-- First Capsule Step -->
             <div class="step-card" id="step-capsule">
                 <div class="step-title">Create Your First Capsule</div>
                 <div class="step-description">
                     Let's create your first UATP capsule with full attribution tracking.
                 </div>
-                
+
                 <div style="text-align: center; padding: 2rem;">
                     <div class="loading-spinner"></div>
                     <div>Creating your personalized capsule...</div>
                 </div>
             </div>
-            
+
             <!-- Success Step -->
             <div class="step-card" id="step-success">
                 <div class="success-animation">
-                    <div class="success-icon">🎉</div>
+                    <div class="success-icon"></div>
                     <div class="step-title">Success! You're All Set</div>
                     <div class="step-description">
                         Congratulations! Your UATP system is configured and ready to use.
                     </div>
-                    
+
                     <div style="margin: 2rem 0;">
                         <strong>What you've accomplished:</strong>
                         <ul style="text-align: left; margin: 1rem 0;">
-                            <li>✅ System configured with optimal settings</li>
-                            <li>✅ AI platform connected and tested</li>
-                            <li>✅ First capsule created with attribution</li>
-                            <li>✅ Ready for production use</li>
+                            <li>[OK] System configured with optimal settings</li>
+                            <li>[OK] AI platform connected and tested</li>
+                            <li>[OK] First capsule created with attribution</li>
+                            <li>[OK] Ready for production use</li>
                         </ul>
                     </div>
-                    
+
                     <button class="btn btn-success" id="launchDashboardBtn">Launch Dashboard</button>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Health Indicator -->
     <div class="health-indicator">
         <div class="health-dot" id="healthDot"></div>
         <div id="healthText">System Healthy</div>
     </div>
-    
+
     <!-- Support FAB -->
-    <button class="support-fab" id="supportBtn" title="Get Help">❓</button>
-    
+    <button class="support-fab" id="supportBtn" title="Get Help"></button>
+
     <script>
         class UATPOnboarding {
             constructor() {
@@ -784,24 +781,24 @@ ONBOARDING_HTML_TEMPLATE = """
                 this.selectedUserType = null;
                 this.selectedPlatform = null;
                 this.onboardingData = {};
-                
+
                 this.steps = [
                     'welcome',
-                    'environment', 
+                    'environment',
                     'platforms',
                     'capsule',
                     'success'
                 ];
-                
+
                 this.init();
             }
-            
+
             init() {
                 this.bindEvents();
                 this.startHealthMonitoring();
                 this.loadPlatforms();
             }
-            
+
             bindEvents() {
                 // User type selection
                 document.querySelectorAll('.user-type-card').forEach(card => {
@@ -812,28 +809,28 @@ ONBOARDING_HTML_TEMPLATE = """
                         document.getElementById('startBtn').disabled = false;
                     });
                 });
-                
+
                 // Start button
                 document.getElementById('startBtn').addEventListener('click', () => {
                     this.startOnboarding();
                 });
-                
+
                 // Platform connection
                 document.getElementById('connectPlatformBtn').addEventListener('click', () => {
                     this.connectPlatform();
                 });
-                
+
                 // Launch dashboard
                 document.getElementById('launchDashboardBtn').addEventListener('click', () => {
                     window.location.href = '/';
                 });
-                
+
                 // Support button
                 document.getElementById('supportBtn').addEventListener('click', () => {
                     this.showSupport();
                 });
             }
-            
+
             async startOnboarding() {
                 try {
                     const response = await fetch('/onboarding/api/start', {
@@ -846,13 +843,13 @@ ONBOARDING_HTML_TEMPLATE = """
                             }
                         })
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.success) {
                         this.onboardingData = data.progress;
                         this.nextStep();
-                        
+
                         // Auto-continue to platforms after environment detection
                         setTimeout(() => {
                             this.continueOnboarding();
@@ -864,7 +861,7 @@ ONBOARDING_HTML_TEMPLATE = """
                     this.showError('Network error: ' + error.message);
                 }
             }
-            
+
             async continueOnboarding(stepData = {}) {
                 try {
                     const response = await fetch('/onboarding/api/continue', {
@@ -875,12 +872,12 @@ ONBOARDING_HTML_TEMPLATE = """
                             step_data: stepData
                         })
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.success) {
                         this.onboardingData = data.progress;
-                        
+
                         if (data.next_step) {
                             this.nextStep();
                         }
@@ -891,12 +888,12 @@ ONBOARDING_HTML_TEMPLATE = """
                     this.showError('Network error: ' + error.message);
                 }
             }
-            
+
             async loadPlatforms() {
                 try {
                     const response = await fetch('/onboarding/api/platforms');
                     const data = await response.json();
-                    
+
                     if (data.success) {
                         this.renderPlatforms(data.platforms);
                     }
@@ -904,19 +901,19 @@ ONBOARDING_HTML_TEMPLATE = """
                     console.error('Failed to load platforms:', error);
                 }
             }
-            
+
             renderPlatforms(platforms) {
                 const grid = document.getElementById('platformGrid');
                 grid.innerHTML = '';
-                
+
                 Object.entries(platforms).forEach(([id, platform]) => {
                     const card = document.createElement('div');
                     card.className = `platform-card ${platform.available ? 'available' : ''}`;
                     card.dataset.platform = id;
-                    
+
                     card.innerHTML = `
                         <div class="platform-status ${platform.available ? 'available' : 'setup-needed'}">
-                            ${platform.available ? '✅ Ready' : '⚙️ Setup Needed'}
+                            ${platform.available ? '[OK] Ready' : ' Setup Needed'}
                         </div>
                         <h3>${platform.name}</h3>
                         <p>${platform.description}</p>
@@ -924,70 +921,70 @@ ONBOARDING_HTML_TEMPLATE = """
                             <small>Setup time: ~${platform.estimated_setup_time} min</small>
                         </div>
                     `;
-                    
+
                     card.addEventListener('click', () => {
                         document.querySelectorAll('.platform-card').forEach(c => c.classList.remove('selected'));
                         card.classList.add('selected');
                         this.selectedPlatform = id;
                         document.getElementById('connectPlatformBtn').disabled = false;
                     });
-                    
+
                     grid.appendChild(card);
                 });
             }
-            
+
             async connectPlatform() {
                 if (!this.selectedPlatform) return;
-                
-                document.getElementById('connectPlatformBtn').innerHTML = 
+
+                document.getElementById('connectPlatformBtn').innerHTML =
                     '<div class="loading-spinner"></div>Connecting...';
                 document.getElementById('connectPlatformBtn').disabled = true;
-                
+
                 await this.continueOnboarding({
                     preferred_platform: this.selectedPlatform
                 });
-                
+
                 // Auto-continue to capsule creation
                 setTimeout(() => {
                     this.nextStep();
                     this.createFirstCapsule();
                 }, 2000);
             }
-            
+
             async createFirstCapsule() {
                 setTimeout(async () => {
                     await this.continueOnboarding();
                     this.nextStep();
                 }, 3000);
             }
-            
+
             nextStep() {
                 if (this.currentStep < this.steps.length - 1) {
                     // Hide current step
                     document.getElementById(`step-${this.steps[this.currentStep]}`).classList.remove('active');
-                    
+
                     // Show next step
                     this.currentStep++;
                     document.getElementById(`step-${this.steps[this.currentStep]}`).classList.add('active');
-                    
+
                     // Update progress
                     this.updateProgress();
                 }
             }
-            
+
             updateProgress() {
                 const progress = ((this.currentStep + 1) / this.steps.length) * 100;
                 document.getElementById('progressFill').style.width = `${progress}%`;
-                document.getElementById('progressText').textContent = 
+                document.getElementById('progressText').textContent =
                     `Step ${this.currentStep + 1} of ${this.steps.length}`;
             }
-            
+
             async startHealthMonitoring() {
                 setInterval(async () => {
                     try {
                         const response = await fetch('/onboarding/api/health');
                         const data = await response.json();
-                        
+
                         if (data.success) {
                             this.updateHealthIndicator(data.health);
                         }
@@ -996,13 +993,13 @@ ONBOARDING_HTML_TEMPLATE = """
                     }
                 }, 5000);
             }
-            
+
             updateHealthIndicator(health) {
                 const dot = document.getElementById('healthDot');
                 const text = document.getElementById('healthText');
-                
+
                 dot.className = 'health-dot';
-                
+
                 if (health.overall_status === 'excellent' || health.overall_status === 'good') {
                     dot.classList.add('healthy');
                     text.textContent = 'System Healthy';
@@ -1014,7 +1011,7 @@ ONBOARDING_HTML_TEMPLATE = """
                     text.textContent = 'System Critical';
                 }
             }
-            
+
             async showSupport() {
                 try {
                     const response = await fetch('/onboarding/api/support', {
@@ -1026,23 +1023,23 @@ ONBOARDING_HTML_TEMPLATE = """
                             message: 'I need help with onboarding'
                         })
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.success) {
-                        alert(data.support.message + '\\n\\nNext steps:\\n' + 
+                        alert(data.support.message + '\\n\\nNext steps:\\n' +
                               data.support.immediate_actions.join('\\n'));
                     }
                 } catch (error) {
                     alert('Support system temporarily unavailable. Please try again.');
                 }
             }
-            
+
             showError(message) {
                 alert('Error: ' + message);
             }
         }
-        
+
         // Initialize onboarding when page loads
         document.addEventListener('DOMContentLoaded', () => {
             new UATPOnboarding();

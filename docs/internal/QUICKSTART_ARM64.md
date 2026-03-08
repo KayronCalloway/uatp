@@ -1,13 +1,13 @@
 # UATP Capsule Engine - Quick Start (ARM64)
 
 ## System Status
-🟢 **FULLY OPERATIONAL** on Apple M5 Mac (ARM64)
+ **FULLY OPERATIONAL** on Apple M5 Mac (ARM64)
 
 ## What Was Fixed
-- ✅ Post-quantum crypto graceful fallback in development
-- ✅ All Python packages reinstalled for ARM64 (numpy, scipy, sklearn, pandas, pyarrow, psutil)
-- ✅ API server verified working
-- ✅ Test suite passing (3/3 basic tests)
+- [OK] Post-quantum crypto graceful fallback in development
+- [OK] All Python packages reinstalled for ARM64 (numpy, scipy, sklearn, pandas, pyarrow, psutil)
+- [OK] API server verified working
+- [OK] Test suite passing (3/3 basic tests)
 
 ## Quick Commands
 
@@ -29,10 +29,10 @@ python3 -m pytest tests/test_basic_functionality.py -v
 ### Verify System
 ```bash
 # Check CapsuleEngine import
-python3 -c "from src.engine.capsule_engine import CapsuleEngine; print('✓ Working')"
+python3 -c "from src.engine.capsule_engine import CapsuleEngine; print(' Working')"
 
 # Check API server import
-python3 -c "from src.api.server import app; print('✓ Working')"
+python3 -c "from src.api.server import app; print(' Working')"
 ```
 
 ## Current Configuration
@@ -81,5 +81,5 @@ Note: Takes 10-15 minutes to compile.
 See `ARM64_MIGRATION_COMPLETE.md` for full migration details.
 
 ---
-**Status**: ✅ Ready to Use
+**Status**: [OK] Ready to Use
 **Updated**: 2025-12-03

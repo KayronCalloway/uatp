@@ -237,7 +237,7 @@ def format_api_results(results):
     if "valid" in results:
         # Validation results
         if results["valid"]:
-            return {"formatted": "✅ Reasoning trace is valid", "details": results}
+            return {"formatted": "[OK] Reasoning trace is valid", "details": results}
         else:
             errors = "\n".join(
                 [
@@ -245,7 +245,10 @@ def format_api_results(results):
                     for error in results.get("errors", ["Unknown validation error"])
                 ]
             )
-            return {"formatted": f"❌ Validation failed:\n{errors}", "details": results}
+            return {
+                "formatted": f"[ERROR] Validation failed:\n{errors}",
+                "details": results,
+            }
 
     # Analysis results
     if "analysis" in results:

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Start Desktop Apps Auto-Capture Service
 
-echo "🖥️ Starting Desktop Apps Auto-Capture Service..."
+echo " Starting Desktop Apps Auto-Capture Service..."
 echo "Monitoring: Claude Desktop & Windsurf"
 echo "Press Ctrl+C to stop"
 echo ""

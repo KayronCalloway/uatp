@@ -6,9 +6,10 @@ Unit Tests for BaseHook
 Tests the base hook functionality that all platform hooks inherit.
 """
 
+from typing import Any, Dict
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Dict, Any
 
 from src.live_capture.base_hook import BaseHook, SimplePlatformHook
 
@@ -18,10 +19,12 @@ class TestHook(BaseHook):
 
     def __init__(self, user_id: str = "test_user", session_id: str = None):
         self.custom_field = "test_value"
-        super().__init__(platform="test_platform", user_id=user_id, session_id=session_id)
+        super().__init__(
+            platform="test_platform", user_id=user_id, session_id=session_id
+        )
 
     def get_platform_emoji(self) -> str:
-        return "🧪"
+        return ""
 
     def get_platform_specific_metadata(self, **kwargs) -> Dict[str, Any]:
         return {
@@ -52,7 +55,7 @@ class TestBaseHookInitialization:
         """Test platform emoji is correctly set."""
         hook = TestHook()
 
-        assert hook.get_platform_emoji() == "🧪"
+        assert hook.get_platform_emoji() == ""
 
     def test_platform_specific_metadata(self):
         """Test platform-specific metadata generation."""
@@ -73,14 +76,16 @@ class TestBaseHookCapture:
         """Test successful capture interaction."""
         hook = TestHook()
 
-        with patch('src.live_capture.base_hook.capture_live_interaction') as mock_capture:
+        with patch(
+            "src.live_capture.base_hook.capture_live_interaction"
+        ) as mock_capture:
             mock_capture.return_value = "cap_test_123"
 
             capsule_id = await hook.capture_interaction(
                 user_input="Test user input",
                 assistant_response="Test AI response",
                 model="test-model",
-                test_param="test_value"
+                test_param="test_value",
             )
 
             # Verify capture was called correctly
@@ -109,14 +114,16 @@ class TestBaseHookCapture:
         """Test capture with custom interaction type."""
         hook = TestHook()
 
-        with patch('src.live_capture.base_hook.capture_live_interaction') as mock_capture:
+        with patch(
+            "src.live_capture.base_hook.capture_live_interaction"
+        ) as mock_capture:
             mock_capture.return_value = "cap_test_456"
 
             await hook.capture_interaction(
                 user_input="Test",
                 assistant_response="Response",
                 model="test-model",
-                interaction_type="code_generation"
+                interaction_type="code_generation",
             )
 
             metadata = mock_capture.call_args.kwargs["metadata"]
@@ -127,13 +134,13 @@ class TestBaseHookCapture:
         """Test that capture returns None on failure."""
         hook = TestHook()
 
-        with patch('src.live_capture.base_hook.capture_live_interaction') as mock_capture:
+        with patch(
+            "src.live_capture.base_hook.capture_live_interaction"
+        ) as mock_capture:
             mock_capture.side_effect = Exception("Test error")
 
             capsule_id = await hook.capture_interaction(
-                user_input="Test",
-                assistant_response="Response",
-                model="test-model"
+                user_input="Test", assistant_response="Response", model="test-model"
             )
 
             assert capsule_id is None
@@ -143,13 +150,13 @@ class TestBaseHookCapture:
         """Test that capture returns None when interaction is not significant."""
         hook = TestHook()
 
-        with patch('src.live_capture.base_hook.capture_live_interaction') as mock_capture:
+        with patch(
+            "src.live_capture.base_hook.capture_live_interaction"
+        ) as mock_capture:
             mock_capture.return_value = None
 
             capsule_id = await hook.capture_interaction(
-                user_input="Short",
-                assistant_response="OK",
-                model="test-model"
+                user_input="Short", assistant_response="OK", model="test-model"
             )
 
             assert capsule_id is None
@@ -175,28 +182,24 @@ class TestSimplePlatformHook:
     def test_simple_hook_initialization(self):
         """Test SimplePlatformHook basic initialization."""
         hook = SimplePlatformHook(
-            platform="simple_test",
-            user_id="simple_user",
-            emoji="🚀"
+            platform="simple_test", user_id="simple_user", emoji=""
         )
 
         assert hook.platform == "simple_test"
         assert hook.user_id == "simple_user"
-        assert hook.get_platform_emoji() == "🚀"
+        assert hook.get_platform_emoji() == ""
 
     def test_simple_hook_with_metadata_provider(self):
         """Test SimplePlatformHook with custom metadata provider."""
+
         def metadata_provider(**kwargs):
-            return {
-                "custom_field": "custom_value",
-                "param": kwargs.get("param")
-            }
+            return {"custom_field": "custom_value", "param": kwargs.get("param")}
 
         hook = SimplePlatformHook(
             platform="simple_test",
             user_id="simple_user",
-            emoji="🚀",
-            metadata_provider=metadata_provider
+            emoji="",
+            metadata_provider=metadata_provider,
         )
 
         metadata = hook.get_platform_specific_metadata(param="test_param")
@@ -206,10 +209,7 @@ class TestSimplePlatformHook:
 
     def test_simple_hook_default_metadata(self):
         """Test SimplePlatformHook with default metadata provider."""
-        hook = SimplePlatformHook(
-            platform="simple_test",
-            user_id="simple_user"
-        )
+        hook = SimplePlatformHook(platform="simple_test", user_id="simple_user")
 
         metadata = hook.get_platform_specific_metadata()
 
@@ -219,18 +219,18 @@ class TestSimplePlatformHook:
     async def test_simple_hook_capture(self):
         """Test SimplePlatformHook can capture interactions."""
         hook = SimplePlatformHook(
-            platform="simple_test",
-            user_id="simple_user",
-            emoji="🚀"
+            platform="simple_test", user_id="simple_user", emoji=""
         )
 
-        with patch('src.live_capture.base_hook.capture_live_interaction') as mock_capture:
+        with patch(
+            "src.live_capture.base_hook.capture_live_interaction"
+        ) as mock_capture:
             mock_capture.return_value = "cap_simple_123"
 
             capsule_id = await hook.capture_interaction(
                 user_input="Test input",
                 assistant_response="Test response",
-                model="simple-model"
+                model="simple-model",
             )
 
             assert capsule_id == "cap_simple_123"
@@ -246,46 +246,59 @@ class TestBaseHookLogging:
             hook = TestHook(user_id="log_user", session_id="log_session")
 
         # Check for initialization log messages
-        assert any("Test_platform Live Capture initialized" in record.message for record in caplog.records)
+        assert any(
+            "Test_platform Live Capture initialized" in record.message
+            for record in caplog.records
+        )
         assert any("User ID: log_user" in record.message for record in caplog.records)
-        assert any("Session ID: log_session" in record.message for record in caplog.records)
+        assert any(
+            "Session ID: log_session" in record.message for record in caplog.records
+        )
 
     @pytest.mark.asyncio
     async def test_success_logging(self, caplog):
         """Test that successful capture logs correctly."""
         hook = TestHook()
 
-        with patch('src.live_capture.base_hook.capture_live_interaction') as mock_capture:
+        with patch(
+            "src.live_capture.base_hook.capture_live_interaction"
+        ) as mock_capture:
             mock_capture.return_value = "cap_log_123"
 
             with caplog.at_level("INFO"):
                 await hook.capture_interaction(
-                    user_input="Test",
-                    assistant_response="Response",
-                    model="test-model"
+                    user_input="Test", assistant_response="Response", model="test-model"
                 )
 
             # Check for success log messages
-            assert any("interaction encapsulated: cap_log_123" in record.message for record in caplog.records)
-            assert any("Model: test-model" in record.message for record in caplog.records)
+            assert any(
+                "interaction encapsulated: cap_log_123" in record.message
+                for record in caplog.records
+            )
+            assert any(
+                "Model: test-model" in record.message for record in caplog.records
+            )
 
     @pytest.mark.asyncio
     async def test_failure_logging(self, caplog):
         """Test that failed capture logs correctly."""
         hook = TestHook()
 
-        with patch('src.live_capture.base_hook.capture_live_interaction') as mock_capture:
+        with patch(
+            "src.live_capture.base_hook.capture_live_interaction"
+        ) as mock_capture:
             mock_capture.side_effect = Exception("Test error")
 
             with caplog.at_level("ERROR"):
                 await hook.capture_interaction(
-                    user_input="Test",
-                    assistant_response="Response",
-                    model="test-model"
+                    user_input="Test", assistant_response="Response", model="test-model"
                 )
 
             # Check for error log message
-            assert any("interaction capture failed" in record.message for record in caplog.records)
+            assert any(
+                "interaction capture failed" in record.message
+                for record in caplog.records
+            )
 
 
 class TestBaseHookExtensibility:
@@ -300,7 +313,7 @@ class TestBaseHookExtensibility:
             super().__init__(platform="custom", user_id="custom_user")
 
         def get_platform_emoji(self) -> str:
-            return "🎨"
+            return ""
 
         def get_platform_specific_metadata(self, **kwargs) -> Dict[str, Any]:
             return {"custom": "metadata"}
@@ -322,13 +335,13 @@ class TestBaseHookExtensibility:
         """Test that custom success logging is called."""
         hook = self.CustomLoggingHook()
 
-        with patch('src.live_capture.base_hook.capture_live_interaction') as mock_capture:
+        with patch(
+            "src.live_capture.base_hook.capture_live_interaction"
+        ) as mock_capture:
             mock_capture.return_value = "cap_custom_123"
 
             await hook.capture_interaction(
-                user_input="Test",
-                assistant_response="Response",
-                model="custom-model"
+                user_input="Test", assistant_response="Response", model="custom-model"
             )
 
             assert hook.success_logged is True

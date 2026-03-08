@@ -6,13 +6,14 @@ Unit Tests for CaptureOrchestrator
 Tests the unified capture interface for all platforms.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.live_capture.capture_orchestrator import (
     CaptureOrchestrator,
-    get_orchestrator,
     capture,
+    get_orchestrator,
 )
 
 
@@ -41,16 +42,18 @@ class TestPlatformRouting:
         """Test routing to OpenAI hook."""
         orchestrator = CaptureOrchestrator()
 
-        with patch.object(orchestrator, '_get_hook') as mock_get_hook:
+        with patch.object(orchestrator, "_get_hook") as mock_get_hook:
             mock_hook = MagicMock()
-            mock_hook.capture_openai_interaction = AsyncMock(return_value="cap_openai_123")
+            mock_hook.capture_openai_interaction = AsyncMock(
+                return_value="cap_openai_123"
+            )
             mock_get_hook.return_value = mock_hook
 
             result = await orchestrator.capture(
                 platform="openai",
                 user_input="Test",
                 assistant_response="Response",
-                model="gpt-4"
+                model="gpt-4",
             )
 
             assert result == "cap_openai_123"
@@ -61,16 +64,18 @@ class TestPlatformRouting:
         """Test routing to Anthropic hook."""
         orchestrator = CaptureOrchestrator()
 
-        with patch.object(orchestrator, '_get_hook') as mock_get_hook:
+        with patch.object(orchestrator, "_get_hook") as mock_get_hook:
             mock_hook = MagicMock()
-            mock_hook.capture_anthropic_interaction = AsyncMock(return_value="cap_anthropic_123")
+            mock_hook.capture_anthropic_interaction = AsyncMock(
+                return_value="cap_anthropic_123"
+            )
             mock_get_hook.return_value = mock_hook
 
             result = await orchestrator.capture(
                 platform="anthropic",
                 user_input="Test",
                 assistant_response="Response",
-                model="claude-3-sonnet"
+                model="claude-3-sonnet",
             )
 
             assert result == "cap_anthropic_123"
@@ -81,15 +86,15 @@ class TestPlatformRouting:
         """Test routing to Cursor hook."""
         orchestrator = CaptureOrchestrator()
 
-        with patch.object(orchestrator, '_get_hook') as mock_get_hook:
+        with patch.object(orchestrator, "_get_hook") as mock_get_hook:
             mock_hook = MagicMock()
-            mock_hook.capture_cursor_interaction = AsyncMock(return_value="cap_cursor_123")
+            mock_hook.capture_cursor_interaction = AsyncMock(
+                return_value="cap_cursor_123"
+            )
             mock_get_hook.return_value = mock_hook
 
             result = await orchestrator.capture(
-                platform="cursor",
-                user_input="Test",
-                assistant_response="Response"
+                platform="cursor", user_input="Test", assistant_response="Response"
             )
 
             assert result == "cap_cursor_123"
@@ -100,15 +105,15 @@ class TestPlatformRouting:
         """Test routing to Windsurf hook."""
         orchestrator = CaptureOrchestrator()
 
-        with patch.object(orchestrator, '_get_hook') as mock_get_hook:
+        with patch.object(orchestrator, "_get_hook") as mock_get_hook:
             mock_hook = MagicMock()
-            mock_hook.capture_windsurf_interaction = AsyncMock(return_value="cap_windsurf_123")
+            mock_hook.capture_windsurf_interaction = AsyncMock(
+                return_value="cap_windsurf_123"
+            )
             mock_get_hook.return_value = mock_hook
 
             result = await orchestrator.capture(
-                platform="windsurf",
-                user_input="Test",
-                assistant_response="Response"
+                platform="windsurf", user_input="Test", assistant_response="Response"
             )
 
             assert result == "cap_windsurf_123"
@@ -119,15 +124,15 @@ class TestPlatformRouting:
         """Test routing to Antigravity hook."""
         orchestrator = CaptureOrchestrator()
 
-        with patch.object(orchestrator, '_get_hook') as mock_get_hook:
+        with patch.object(orchestrator, "_get_hook") as mock_get_hook:
             mock_hook = MagicMock()
-            mock_hook.capture_antigravity_interaction = AsyncMock(return_value="cap_antigravity_123")
+            mock_hook.capture_antigravity_interaction = AsyncMock(
+                return_value="cap_antigravity_123"
+            )
             mock_get_hook.return_value = mock_hook
 
             result = await orchestrator.capture(
-                platform="antigravity",
-                user_input="Test",
-                assistant_response="Response"
+                platform="antigravity", user_input="Test", assistant_response="Response"
             )
 
             assert result == "cap_antigravity_123"
@@ -138,15 +143,15 @@ class TestPlatformRouting:
         """Test routing to Claude Code hook."""
         orchestrator = CaptureOrchestrator()
 
-        with patch.object(orchestrator, '_get_hook') as mock_get_hook:
+        with patch.object(orchestrator, "_get_hook") as mock_get_hook:
             mock_hook = MagicMock()
-            mock_hook.capture_current_conversation = AsyncMock(return_value="cap_claude_code_123")
+            mock_hook.capture_current_conversation = AsyncMock(
+                return_value="cap_claude_code_123"
+            )
             mock_get_hook.return_value = mock_hook
 
             result = await orchestrator.capture(
-                platform="claude_code",
-                user_input="Test",
-                assistant_response="Response"
+                platform="claude_code", user_input="Test", assistant_response="Response"
             )
 
             assert result == "cap_claude_code_123"
@@ -161,12 +166,14 @@ class TestPlatformAliases:
         """Test 'gpt' alias routes to openai."""
         orchestrator = CaptureOrchestrator()
 
-        with patch.object(orchestrator, '_get_hook') as mock_get_hook:
+        with patch.object(orchestrator, "_get_hook") as mock_get_hook:
             mock_hook = MagicMock()
             mock_hook.capture_openai_interaction = AsyncMock(return_value="cap_123")
             mock_get_hook.return_value = mock_hook
 
-            await orchestrator.capture(platform="gpt", user_input="Test", assistant_response="Response")
+            await orchestrator.capture(
+                platform="gpt", user_input="Test", assistant_response="Response"
+            )
 
             assert mock_hook.capture_openai_interaction.called
 
@@ -175,12 +182,14 @@ class TestPlatformAliases:
         """Test 'claude' alias routes to anthropic."""
         orchestrator = CaptureOrchestrator()
 
-        with patch.object(orchestrator, '_get_hook') as mock_get_hook:
+        with patch.object(orchestrator, "_get_hook") as mock_get_hook:
             mock_hook = MagicMock()
             mock_hook.capture_anthropic_interaction = AsyncMock(return_value="cap_123")
             mock_get_hook.return_value = mock_hook
 
-            await orchestrator.capture(platform="claude", user_input="Test", assistant_response="Response")
+            await orchestrator.capture(
+                platform="claude", user_input="Test", assistant_response="Response"
+            )
 
             assert mock_hook.capture_anthropic_interaction.called
 
@@ -189,12 +198,16 @@ class TestPlatformAliases:
         """Test 'gemini' alias routes to antigravity."""
         orchestrator = CaptureOrchestrator()
 
-        with patch.object(orchestrator, '_get_hook') as mock_get_hook:
+        with patch.object(orchestrator, "_get_hook") as mock_get_hook:
             mock_hook = MagicMock()
-            mock_hook.capture_antigravity_interaction = AsyncMock(return_value="cap_123")
+            mock_hook.capture_antigravity_interaction = AsyncMock(
+                return_value="cap_123"
+            )
             mock_get_hook.return_value = mock_hook
 
-            await orchestrator.capture(platform="gemini", user_input="Test", assistant_response="Response")
+            await orchestrator.capture(
+                platform="gemini", user_input="Test", assistant_response="Response"
+            )
 
             assert mock_hook.capture_antigravity_interaction.called
 
@@ -203,12 +216,14 @@ class TestPlatformAliases:
         """Test that platform names are case-insensitive."""
         orchestrator = CaptureOrchestrator()
 
-        with patch.object(orchestrator, '_get_hook') as mock_get_hook:
+        with patch.object(orchestrator, "_get_hook") as mock_get_hook:
             mock_hook = MagicMock()
             mock_hook.capture_openai_interaction = AsyncMock(return_value="cap_123")
             mock_get_hook.return_value = mock_hook
 
-            await orchestrator.capture(platform="OpenAI", user_input="Test", assistant_response="Response")
+            await orchestrator.capture(
+                platform="OpenAI", user_input="Test", assistant_response="Response"
+            )
 
             assert mock_hook.capture_openai_interaction.called
 
@@ -220,7 +235,9 @@ class TestHookCaching:
         """Test that hooks are cached after creation."""
         orchestrator = CaptureOrchestrator()
 
-        with patch('src.live_capture.capture_orchestrator.OpenAILiveCapture') as MockHook:
+        with patch(
+            "src.live_capture.capture_orchestrator.OpenAILiveCapture"
+        ) as MockHook:
             mock_instance = MagicMock()
             MockHook.return_value = mock_instance
 
@@ -237,9 +254,11 @@ class TestHookCaching:
         """Test that different platforms get different hooks."""
         orchestrator = CaptureOrchestrator()
 
-        with patch('src.live_capture.capture_orchestrator.OpenAILiveCapture') as MockOpenAI, \
-             patch('src.live_capture.capture_orchestrator.AnthropicLiveCapture') as MockAnthropic:
-
+        with patch(
+            "src.live_capture.capture_orchestrator.OpenAILiveCapture"
+        ) as MockOpenAI, patch(
+            "src.live_capture.capture_orchestrator.AnthropicLiveCapture"
+        ) as MockAnthropic:
             mock_openai = MagicMock()
             mock_anthropic = MagicMock()
             MockOpenAI.return_value = mock_openai
@@ -256,7 +275,9 @@ class TestHookCaching:
         """Test clearing hook cache."""
         orchestrator = CaptureOrchestrator()
 
-        with patch('src.live_capture.capture_orchestrator.OpenAILiveCapture') as MockHook:
+        with patch(
+            "src.live_capture.capture_orchestrator.OpenAILiveCapture"
+        ) as MockHook:
             mock_instance = MagicMock()
             MockHook.return_value = mock_instance
 
@@ -293,7 +314,7 @@ class TestPlatformDiscovery:
         info = orchestrator.get_platform_info("openai")
 
         assert info["name"] == "OpenAI"
-        assert info["emoji"] == "🤖"
+        assert info["emoji"] == ""
         assert "gpt-4" in info["models"]
         assert info["type"] == "api"
 
@@ -304,7 +325,7 @@ class TestPlatformDiscovery:
         info = orchestrator.get_platform_info("anthropic")
 
         assert info["name"] == "Anthropic Claude"
-        assert info["emoji"] == "🧠"
+        assert info["emoji"] == ""
         assert "claude-3-sonnet" in info["models"]
         assert info["type"] == "api"
 
@@ -321,7 +342,9 @@ class TestPlatformDiscovery:
         """Test getting active hooks info."""
         orchestrator = CaptureOrchestrator()
 
-        with patch('src.live_capture.capture_orchestrator.OpenAILiveCapture') as MockHook:
+        with patch(
+            "src.live_capture.capture_orchestrator.OpenAILiveCapture"
+        ) as MockHook:
             mock_instance = MagicMock()
             mock_instance.platform = "openai"
             mock_instance.user_id = "test_user"
@@ -358,15 +381,15 @@ class TestErrorHandling:
         """Test that capture errors return None."""
         orchestrator = CaptureOrchestrator()
 
-        with patch.object(orchestrator, '_get_hook') as mock_get_hook:
+        with patch.object(orchestrator, "_get_hook") as mock_get_hook:
             mock_hook = MagicMock()
-            mock_hook.capture_openai_interaction = AsyncMock(side_effect=Exception("Test error"))
+            mock_hook.capture_openai_interaction = AsyncMock(
+                side_effect=Exception("Test error")
+            )
             mock_get_hook.return_value = mock_hook
 
             result = await orchestrator.capture(
-                platform="openai",
-                user_input="Test",
-                assistant_response="Response"
+                platform="openai", user_input="Test", assistant_response="Response"
             )
 
             assert result is None
@@ -379,6 +402,7 @@ class TestGlobalOrchestrator:
         """Test that get_orchestrator creates instance."""
         # Clear global instance
         import src.live_capture.capture_orchestrator as module
+
         module._orchestrator = None
 
         orchestrator = get_orchestrator(user_id="global_user")
@@ -389,6 +413,7 @@ class TestGlobalOrchestrator:
     def test_get_orchestrator_reuses_instance(self):
         """Test that get_orchestrator reuses same instance."""
         import src.live_capture.capture_orchestrator as module
+
         module._orchestrator = None
 
         orchestrator1 = get_orchestrator(user_id="global_user")
@@ -401,16 +426,19 @@ class TestGlobalOrchestrator:
     async def test_convenience_function(self):
         """Test global convenience function."""
         import src.live_capture.capture_orchestrator as module
+
         module._orchestrator = None
 
-        with patch.object(CaptureOrchestrator, 'capture', new_callable=AsyncMock) as mock_capture:
+        with patch.object(
+            CaptureOrchestrator, "capture", new_callable=AsyncMock
+        ) as mock_capture:
             mock_capture.return_value = "cap_convenience_123"
 
             result = await capture(
                 platform="openai",
                 user_input="Test",
                 assistant_response="Response",
-                user_id="convenience_user"
+                user_id="convenience_user",
             )
 
             assert result == "cap_convenience_123"
@@ -426,9 +454,13 @@ class TestIntegration:
         orchestrator = CaptureOrchestrator(user_id="integration_user")
 
         # Mock the actual hook's capture method
-        with patch('src.live_capture.capture_orchestrator.OpenAILiveCapture') as MockHook:
+        with patch(
+            "src.live_capture.capture_orchestrator.OpenAILiveCapture"
+        ) as MockHook:
             mock_instance = MagicMock()
-            mock_instance.capture_openai_interaction = AsyncMock(return_value="cap_integration_123")
+            mock_instance.capture_openai_interaction = AsyncMock(
+                return_value="cap_integration_123"
+            )
             MockHook.return_value = mock_instance
 
             # Perform capture
@@ -437,7 +469,7 @@ class TestIntegration:
                 user_input="Write a Python function",
                 assistant_response="Here's a Python function...",
                 model="gpt-4",
-                interaction_type="code_generation"
+                interaction_type="code_generation",
             )
 
             # Verify result
@@ -446,7 +478,9 @@ class TestIntegration:
             # Verify hook was called with correct parameters
             call_args = mock_instance.capture_openai_interaction.call_args
             assert call_args.kwargs["user_input"] == "Write a Python function"
-            assert call_args.kwargs["assistant_response"] == "Here's a Python function..."
+            assert (
+                call_args.kwargs["assistant_response"] == "Here's a Python function..."
+            )
             assert call_args.kwargs["model"] == "gpt-4"
             assert call_args.kwargs["interaction_type"] == "code_generation"
 

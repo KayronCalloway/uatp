@@ -4,7 +4,7 @@ Complete guide for setting up production monitoring with Prometheus, Grafana, an
 
 ---
 
-## 📊 Overview
+##  Overview
 
 **Monitoring Stack:**
 - **Prometheus** - Metrics collection and storage
@@ -24,7 +24,7 @@ Complete guide for setting up production monitoring with Prometheus, Grafana, an
 
 ---
 
-## 🚀 Quick Setup
+##  Quick Setup
 
 ### 1. Install Monitoring Stack
 
@@ -107,7 +107,7 @@ kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-alertmanager 9
 
 ---
 
-## 📁 File Structure
+##  File Structure
 
 ```
 config/prometheus/
@@ -123,7 +123,7 @@ grafana/dashboards/
 
 ---
 
-## 📈 Dashboards
+##  Dashboards
 
 ### 1. API Performance Dashboard
 
@@ -202,7 +202,7 @@ grafana/dashboards/
 
 ---
 
-## 🚨 Alert Rules
+##  Alert Rules
 
 ### Application Health Alerts
 
@@ -256,7 +256,7 @@ grafana/dashboards/
 
 ---
 
-## 🔔 Notification Channels
+##  Notification Channels
 
 ### Slack
 
@@ -311,7 +311,7 @@ kubectl create secret generic alertmanager-secrets \
 
 ---
 
-## 🔍 Querying Metrics
+##  Querying Metrics
 
 ### Useful PromQL Queries
 
@@ -347,7 +347,7 @@ sum(rate(uatp_cache_hits_total[5m])) / (sum(rate(uatp_cache_hits_total[5m])) + s
 
 ---
 
-## 🧪 Testing Alerts
+##  Testing Alerts
 
 ### Trigger Test Alerts
 
@@ -384,7 +384,7 @@ kubectl set resources deployment uatp-api --limits=memory=128Mi -n uatp-producti
 
 ---
 
-## 📊 Metrics Reference
+##  Metrics Reference
 
 ### Application Metrics
 
@@ -421,7 +421,7 @@ kubectl set resources deployment uatp-api --limits=memory=128Mi -n uatp-producti
 
 ---
 
-## 🔧 Advanced Configuration
+##  Advanced Configuration
 
 ### Custom Metrics
 
@@ -475,7 +475,7 @@ kubectl apply -f config/jaeger/jaeger-instance.yaml
 
 ---
 
-## 📚 Resources
+##  Resources
 
 **Prometheus:**
 - [Prometheus Query Basics](https://prometheus.io/docs/prometheus/latest/querying/basics/)

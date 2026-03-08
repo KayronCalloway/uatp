@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 
 import streamlit as st
-
 from capsules.specialized_capsules import TrustRenewalCapsule
+
 from visualizer.components.uatp7_inspector import render_trust_renewal_content
 
 
@@ -16,7 +16,7 @@ def main():
         initial_sidebar_state="collapsed",
     )
 
-    st.title("🔄 Trust Renewal Capsule Visualization Test")
+    st.title(" Trust Renewal Capsule Visualization Test")
     st.markdown(
         """
     This test demonstrates the enhanced visualization components for UATP 7.0 Trust Renewal capsules.

@@ -1128,13 +1128,13 @@ class CourtAdmissibleEnricher:
 
 # Example usage and testing
 if __name__ == "__main__":
-    print("✅ Court-Admissible Enrichment Ready")
+    print("[OK] Court-Admissible Enrichment Ready")
     print("\nCapabilities:")
-    print("  ✓ Data provenance tracking (Daubert compliance)")
-    print("  ✓ Quantitative risk assessment (insurance-ready)")
-    print("  ✓ Decision methodology (alternatives with scores)")
-    print("  ✓ Plain language summaries (EU AI Act Article 13)")
-    print("  ✓ Ground truth tracking (outcome recording)")
+    print("   Data provenance tracking (Daubert compliance)")
+    print("   Quantitative risk assessment (insurance-ready)")
+    print("   Decision methodology (alternatives with scores)")
+    print("   Plain language summaries (EU AI Act Article 13)")
+    print("   Ground truth tracking (outcome recording)")
     print("\nUsage:")
     print(
         "  from src.live_capture.court_admissible_enrichment import CourtAdmissibleEnricher"

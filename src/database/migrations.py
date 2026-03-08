@@ -291,15 +291,19 @@ class MigrationManager:
         """Add table partitioning for large tables"""
         logger.info("Setting up table partitioning...")
 
-        from src.core.config import DATABASE_URL
-        from datetime import datetime, timedelta
+        from datetime import datetime
+
         from dateutil.relativedelta import relativedelta
+
+        from src.core.config import DATABASE_URL
 
         # Only for PostgreSQL
         if "postgresql" in DATABASE_URL.lower():
             # Calculate dynamic partition dates
             now = datetime.now()
-            current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            current_month_start = now.replace(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
             prev_month_start = current_month_start - relativedelta(months=1)
             next_month_start = current_month_start + relativedelta(months=1)
             next_next_month_start = current_month_start + relativedelta(months=2)
@@ -344,7 +348,9 @@ class MigrationManager:
                 try:
                     await session.execute(text(partition_sql))
                     await session.commit()
-                    logger.info(f"Table partitioning configured for {prev_partition_name}, {current_partition_name}, {next_partition_name}")
+                    logger.info(
+                        f"Table partitioning configured for {prev_partition_name}, {current_partition_name}, {next_partition_name}"
+                    )
                 except Exception as e:
                     logger.warning(f"Could not create partitioning: {e}")
                     await session.rollback()
@@ -407,7 +413,7 @@ def check_migration_status():
     try:
         status = migration_manager.get_migration_status()
 
-        print("📊 Migration Status:")
+        print(" Migration Status:")
         print(f"   Applied: {status['applied_count']}")
         print(f"   Pending: {status['pending_count']}")
 
@@ -419,14 +425,14 @@ def check_migration_status():
 
         return status
     except Exception as e:
-        print(f"❌ Could not check migration status: {e}")
+        print(f"[ERROR] Could not check migration status: {e}")
         return None
 
 
 # CLI functions
 def create_database():
     """Create database with initial schema"""
-    print("🗄️  Creating database with initial schema...")
+    print("️  Creating database with initial schema...")
 
     try:
         # Initialize database
@@ -435,23 +441,23 @@ def create_database():
         # Run migrations
         run_migrations_sync()
 
-        print("✅ Database created successfully!")
+        print("[OK] Database created successfully!")
 
         # Create test data if in development
         if os.getenv("ENVIRONMENT", "development") == "development":
             from .connection import create_test_data
 
             create_test_data()
-            print("✅ Test data created!")
+            print("[OK] Test data created!")
 
     except Exception as e:
-        print(f"❌ Database creation failed: {e}")
+        print(f"[ERROR] Database creation failed: {e}")
         logger.error(f"Database creation error: {e}")
 
 
 def reset_database():
     """Reset database (drop and recreate)"""
-    print("⚠️  Resetting database (this will delete all data)...")
+    print("[WARN]  Resetting database (this will delete all data)...")
 
     try:
         # Initialize database
@@ -463,10 +469,10 @@ def reset_database():
         # Run migrations
         run_migrations_sync()
 
-        print("✅ Database reset successfully!")
+        print("[OK] Database reset successfully!")
 
     except Exception as e:
-        print(f"❌ Database reset failed: {e}")
+        print(f"[ERROR] Database reset failed: {e}")
         logger.error(f"Database reset error: {e}")
 
 

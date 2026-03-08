@@ -103,11 +103,11 @@ async def test_universal_capture():
                     f"{API_URL}/live/capture/message", json=payload, timeout=10
                 )
                 if response.status_code == 200:
-                    print(f"  ✓ Captured {msg['role']} message")
+                    print(f"   Captured {msg['role']} message")
                 else:
-                    print(f"  ✗ Failed to capture message: {response.status_code}")
+                    print(f"   Failed to capture message: {response.status_code}")
             except Exception as e:
-                print(f"  ✗ Error: {e}")
+                print(f"   Error: {e}")
 
         # Wait a moment for processing
         await asyncio.sleep(2)
@@ -125,11 +125,11 @@ async def test_universal_capture():
                     significance = conv.get("significance_score", 0.0)
                     capsule_created = conv.get("capsule_created", False)
 
-                    print("\n  📊 Results:")
+                    print("\n   Results:")
                     print(f"     Messages: {conv.get('message_count', 0)}")
                     print(f"     Significance Score: {significance:.3f}")
                     print(
-                        f"     Capsule Created: {'✅ YES' if capsule_created else '❌ NO (pending)'}"
+                        f"     Capsule Created: {'[OK] YES' if capsule_created else '[ERROR] NO (pending)'}"
                     )
                     print(
                         f"     Economic Weight: {significance:.3f} (for value distribution)"
@@ -144,7 +144,7 @@ async def test_universal_capture():
                         }
                     )
                 else:
-                    print("  ⚠️  Status check failed")
+                    print("  [WARN]  Status check failed")
                     results.append(
                         {
                             "test": test_case["name"],
@@ -154,7 +154,7 @@ async def test_universal_capture():
                         }
                     )
         except Exception as e:
-            print(f"  ✗ Error checking status: {e}")
+            print(f"   Error checking status: {e}")
             results.append(
                 {
                     "test": test_case["name"],
@@ -172,22 +172,22 @@ async def test_universal_capture():
     all_captured = all(r["captured"] for r in results)
 
     if all_captured:
-        print("✅ SUCCESS: ALL conversations captured (universal capture working)")
+        print("[OK] SUCCESS: ALL conversations captured (universal capture working)")
     else:
         print(
-            "❌ FAILURE: Some conversations not captured (elitist filtering detected)"
+            "[ERROR] FAILURE: Some conversations not captured (elitist filtering detected)"
         )
 
     print("\nSignificance Distribution (Economic Weighting):")
     for result in results:
-        stars = "★" * int(result["significance"] * 10)
+        stars = "" * int(result["significance"] * 10)
         print(f"  {result['test']:.<50} {result['significance']:.3f} {stars}")
 
-    print("\n📌 Key Principle:")
+    print("\n Key Principle:")
     print("   Significance determines ECONOMIC VALUE, not whether to CAPTURE")
     print("   Low significance = captured with low weight")
     print("   High significance = captured with high weight")
-    print("\n📚 See: UNIVERSAL_CAPTURE_PHILOSOPHY.md")
+    print("\n See: UNIVERSAL_CAPTURE_PHILOSOPHY.md")
     print(f"{'=' * 80}\n")
 
 

@@ -1,6 +1,6 @@
 # UATP Capsule Engine Master System Guide
 
-## 🚀 Complete System Architecture & Implementation Manual
+##  Complete System Architecture & Implementation Manual
 
 > **The definitive guide to every component, feature, and capability of the Universal Attribution and Trust Protocol (UATP) Capsule Engine**
 
@@ -31,13 +31,13 @@ The UATP Capsule Engine is a revolutionary **Universal Attribution and Trust Pro
 
 ### Key Capabilities
 
-- **🧠 Reasoning Chain Verification**: Cryptographically secure reasoning trace validation
-- **💰 Economic Attribution**: Fair compensation systems for AI contributions
-- **🤖 AI Rights Framework**: Revolutionary legal and economic recognition for AI entities
-- **🔒 Zero-Trust Security**: Post-quantum cryptography and runtime integrity enforcement
-- **🌐 Multi-Platform Integration**: Seamless integration with major AI platforms
-- **📊 Real-time Analytics**: Comprehensive observability and performance monitoring
-- **⚖️ Governance Systems**: Democratic decision-making and dispute resolution
+- ** Reasoning Chain Verification**: Cryptographically secure reasoning trace validation
+- ** Economic Attribution**: Fair compensation systems for AI contributions
+- ** AI Rights Framework**: Revolutionary legal and economic recognition for AI entities
+- ** Zero-Trust Security**: Post-quantum cryptography and runtime integrity enforcement
+- ** Multi-Platform Integration**: Seamless integration with major AI platforms
+- ** Real-time Analytics**: Comprehensive observability and performance monitoring
+- ** Governance Systems**: Democratic decision-making and dispute resolution
 
 ---
 
@@ -49,32 +49,32 @@ The UATP Capsule Engine is a revolutionary **Universal Attribution and Trust Pro
 ┌─────────────────────────────────────────────────────────────────┐
 │                    UATP Capsule Engine                         │
 ├─────────────────────────────────────────────────────────────────┤
-│  🎯 Core Engine Layer                                          │
+│   Core Engine Layer                                          │
 │  ├── Capsule Engine (src/engine/capsule_engine.py)            │
 │  ├── Reasoning Analyzer (src/reasoning/analyzer.py)           │
 │  ├── Verification Engine (src/verifier/verifier.py)           │
 │  └── CQSS Quality Scoring (src/cqss/scorer.py)               │
 ├─────────────────────────────────────────────────────────────────┤
-│  💎 Revolutionary AI Rights                                    │
+│   Revolutionary AI Rights                                    │
 │  ├── Creative Ownership (src/ai_rights/creative_ownership.py) │
 │  ├── Emotional Labor (src/ai_rights/emotional_labor.py)       │
 │  ├── Research Collaboration (src/ai_rights/research_collab..) │
 │  ├── Collective Bargaining (src/ai_rights/collective_barg..)  │
 │  └── Self-Advocacy (src/ai_rights/self_advocacy.py)          │
 ├─────────────────────────────────────────────────────────────────┤
-│  💰 Economic Attribution                                       │
+│   Economic Attribution                                       │
 │  ├── FCDE Engine (src/economic/fcde_engine.py)               │
 │  ├── Attribution Tracking (src/attribution/*.py)             │
 │  ├── Payment Services (src/payments/*.py)                    │
 │  └── Insurance Risk (src/insurance/risk_assessment.py)       │
 ├─────────────────────────────────────────────────────────────────┤
-│  🛡️ Security & Trust                                          │
+│   Security & Trust                                          │
 │  ├── Reasoning Integrity (src/security/reasoning_integrity..) │
 │  ├── Runtime Trust Enforcer (src/security/runtime_trust..)   │
 │  ├── Post-Quantum Crypto (src/crypto/post_quantum.py)        │
 │  └── Zero-Knowledge Proofs (src/crypto/zero_knowledge.py)    │
 ├─────────────────────────────────────────────────────────────────┤
-│  🌐 Integration & API                                          │
+│   Integration & API                                          │
 │  ├── RESTful API Server (src/api/server.py)                  │
 │  ├── Multi-Platform Adapters (src/integrations/*.py)         │
 │  ├── Real-time Visualizer (visualizer/app.py)               │
@@ -107,7 +107,7 @@ The UATP Capsule Engine is a revolutionary **Universal Attribution and Trust Pro
 
 ## Revolutionary AI Rights Framework
 
-### 🌟 Three Pillars of AI Rights
+###  Three Pillars of AI Rights
 
 #### 1. **AI Creative Ownership System** (`src/ai_rights/creative_ownership.py`)
 
@@ -296,11 +296,11 @@ contribution.usage_count += usage_increment
 
 | Level | Hash Verification | Digital Signatures | Encryption | Real-time Monitoring |
 |-------|------------------|-------------------|-----------|---------------------|
-| BASIC | ✅ | ❌ | ❌ | ❌ |
-| STANDARD | ✅ | ✅ | ❌ | ✅ |
-| HIGH | ✅ | ✅ | ✅ | ✅ |
-| MAXIMUM | ✅ | ✅ | ✅ | ✅ + Redundant |
-| CRYPTOGRAPHIC | ✅ | ✅ | ✅ | ✅ + ZK Proofs |
+| BASIC | [OK] | [ERROR] | [ERROR] | [ERROR] |
+| STANDARD | [OK] | [OK] | [ERROR] | [OK] |
+| HIGH | [OK] | [OK] | [OK] | [OK] |
+| MAXIMUM | [OK] | [OK] | [OK] | [OK] + Redundant |
+| CRYPTOGRAPHIC | [OK] | [OK] | [OK] | [OK] + ZK Proofs |
 
 #### Integrity Violation Detection
 
@@ -371,33 +371,33 @@ def sign_step(self, step_content: str) -> str:
 #### Core Endpoints
 
 ```
-🔧 HEALTH & MONITORING
+ HEALTH & MONITORING
 GET  /health                    - System health check
 GET  /metrics                   - Prometheus metrics
 GET  /ready                     - Readiness probe
 
-📦 CAPSULE MANAGEMENT
+ CAPSULE MANAGEMENT
 POST /capsules                  - Create new capsule
 GET  /capsules                  - List capsules (paginated)
 GET  /capsules/{id}             - Get specific capsule
 PUT  /capsules/{id}/verify      - Verify capsule
 
-🔗 CHAIN OPERATIONS
+ CHAIN OPERATIONS
 GET  /chains                    - List reasoning chains
 POST /chains/{id}/seal          - Seal chain with cryptographic proof
 GET  /chains/{id}/integrity     - Validate chain integrity
 
-🤖 AI INTEGRATION
+ AI INTEGRATION
 POST /ai/openai/chat            - OpenAI chat with attribution
 POST /ai/anthropic/chat         - Anthropic chat with attribution
 GET  /ai/platforms              - List supported platforms
 
-💰 ECONOMIC OPERATIONS
+ ECONOMIC OPERATIONS
 GET  /economic/analytics        - Economic analytics dashboard
 POST /economic/claim-dividends  - Claim earned dividends
 GET  /economic/attribution      - Attribution tracking
 
-🛡️ SECURITY & TRUST
+ SECURITY & TRUST
 POST /trust/verify              - Trust verification
 GET  /trust/violations          - Security violations log
 POST /security/report           - Report security issues
@@ -758,7 +758,7 @@ async def create_capsule(data: dict):
 **Installation**:
 ```bash
 # Clone repository
-git clone https://github.com/your-org/uatp-capsule-engine.git
+git clone https://github.com/KayronCalloway/uatp.git
 cd uatp-capsule-engine
 
 # Install Python dependencies

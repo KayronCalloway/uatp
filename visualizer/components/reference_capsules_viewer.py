@@ -177,7 +177,7 @@ def render_reference_capsules_viewer():
                 if policies:
                     st.markdown("**Policies Checked:**")
                     for policy in policies:
-                        status = "✅" if policy.get("compliant") else "❌"
+                        status = "[OK]" if policy.get("compliant") else "[ERROR]"
                         st.markdown(
                             f"{status} **{policy.get('policy')}**: {policy.get('evidence')}"
                         )
@@ -433,9 +433,9 @@ def render_reference_capsules_viewer():
                         "Ethical Policy Validation",
                         "UATP 7.0 Compliance",
                     ],
-                    "Ideal": ["✅", "✅", "❌", "❌", "✅", "✅"],
-                    "Economic": ["✅", "✅", "✅", "❌", "✅", "✅"],
-                    "Remix": ["✅", "✅", "❌", "✅", "✅", "✅"],
+                    "Ideal": ["[OK]", "[OK]", "[ERROR]", "[ERROR]", "[OK]", "[OK]"],
+                    "Economic": ["[OK]", "[OK]", "[OK]", "[ERROR]", "[OK]", "[OK]"],
+                    "Remix": ["[OK]", "[OK]", "[ERROR]", "[OK]", "[OK]", "[OK]"],
                 }
             )
 
@@ -519,26 +519,26 @@ def render_reference_capsules_viewer():
                             hasattr(user_capsule, "signature")
                             and user_capsule.signature
                         ):
-                            st.markdown("**Signature:** ✅ Present")
+                            st.markdown("**Signature:** [OK] Present")
                         else:
-                            st.markdown("**Signature:** ❌ Missing")
+                            st.markdown("**Signature:** [ERROR] Missing")
 
                         # Show reasoning trace check
                         if (
                             hasattr(user_capsule, "reasoning_trace")
                             and user_capsule.reasoning_trace
                         ):
-                            st.markdown("**Reasoning Trace:** ✅ Present")
+                            st.markdown("**Reasoning Trace:** [OK] Present")
                         else:
-                            st.markdown("**Reasoning Trace:** ❌ Missing")
+                            st.markdown("**Reasoning Trace:** [ERROR] Missing")
 
                     with col2:
                         st.markdown("##### Reference Model")
                         st.markdown(f"**ID:** `{reference_capsule.capsule_id[:10]}...`")
                         st.markdown(f"**Type:** `{reference_capsule.capsule_type}`")
                         st.markdown(f"**Agent:** `{reference_capsule.agent_id}`")
-                        st.markdown("**Signature:** ✅ Present")
-                        st.markdown("**Reasoning Trace:** ✅ Present")
+                        st.markdown("**Signature:** [OK] Present")
+                        st.markdown("**Reasoning Trace:** [OK] Present")
 
                     # Run CQSS simulation for both capsules
                     st.markdown("#### CQSS Score Comparison")
@@ -691,7 +691,7 @@ def render_reference_capsules_viewer():
                                 < ref_cqss.get("signature_score", 0) - 10
                             ):
                                 recommendations.append(
-                                    "🔑 **Signature Verification**: Ensure your capsule uses proper cryptographic signatures and key management."
+                                    " **Signature Verification**: Ensure your capsule uses proper cryptographic signatures and key management."
                                 )
 
                             if (
@@ -699,7 +699,7 @@ def render_reference_capsules_viewer():
                                 < ref_cqss.get("reasoning_score", 0) - 10
                             ):
                                 recommendations.append(
-                                    "🧠 **Reasoning Trace**: Include more detailed reasoning steps with explicit confidence levels."
+                                    " **Reasoning Trace**: Include more detailed reasoning steps with explicit confidence levels."
                                 )
 
                             if (
@@ -707,7 +707,7 @@ def render_reference_capsules_viewer():
                                 < ref_cqss.get("confidence_score", 0) - 10
                             ):
                                 recommendations.append(
-                                    "📊 **Confidence Scoring**: Improve confidence metrics and ensure they accurately reflect certainty levels."
+                                    " **Confidence Scoring**: Improve confidence metrics and ensure they accurately reflect certainty levels."
                                 )
 
                             if (
@@ -715,12 +715,12 @@ def render_reference_capsules_viewer():
                                 < ref_cqss.get("ethical_score", 0) - 10
                             ):
                                 recommendations.append(
-                                    "⚖️ **Ethical Policy**: Add explicit ethical policy validations and framework references."
+                                    " **Ethical Policy**: Add explicit ethical policy validations and framework references."
                                 )
 
                             if not recommendations:
                                 st.success(
-                                    "👏 Your capsule is performing well compared to the reference model!"
+                                    " Your capsule is performing well compared to the reference model!"
                                 )
                             else:
                                 for rec in recommendations:

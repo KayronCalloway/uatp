@@ -342,4 +342,4 @@ if __name__ == "__main__":
     test_emergency_proposal()
     test_voting_power_calculation()
     test_proposal_execution()
-    print("✅ All governance tests passed!")
+    print("[OK] All governance tests passed!")

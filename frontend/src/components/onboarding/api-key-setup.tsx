@@ -35,7 +35,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
     try {
       // Check environment variables first
       const envVarNames = getEnvVarNames(platform);
-      
+
       // Try to detect from browser environment (development mode)
       if (typeof window !== 'undefined') {
         for (const envVar of envVarNames) {
@@ -59,7 +59,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
       try {
         const { apiClient } = await import('@/lib/api-client');
         const platformsData = await apiClient.getAvailablePlatforms();
-        
+
         if (platformsData.success && platformsData.data[platform]) {
           const platformInfo = platformsData.data[platform];
           if (platformInfo.available) {
@@ -69,7 +69,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
               source: 'backend',
               keyPreview: 'configured'
             });
-            
+
             // Auto-complete if platform is available in backend
             onComplete('__detected__'); // Special value indicating detected key
             return;
@@ -99,13 +99,13 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
       // For now, we'll do basic validation client-side
       // In production, this would go through the API client to validate with the platform
       const isValidFormat = validateApiKeyFormat(key, platform);
-      
+
       if (isValidFormat) {
         setStatus(prev => ({ ...prev, valid: true }));
-        
+
         // Save key for future use
         localStorage.setItem(`uatp_${platform}_api_key`, key);
-        
+
         // Auto-complete after validation
         setTimeout(() => onComplete(key), 1000);
       } else {
@@ -151,7 +151,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
       google: ['GOOGLE_API_KEY'],
       azure: ['AZURE_OPENAI_KEY']
     };
-    
+
     return envVars[platform] || [`${platform.toUpperCase()}_API_KEY`];
   };
 
@@ -192,7 +192,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
     return (
       <Card className="p-6">
         <div className="text-center">
-          <div className="text-4xl mb-4">✅</div>
+          <div className="text-4xl mb-4">[OK]</div>
           <h3 className="text-lg font-semibold text-green-800 mb-2">
             {platformInfo.name} API Key Detected!
           </h3>
@@ -222,7 +222,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
         {status.detected && !status.valid && (
           <Alert>
             <AlertDescription>
-              Found API key from {status.source} ({status.keyPreview}), but it appears to be invalid. 
+              Found API key from {status.source} ({status.keyPreview}), but it appears to be invalid.
               Please check or enter a new key below.
             </AlertDescription>
           </Alert>
@@ -247,12 +247,12 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
               onChange={(e) => setApiKey(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleManualSubmit()}
             />
-            
+
             {platformInfo.docsUrl && (
               <p className="text-sm text-blue-600">
-                <a 
-                  href={platformInfo.docsUrl} 
-                  target="_blank" 
+                <a
+                  href={platformInfo.docsUrl}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="underline hover:no-underline"
                 >
@@ -276,7 +276,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
                   'Validate & Continue'
                 )}
               </Button>
-              
+
               {onSkip && (
                 <Button
                   onClick={onSkip}
@@ -291,7 +291,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
 
         {!showManualInput && !status.detected && (
           <div className="text-center space-y-4">
-            <div className="text-2xl">🔍</div>
+            <div className="text-2xl"></div>
             <p className="text-gray-600">
               Detecting API keys in your environment...
             </p>
@@ -305,7 +305,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
         )}
 
         <div className="bg-blue-50 p-4 rounded-lg text-sm">
-          <h4 className="font-medium text-blue-900 mb-2">💡 Pro Tips:</h4>
+          <h4 className="font-medium text-blue-900 mb-2"> Pro Tips:</h4>
           <ul className="text-blue-800 space-y-1">
             <li>• API keys are stored locally and never sent to our servers</li>
             <li>• You can set environment variables for automatic detection</li>

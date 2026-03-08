@@ -11,10 +11,10 @@ import asyncio
 import json
 import logging
 import os
-import sys
 import subprocess
+import sys
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -34,12 +34,12 @@ class TestRunner:
         self.start_time = None
         self.end_time = None
 
-        logger.info("🧪 Test Runner initialized")
+        logger.info(" Test Runner initialized")
 
     def run_unit_tests(self) -> Dict[str, Any]:
         """Run unit tests."""
 
-        logger.info("🔬 Running unit tests...")
+        logger.info(" Running unit tests...")
 
         try:
             # Run pytest
@@ -62,7 +62,7 @@ class TestRunner:
             }
 
         except Exception as e:
-            logger.error(f"❌ Unit tests failed: {e}")
+            logger.error(f"[ERROR] Unit tests failed: {e}")
             return {
                 "type": "unit_tests",
                 "success": False,
@@ -73,7 +73,7 @@ class TestRunner:
     def run_integration_tests(self) -> Dict[str, Any]:
         """Run integration tests."""
 
-        logger.info("🔗 Running integration tests...")
+        logger.info(" Running integration tests...")
 
         try:
             # Run specific integration tests
@@ -96,7 +96,7 @@ class TestRunner:
             }
 
         except Exception as e:
-            logger.error(f"❌ Integration tests failed: {e}")
+            logger.error(f"[ERROR] Integration tests failed: {e}")
             return {
                 "type": "integration_tests",
                 "success": False,
@@ -107,7 +107,7 @@ class TestRunner:
     async def run_load_tests(self) -> Dict[str, Any]:
         """Run load tests."""
 
-        logger.info("🔥 Running load tests...")
+        logger.info(" Running load tests...")
 
         try:
             # Import and run load tests
@@ -136,7 +136,7 @@ class TestRunner:
             }
 
         except Exception as e:
-            logger.error(f"❌ Load tests failed: {e}")
+            logger.error(f"[ERROR] Load tests failed: {e}")
             return {
                 "type": "load_tests",
                 "success": False,
@@ -147,7 +147,7 @@ class TestRunner:
     async def run_performance_benchmarks(self) -> Dict[str, Any]:
         """Run performance benchmarks."""
 
-        logger.info("📊 Running performance benchmarks...")
+        logger.info(" Running performance benchmarks...")
 
         try:
             from src.testing.performance_benchmarks import PerformanceBenchmark
@@ -179,7 +179,7 @@ class TestRunner:
             }
 
         except Exception as e:
-            logger.error(f"❌ Performance benchmarks failed: {e}")
+            logger.error(f"[ERROR] Performance benchmarks failed: {e}")
             return {
                 "type": "performance_benchmarks",
                 "success": False,
@@ -190,10 +190,11 @@ class TestRunner:
     def run_health_checks(self) -> Dict[str, Any]:
         """Run health checks."""
 
-        logger.info("🏥 Running health checks...")
+        logger.info(" Running health checks...")
 
         try:
             import asyncio
+
             from src.monitoring.health_checks import get_health_manager
 
             async def check_health():
@@ -213,7 +214,7 @@ class TestRunner:
             }
 
         except Exception as e:
-            logger.error(f"❌ Health checks failed: {e}")
+            logger.error(f"[ERROR] Health checks failed: {e}")
             return {
                 "type": "health_checks",
                 "success": False,
@@ -224,7 +225,7 @@ class TestRunner:
     def run_security_tests(self) -> Dict[str, Any]:
         """Run security tests."""
 
-        logger.info("🔒 Running security tests...")
+        logger.info(" Running security tests...")
 
         try:
             # Run security-focused tests
@@ -247,7 +248,7 @@ class TestRunner:
             }
 
         except Exception as e:
-            logger.error(f"❌ Security tests failed: {e}")
+            logger.error(f"[ERROR] Security tests failed: {e}")
             return {
                 "type": "security_tests",
                 "success": False,
@@ -268,7 +269,7 @@ class TestRunner:
                 "performance_benchmarks",
             ]
 
-        logger.info(f"🧪 Running test suite: {', '.join(test_types)}")
+        logger.info(f" Running test suite: {', '.join(test_types)}")
 
         self.start_time = datetime.now()
         results = {}
@@ -291,17 +292,17 @@ class TestRunner:
                 elif test_type == "performance_benchmarks":
                     results[test_type] = await self.run_performance_benchmarks()
                 else:
-                    logger.warning(f"⚠️ Unknown test type: {test_type}")
+                    logger.warning(f"[WARN] Unknown test type: {test_type}")
                     continue
 
                 # Log result
                 if results[test_type]["success"]:
-                    logger.info(f"✅ {test_type} passed")
+                    logger.info(f"[OK] {test_type} passed")
                 else:
-                    logger.error(f"❌ {test_type} failed")
+                    logger.error(f"[ERROR] {test_type} failed")
 
             except Exception as e:
-                logger.error(f"❌ {test_type} crashed: {e}")
+                logger.error(f"[ERROR] {test_type} crashed: {e}")
                 results[test_type] = {
                     "type": test_type,
                     "success": False,
@@ -352,26 +353,26 @@ class TestRunner:
         with open(filepath, "w") as f:
             json.dump(results, f, indent=2, default=str)
 
-        logger.info(f"📄 Test results saved to {filepath}")
+        logger.info(f" Test results saved to {filepath}")
 
     def print_summary(self, results: Dict[str, Any]):
         """Print test summary to console."""
 
         print("\n" + "=" * 60)
-        print("🧪 TEST SUMMARY")
+        print(" TEST SUMMARY")
         print("=" * 60)
 
         summary = results["summary"]
 
-        print(f"📊 Overall Status: {summary['overall_status']}")
-        print(f"📈 Success Rate: {summary['success_rate']:.1%}")
-        print(f"✅ Passed: {summary['passed_tests']}")
-        print(f"❌ Failed: {summary['failed_tests']}")
-        print(f"⏱️ Total Duration: {summary['total_duration']:.1f}s")
+        print(f" Overall Status: {summary['overall_status']}")
+        print(f" Success Rate: {summary['success_rate']:.1%}")
+        print(f"[OK] Passed: {summary['passed_tests']}")
+        print(f"[ERROR] Failed: {summary['failed_tests']}")
+        print(f" Total Duration: {summary['total_duration']:.1f}s")
 
-        print("\n📋 Test Results:")
+        print("\n Test Results:")
         for test_type, result in results["results"].items():
-            status = "✅ PASS" if result["success"] else "❌ FAIL"
+            status = "[OK] PASS" if result["success"] else "[ERROR] FAIL"
             duration = result.get("duration", 0)
             print(f"   {test_type}: {status} ({duration:.1f}s)")
 
@@ -411,7 +412,7 @@ async def main():
     if args.quiet:
         logging.getLogger().setLevel(logging.WARNING)
 
-    print("🧪 UATP Comprehensive Test Runner")
+    print(" UATP Comprehensive Test Runner")
     print("=" * 50)
 
     runner = TestRunner()
@@ -433,7 +434,7 @@ async def main():
         sys.exit(exit_code)
 
     except Exception as e:
-        print(f"❌ Test runner failed: {e}")
+        print(f"[ERROR] Test runner failed: {e}")
         sys.exit(1)
 
 

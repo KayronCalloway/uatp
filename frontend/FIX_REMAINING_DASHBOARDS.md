@@ -1,12 +1,12 @@
 # Fix Remaining Dashboards - Demo Mode Integration
 
-## ✅ Completed
-1. Economic Dashboard - Fixed ✅
-2. Federation Dashboard - Fixed ✅
-3. Main Dashboard - Fixed ✅
-4. Live Capture Dashboard - Fixed ✅
+## [OK] Completed
+1. Economic Dashboard - Fixed [OK]
+2. Federation Dashboard - Fixed [OK]
+3. Main Dashboard - Fixed [OK]
+4. Live Capture Dashboard - Fixed [OK]
 
-## 🔧 Pattern to Apply to Remaining Dashboards
+##  Pattern to Apply to Remaining Dashboards
 
 For each dashboard that has hardcoded mock data:
 
@@ -77,7 +77,7 @@ const mockData = isDemoMode ? [...] : [];
 )}
 ```
 
-## 📋 Dashboards Still Needing Fixes
+##  Dashboards Still Needing Fixes
 
 ### High Priority (User Reported Issues)
 - [ ] Organization Dashboard (`organization-dashboard.tsx`)
@@ -99,7 +99,7 @@ const mockData = isDemoMode ? [...] : [];
 - [ ] Capsules Explorer (`capsule-explorer.tsx`)
 - [ ] Universe Visualization (check if has mock data)
 
-## 🔍 Quick Audit Command
+##  Quick Audit Command
 
 To find dashboards with hardcoded data:
 ```bash
@@ -108,7 +108,7 @@ grep -r "const mock" --include="*.tsx" | grep -v "node_modules"
 grep -r "DEMO_MODE.*env" --include="*.tsx" | grep -v "node_modules"
 ```
 
-## ⚡ Quick Fix Steps
+##  Quick Fix Steps
 
 For each dashboard:
 1. Search for `DEMO_MODE = process.env`
@@ -118,7 +118,7 @@ For each dashboard:
 5. Wrap all data-dependent sections in conditionals
 6. Test both demo ON and demo OFF modes
 
-## 🎯 Expected Behavior
+##  Expected Behavior
 
 **Demo Mode ON**: Show all mock data with orange badge
 **Demo Mode OFF**: Show ONLY real API data, or "no data" message if none exists

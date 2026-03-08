@@ -39,6 +39,7 @@ _FEEDBACK_LOOP_ENABLED = True
 @dataclass
 class ConversationMessage:
     """Represents a single message in a conversation."""
+
     role: str  # 'user' or 'assistant'
     content: str
     timestamp: datetime
@@ -51,6 +52,7 @@ class ConversationMessage:
 @dataclass
 class ConversationSession:
     """Represents a complete conversation session."""
+
     session_id: str
     user_id: str
     start_time: datetime
@@ -82,13 +84,19 @@ class BaseHook(ABC):
 
     Subclasses must implement:
     - get_platform_specific_metadata(): Platform-specific metadata dict
-    - get_platform_emoji(): Emoji for logging (e.g., "🤖" for OpenAI)
+    - get_platform_emoji(): Emoji for logging (e.g., "" for OpenAI)
     """
 
     # Valid platform enum
     VALID_PLATFORMS = [
-        'cursor', 'claude-code', 'openai', 'anthropic',
-        'windsurf', 'antigravity', 'custom', 'legacy_unknown'
+        "cursor",
+        "claude-code",
+        "openai",
+        "anthropic",
+        "windsurf",
+        "antigravity",
+        "custom",
+        "legacy_unknown",
     ]
 
     def __init__(
@@ -142,18 +150,18 @@ class BaseHook(ABC):
             User identifier string
         """
         # Check environment variables
-        user = os.getenv('USER') or os.getenv('USERNAME')
-        if user and user != 'unknown':
+        user = os.getenv("USER") or os.getenv("USERNAME")
+        if user and user != "unknown":
             logger.debug(f"User detected from environment: {user}")
             return user
 
         # Check git config
         try:
             result = subprocess.run(
-                ['git', 'config', 'user.name'],
+                ["git", "config", "user.name"],
                 capture_output=True,
                 text=True,
-                timeout=2
+                timeout=2,
             )
             if result.returncode == 0 and result.stdout.strip():
                 git_user = result.stdout.strip()
@@ -193,29 +201,36 @@ class BaseHook(ABC):
             Validated platform name from VALID_PLATFORMS
         """
         # If provided platform is valid and not 'unknown', use it
-        if provided_platform and provided_platform in self.VALID_PLATFORMS and provided_platform != 'unknown':
+        if (
+            provided_platform
+            and provided_platform in self.VALID_PLATFORMS
+            and provided_platform != "unknown"
+        ):
             logger.debug(f"Using provided platform: {provided_platform}")
             return provided_platform
 
         # Check environment variables
         platform_env_vars = {
-            'CURSOR_SESSION': 'cursor',
-            'CURSOR_IDE': 'cursor',
-            'WINDSURF_SESSION': 'windsurf',
-            'WINDSURF_IDE': 'windsurf',
-            'CLAUDE_CODE_SESSION': 'claude-code',
-            'ANTHROPIC_SESSION': 'anthropic',
-            'OPENAI_SESSION': 'openai',
+            "CURSOR_SESSION": "cursor",
+            "CURSOR_IDE": "cursor",
+            "WINDSURF_SESSION": "windsurf",
+            "WINDSURF_IDE": "windsurf",
+            "CLAUDE_CODE_SESSION": "claude-code",
+            "ANTHROPIC_SESSION": "anthropic",
+            "OPENAI_SESSION": "openai",
         }
 
         for env_var, platform_name in platform_env_vars.items():
             if os.getenv(env_var):
-                logger.debug(f"Platform detected from env var {env_var}: {platform_name}")
+                logger.debug(
+                    f"Platform detected from env var {env_var}: {platform_name}"
+                )
                 return platform_name
 
         # Check process name
         try:
             import psutil
+
             current_process = psutil.Process()
             parent = current_process.parent()
 
@@ -225,15 +240,17 @@ class BaseHook(ABC):
 
                 # Map process names to platforms
                 process_mappings = {
-                    'cursor': 'cursor',
-                    'code': 'claude-code',  # VS Code / Claude Code
-                    'windsurf': 'windsurf',
-                    'python': None,  # Skip Python - too generic
+                    "cursor": "cursor",
+                    "code": "claude-code",  # VS Code / Claude Code
+                    "windsurf": "windsurf",
+                    "python": None,  # Skip Python - too generic
                 }
 
                 for process_keyword, platform_name in process_mappings.items():
                     if platform_name and process_keyword in parent_name:
-                        logger.debug(f"Platform detected from process name: {platform_name}")
+                        logger.debug(
+                            f"Platform detected from process name: {platform_name}"
+                        )
                         return platform_name
 
         except ImportError:
@@ -242,20 +259,20 @@ class BaseHook(ABC):
             logger.debug(f"Process detection failed: {e}")
 
         # Check if subclass has platform_name attribute
-        if hasattr(self, 'platform_name'):
+        if hasattr(self, "platform_name"):
             detected = self.platform_name
             if detected in self.VALID_PLATFORMS:
                 logger.debug(f"Platform detected from class attribute: {detected}")
                 return detected
 
         # If provided platform was 'unknown', use 'legacy_unknown' for backfill tracking
-        if provided_platform == 'unknown':
+        if provided_platform == "unknown":
             logger.debug("Marking unknown platform as 'legacy_unknown'")
-            return 'legacy_unknown'
+            return "legacy_unknown"
 
         # Final fallback: 'custom' (not 'unknown')
         logger.info("Could not detect platform, using 'custom'")
-        return 'custom'
+        return "custom"
 
     @abstractmethod
     def get_platform_specific_metadata(self, **kwargs) -> Dict[str, Any]:
@@ -279,7 +296,7 @@ class BaseHook(ABC):
         Get platform emoji for logging.
 
         Returns:
-            Emoji string (e.g., "🤖" for OpenAI, "🎯" for Cursor)
+            Emoji string (e.g., "" for OpenAI, "" for Cursor)
         """
         pass
 
@@ -322,7 +339,9 @@ class BaseHook(ABC):
                 try:
                     follow_up_result = await self.process_user_follow_up(user_input)
                     if follow_up_result.get("outcome_inferred"):
-                        logger.info(f"🎯 Auto-outcome from follow-up: {follow_up_result.get('inferred_outcome')}")
+                        logger.info(
+                            f" Auto-outcome from follow-up: {follow_up_result.get('inferred_outcome')}"
+                        )
                 except Exception as e:
                     logger.debug(f"Follow-up processing skipped: {e}")
 
@@ -362,11 +381,15 @@ class BaseHook(ABC):
             # Log success
             if capsule_id:
                 emoji = self.get_platform_emoji()
-                logger.info(f"{emoji} {self.platform.title()} interaction encapsulated: {capsule_id}")
+                logger.info(
+                    f"{emoji} {self.platform.title()} interaction encapsulated: {capsule_id}"
+                )
                 logger.info(f"   Model: {model}")
                 logger.info(f"   Type: {interaction_type}")
                 if self.use_rich_capture:
-                    logger.info("   Enrichment: confidence + uncertainty + critical path")
+                    logger.info(
+                        "   Enrichment: confidence + uncertainty + critical path"
+                    )
 
                 # Allow subclass to add custom success logging
                 self._log_platform_specific_success(capsule_id, **platform_kwargs)
@@ -383,7 +406,9 @@ class BaseHook(ABC):
             return capsule_id
 
         except Exception as e:
-            logger.error(f"❌ {self.platform.title()} interaction capture failed: {e}")
+            logger.error(
+                f"[ERROR] {self.platform.title()} interaction capture failed: {e}"
+            )
             return None
 
     async def _capture_with_rich_metadata(
@@ -423,7 +448,9 @@ class BaseHook(ABC):
             # Extract token counts if available
             usage_info = platform_kwargs.get("usage_info", {})
             user_tokens = usage_info.get("prompt_tokens", len(user_input.split()))
-            assistant_tokens = usage_info.get("completion_tokens", len(assistant_response.split()))
+            assistant_tokens = usage_info.get(
+                "completion_tokens", len(assistant_response.split())
+            )
 
             # Create conversation messages
             messages = [
@@ -448,7 +475,9 @@ class BaseHook(ABC):
             ]
 
             # Extract topics from interaction
-            topics = self._extract_topics_from_interaction(user_input, assistant_response, metadata)
+            topics = self._extract_topics_from_interaction(
+                user_input, assistant_response, metadata
+            )
 
             # Calculate significance score
             significance_score = self._calculate_significance_score(
@@ -470,14 +499,19 @@ class BaseHook(ABC):
             )
 
             # Use RichCaptureEnhancer to create capsule with rich metadata
-            logger.info(f"Creating rich capsule with enhanced metadata for {self.platform}...")
-            capsule_data = RichCaptureEnhancer.create_capsule_from_session_with_rich_metadata(
-                session=session,
-                user_id=self.user_id,
+            logger.info(
+                f"Creating rich capsule with enhanced metadata for {self.platform}..."
+            )
+            capsule_data = (
+                RichCaptureEnhancer.create_capsule_from_session_with_rich_metadata(
+                    session=session,
+                    user_id=self.user_id,
+                )
             )
 
             # Store capsule using the CapsuleCreator
             from src.filters.capsule_creator import get_capsule_creator
+
             capsule_creator = get_capsule_creator()
 
             # Create capsule through the creator (which handles storage)
@@ -487,8 +521,12 @@ class BaseHook(ABC):
             await self._store_rich_capsule(capsule_data)
 
             logger.info(f"Rich capsule created: {capsule_id}")
-            logger.info(f"   Confidence: {capsule_data['payload'].get('overall_confidence', 'N/A')}")
-            logger.info(f"   Reasoning steps: {len(capsule_data['payload'].get('reasoning_steps', []))}")
+            logger.info(
+                f"   Confidence: {capsule_data['payload'].get('overall_confidence', 'N/A')}"
+            )
+            logger.info(
+                f"   Reasoning steps: {len(capsule_data['payload'].get('reasoning_steps', []))}"
+            )
 
             return capsule_id
 
@@ -558,8 +596,14 @@ class BaseHook(ABC):
 
         # Complexity indicators
         complexity_keywords = [
-            "algorithm", "implement", "architecture", "design",
-            "optimize", "debug", "analyze", "system"
+            "algorithm",
+            "implement",
+            "architecture",
+            "design",
+            "optimize",
+            "debug",
+            "analyze",
+            "system",
         ]
         content_lower = (user_input + " " + assistant_response).lower()
         for keyword in complexity_keywords:
@@ -606,11 +650,17 @@ class BaseHook(ABC):
                     )
 
                     await conn.close()
-                    logger.info(f"Stored rich capsule to PostgreSQL: {capsule_data['capsule_id']}")
+                    logger.info(
+                        f"Stored rich capsule to PostgreSQL: {capsule_data['capsule_id']}"
+                    )
                 else:
-                    logger.warning("PostgreSQL not configured, capsule data prepared but not persisted")
+                    logger.warning(
+                        "PostgreSQL not configured, capsule data prepared but not persisted"
+                    )
             except Exception as db_error:
-                logger.warning(f"PostgreSQL storage failed: {db_error}, capsule data prepared")
+                logger.warning(
+                    f"PostgreSQL storage failed: {db_error}, capsule data prepared"
+                )
 
         except Exception as e:
             logger.error(f"Failed to store rich capsule: {e}")
@@ -783,7 +833,7 @@ class SimplePlatformHook(BaseHook):
         hook = SimplePlatformHook(
             platform="my_platform",
             user_id="user123",
-            emoji="🚀",
+            emoji="",
             metadata_provider=lambda **kwargs: {"custom_field": kwargs.get("field")}
         )
     """
@@ -792,7 +842,7 @@ class SimplePlatformHook(BaseHook):
         self,
         platform: str,
         user_id: str,
-        emoji: str = "📝",
+        emoji: str = "",
         metadata_provider: Optional[callable] = None,
         **kwargs,
     ):

@@ -3,31 +3,31 @@ UATP 7.0 World Economic Forum Top 10 2025 Watermarking System
 
 Implements the absolute cutting-edge watermarking breakthroughs from 2025.
 
-🏆 WORLD ECONOMIC FORUM TOP 10 EMERGING TECHNOLOGIES 2025:
+ WORLD ECONOMIC FORUM TOP 10 EMERGING TECHNOLOGIES 2025:
 - Generative AI watermarking officially recognized as top 10 breakthrough technology
 
-🚀 LATEST INDUSTRY BREAKTHROUGHS 2025:
+ LATEST INDUSTRY BREAKTHROUGHS 2025:
 - Meta's Stable Signature: Unremovable watermarks rooted in AI model architecture
 - IMATAG's Independent Watermarking: First independent technology outside model development
 - User-Level Attribution: Unique watermarks per user with message embedding
 - VideoSeal: Advanced video watermarking system from Meta
 - Post-Quantum Homomorphic Encryption for privacy-preserving watermarks
 
-🔬 CUTTING-EDGE RESEARCH INTEGRATION:
+ CUTTING-EDGE RESEARCH INTEGRATION:
 - SynthID open-sourced (Google DeepMind, 2024)
 - zkDL++ zero-knowledge watermark extraction without revealing internals
-- Tree-Ring diffusion watermarks with purification resistance  
+- Tree-Ring diffusion watermarks with purification resistance
 - Multi-signature schemes for decentralized watermark verification
 - AI-enhanced anomaly detection for watermark tampering
 
-🛡️ REGULATORY COMPLIANCE 2025:
+ REGULATORY COMPLIANCE 2025:
 - EU AI Act mandatory machine-readable marking (Article 50)
 - C2PA 2.0 Coalition for Content Provenance standards
 - Message-embedding watermarks for scam prevention & law enforcement
 - User-aware detection systems for forensic attribution
 
-⚛️ POST-QUANTUM CRYPTOGRAPHY:
-- NIST HQC algorithm integration (5th standardized PQ algorithm)  
+️ POST-QUANTUM CRYPTOGRAPHY:
+- NIST HQC algorithm integration (5th standardized PQ algorithm)
 - Lattice-based and hash-based quantum-resistant signatures
 - IBM ML-KEM and ML-DSA quantum-safe algorithms
 - Merkle tree watermark verification with avalanche effect
@@ -43,9 +43,9 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from ..crypto.post_quantum import pq_crypto
-from ..crypto.zero_knowledge import ZKProof, create_zk_proof, verify_zk_proof
 from ..compliance.c2pa_integration import c2pa_integration
+from ..crypto.post_quantum import pq_crypto
+from ..crypto.zero_knowledge import create_zk_proof, verify_zk_proof
 
 
 @dataclass
@@ -641,11 +641,11 @@ class NextGenWatermarkingSystem:
                 )
 
                 print(
-                    f"✅ C2PA Content Credentials Generated: {c2pa_credentials.manifest_id}"
+                    f"[OK] C2PA Content Credentials Generated: {c2pa_credentials.manifest_id}"
                 )
 
             except Exception as e:
-                print(f"⚠️ C2PA generation failed: {e}")
+                print(f"[WARN] C2PA generation failed: {e}")
                 # Continue without C2PA credentials
 
         return watermarked_content, metadata, c2pa_credentials
@@ -691,8 +691,8 @@ class NextGenWatermarkingSystem:
         """Get analytics about next-generation watermarking activity."""
 
         total_watermarks = len(self.watermark_registry)
-        creators = set(wm.creator_id for wm in self.watermark_registry.values())
-        modalities = set(wm.content_modality for wm in self.watermark_registry.values())
+        creators = {wm.creator_id for wm in self.watermark_registry.values()}
+        modalities = {wm.content_modality for wm in self.watermark_registry.values()}
 
         # Calculate confidence distribution
         confidence_scores = [
@@ -763,7 +763,7 @@ class NextGenWatermarkingSystem:
 
             authenticity_signature = f"dilithium3:{pq_signature.hex()}"
 
-        except Exception as e:
+        except Exception:
             # Fallback to HMAC signature if PQ crypto fails
             authenticity_signature = f"hmac_sha256:{hmac.new(secrets.token_bytes(32), manifest_bytes, hashlib.sha256).hexdigest()}"
 
@@ -934,7 +934,7 @@ class NextGenWatermarkingSystem:
         """Get analytics about watermarking activity."""
 
         total_watermarks = len(self.watermark_registry)
-        creators = set(wm.creator_id for wm in self.watermark_registry.values())
+        creators = {wm.creator_id for wm in self.watermark_registry.values()}
 
         # Calculate confidence distribution
         confidence_scores = [

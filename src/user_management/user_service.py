@@ -9,7 +9,6 @@ import logging
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -429,8 +428,6 @@ class UserService:
 
             # Delete any user-related capsules or attribution data (GDPR Right to be Forgotten)
             try:
-                from src.models.capsule import CapsuleModel
-
                 # Delete all capsules created by this user
                 await self.db.execute(
                     "DELETE FROM capsules WHERE creator_id = :user_id",
@@ -458,7 +455,7 @@ class UserService:
             await self.db.commit()
 
             logger.info(
-                f"✅ User account deleted: {user_id} (username: {username}, email: {email}) - Reason: {reason}"
+                f"[OK] User account deleted: {user_id} (username: {username}, email: {email}) - Reason: {reason}"
             )
 
             return {
@@ -472,7 +469,7 @@ class UserService:
             }
 
         except Exception as e:
-            logger.error(f"❌ Failed to delete user {user_id}: {e}")
+            logger.error(f"[ERROR] Failed to delete user {user_id}: {e}")
             await self.db.rollback()
             return {"success": False, "error": f"Account deletion failed: {str(e)}"}
 
@@ -532,7 +529,7 @@ class UserService:
             await self.db.commit()
 
             logger.info(
-                f"✅ User account anonymized: {user_id} (was: {original_username}/{original_email}) - Reason: {reason}"
+                f"[OK] User account anonymized: {user_id} (was: {original_username}/{original_email}) - Reason: {reason}"
             )
 
             return {
@@ -547,7 +544,7 @@ class UserService:
             }
 
         except Exception as e:
-            logger.error(f"❌ Failed to anonymize user {user_id}: {e}")
+            logger.error(f"[ERROR] Failed to anonymize user {user_id}: {e}")
             await self.db.rollback()
             return {
                 "success": False,
@@ -697,7 +694,7 @@ if __name__ == "__main__":
         service = create_user_service()
 
         # Register a new user
-        print("🔐 Registering new user...")
+        print(" Registering new user...")
         result = await service.register_user(
             email="alice@example.com",
             username="alice123",
@@ -710,7 +707,7 @@ if __name__ == "__main__":
             user_id = result["user_id"]
 
             # Check onboarding status
-            print("\n📋 Checking onboarding status...")
+            print("\n Checking onboarding status...")
             status = await service.get_user_onboarding_status(user_id)
             print(f"Onboarding status: {status}")
 
@@ -733,7 +730,7 @@ if __name__ == "__main__":
                 print(f"Verification completion: {completion_result}")
 
             # Set up payout method
-            print("\n💳 Setting up payout method...")
+            print("\n Setting up payout method...")
             payout_result = await service.setup_payout_method(
                 user_id=user_id,
                 payout_method=PayoutMethod.PAYPAL,
@@ -742,7 +739,7 @@ if __name__ == "__main__":
             print(f"Payout setup result: {payout_result}")
 
             # Login user
-            print("\n🔑 Logging in user...")
+            print("\n Logging in user...")
             login_result = await service.login_user(
                 email="alice@example.com",
                 password="SecurePass123!",
@@ -752,12 +749,12 @@ if __name__ == "__main__":
             print(f"Login result: {login_result}")
 
             # Get final onboarding status
-            print("\n✅ Final onboarding status...")
+            print("\n[OK] Final onboarding status...")
             final_status = await service.get_user_onboarding_status(user_id)
             print(f"Final status: {final_status}")
 
             # Get user statistics
-            print("\n📊 User statistics...")
+            print("\n User statistics...")
             stats = await service.get_user_statistics(user_id)
             print(f"Statistics: {stats}")
 

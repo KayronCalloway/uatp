@@ -3,7 +3,7 @@ UATP Advanced Semantic Analysis Engine (2024-2025 Breakthrough Edition)
 
 Implements state-of-the-art semantic understanding using the latest breakthrough models:
 
-🏆 2024-2025 BREAKTHROUGH MODELS INTEGRATED:
+ 2024-2025 BREAKTHROUGH MODELS INTEGRATED:
 - OpenAI GPT-4/o1 reasoning models with step-by-step attribution analysis
 - DeepSeek-Coder R1 with reinforcement learning for high-performance analysis
 - LLaMA 3 (405B parameters, 128K context, multimodal reasoning)
@@ -11,7 +11,7 @@ Implements state-of-the-art semantic understanding using the latest breakthrough
 - Gemini 1.5 for advanced contextual understanding
 - Aya multilingual model (101 languages, 50%+ lower-resourced)
 
-🧠 ADVANCED SEMANTIC TECHNIQUES:
+ ADVANCED SEMANTIC TECHNIQUES:
 - Sentence Transformers v3.0 (latest major update, 15,000+ models)
 - E5-Mistral-7B-instruct (66.63 MTEB benchmark score)
 - BGE-Large-en-v1.5 (64.23 MTEB score, optimized efficiency)
@@ -20,7 +20,7 @@ Implements state-of-the-art semantic understanding using the latest breakthrough
 - AttnLRP for accurate attribution flow through non-linear components
 - LLM2Vec for unsupervised state-of-the-art embeddings (MTEB leader)
 
-🔬 ATTRIBUTION ANALYSIS INNOVATIONS:
+ ATTRIBUTION ANALYSIS INNOVATIONS:
 - BiLRP for second-order explanations in bilinear similarity models
 - Cross-lingual semantic similarity (95.28% correlation rate)
 - Contextual embeddings with attention mechanisms for nuanced understanding
@@ -30,28 +30,26 @@ Implements state-of-the-art semantic understanding using the latest breakthrough
 This represents the absolute cutting-edge in semantic analysis as of 2025.
 """
 
-import asyncio
 import json
 import logging
-import numpy as np
-import re
-from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 # Import latest semantic analysis libraries
 try:
-    from sentence_transformers import SentenceTransformer
-    from transformers import AutoTokenizer, AutoModel
     import torch
     import torch.nn.functional as F
+    from sentence_transformers import SentenceTransformer
+    from transformers import AutoModel, AutoTokenizer
 
     ADVANCED_LIBS_AVAILABLE = True
 except ImportError:
     ADVANCED_LIBS_AVAILABLE = False
     print(
-        "⚠️ Advanced semantic libraries not installed. Using fallback implementations."
+        "[WARN] Advanced semantic libraries not installed. Using fallback implementations."
     )
 
 logger = logging.getLogger(__name__)
@@ -111,7 +109,7 @@ class AdvancedSemanticEngine:
         self.attribution_confidence_min = 0.60
 
         logger.info(
-            "🧠 Advanced Semantic Engine initialized with 2025 breakthrough models"
+            " Advanced Semantic Engine initialized with 2025 breakthrough models"
         )
 
     def _initialize_2025_models(self):
@@ -169,17 +167,17 @@ class AdvancedSemanticEngine:
                             config["model_name"]
                         )
 
-                    logger.info(f"✅ Loaded {config['description']}")
+                    logger.info(f"[OK] Loaded {config['description']}")
 
                 except Exception as e:
-                    logger.warning(f"⚠️ Failed to load {model_key}: {e}")
+                    logger.warning(f"[WARN] Failed to load {model_key}: {e}")
                     # Continue with other models
 
             if not self.models:
-                logger.error("❌ No models loaded successfully")
+                logger.error("[ERROR] No models loaded successfully")
 
         except Exception as e:
-            logger.error(f"❌ Model initialization failed: {e}")
+            logger.error(f"[ERROR] Model initialization failed: {e}")
 
     def analyze_semantic_similarity(
         self,
@@ -439,7 +437,7 @@ class AdvancedSemanticEngine:
 
         # Step 1: Initial assessment
         reasoning_steps.append(
-            f"Step 1: Semantic similarity analysis between two text segments"
+            "Step 1: Semantic similarity analysis between two text segments"
         )
 
         # Step 2: Similarity assessment
@@ -546,8 +544,8 @@ class AdvancedSemanticEngine:
         """Extract domain-specific terms for contextual analysis."""
 
         # Simple domain term extraction
-        words1 = set(word.lower() for word in text1.split() if len(word) > 5)
-        words2 = set(word.lower() for word in text2.split() if len(word) > 5)
+        words1 = {word.lower() for word in text1.split() if len(word) > 5}
+        words2 = {word.lower() for word in text2.split() if len(word) > 5}
 
         return list(words1 & words2)
 

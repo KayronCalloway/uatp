@@ -30,7 +30,7 @@ async def test_capture_flow():
 
     # Show DATABASE_URL
     db_env = os.getenv("DATABASE_URL", "not set")
-    print("\n📊 Environment Configuration:")
+    print("\n Environment Configuration:")
     print(f"   DATABASE_URL: {db_env[:60]}...")
 
     app = create_app()
@@ -44,7 +44,7 @@ async def test_capture_flow():
     print(f"   Using PostgreSQL: {is_postgres}")
 
     if not is_postgres:
-        print("\n   ✗ Still using SQLite! Check if .env file exists.")
+        print("\n    Still using SQLite! Check if .env file exists.")
         return False
 
     # Create test capsule
@@ -78,7 +78,7 @@ async def test_capture_flow():
         "verification": {"verified": True, "trust_score": 0.92, "method": "test"},
     }
 
-    print("\n✅ Creating test capsule via ORM:")
+    print("\n[OK] Creating test capsule via ORM:")
     print(f"   ID: {test_id}")
 
     async with db.get_session() as session:
@@ -94,10 +94,10 @@ async def test_capture_flow():
         session.add(capsule_model)
         await session.commit()
 
-    print("   ✓ Committed to database")
+    print("    Committed to database")
 
     # Verify in PostgreSQL directly
-    print("\n🔍 Verifying in PostgreSQL directly...")
+    print("\n Verifying in PostgreSQL directly...")
     import asyncpg
 
     conn = await asyncpg.connect(
@@ -109,37 +109,37 @@ async def test_capture_flow():
     )
 
     if result:
-        print("   ✓ Found in PostgreSQL!")
+        print("    Found in PostgreSQL!")
     else:
-        print("   ✗ NOT FOUND - something went wrong")
+        print("    NOT FOUND - something went wrong")
         await conn.close()
         return False
 
     await conn.close()
 
     # Verify via API
-    print("\n🌐 Verifying via API (frontend access)...")
+    print("\n Verifying via API (frontend access)...")
     import requests
 
     response = requests.get(f"http://localhost:8000/capsules/{test_id}")
     if response.status_code == 200:
         data = response.json()
-        print("   ✓ Accessible via API")
-        print("   ✓ Frontend will see it!")
+        print("    Accessible via API")
+        print("    Frontend will see it!")
     else:
-        print(f"   ✗ API returned: {response.status_code}")
+        print(f"    API returned: {response.status_code}")
         return False
 
     print(f'\n{"="*80}')
-    print("  ✅ END-TO-END TEST PASSED")
+    print("  [OK] END-TO-END TEST PASSED")
     print(f'{"="*80}')
-    print("\n📋 Complete Flow Verified:")
-    print("   ✓ .env file loaded correctly")
-    print("   ✓ ORM using PostgreSQL (not SQLite)")
-    print("   ✓ Capsule saved to PostgreSQL")
-    print("   ✓ Accessible via API")
-    print("   ✓ Frontend can display it")
-    print("\n🎯 All new captures will follow this same path!")
+    print("\n Complete Flow Verified:")
+    print("    .env file loaded correctly")
+    print("    ORM using PostgreSQL (not SQLite)")
+    print("    Capsule saved to PostgreSQL")
+    print("    Accessible via API")
+    print("    Frontend can display it")
+    print("\n All new captures will follow this same path!")
     print(f"\n   Test Capsule: {test_id}")
     print(f'   View at: http://localhost:3000 → Capsules → search "{test_id[:20]}"')
 

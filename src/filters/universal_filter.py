@@ -7,7 +7,7 @@ It determines what gets encapsulated based on significance analysis.
 
 Flow:
 1. All AI interactions → Universal Filter
-2. Filter analyzes significance 
+2. Filter analyzes significance
 3. If significant → Create capsule
 4. If not significant → Log and discard
 
@@ -19,15 +19,13 @@ Configuration:
 """
 
 import asyncio
-import json
 import logging
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, field
-from enum import Enum
-
-import sys
 import os
+import sys
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -138,7 +136,7 @@ class UniversalFilter:
         }
 
         logger.info(
-            f"🔧 Universal Filter initialized with threshold {self.config.significance_threshold}"
+            f" Universal Filter initialized with threshold {self.config.significance_threshold}"
         )
 
     async def process_interaction(
@@ -358,18 +356,18 @@ class UniversalFilter:
         if result.decision == FilterDecision.ENCAPSULATE:
             self.total_encapsulated += 1
             logger.info(
-                f"✅ ENCAPSULATE - Score: {result.significance_score:.2f} - {result.reasoning[:2]}"
+                f"[OK] ENCAPSULATE - Score: {result.significance_score:.2f} - {result.reasoning[:2]}"
             )
         elif result.decision == FilterDecision.DISCARD:
             self.total_discarded += 1
-            logger.debug(f"❌ DISCARD - Score: {result.significance_score:.2f}")
+            logger.debug(f"[ERROR] DISCARD - Score: {result.significance_score:.2f}")
         elif result.decision == FilterDecision.DEFER:
             logger.info(
                 f"⏳ DEFER - Score: {result.significance_score:.2f} - Waiting for more context"
             )
         elif result.decision == FilterDecision.REVIEW:
             logger.info(
-                f"👁️ REVIEW - Score: {result.significance_score:.2f} - Manual review needed"
+                f"️ REVIEW - Score: {result.significance_score:.2f} - Manual review needed"
             )
 
     def add_callback(self, decision: FilterDecision, callback: Callable):
@@ -397,7 +395,7 @@ class UniversalFilter:
         for key, value in new_config.items():
             if hasattr(self.config, key):
                 setattr(self.config, key, value)
-                logger.info(f"📝 Updated filter config: {key} = {value}")
+                logger.info(f" Updated filter config: {key} = {value}")
 
 
 # Global filter instance

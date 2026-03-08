@@ -4,12 +4,11 @@ UATP Python SDK - Economic Engine Module
 Handles economic attribution, reward calculation, and payment distribution.
 """
 
-import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any, Union
 from datetime import datetime, timezone
 from decimal import Decimal
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +65,7 @@ class EconomicEngine:
         self.client = client
         self.metrics_cache = {}
         self.metrics_cache_ttl = 300  # 5 minutes
-        logger.info("💰 Economic Engine initialized")
+        logger.info(" Economic Engine initialized")
 
     async def get_global_metrics(self) -> EconomicMetrics:
         """Get current global economic metrics from the UATP network."""
@@ -103,11 +102,11 @@ class EconomicEngine:
             # Cache the result
             self.metrics_cache["global_metrics"] = (metrics, now)
 
-            logger.info("📊 Retrieved global economic metrics")
+            logger.info(" Retrieved global economic metrics")
             return metrics
 
         except Exception as e:
-            logger.error(f"❌ Failed to get global metrics: {e}")
+            logger.error(f"[ERROR] Failed to get global metrics: {e}")
 
             # Return fallback metrics
             return EconomicMetrics(
@@ -160,12 +159,12 @@ class EconomicEngine:
 
             result = response.json()
             logger.info(
-                f"💰 Calculated attribution value: ${result.get('total_value', 0.0)}"
+                f" Calculated attribution value: ${result.get('total_value', 0.0)}"
             )
             return result
 
         except Exception as e:
-            logger.error(f"❌ Value calculation failed: {e}")
+            logger.error(f"[ERROR] Value calculation failed: {e}")
 
             # Fallback calculation based on simple heuristics
             base_value = self._fallback_value_calculation(
@@ -213,7 +212,7 @@ class EconomicEngine:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ Failed to get commons fund status: {e}")
+            logger.error(f"[ERROR] Failed to get commons fund status: {e}")
             return {
                 "balance": "0.0",
                 "monthly_distribution": "0.0",
@@ -236,7 +235,7 @@ class EconomicEngine:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ UBA estimation failed for user {user_id}: {e}")
+            logger.error(f"[ERROR] UBA estimation failed for user {user_id}: {e}")
             return {
                 "estimated_monthly_uba": "0.0",
                 "eligibility_status": "unknown",
@@ -258,7 +257,9 @@ class EconomicEngine:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ Failed to get platform economics for {platform}: {e}")
+            logger.error(
+                f"[ERROR] Failed to get platform economics for {platform}: {e}"
+            )
             return {
                 "platform": platform,
                 "total_attributions": 0,
@@ -275,7 +276,7 @@ class RewardCalculator:
     def __init__(self, client):
         self.client = client
         self.payment_methods = ["usd", "crypto", "credits"]
-        logger.info("💳 Reward Calculator initialized")
+        logger.info(" Reward Calculator initialized")
 
     async def get_user_rewards(
         self, user_id: str, time_period: str = "30d"
@@ -301,12 +302,12 @@ class RewardCalculator:
 
             result = response.json()
             logger.info(
-                f"💰 Retrieved rewards for user {user_id}: ${result.get('total_earned', 0.0)}"
+                f" Retrieved rewards for user {user_id}: ${result.get('total_earned', 0.0)}"
             )
             return result
 
         except Exception as e:
-            logger.error(f"❌ Failed to get user rewards for {user_id}: {e}")
+            logger.error(f"[ERROR] Failed to get user rewards for {user_id}: {e}")
             return {
                 "user_id": user_id,
                 "time_period": time_period,
@@ -351,12 +352,12 @@ class RewardCalculator:
                 distributions.append(distribution)
 
             logger.info(
-                f"📊 Retrieved {len(distributions)} reward distributions for user {user_id}"
+                f" Retrieved {len(distributions)} reward distributions for user {user_id}"
             )
             return distributions
 
         except Exception as e:
-            logger.error(f"❌ Failed to get reward history for {user_id}: {e}")
+            logger.error(f"[ERROR] Failed to get reward history for {user_id}: {e}")
             return []
 
     async def estimate_value(
@@ -393,7 +394,7 @@ class RewardCalculator:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ Value estimation failed: {e}")
+            logger.error(f"[ERROR] Value estimation failed: {e}")
 
             # Fallback estimation
             base_value = self._estimate_base_value(
@@ -457,11 +458,11 @@ class RewardCalculator:
             response.raise_for_status()
 
             result = response.json()
-            logger.info(f"💸 Payout requested for user {user_id}: ${amount}")
+            logger.info(f" Payout requested for user {user_id}: ${amount}")
             return result
 
         except Exception as e:
-            logger.error(f"❌ Payout request failed for user {user_id}: {e}")
+            logger.error(f"[ERROR] Payout request failed for user {user_id}: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -482,7 +483,9 @@ class RewardCalculator:
             return response.json().get("methods", [])
 
         except Exception as e:
-            logger.error(f"❌ Failed to get payout methods for user {user_id}: {e}")
+            logger.error(
+                f"[ERROR] Failed to get payout methods for user {user_id}: {e}"
+            )
             return [
                 {
                     "method": "bank_transfer",

@@ -33,24 +33,31 @@ from src.reasoning.fixed_analyzer import analyze_conversation_significance
 
 # Initialize outcome inference for auto-tracking
 _outcome_engine = None
+
+
 def get_outcome_engine():
     global _outcome_engine
     if _outcome_engine is None:
         _outcome_engine = OutcomeInferenceEngine()
     return _outcome_engine
 
+
 # Calibration integration for recursive learning
 _calibration_manager = None
+
+
 def get_calibration_manager():
     """Get calibration manager for recording outcomes."""
     global _calibration_manager
     if _calibration_manager is None:
         try:
             from src.feedback.calibration import get_calibration_manager as get_cal
+
             _calibration_manager = get_cal()
         except Exception as e:
             logger.debug(f"Calibration manager not available: {e}")
     return _calibration_manager
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -100,7 +107,7 @@ class LiveConversationMonitor:
 
     async def start_monitoring(self):
         """Start the live monitoring system."""
-        logger.info("🚀 Starting live conversation monitoring...")
+        logger.info(" Starting live conversation monitoring...")
 
         # Start background tasks
         tasks = [
@@ -118,16 +125,20 @@ class LiveConversationMonitor:
 
     async def monitor_conversations(self):
         """Monitor active conversations for significance."""
-        logger.info("🔄 Monitor loop started")
+        logger.info(" Monitor loop started")
         while True:
             try:
-                logger.info(f"🔄 Monitor tick (instance {id(self)}): {len(self.active_conversations)} conversations: {list(self.active_conversations.keys())}")
+                logger.info(
+                    f" Monitor tick (instance {id(self)}): {len(self.active_conversations)} conversations: {list(self.active_conversations.keys())}"
+                )
                 # Check each active conversation
                 for session_id, context in list(self.active_conversations.items()):
                     should_check = self.should_check_conversation(context)
-                    logger.info(f"🔍 Checking {session_id}: should_check={should_check}, messages={len(context.messages)}, capsules_created={context.capsules_created}")
+                    logger.info(
+                        f" Checking {session_id}: should_check={should_check}, messages={len(context.messages)}, capsules_created={context.capsules_created}"
+                    )
                     if should_check:
-                        logger.info(f"📊 Analyzing conversation {session_id}")
+                        logger.info(f" Analyzing conversation {session_id}")
                         await self.analyze_conversation_significance(context)
 
                 # Wait before next check
@@ -136,6 +147,7 @@ class LiveConversationMonitor:
             except Exception as e:
                 logger.error(f"Error in conversation monitoring: {e}")
                 import traceback
+
                 logger.error(f"Traceback: {traceback.format_exc()}")
                 await asyncio.sleep(10)
 
@@ -171,7 +183,9 @@ class LiveConversationMonitor:
             # REAL-TIME CAPSULE CREATION
             # Create capsules periodically: every 5 new messages OR every 2 minutes
             current_time = datetime.now(timezone.utc)
-            messages_since_last = len(context.messages) - context.last_capsule_message_count
+            messages_since_last = (
+                len(context.messages) - context.last_capsule_message_count
+            )
 
             should_create_capsule = False
             reason = ""
@@ -191,7 +205,7 @@ class LiveConversationMonitor:
 
             if should_create_capsule:
                 logger.info(
-                    f"📝 Creating real-time capsule ({reason}, significance: {context.significance_score:.2f})"
+                    f" Creating real-time capsule ({reason}, significance: {context.significance_score:.2f})"
                 )
                 await self.create_conversation_capsule(context, significance_result)
 
@@ -219,7 +233,9 @@ class LiveConversationMonitor:
                 msg_timestamp = msg.get("timestamp")
                 if isinstance(msg_timestamp, str):
                     try:
-                        msg_timestamp = datetime.fromisoformat(msg_timestamp.replace("Z", "+00:00"))
+                        msg_timestamp = datetime.fromisoformat(
+                            msg_timestamp.replace("Z", "+00:00")
+                        )
                     except:
                         msg_timestamp = datetime.now(timezone.utc)
                 elif not isinstance(msg_timestamp, datetime):
@@ -229,15 +245,19 @@ class LiveConversationMonitor:
                 content = msg.get("content", "")
                 estimated_tokens = int(len(content.split()) * 1.3)
 
-                rich_messages.append(ConversationMessage(
-                    role=msg.get("role", "user"),
-                    content=content,
-                    timestamp=msg_timestamp,
-                    message_id=f"msg_{context.session_id}_{i}",
-                    session_id=context.session_id,
-                    token_count=estimated_tokens,
-                    model_info=msg.get("metadata", {}).get("model", f"{context.platform}-model"),
-                ))
+                rich_messages.append(
+                    ConversationMessage(
+                        role=msg.get("role", "user"),
+                        content=content,
+                        timestamp=msg_timestamp,
+                        message_id=f"msg_{context.session_id}_{i}",
+                        session_id=context.session_id,
+                        token_count=estimated_tokens,
+                        model_info=msg.get("metadata", {}).get(
+                            "model", f"{context.platform}-model"
+                        ),
+                    )
+                )
 
             # Extract topics from conversation content
             topics = self._extract_topics(context)
@@ -260,10 +280,11 @@ class LiveConversationMonitor:
             )
 
             # Use RichCaptureEnhancer to create RICH capsule with full metadata
-            logger.info(f"🔥 Creating RICH capsule for session {context.session_id}")
-            capsule_data = RichCaptureEnhancer.create_capsule_from_session_with_rich_metadata(
-                session=session,
-                user_id=context.user_id
+            logger.info(f" Creating RICH capsule for session {context.session_id}")
+            capsule_data = (
+                RichCaptureEnhancer.create_capsule_from_session_with_rich_metadata(
+                    session=session, user_id=context.user_id
+                )
             )
 
             # Add universal capture metadata
@@ -276,23 +297,32 @@ class LiveConversationMonitor:
             # Store to database via engine
             if self.engine:
                 # Create capsule using the engine's direct storage method
-                stored_capsule = await self.engine.store_rich_capsule_async(capsule_data)
-                logger.info(f"✅ Created RICH capsule: {capsule_data.get('capsule_id')} with {len(rich_messages)} messages")
+                stored_capsule = await self.engine.store_rich_capsule_async(
+                    capsule_data
+                )
+                logger.info(
+                    f"[OK] Created RICH capsule: {capsule_data.get('capsule_id')} with {len(rich_messages)} messages"
+                )
                 logger.info(f"   Topics: {topics}")
                 logger.info(f"   Confidence: {capsule_data.get('confidence', 'N/A')}")
             else:
-                logger.warning("⚠️ Engine not available - capsule data prepared but not stored")
+                logger.warning(
+                    "[WARN] Engine not available - capsule data prepared but not stored"
+                )
                 logger.info(f"   Capsule ID: {capsule_data.get('capsule_id')}")
 
         except Exception as e:
             import traceback
+
             logger.error(f"Error creating RICH conversation capsule: {e}")
             logger.error(f"Traceback: {traceback.format_exc()}")
 
     def _extract_topics(self, context: ConversationContext) -> List[str]:
         """Extract topics from conversation content."""
         topics = []
-        all_content = " ".join([msg.get("content", "") for msg in context.messages]).lower()
+        all_content = " ".join(
+            [msg.get("content", "") for msg in context.messages]
+        ).lower()
 
         topic_keywords = {
             "python": "Python Programming",
@@ -378,7 +408,7 @@ class LiveConversationMonitor:
                         expired_sessions.append(session_id)
 
                 for session_id in expired_sessions:
-                    logger.info(f"🧹 Cleaning up expired conversation: {session_id}")
+                    logger.info(f" Cleaning up expired conversation: {session_id}")
                     del self.active_conversations[session_id]
 
                 await asyncio.sleep(300)  # Clean up every 5 minutes
@@ -397,7 +427,9 @@ class LiveConversationMonitor:
         metadata: Optional[Dict] = None,
     ):
         """Add a message to a conversation being monitored."""
-        logger.info(f"📨 Adding message to monitor instance {id(self)}, conversations: {list(self.active_conversations.keys())}")
+        logger.info(
+            f" Adding message to monitor instance {id(self)}, conversations: {list(self.active_conversations.keys())}"
+        )
         if session_id not in self.active_conversations:
             self.active_conversations[session_id] = ConversationContext(
                 session_id=session_id,
@@ -419,7 +451,7 @@ class LiveConversationMonitor:
         )
         context.last_activity = datetime.now(timezone.utc)
 
-        logger.info(f"📨 Added message to conversation {session_id}: {role}")
+        logger.info(f" Added message to conversation {session_id}: {role}")
 
         # AUTO-OUTCOME TRACKING: Infer outcome from user follow-ups
         # This is the RECURSIVE LEARNING loop - outcomes feed back to calibration
@@ -430,24 +462,27 @@ class LiveConversationMonitor:
                 try:
                     engine = get_outcome_engine()
                     result = engine.infer_outcome(
-                        ai_response=prev_msg.get("content", ""),
-                        follow_up=content
+                        ai_response=prev_msg.get("content", ""), follow_up=content
                     )
 
                     # Store inference result
-                    if not hasattr(context, 'outcome_inference'):
+                    if not hasattr(context, "outcome_inference"):
                         context.outcome_inference = []
-                    context.outcome_inference.append({
-                        "outcome": result.outcome,
-                        "confidence": result.confidence,
-                        "signals": result.signals,
-                        "timestamp": datetime.now(timezone.utc).isoformat()
-                    })
+                    context.outcome_inference.append(
+                        {
+                            "outcome": result.outcome,
+                            "confidence": result.confidence,
+                            "signals": result.signals,
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                        }
+                    )
 
                     # HIGH CONFIDENCE: Feed to calibration (RECURSIVE LEARNING)
                     # Lowered from 0.7 to 0.5 to capture more training data
                     if result.confidence >= 0.5:
-                        logger.info(f"🎯 Auto-outcome: {result.outcome} (conf: {result.confidence:.2f}) - {result.signals[:2]}")
+                        logger.info(
+                            f" Auto-outcome: {result.outcome} (conf: {result.confidence:.2f}) - {result.signals[:2]}"
+                        )
 
                         # CALIBRATION UPDATE: This is where the system LEARNS
                         # Map outcome to numeric value for calibration
@@ -456,7 +491,9 @@ class LiveConversationMonitor:
                             cal_manager = get_calibration_manager()
                             if cal_manager:
                                 # Get predicted confidence from capsule (estimate if not available)
-                                predicted_conf = prev_msg.get("metadata", {}).get("confidence", 0.5)
+                                predicted_conf = prev_msg.get("metadata", {}).get(
+                                    "confidence", 0.5
+                                )
                                 actual_outcome = outcome_map[result.outcome]
 
                                 # Record for calibration - THIS IS THE LEARNING STEP
@@ -465,10 +502,12 @@ class LiveConversationMonitor:
                                     actual_outcome=actual_outcome,
                                     domain=context.platform,  # Use platform as domain
                                 )
-                                logger.info(f"📈 Calibration updated: predicted={predicted_conf:.2f}, actual={actual_outcome:.2f}, domain={context.platform}")
+                                logger.info(
+                                    f" Calibration updated: predicted={predicted_conf:.2f}, actual={actual_outcome:.2f}, domain={context.platform}"
+                                )
 
                                 # Track total calibration points for this session
-                                if not hasattr(context, 'calibration_points'):
+                                if not hasattr(context, "calibration_points"):
                                     context.calibration_points = 0
                                 context.calibration_points += 1
 
@@ -476,18 +515,22 @@ class LiveConversationMonitor:
                         if context.last_capsule_time and self.engine:
                             try:
                                 # Mark the outcome on the most recent capsule for this session
-                                asyncio.create_task(self._update_capsule_outcome_async(
-                                    session_id=session_id,
-                                    outcome=result.outcome,
-                                    confidence=result.confidence,
-                                    signals=result.signals,
-                                ))
+                                asyncio.create_task(
+                                    self._update_capsule_outcome_async(
+                                        session_id=session_id,
+                                        outcome=result.outcome,
+                                        confidence=result.confidence,
+                                        signals=result.signals,
+                                    )
+                                )
                             except Exception as e:
                                 logger.debug(f"Capsule outcome update queued: {e}")
 
                     # LOW CONFIDENCE: Log for potential human review
                     elif result.confidence >= 0.4:
-                        logger.debug(f"📊 Low-confidence outcome: {result.outcome} (conf: {result.confidence:.2f}) - may need review")
+                        logger.debug(
+                            f" Low-confidence outcome: {result.outcome} (conf: {result.confidence:.2f}) - may need review"
+                        )
 
                 except Exception as e:
                     logger.debug(f"Outcome inference skipped: {e}")
@@ -515,24 +558,33 @@ class LiveConversationMonitor:
             # Find the most recent capsule for this session
             # Update its outcome_status field
             async with self.engine.db_manager.session() as session:
-                from sqlalchemy import update, desc
+                from sqlalchemy import update
+
                 from src.models.capsule import CapsuleModel
 
                 # Update the most recent capsule matching this session
                 result = await session.execute(
                     update(CapsuleModel)
-                    .where(CapsuleModel.payload["session_metadata"]["session_id"].astext == session_id)
+                    .where(
+                        CapsuleModel.payload["session_metadata"]["session_id"].astext
+                        == session_id
+                    )
                     .values(
                         outcome_status=outcome,
                         outcome_timestamp=datetime.now(timezone.utc),
                         outcome_notes=f"Auto-inferred (conf: {confidence:.2f})",
-                        outcome_metrics={"signals": signals, "inference_confidence": confidence},
+                        outcome_metrics={
+                            "signals": signals,
+                            "inference_confidence": confidence,
+                        },
                     )
                 )
                 await session.commit()
 
                 if result.rowcount > 0:
-                    logger.info(f"✅ Updated {result.rowcount} capsule(s) with outcome: {outcome}")
+                    logger.info(
+                        f"[OK] Updated {result.rowcount} capsule(s) with outcome: {outcome}"
+                    )
                 else:
                     logger.debug(f"No capsules found for session {session_id}")
 
@@ -546,8 +598,8 @@ class LiveConversationMonitor:
 
         context = self.active_conversations[session_id]
         # Include calibration stats if available
-        calibration_points = getattr(context, 'calibration_points', 0)
-        outcome_inferences = len(getattr(context, 'outcome_inference', []))
+        calibration_points = getattr(context, "calibration_points", 0)
+        outcome_inferences = len(getattr(context, "outcome_inference", []))
 
         return {
             "session_id": session_id,
@@ -556,7 +608,9 @@ class LiveConversationMonitor:
             "message_count": len(context.messages),
             "significance_score": context.significance_score,
             "capsules_created": context.capsules_created,
-            "last_capsule_time": context.last_capsule_time.isoformat() if context.last_capsule_time else None,
+            "last_capsule_time": context.last_capsule_time.isoformat()
+            if context.last_capsule_time
+            else None,
             "last_activity": context.last_activity.isoformat(),
             # Recursive learning stats
             "calibration_points": calibration_points,

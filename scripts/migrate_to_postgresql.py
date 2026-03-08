@@ -12,14 +12,14 @@ import logging
 import os
 import sys
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 # Import required modules
-from src.database.postgresql_schema import get_postgresql_manager
 from src.database.postgresql_adapter import get_postgresql_adapter
+from src.database.postgresql_schema import get_postgresql_manager
 
 # Set up logging
 logging.basicConfig(
@@ -35,12 +35,12 @@ class PostgreSQLMigrator:
         self.pg_manager = get_postgresql_manager()
         self.pg_adapter = get_postgresql_adapter()
 
-        logger.info("🔄 PostgreSQL Migrator initialized")
+        logger.info(" PostgreSQL Migrator initialized")
 
     async def check_prerequisites(self) -> bool:
         """Check if prerequisites are met."""
 
-        logger.info("🔍 Checking prerequisites...")
+        logger.info(" Checking prerequisites...")
 
         try:
             # Test PostgreSQL connection
@@ -48,20 +48,20 @@ class PostgreSQLMigrator:
             health = await self.pg_manager.health_check()
 
             if health["status"] != "healthy":
-                logger.error("❌ PostgreSQL is not healthy")
+                logger.error("[ERROR] PostgreSQL is not healthy")
                 return False
 
-            logger.info("✅ PostgreSQL connection verified")
+            logger.info("[OK] PostgreSQL connection verified")
             return True
 
         except Exception as e:
-            logger.error(f"❌ Prerequisites check failed: {e}")
+            logger.error(f"[ERROR] Prerequisites check failed: {e}")
             return False
 
     async def setup_database(self) -> bool:
         """Set up the PostgreSQL database."""
 
-        logger.info("🏗️ Setting up PostgreSQL database...")
+        logger.info(" Setting up PostgreSQL database...")
 
         try:
             # Create schema
@@ -73,11 +73,11 @@ class PostgreSQLMigrator:
             # Create functions
             await self.pg_manager.create_functions()
 
-            logger.info("✅ PostgreSQL database setup completed")
+            logger.info("[OK] PostgreSQL database setup completed")
             return True
 
         except Exception as e:
-            logger.error(f"❌ Database setup failed: {e}")
+            logger.error(f"[ERROR] Database setup failed: {e}")
             return False
 
     async def migrate_data(self, jsonl_files: List[str] = None) -> bool:
@@ -86,19 +86,19 @@ class PostgreSQLMigrator:
         if jsonl_files is None:
             jsonl_files = ["capsule_chain.jsonl", "src/filters/capsule_creator.jsonl"]
 
-        logger.info(f"📊 Migrating data from {len(jsonl_files)} files...")
+        logger.info(f" Migrating data from {len(jsonl_files)} files...")
 
         total_migrated = 0
 
         for jsonl_file in jsonl_files:
             if not os.path.exists(jsonl_file):
-                logger.warning(f"⚠️ File not found: {jsonl_file}")
+                logger.warning(f"[WARN] File not found: {jsonl_file}")
                 continue
 
-            logger.info(f"🔄 Processing {jsonl_file}...")
+            logger.info(f" Processing {jsonl_file}...")
 
             try:
-                with open(jsonl_file, "r") as f:
+                with open(jsonl_file) as f:
                     file_count = 0
                     for line in f:
                         line = line.strip()
@@ -134,13 +134,15 @@ class PostgreSQLMigrator:
                             logger.warning(f"Failed to migrate capsule: {e}")
                             continue
 
-                    logger.info(f"✅ Migrated {file_count} capsules from {jsonl_file}")
+                    logger.info(
+                        f"[OK] Migrated {file_count} capsules from {jsonl_file}"
+                    )
 
             except Exception as e:
-                logger.error(f"❌ Failed to process {jsonl_file}: {e}")
+                logger.error(f"[ERROR] Failed to process {jsonl_file}: {e}")
                 continue
 
-        logger.info(f"✅ Total migration completed: {total_migrated} capsules")
+        logger.info(f"[OK] Total migration completed: {total_migrated} capsules")
         return total_migrated > 0
 
     def _standardize_capsule_data(self, capsule_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -210,13 +212,13 @@ class PostgreSQLMigrator:
     async def verify_migration(self) -> bool:
         """Verify the migration was successful."""
 
-        logger.info("🔍 Verifying migration...")
+        logger.info(" Verifying migration...")
 
         try:
             # Get statistics
             stats = await self.pg_adapter.get_capsule_stats()
 
-            logger.info(f"📊 Migration verification:")
+            logger.info(" Migration verification:")
             logger.info(f"   Total capsules: {stats['total_capsules']}")
             logger.info(f"   Active capsules: {stats['active_capsules']}")
             logger.info(f"   Platforms: {list(stats['platforms'].keys())}")
@@ -227,20 +229,20 @@ class PostgreSQLMigrator:
             logger.info(f"   Recent capsules: {len(recent_capsules)}")
 
             if stats["total_capsules"] > 0:
-                logger.info("✅ Migration verification successful")
+                logger.info("[OK] Migration verification successful")
                 return True
             else:
-                logger.warning("⚠️ No capsules found in PostgreSQL")
+                logger.warning("[WARN] No capsules found in PostgreSQL")
                 return False
 
         except Exception as e:
-            logger.error(f"❌ Migration verification failed: {e}")
+            logger.error(f"[ERROR] Migration verification failed: {e}")
             return False
 
     async def create_backup(self) -> bool:
         """Create a backup of existing data."""
 
-        logger.info("💾 Creating backup of existing data...")
+        logger.info(" Creating backup of existing data...")
 
         try:
             backup_dir = f"backups/migration_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -258,37 +260,37 @@ class PostgreSQLMigrator:
                     backup_path = os.path.join(backup_dir, os.path.basename(file_path))
 
                     # Copy file
-                    with open(file_path, "r") as src, open(backup_path, "w") as dst:
+                    with open(file_path) as src, open(backup_path, "w") as dst:
                         dst.write(src.read())
 
-                    logger.info(f"📄 Backed up {file_path} to {backup_path}")
+                    logger.info(f" Backed up {file_path} to {backup_path}")
 
-            logger.info(f"✅ Backup created in {backup_dir}")
+            logger.info(f"[OK] Backup created in {backup_dir}")
             return True
 
         except Exception as e:
-            logger.error(f"❌ Backup creation failed: {e}")
+            logger.error(f"[ERROR] Backup creation failed: {e}")
             return False
 
     async def cleanup(self):
         """Clean up resources."""
 
-        logger.info("🧹 Cleaning up...")
+        logger.info(" Cleaning up...")
 
         try:
             if self.pg_manager.pool:
                 await self.pg_manager.close_connection_pool()
 
-            logger.info("✅ Cleanup completed")
+            logger.info("[OK] Cleanup completed")
 
         except Exception as e:
-            logger.error(f"❌ Cleanup failed: {e}")
+            logger.error(f"[ERROR] Cleanup failed: {e}")
 
 
 async def main():
     """Main migration function."""
 
-    print("🐘 PostgreSQL Migration Tool")
+    print(" PostgreSQL Migration Tool")
     print("=" * 40)
 
     migrator = PostgreSQLMigrator()
@@ -296,37 +298,37 @@ async def main():
     try:
         # Check prerequisites
         if not await migrator.check_prerequisites():
-            print("❌ Prerequisites not met. Please check PostgreSQL connection.")
+            print("[ERROR] Prerequisites not met. Please check PostgreSQL connection.")
             return
 
         # Create backup
         if not await migrator.create_backup():
-            print("❌ Backup creation failed. Migration aborted.")
+            print("[ERROR] Backup creation failed. Migration aborted.")
             return
 
         # Setup database
         if not await migrator.setup_database():
-            print("❌ Database setup failed. Migration aborted.")
+            print("[ERROR] Database setup failed. Migration aborted.")
             return
 
         # Migrate data
         if not await migrator.migrate_data():
-            print("❌ Data migration failed.")
+            print("[ERROR] Data migration failed.")
             return
 
         # Verify migration
         if not await migrator.verify_migration():
-            print("❌ Migration verification failed.")
+            print("[ERROR] Migration verification failed.")
             return
 
-        print("\n✅ PostgreSQL migration completed successfully!")
+        print("\n[OK] PostgreSQL migration completed successfully!")
         print("\nNext steps:")
         print("1. Update your configuration to use PostgreSQL")
         print("2. Test the system with the new database")
         print("3. Monitor performance and adjust as needed")
 
     except Exception as e:
-        print(f"❌ Migration failed: {e}")
+        print(f"[ERROR] Migration failed: {e}")
 
     finally:
         await migrator.cleanup()

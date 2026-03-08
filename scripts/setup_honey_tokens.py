@@ -14,8 +14,9 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.security.honey_tokens import HoneyTokenManager
 import logging
+
+from src.security.honey_tokens import HoneyTokenManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,10 +27,10 @@ def setup_honey_tokens():
 
     manager = HoneyTokenManager()
 
-    logger.info("🍯 Setting up honey tokens for intrusion detection...")
+    logger.info(" Setting up honey tokens for intrusion detection...")
 
     # 1. Generate fake API keys
-    logger.info("\n📝 Creating honey API keys...")
+    logger.info("\n Creating honey API keys...")
 
     honey_keys = []
     for i in range(5):
@@ -41,7 +42,7 @@ def setup_honey_tokens():
         logger.info(f"   Created: {key[:30]}...")
 
     # 2. Generate canary database records
-    logger.info("\n🐤 Creating canary database records...")
+    logger.info("\n Creating canary database records...")
 
     # Fake user record
     manager.generate_canary_database_record(
@@ -84,7 +85,7 @@ def setup_honey_tokens():
     logger.info("   Created: Canary payment record")
 
     # 3. Generate honey file paths
-    logger.info("\n📂 Creating honey file paths...")
+    logger.info("\n Creating honey file paths...")
 
     sensitive_files = [
         "/app/.env",
@@ -99,25 +100,25 @@ def setup_honey_tokens():
         logger.info(f"   Created: {file_path}")
 
     # Summary
-    logger.info("\n✅ Honey token setup complete!")
-    logger.info(f"\n📊 Summary:")
+    logger.info("\n[OK] Honey token setup complete!")
+    logger.info("\n Summary:")
     logger.info(f"   - Fake API keys: {len(honey_keys)}")
-    logger.info(f"   - Canary database records: 3")
+    logger.info("   - Canary database records: 3")
     logger.info(f"   - Honey file paths: {len(sensitive_files)}")
 
-    logger.info(f"\n⚠️  IMPORTANT:")
+    logger.info("\n[WARN]  IMPORTANT:")
     logger.info(
-        f"   - These honey tokens will trigger CRITICAL security alerts if accessed"
+        "   - These honey tokens will trigger CRITICAL security alerts if accessed"
     )
-    logger.info(f"   - Never use these credentials or access these files/records")
+    logger.info("   - Never use these credentials or access these files/records")
     logger.info(
-        f"   - Alerts are logged to: security/honey_tokens/honey_token_alerts.jsonl"
+        "   - Alerts are logged to: security/honey_tokens/honey_token_alerts.jsonl"
     )
 
-    logger.info(f"\n🔍 To check for intrusions:")
-    logger.info(f"   - Monitor: security/honey_tokens/honey_token_alerts.jsonl")
-    logger.info(f"   - Check audit logs for 'honey_token_triggered' events")
-    logger.info(f"   - Run: python scripts/check_honey_token_alerts.py")
+    logger.info("\n To check for intrusions:")
+    logger.info("   - Monitor: security/honey_tokens/honey_token_alerts.jsonl")
+    logger.info("   - Check audit logs for 'honey_token_triggered' events")
+    logger.info("   - Run: python scripts/check_honey_token_alerts.py")
 
 
 if __name__ == "__main__":

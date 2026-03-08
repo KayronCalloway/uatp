@@ -4,11 +4,11 @@ from typing import Optional, Union
 
 import streamlit as st
 from capsule_schema import Capsule
-from cqss.scorer import CQSSScorer
-
 from capsules.specialized_capsules import (
     SpecializedCapsule,
 )
+from cqss.scorer import CQSSScorer
+
 from visualizer.components.uatp7_inspector import render_uatp7_content
 from visualizer.utils.colors import CAPSULE_TYPE_COLORS, get_cqss_color
 from visualizer.utils.state import toggle_pin_capsule
@@ -64,7 +64,7 @@ def render_specialized_inspector(
 
         with col2:
             # Actions for this capsule
-            if st.button("📌 Pin", help="Pin this capsule for comparison"):
+            if st.button(" Pin", help="Pin this capsule for comparison"):
                 toggle_pin_capsule(capsule.capsule_id)
                 st.rerun()
 
@@ -104,9 +104,9 @@ def render_specialized_inspector(
             st.caption("Previous Capsule")
             if capsule.previous_capsule_id:
                 if st.button("View Previous", key="view_prev"):
-                    st.session_state[
-                        "selected_capsule_id"
-                    ] = capsule.previous_capsule_id
+                    st.session_state["selected_capsule_id"] = (
+                        capsule.previous_capsule_id
+                    )
                     st.rerun()
                 st.code(capsule.previous_capsule_id, language=None)
             else:
@@ -383,11 +383,11 @@ def render_lifecycle_content(capsule):
     with st.expander("Lifecycle Details", expanded=True):
         if hasattr(capsule, "event_type") and capsule.event_type:
             event_icon = (
-                "🚀"
+                ""
                 if capsule.event_type == "startup"
-                else "🛑"
+                else ""
                 if capsule.event_type == "shutdown"
-                else "🔄"
+                else ""
             )
             st.markdown(f"**Event Type:** {event_icon} {capsule.event_type}")
 

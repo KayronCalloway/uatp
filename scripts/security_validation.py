@@ -5,14 +5,13 @@ Comprehensive security validation for production deployment
 """
 
 import json
-import os
-import sys
-import subprocess
-import yaml
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Any, Optional
 import logging
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict
+
+import yaml
 
 # Configure logging
 logging.basicConfig(
@@ -669,12 +668,17 @@ class SecurityValidator:
 
     def _generate_markdown_report(self) -> str:
         """Generate markdown report"""
-        status_emoji = {"pass": "✅", "warning": "⚠️", "fail": "❌", "unknown": "❔"}
+        status_emoji = {
+            "pass": "[OK]",
+            "warning": "[WARN]",
+            "fail": "[ERROR]",
+            "unknown": "",
+        }
 
         report = f"""# UATP Capsule Engine Security Validation Report
 
 **Validation Date**: {self.validation_results['timestamp']}
-**Overall Status**: {status_emoji.get(self.validation_results['overall_status'], '❔')} {self.validation_results['overall_status'].upper()}
+**Overall Status**: {status_emoji.get(self.validation_results['overall_status'], '')} {self.validation_results['overall_status'].upper()}
 
 ## Security Categories
 
@@ -682,7 +686,7 @@ class SecurityValidator:
 
         for category, data in self.validation_results["categories"].items():
             status = data.get("status", "unknown")
-            emoji = status_emoji.get(status, "❔")
+            emoji = status_emoji.get(status, "")
 
             report += f"### {emoji} {category.replace('_', ' ').title()}\n"
             report += f"**Status**: {status.upper()}\n\n"
@@ -704,7 +708,7 @@ class SecurityValidator:
                 else "warning"
                 if percentage >= 60
                 else "fail",
-                "❔",
+                "",
             )
 
             report += f"### {emoji} {framework}\n"
@@ -716,11 +720,11 @@ class SecurityValidator:
             report += "## Recommendations\n\n"
             for rec in self.validation_results["recommendations"]:
                 priority_emoji = {
-                    "critical": "🚨",
-                    "high": "🔴",
-                    "medium": "🟡",
-                    "low": "🟢",
-                }.get(rec["priority"], "📋")
+                    "critical": "",
+                    "high": "",
+                    "medium": "",
+                    "low": "",
+                }.get(rec["priority"], "")
                 report += f"### {priority_emoji} {rec['title']}\n"
                 report += f"**Priority**: {rec['priority'].upper()}\n"
                 report += f"**Category**: {rec['category']}\n"

@@ -23,39 +23,39 @@
 
 This Q&A follows a **learning progression**:
 
-📘 **New to UATP?** Read Section 1 (Introduction) first
-💼 **Evaluating cost?** Jump to Section 2 (Commercials)
-🎨 **Want to see it?** Check Section 3 (Product Experience)
-🔧 **Ready to integrate?** Read Sections 4-5 (Integration & Governance)
-⚙️ **Planning deployment?** Review Section 6 (Operations)
-🔒 **Need security validation?** Dive into Sections 7-9 (Security, Data, Crypto)
+ **New to UATP?** Read Section 1 (Introduction) first
+ **Evaluating cost?** Jump to Section 2 (Commercials)
+ **Want to see it?** Check Section 3 (Product Experience)
+ **Ready to integrate?** Read Sections 4-5 (Integration & Governance)
+ **Planning deployment?** Review Section 6 (Operations)
+ **Need security validation?** Dive into Sections 7-9 (Security, Data, Crypto)
 
 ---
 
 ## Table of Contents
 
-### 📘 Understanding UATP (Start Here)
+###  Understanding UATP (Start Here)
 **1. [Introduction - What is UATP?](#1-introduction---what-is-uatp)**
 - What is UATP and what problem does it solve?
 - How does UATP work?
 - Who needs UATP?
 - What makes UATP different from logging or monitoring?
 
-### 💼 Business & Commercial
+###  Business & Commercial
 **2. [Commercials & Risk](#2-commercials--risk)**
 - Proof milestones in pilot
 - Pricing protections
 - Reference customers
 - Offboarding plan
 
-### 🎨 Product Experience
+###  Product Experience
 **3. [Product Experience](#3-product-experience)**
 - Dashboard and reports
 - Template packs
 - Alerting
 - Training and documentation
 
-### 🔧 Integration & Daily Use
+###  Integration & Daily Use
 **4. [Integration Surface](#4-integration-surface)**
 - Provider support matrix
 - APIs and SDKs
@@ -67,14 +67,14 @@ This Q&A follows a **learning progression**:
 - Override workflows
 - Policy-as-code
 
-### ⚙️ Production Operations
+###  Production Operations
 **6. [Deployment, Reliability & Ops](#6-deployment-reliability--ops)**
 - SLO/SLA targets
 - Throughput limits
 - Disaster recovery
 - Multi-environment support
 
-### 🔒 Security & Technical Deep Dives
+###  Security & Technical Deep Dives
 **7. [Security & Compliance](#7-security--compliance)**
 - BAA/DPA agreements
 - Key management
@@ -128,10 +128,10 @@ Week 3: Hire external auditor ($50K+)
   └─ Result: "We can't be certain..."
 
 Outcome:
-  ❌ 3 weeks wasted
-  ❌ $150K+ in costs
-  ❌ Uncertain compliance status
-  ❌ Settlement pressure
+  [ERROR] 3 weeks wasted
+  [ERROR] $150K+ in costs
+  [ERROR] Uncertain compliance status
+  [ERROR] Settlement pressure
 ```
 
 **What UATP provides:**
@@ -139,17 +139,17 @@ Outcome:
 30 Minutes Later: Complete audit report
 
 Evidence Delivered:
-  ✅ Capsule chain from input → reasoning → output
-  ✅ HIPAA policy check capsule (PASSED)
-  ✅ Cryptographic signatures (untamperable)
-  ✅ Refusal mechanisms (verified functional)
-  ✅ Complete audit trail (human + machine readable)
+  [OK] Capsule chain from input → reasoning → output
+  [OK] HIPAA policy check capsule (PASSED)
+  [OK] Cryptographic signatures (untamperable)
+  [OK] Refusal mechanisms (verified functional)
+  [OK] Complete audit trail (human + machine readable)
 
 Outcome:
-  ✅ 30 minutes to evidence
-  ✅ Included in subscription
-  ✅ Cryptographic proof
-  ✅ Defensible in litigation
+  [OK] 30 minutes to evidence
+  [OK] Included in subscription
+  [OK] Cryptographic proof
+  [OK] Defensible in litigation
 ```
 
 **Bottom line:** UATP turns "we think we were compliant" into "here's cryptographic proof we were compliant."
@@ -243,17 +243,17 @@ Your Code                UATP                AI Provider
 
 **Common scenarios:**
 
-- ✅ "We use GPT-4 to analyze patient data"
-- ✅ "Our AI makes credit decisions"
-- ✅ "We're deploying AI in regulated workflows"
-- ✅ "Board asked: 'how do we know our AI is compliant?'"
-- ✅ "Insurance wants proof we have AI controls"
+- [OK] "We use GPT-4 to analyze patient data"
+- [OK] "Our AI makes credit decisions"
+- [OK] "We're deploying AI in regulated workflows"
+- [OK] "Board asked: 'how do we know our AI is compliant?'"
+- [OK] "Insurance wants proof we have AI controls"
 
 **Who does NOT need UATP (yet):**
 
-- ❌ Internal AI tools with no compliance requirements
-- ❌ Unregulated consumer apps
-- ❌ Research projects (unless publishing results)
+- [ERROR] Internal AI tools with no compliance requirements
+- [ERROR] Unregulated consumer apps
+- [ERROR] Research projects (unless publishing results)
 
 ---
 
@@ -263,21 +263,21 @@ Your Code                UATP                AI Provider
 
 | Tool Type | What it does | Why it's not enough |
 |-----------|--------------|---------------------|
-| **Application logs** | Records inputs/outputs | ❌ Can be edited/deleted<br>❌ No policy check proof<br>❌ No cryptographic seal |
-| **Monitoring (Datadog, etc.)** | Tracks metrics, errors | ❌ Reactive, not preventive<br>❌ No decision-level audit trail<br>❌ No compliance focus |
-| **MLOps tools** | Model performance tracking | ❌ No runtime policy enforcement<br>❌ No cryptographic chain<br>❌ No regulator-ready reports |
-| **Audit logs** | Security events | ❌ Periodic, not real-time<br>❌ No AI-specific context<br>❌ Not designed for litigation |
+| **Application logs** | Records inputs/outputs | [ERROR] Can be edited/deleted<br>[ERROR] No policy check proof<br>[ERROR] No cryptographic seal |
+| **Monitoring (Datadog, etc.)** | Tracks metrics, errors | [ERROR] Reactive, not preventive<br>[ERROR] No decision-level audit trail<br>[ERROR] No compliance focus |
+| **MLOps tools** | Model performance tracking | [ERROR] No runtime policy enforcement<br>[ERROR] No cryptographic chain<br>[ERROR] No regulator-ready reports |
+| **Audit logs** | Security events | [ERROR] Periodic, not real-time<br>[ERROR] No AI-specific context<br>[ERROR] Not designed for litigation |
 
 **What UATP provides uniquely:**
 
 | Feature | UATP | Traditional Logging |
 |---------|------|---------------------|
-| **Tamper-proof** | ✅ Cryptographic signatures | ❌ Logs can be edited |
-| **Real-time policy enforcement** | ✅ Blocks violations before they happen | ❌ Detects violations after |
-| **Regulator-ready reports** | ✅ Generate in 30 minutes | ❌ Takes weeks to compile |
-| **Cryptographic proof** | ✅ Post-quantum secure | ❌ No cryptographic guarantees |
-| **AI-specific** | ✅ Captures reasoning, not just I/O | ❌ Generic logging |
-| **Compliance-focused** | ✅ Built for HIPAA/GDPR/EU AI Act | ❌ Generic security logs |
+| **Tamper-proof** | [OK] Cryptographic signatures | [ERROR] Logs can be edited |
+| **Real-time policy enforcement** | [OK] Blocks violations before they happen | [ERROR] Detects violations after |
+| **Regulator-ready reports** | [OK] Generate in 30 minutes | [ERROR] Takes weeks to compile |
+| **Cryptographic proof** | [OK] Post-quantum secure | [ERROR] No cryptographic guarantees |
+| **AI-specific** | [OK] Captures reasoning, not just I/O | [ERROR] Generic logging |
+| **Compliance-focused** | [OK] Built for HIPAA/GDPR/EU AI Act | [ERROR] Generic security logs |
 
 **Analogy:**
 
@@ -308,25 +308,25 @@ AI System: Claude Sonnet 4
 ----------------------------------------------------------------------
  CHAIN INTEGRITY
 ----------------------------------------------------------------------
-✅ Chain Status: VERIFIED
-✅ Capsules Traced: 5 of 5
-✅ Cryptographic Proofs: All Valid
-✅ Tampering Detected: None
+[OK] Chain Status: VERIFIED
+[OK] Capsules Traced: 5 of 5
+[OK] Cryptographic Proofs: All Valid
+[OK] Tampering Detected: None
 
 ----------------------------------------------------------------------
  COMPLIANCE CHECK
 ----------------------------------------------------------------------
-✅ EU_AI_ACT: COMPLIANT
+[OK] EU_AI_ACT: COMPLIANT
    - Human oversight documented
    - Risk assessment performed
    - Transparency requirements met
 
-✅ GDPR: COMPLIANT
+[OK] GDPR: COMPLIANT
    - Data processing documented
    - Consent properly recorded
    - Rights procedures in place
 
-✅ HIPAA: COMPLIANT
+[OK] HIPAA: COMPLIANT
    - PHI access controls verified
    - Audit trail complete
    - Minimum necessary principle followed
@@ -337,22 +337,22 @@ AI System: Claude Sonnet 4
 1. INPUT_PERSPECTIVE (2025-10-26T20:12:47)
    User query received with patient context
    Sensitivity: PROTECTED_HEALTH_INFO
-   Verification: ✅
+   Verification: [OK]
 
 2. POLICY_CHECK (2025-10-26T20:12:47)
    HIPAA consent verification: PASSED
    Data minimization check: PASSED
-   Verification: ✅
+   Verification: [OK]
 
 3. REASONING_CHAIN (2025-10-26T20:12:47)
    Multi-step clinical reasoning performed
    Confidence: 92%
-   Verification: ✅
+   Verification: [OK]
 
 4. OUTPUT_DECISION (2025-10-26T20:12:47)
    Response generated with uncertainty acknowledged
    Recommendation: Escalate to human physician
-   Verification: ✅
+   Verification: [OK]
 
 ----------------------------------------------------------------------
  BOTTOM LINE FOR RISK OFFICER
@@ -396,10 +396,10 @@ The pilot is designed to give you **concrete proof points** every 2-3 weeks, so 
 Milestone: UATP Installed and Generating Capsules
 
 Success Criteria:
-  ✅ SDK integrated with 1 AI workflow
-  ✅ First capsule generated and verified
-  ✅ Signature verification passes
-  ✅ Dashboard accessible
+  [OK] SDK integrated with 1 AI workflow
+  [OK] First capsule generated and verified
+  [OK] Signature verification passes
+  [OK] Dashboard accessible
 
 Deliverable:
   - Installation report
@@ -407,7 +407,7 @@ Deliverable:
 
 Proof:
   You run: uatp verify --chain-id <your-chain>
-  Result: "✅ All signatures valid, chain intact"
+  Result: "[OK] All signatures valid, chain intact"
 ```
 
 **Week 2-3: Policy Deployment (Shadow Mode)**
@@ -415,10 +415,10 @@ Proof:
 Milestone: Policies Detecting Issues (Not Blocking Yet)
 
 Success Criteria:
-  ✅ HIPAA/GDPR template pack deployed
-  ✅ Shadow mode active (logging, not enforcing)
-  ✅ 10,000+ AI interactions captured
-  ✅ Policy violation rate measured
+  [OK] HIPAA/GDPR template pack deployed
+  [OK] Shadow mode active (logging, not enforcing)
+  [OK] 10,000+ AI interactions captured
+  [OK] Policy violation rate measured
 
 Deliverable:
   - Shadow mode report:
@@ -436,10 +436,10 @@ Proof:
 Milestone: Policies Enforcing in Staging/Canary
 
 Success Criteria:
-  ✅ Enforcement mode enabled (10% of traffic)
-  ✅ Circuit breaker tested
-  ✅ Refusal mechanism working
-  ✅ False positive rate <2%
+  [OK] Enforcement mode enabled (10% of traffic)
+  [OK] Circuit breaker tested
+  [OK] Refusal mechanism working
+  [OK] False positive rate <2%
 
 Deliverable:
   - Enforcement report:
@@ -457,10 +457,10 @@ Proof:
 Milestone: Audit Artifacts for Regulators
 
 Success Criteria:
-  ✅ 50,000+ interactions in capsule chains
-  ✅ Generate audit report for 1 workflow
-  ✅ Cryptographic verification passes
-  ✅ Human summary clear and accurate
+  [OK] 50,000+ interactions in capsule chains
+  [OK] Generate audit report for 1 workflow
+  [OK] Cryptographic verification passes
+  [OK] Human summary clear and accurate
 
 Deliverable:
   - Full audit report (JSON + PDF)
@@ -477,11 +477,11 @@ Proof:
 Milestone: Full Production Deployment Plan
 
 Success Criteria:
-  ✅ Performance validated (<50ms p99 latency)
-  ✅ Storage scaling plan confirmed
-  ✅ DR tested (backup/restore)
-  ✅ Alerting configured
-  ✅ Runbooks reviewed
+  [OK] Performance validated (<50ms p99 latency)
+  [OK] Storage scaling plan confirmed
+  [OK] DR tested (backup/restore)
+  [OK] Alerting configured
+  [OK] Runbooks reviewed
 
 Deliverable:
   - Production deployment plan
@@ -499,22 +499,22 @@ By week 6, you'll know if this works:
 
 ```
 MUST HAVE (No-Go if Missing):
-  ✅ Capsules generating correctly
-  ✅ Signatures verifying (no false negatives)
-  ✅ Audit reports generated successfully
-  ✅ Performance impact <50ms p99
-  ✅ False positive rate <2% (tuned)
+  [OK] Capsules generating correctly
+  [OK] Signatures verifying (no false negatives)
+  [OK] Audit reports generated successfully
+  [OK] Performance impact <50ms p99
+  [OK] False positive rate <2% (tuned)
 
 If these pass: Continue to full pilot
 If these fail: We extend pilot (no extra cost) or part ways
 ```
 
 **What happens after pilot:**
-- ✅ Success → Convert to annual subscription ($36K/year)
-- ✅ Success → Expand to more workflows
-- ✅ Success → Become reference customer (optional, 10% discount)
-- ❌ Failure → We work with you to fix (free extension)
-- ❌ Unfixable → Part ways cleanly (keep all data)
+- [OK] Success → Convert to annual subscription ($36K/year)
+- [OK] Success → Expand to more workflows
+- [OK] Success → Become reference customer (optional, 10% discount)
+- [ERROR] Failure → We work with you to fix (free extension)
+- [ERROR] Unfixable → Part ways cleanly (keep all data)
 
 **Honest assessment:**
 > The pilot is designed to derisk YOUR decision. If we can't deliver milestones, we extend the pilot at no extra cost until we do (or we part ways). You're not locked in.
@@ -567,12 +567,12 @@ Volume Tiers:
 **4. No Hidden Fees:**
 ```
 Included in Base:
-  ✅ Unlimited policies
-  ✅ Unlimited audit reports
-  ✅ Unlimited users
-  ✅ Standard support
-  ✅ All template packs
-  ✅ Dashboard + API access
+  [OK] Unlimited policies
+  [OK] Unlimited audit reports
+  [OK] Unlimited users
+  [OK] Standard support
+  [OK] All template packs
+  [OK] Dashboard + API access
 
 Extra Costs (Transparent):
   - Premium support (24/7): +$10K/year
@@ -708,10 +708,10 @@ Example:
   $ uatp-verify --export-file capsules.json --check-signatures
 
   Output:
-    ✅ 45,892 capsules verified
-    ✅ All signatures valid
-    ✅ Chain integrity intact
-    ✅ No UATP backend required
+    [OK] 45,892 capsules verified
+    [OK] All signatures valid
+    [OK] Chain integrity intact
+    [OK] No UATP backend required
 ```
 
 **Step 4: Storage Cleanup (Days 31-60)**
@@ -736,10 +736,10 @@ Option 3: Transfer to Your Infrastructure
 **Step 5: Termination Certificate (Day 60)**
 ```
 Final Deliverables:
-  ✅ Data export complete (verified)
-  ✅ Deletion certificate (if requested)
-  ✅ Final invoice (prorated)
-  ✅ Offboarding report
+  [OK] Data export complete (verified)
+  [OK] Deletion certificate (if requested)
+  [OK] Final invoice (prorated)
+  [OK] Offboarding report
 
   Optional: Exit interview to improve UATP
 ```
@@ -781,4 +781,3 @@ These are anticipated based on enterprise software patterns.
 > We want satisfied customers, not hostages. If UATP doesn't work, we'll help you leave cleanly. No data lock-in, no vendor hostage tactics. Our bet: if we're good, you'll stay or return.
 
 ---
-

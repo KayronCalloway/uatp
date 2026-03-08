@@ -617,7 +617,7 @@ test_case = {
 **Document Hash**: sha256:pending_final_signature
 **Public Key**: ed25519:uatp_doc_verification_key_v31
 **Signature**: ed25519:pending_document_finalization
-**Version Control**: https://github.com/uatp/specification/tree/v3.1
+**Version Control**: https://github.com/KayronCalloway/specification/tree/v3.1
 **Live Specification**: https://spec.uatp.org/v3.1
 
 ---

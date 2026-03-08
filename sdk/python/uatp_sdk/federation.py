@@ -4,12 +4,11 @@ UATP Python SDK - Federation Module
 Provides global coordination and federation capabilities for planetary-scale UATP network.
 """
 
-import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any, Union
 from datetime import datetime, timezone
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +141,7 @@ class FederationClient:
         self.federation_node = federation_node or "global.uatp.network"
         self.node_cache = {}
         self.metrics_cache = {}
-        logger.info(f"🌐 Federation Client initialized for node: {self.federation_node}")
+        logger.info(f" Federation Client initialized for node: {self.federation_node}")
 
     async def get_network_status(self) -> FederationMetrics:
         """Get current status of the global UATP federation network."""
@@ -178,12 +177,12 @@ class FederationClient:
             )
 
             logger.info(
-                f"🌐 Network status: {metrics.active_nodes}/{metrics.total_nodes} nodes active"
+                f" Network status: {metrics.active_nodes}/{metrics.total_nodes} nodes active"
             )
             return metrics
 
         except Exception as e:
-            logger.error(f"❌ Failed to get network status: {e}")
+            logger.error(f"[ERROR] Failed to get network status: {e}")
 
             # Return fallback metrics
             return FederationMetrics(
@@ -245,11 +244,11 @@ class FederationClient:
                 # Cache the node
                 self.node_cache[node.node_id] = node
 
-            logger.info(f"🌐 Retrieved {len(nodes)} federation nodes")
+            logger.info(f" Retrieved {len(nodes)} federation nodes")
             return nodes
 
         except Exception as e:
-            logger.error(f"❌ Failed to get federation nodes: {e}")
+            logger.error(f"[ERROR] Failed to get federation nodes: {e}")
             return []
 
     async def get_node(self, node_id: str) -> Optional[Node]:
@@ -292,7 +291,7 @@ class FederationClient:
             return node
 
         except Exception as e:
-            logger.error(f"❌ Failed to get node {node_id}: {e}")
+            logger.error(f"[ERROR] Failed to get node {node_id}: {e}")
             return None
 
     async def join_federation(
@@ -324,12 +323,12 @@ class FederationClient:
 
             result = response.json()
             logger.info(
-                f"🌐 Federation join request submitted: {result.get('request_id')}"
+                f" Federation join request submitted: {result.get('request_id')}"
             )
             return result
 
         except Exception as e:
-            logger.error(f"❌ Federation join request failed: {e}")
+            logger.error(f"[ERROR] Federation join request failed: {e}")
             return {"success": False, "error": str(e), "request_id": None}
 
     async def sync_with_federation(
@@ -351,12 +350,12 @@ class FederationClient:
 
             result = response.json()
             logger.info(
-                f"🔄 Federation sync completed: {result.get('records_synced', 0)} records"
+                f" Federation sync completed: {result.get('records_synced', 0)} records"
             )
             return result
 
         except Exception as e:
-            logger.error(f"❌ Federation sync failed: {e}")
+            logger.error(f"[ERROR] Federation sync failed: {e}")
             return {"success": False, "error": str(e), "records_synced": 0}
 
     async def submit_global_proposal(
@@ -388,11 +387,11 @@ class FederationClient:
             response.raise_for_status()
 
             result = response.json()
-            logger.info(f"📋 Global proposal submitted: {result.get('proposal_id')}")
+            logger.info(f" Global proposal submitted: {result.get('proposal_id')}")
             return result
 
         except Exception as e:
-            logger.error(f"❌ Global proposal submission failed: {e}")
+            logger.error(f"[ERROR] Global proposal submission failed: {e}")
             return {"success": False, "error": str(e), "proposal_id": None}
 
     async def get_consensus_status(self) -> Dict[str, Any]:
@@ -405,7 +404,7 @@ class FederationClient:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ Failed to get consensus status: {e}")
+            logger.error(f"[ERROR] Failed to get consensus status: {e}")
             return {
                 "consensus_reached": False,
                 "participating_nodes": 0,
@@ -426,7 +425,7 @@ class FederationClient:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ Failed to get crisis status: {e}")
+            logger.error(f"[ERROR] Failed to get crisis status: {e}")
             return {
                 "crisis_level": "none",
                 "active_protocols": [],
@@ -455,11 +454,11 @@ class FederationClient:
             response.raise_for_status()
 
             result = response.json()
-            logger.warning(f"🚨 Emergency protocol triggered: {protocol_type}")
+            logger.warning(f" Emergency protocol triggered: {protocol_type}")
             return result
 
         except Exception as e:
-            logger.error(f"❌ Emergency protocol trigger failed: {e}")
+            logger.error(f"[ERROR] Emergency protocol trigger failed: {e}")
             return {"success": False, "error": str(e), "protocol_id": None}
 
     async def get_regional_stats(self, region: str) -> Dict[str, Any]:
@@ -475,7 +474,7 @@ class FederationClient:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ Failed to get regional stats for {region}: {e}")
+            logger.error(f"[ERROR] Failed to get regional stats for {region}: {e}")
             return {
                 "region": region,
                 "active_nodes": 0,
@@ -489,4 +488,4 @@ class FederationClient:
         """Clear all cached federation data."""
         self.node_cache.clear()
         self.metrics_cache.clear()
-        logger.info("🧹 Federation cache cleared")
+        logger.info(" Federation cache cleared")

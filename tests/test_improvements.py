@@ -198,7 +198,7 @@ def test_capsule_schema_completeness():
 
     for suggested_type in ai_suggested_types:
         assert any(ct.value == suggested_type for ct in CapsuleType)
-        print(f"✅ {suggested_type} capsule type implemented")
+        print(f"[OK] {suggested_type} capsule type implemented")
 
 
 if __name__ == "__main__":
@@ -209,4 +209,4 @@ if __name__ == "__main__":
     test_audit_event_system()
     test_manipulation_attempt_capsule()
     test_capsule_schema_completeness()
-    print("✅ All improvement tests passed!")
+    print("[OK] All improvement tests passed!")

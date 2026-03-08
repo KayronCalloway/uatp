@@ -13,16 +13,17 @@ This script:
 4. Initializes spending tracking
 """
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import logging
+
 from src.agent.spending_limits import AgentSpendingManager
 from src.auth.agent_auth import AgentAuthManager
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ async def setup_budget_tiers():
     """
     manager = AgentSpendingManager()
 
-    logger.info("🎯 Setting up agent budget tiers...")
+    logger.info(" Setting up agent budget tiers...")
 
     # Store tier definitions
     tiers = {
@@ -66,7 +67,7 @@ async def setup_budget_tiers():
         },
     }
 
-    logger.info("\\n📊 Available Budget Tiers:")
+    logger.info("\\n Available Budget Tiers:")
     for tier_name, tier_config in tiers.items():
         logger.info(f"\\n  {tier_name.upper()}:")
         logger.info(f"    Daily Limit:   ${tier_config['daily_limit']:,.2f}")
@@ -82,7 +83,7 @@ async def create_example_agent_budget():
     auth_manager = AgentAuthManager()
     spending_manager = AgentSpendingManager()
 
-    logger.info("\\n🤖 Creating example agent with budget...")
+    logger.info("\\n Creating example agent with budget...")
 
     # Register example agent
     try:
@@ -95,7 +96,7 @@ async def create_example_agent_budget():
             metadata={"tier": "basic"},
         )
 
-        logger.info(f"\\n✅ Agent registered:")
+        logger.info("\\n[OK] Agent registered:")
         logger.info(f"   Agent ID: {agent.agent_id}")
         logger.info(f"   Name: {agent.agent_name}")
         logger.info(f"   Type: {agent.agent_type}")
@@ -109,17 +110,17 @@ async def create_example_agent_budget():
             metadata={"tier": "basic"},
         )
 
-        logger.info(f"\\n💰 Budget configured:")
-        logger.info(f"   Daily Limit: $100.00")
-        logger.info(f"   Monthly Limit: $1,000.00")
+        logger.info("\\n Budget configured:")
+        logger.info("   Daily Limit: $100.00")
+        logger.info("   Monthly Limit: $1,000.00")
 
-        logger.info(f"\\n🔑 Agent Token (save securely):")
+        logger.info("\\n Agent Token (save securely):")
         logger.info(f"   {token[:50]}...")
 
         # Get spending summary
         summary = await spending_manager.get_spending_summary(agent.agent_id)
 
-        logger.info(f"\\n📈 Initial Spending Summary:")
+        logger.info("\\n Initial Spending Summary:")
         logger.info(f"   Daily Spending: ${summary['spending']['daily']:.2f}")
         logger.info(f"   Monthly Spending: ${summary['spending']['monthly']:.2f}")
         logger.info(f"   Daily Remaining: ${summary['remaining']['daily']:.2f}")
@@ -138,7 +139,7 @@ async def simulate_spending():
     auth_manager = AgentAuthManager()
     spending_manager = AgentSpendingManager()
 
-    logger.info("\\n\\n🎬 Simulating agent spending...")
+    logger.info("\\n\\n Simulating agent spending...")
 
     # Get the example agent
     agents = auth_manager.list_agents(human_owner_id="example_user")
@@ -178,16 +179,16 @@ async def simulate_spending():
                 metadata={"simulated": True},
             )
 
-            logger.info(f"   ✅ ${op['cost']:.2f} - {op['operation']} (approved)")
+            logger.info(f"   [OK] ${op['cost']:.2f} - {op['operation']} (approved)")
         else:
             logger.warning(
-                f"   ❌ ${op['cost']:.2f} - {op['operation']} (rejected: {validation['reason']})"
+                f"   [ERROR] ${op['cost']:.2f} - {op['operation']} (rejected: {validation['reason']})"
             )
 
     # Get updated summary
     summary = await spending_manager.get_spending_summary(agent.agent_id)
 
-    logger.info(f"\\n📊 Updated Spending Summary:")
+    logger.info("\\n Updated Spending Summary:")
     logger.info(f"   Daily Spending: ${summary['spending']['daily']:.2f}")
     logger.info(f"   Daily Remaining: ${summary['remaining']['daily']:.2f}")
     logger.info(f"   Utilization: {summary['utilization']['daily_pct']:.1f}%")
@@ -213,10 +214,10 @@ async def main():
     await simulate_spending()
 
     logger.info("\\n" + "=" * 60)
-    logger.info("✅ Setup Complete!")
+    logger.info("[OK] Setup Complete!")
     logger.info("=" * 60)
 
-    logger.info("\\n📝 Next Steps:")
+    logger.info("\\n Next Steps:")
     logger.info("   1. Use the agent token to make authenticated requests")
     logger.info("   2. Monitor spending in: economic/agent_spending/")
     logger.info(
@@ -226,7 +227,7 @@ async def main():
         "   4. View spending history in: economic/agent_spending/spending_records.jsonl"
     )
 
-    logger.info("\\n🔗 Integration:")
+    logger.info("\\n Integration:")
     logger.info("   - Use @enforce_agent_spending_limits decorator on API routes")
     logger.info("   - Check src/api/agent_spending_middleware.py for examples")
     logger.info("   - See src/agent/spending_limits.py for API documentation")

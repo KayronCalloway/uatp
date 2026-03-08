@@ -7,17 +7,17 @@ The primary interface for developers to integrate with UATP infrastructure.
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
-import httpx
-import json
+from typing import Any, Dict, Optional
 
-from .attribution import AttributionTracker, AttributionResult
+import httpx
+
+from .attribution import AttributionResult, AttributionTracker
 from .economics import EconomicEngine, RewardCalculator
+from .federation import FederationClient
 from .governance import GovernanceClient
 from .privacy import PrivacyEngine
 from .watermarking import WatermarkEngine
-from .federation import FederationClient
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class UATP:
             timeout=self.config.timeout,
             headers={
                 "Authorization": f"Bearer {self.config.api_key}",
-                "User-Agent": f"UATP-Python-SDK/1.0.0",
+                "User-Agent": "UATP-Python-SDK/1.0.0",
                 "Content-Type": "application/json",
             },
         )
@@ -101,7 +101,7 @@ class UATP:
         if self.config.federation_node:
             self.federation = FederationClient(self, self.config.federation_node)
 
-        logger.info(f"🚀 UATP SDK initialized with endpoint: {self.config.base_url}")
+        logger.info(f" UATP SDK initialized with endpoint: {self.config.base_url}")
 
     async def track_ai_interaction(
         self,
@@ -205,7 +205,7 @@ class UATP:
         response.raise_for_status()
 
         result = response.json()
-        logger.info(f"✅ Created capsule: {result.get('capsule_id')}")
+        logger.info(f"[OK] Created capsule: {result.get('capsule_id')}")
 
         return result
 
@@ -310,7 +310,7 @@ class UATP:
     async def close(self):
         """Close the UATP client and cleanup resources."""
         await self.http_client.aclose()
-        logger.info("🔄 UATP SDK client closed")
+        logger.info(" UATP SDK client closed")
 
 
 # Synchronous wrapper for easier use

@@ -27,7 +27,7 @@ class OpenAILiveCapture(BaseHook):
         super().__init__(platform="openai", user_id=user_id)
 
     def get_platform_emoji(self) -> str:
-        return "🤖"
+        return ""
 
     def get_platform_specific_metadata(self, **kwargs) -> Dict[str, Any]:
         """Get OpenAI-specific metadata."""
@@ -40,7 +40,7 @@ class OpenAILiveCapture(BaseHook):
 
     def _log_platform_specific_init(self) -> None:
         """Log OpenAI-specific initialization."""
-        logger.info(f"   API Key: {'✅ Set' if self.api_key else '❌ Missing'}")
+        logger.info(f"   API Key: {'[OK] Set' if self.api_key else '[ERROR] Missing'}")
 
     def _log_platform_specific_success(self, capsule_id: str, **kwargs) -> None:
         """Log OpenAI-specific success info."""
@@ -244,10 +244,10 @@ class CaptureEnabledOpenAI:
             import openai
 
             self.client = openai.OpenAI(api_key=self.api_key)
-            logger.info("✅ OpenAI client initialized with auto-capture")
+            logger.info("[OK] OpenAI client initialized with auto-capture")
         except ImportError:
             logger.warning(
-                "⚠️ OpenAI library not installed, capture wrapper unavailable"
+                "[WARN] OpenAI library not installed, capture wrapper unavailable"
             )
             self.client = None
 
@@ -282,17 +282,17 @@ class CaptureEnabledOpenAI:
             }
 
         except Exception as e:
-            logger.error(f"❌ OpenAI chat completion failed: {e}")
+            logger.error(f"[ERROR] OpenAI chat completion failed: {e}")
             raise
 
 
 async def main():
     """Test the OpenAI integration."""
-    print("🤖 Testing OpenAI Live Capture Integration (with BaseHook)")
+    print(" Testing OpenAI Live Capture Integration (with BaseHook)")
     print("=" * 50)
 
     # Test chat completion
-    print("\n💬 Testing chat completion capture...")
+    print("\n Testing chat completion capture...")
     messages = [
         {
             "role": "user",
@@ -315,11 +315,11 @@ async def main():
     )
 
     if capsule_id:
-        print(f"✅ OpenAI interaction captured: {capsule_id}")
+        print(f"[OK] OpenAI interaction captured: {capsule_id}")
     else:
-        print("❌ No capsule created")
+        print("[ERROR] No capsule created")
 
-    print("\n✅ OpenAI integration test completed (with BaseHook refactoring)!")
+    print("\n[OK] OpenAI integration test completed (with BaseHook refactoring)!")
 
 
 if __name__ == "__main__":

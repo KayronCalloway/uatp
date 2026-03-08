@@ -14,22 +14,19 @@ Production-grade performance testing with:
 
 import asyncio
 import json
-import pytest
 import statistics
 import time
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-from typing import Dict, List, Any, Tuple
-from unittest.mock import Mock, AsyncMock, patch
-import aiohttp
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, Mock
+
 import numpy as np
+import pytest
 
 from src.api.compression_middleware import CompressionMiddleware
-from src.api.enhanced_cache import MultiLayerCache, initialize_cache
-from src.api.response_cache import ResponseCacheManager
-from src.database.read_replica_manager import ReadReplicaManager, ReplicaConfig
+from src.api.enhanced_cache import MultiLayerCache
+from src.database.read_replica_manager import ReadReplicaManager
 from src.performance.query_optimizer import QueryOptimizer
-from src.monitoring.performance_metrics import PerformanceMetricsCollector
 
 
 class PerformanceTestSuite:
@@ -51,7 +48,7 @@ class PerformanceTestSuite:
 
     async def run_all_tests(self) -> Dict[str, Any]:
         """Run complete performance test suite."""
-        print("🚀 Starting Comprehensive Performance Test Suite")
+        print(" Starting Comprehensive Performance Test Suite")
         print("=" * 60)
 
         # Test compression effectiveness
@@ -90,7 +87,7 @@ class PerformanceTestSuite:
 
     async def test_compression_performance(self) -> Dict[str, Any]:
         """Test response compression effectiveness."""
-        print("🗜️  Testing Response Compression Performance...")
+        print("️  Testing Response Compression Performance...")
 
         # Mock ASGI app for testing
         async def mock_app(scope, receive, send):
@@ -174,14 +171,14 @@ class PerformanceTestSuite:
             >= self.performance_targets["compression_ratio_percent"],
         }
 
-        print(f"   ✓ Average compression ratio: {avg_compression_ratio:.1f}%")
-        print(f"   ✓ Average compression time: {avg_compression_time:.2f}ms")
+        print(f"    Average compression ratio: {avg_compression_ratio:.1f}%")
+        print(f"    Average compression time: {avg_compression_time:.2f}ms")
 
         return result
 
     async def test_cache_performance(self) -> Dict[str, Any]:
         """Test multi-layer cache performance."""
-        print("🚀 Testing Multi-layer Cache Performance...")
+        print(" Testing Multi-layer Cache Performance...")
 
         # Initialize test cache
         cache = MultiLayerCache(
@@ -238,14 +235,14 @@ class PerformanceTestSuite:
 
         await cache.disconnect()
 
-        print(f"   ✓ Cache hit rate: {hit_rate:.1f}%")
-        print(f"   ✓ Average get time: {get_time/len(test_keys):.3f}ms per key")
+        print(f"    Cache hit rate: {hit_rate:.1f}%")
+        print(f"    Average get time: {get_time/len(test_keys):.3f}ms per key")
 
         return result
 
     async def test_database_performance(self) -> Dict[str, Any]:
         """Test database performance and read replica functionality."""
-        print("🗄️  Testing Database Performance...")
+        print("️  Testing Database Performance...")
 
         # Mock database connections for testing
         mock_primary = AsyncMock()
@@ -268,7 +265,6 @@ class PerformanceTestSuite:
         mock_replica.execute = mock_replica_execute
 
         # Test read/write query classification
-        from src.database.read_replica_manager import ReadReplicaManager
 
         # Mock database manager
         mock_db_manager = Mock()
@@ -345,14 +341,14 @@ class PerformanceTestSuite:
             "target_met": p95_time <= self.performance_targets["db_query_time_p95_ms"],
         }
 
-        print(f"   ✓ P95 query time: {p95_time:.2f}ms")
-        print(f"   ✓ Query classification accuracy: {classification_accuracy:.1f}%")
+        print(f"    P95 query time: {p95_time:.2f}ms")
+        print(f"    Query classification accuracy: {classification_accuracy:.1f}%")
 
         return result
 
     async def test_query_optimization(self) -> Dict[str, Any]:
         """Test query optimization system."""
-        print("⚡ Testing Query Optimization System...")
+        print(" Testing Query Optimization System...")
 
         optimizer = QueryOptimizer(slow_query_threshold_ms=50.0)
 
@@ -397,15 +393,15 @@ class PerformanceTestSuite:
             "performance_summary": analysis["summary"],
         }
 
-        print(f"   ✓ Queries tracked: {metrics_summary['total_queries_tracked']}")
-        print(f"   ✓ Slow queries detected: {metrics_summary['slow_queries']}")
-        print(f"   ✓ Index recommendations: {len(analysis['index_recommendations'])}")
+        print(f"    Queries tracked: {metrics_summary['total_queries_tracked']}")
+        print(f"    Slow queries detected: {metrics_summary['slow_queries']}")
+        print(f"    Index recommendations: {len(analysis['index_recommendations'])}")
 
         return result
 
     async def test_api_load_performance(self) -> Dict[str, Any]:
         """Test API performance under load."""
-        print("🌐 Testing API Load Performance...")
+        print(" Testing API Load Performance...")
 
         # Mock HTTP client for load testing
         response_times = []
@@ -480,18 +476,19 @@ class PerformanceTestSuite:
         else:
             result = {"error": "No successful requests"}
 
-        print(f"   ✓ Throughput: {throughput:.0f} RPS")
-        print(f"   ✓ P95 response time: {p95_time:.1f}ms")
-        print(f"   ✓ Error rate: {error_rate:.2f}%")
+        print(f"    Throughput: {throughput:.0f} RPS")
+        print(f"    P95 response time: {p95_time:.1f}ms")
+        print(f"    Error rate: {error_rate:.2f}%")
 
         return result
 
     async def test_memory_performance(self) -> Dict[str, Any]:
         """Test memory usage under sustained load."""
-        print("🧠 Testing Memory Performance...")
+        print(" Testing Memory Performance...")
+
+        import gc
 
         import psutil
-        import gc
 
         process = psutil.Process()
 
@@ -547,15 +544,15 @@ class PerformanceTestSuite:
             "target_met": peak_memory <= self.performance_targets["memory_usage_mb"],
         }
 
-        print(f"   ✓ Peak memory usage: {peak_memory:.1f}MB")
-        print(f"   ✓ Memory growth: {memory_growth:.1f}MB")
-        print(f"   ✓ Memory freed after cleanup: {abs(memory_freed):.1f}MB")
+        print(f"    Peak memory usage: {peak_memory:.1f}MB")
+        print(f"    Memory growth: {memory_growth:.1f}MB")
+        print(f"    Memory freed after cleanup: {abs(memory_freed):.1f}MB")
 
         return result
 
     async def test_concurrency_performance(self) -> Dict[str, Any]:
         """Test concurrent user handling."""
-        print("👥 Testing Concurrent User Performance...")
+        print(" Testing Concurrent User Performance...")
 
         # Simulate concurrent user sessions
         concurrent_users = 100  # Reduced for testing
@@ -630,15 +627,15 @@ class PerformanceTestSuite:
             ),  # Scaled down for testing
         }
 
-        print(f"   ✓ Concurrent users handled: {concurrent_users}")
-        print(f"   ✓ Operations per second: {operations_per_second:.0f}")
-        print(f"   ✓ P95 session time: {p95_session_time:.1f}ms")
+        print(f"    Concurrent users handled: {concurrent_users}")
+        print(f"    Operations per second: {operations_per_second:.0f}")
+        print(f"    P95 session time: {p95_session_time:.1f}ms")
 
         return result
 
     def generate_performance_report(self) -> Dict[str, Any]:
         """Generate comprehensive performance report."""
-        print("📊 Generating Performance Report...")
+        print(" Generating Performance Report...")
 
         # Calculate overall scores
         scores = {}
@@ -704,10 +701,10 @@ class PerformanceTestSuite:
         }
 
         # Print summary
-        print(f"   ✓ Overall Performance Score: {overall_score:.1f}/100")
-        print(f"   ✓ Performance Grade: {summary['performance_grade']}")
+        print(f"    Overall Performance Score: {overall_score:.1f}/100")
+        print(f"    Performance Grade: {summary['performance_grade']}")
         print(
-            f"   ✓ Targets Met: {summary['targets_met_count']}/{summary['total_targets']}"
+            f"    Targets Met: {summary['targets_met_count']}/{summary['total_targets']}"
         )
 
         return summary

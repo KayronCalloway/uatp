@@ -220,7 +220,7 @@ source venv/bin/activate
 python3 -c "
 from src.engine.capsule_engine import CapsuleEngine
 from src.integrations.anthropic_client import AnthropicClient
-print('✓ Core imports working')
+print(' Core imports working')
 "
 ```
 
@@ -426,4 +426,4 @@ ls -la .env
 head -n 1 capsule_chain.jsonl
 ```
 
-Good luck with the migration! 🚀
+Good luck with the migration!

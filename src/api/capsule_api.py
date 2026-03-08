@@ -10,25 +10,22 @@ search, filtering, and real-time streaming.
 import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
-from dataclasses import asdict
-
-from quart import Quart, request, jsonify, websocket
-from quart_cors import cors
-import sqlite3
-import sys
 import os
+import sys
+from datetime import datetime
+
+from quart import Quart, jsonify, request, websocket
+from quart_cors import cors
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
+from sqlalchemy import text
+
+from src.core.database import db
 from src.filters.sqlite_capsule_creator import (
-    get_sqlite_capsule_creator,
     initialize_sqlite_capsule_creator,
 )
-from src.core.database import db
-from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -47,10 +44,10 @@ async def init_capsule_api():
 
     try:
         capsule_creator = await initialize_sqlite_capsule_creator()
-        logger.info("🚀 Capsule API initialized successfully")
+        logger.info(" Capsule API initialized successfully")
         return True
     except Exception as e:
-        logger.error(f"❌ Failed to initialize capsule API: {e}")
+        logger.error(f"[ERROR] Failed to initialize capsule API: {e}")
         return False
 
 
@@ -180,7 +177,7 @@ async def get_capsules():
         )
 
     except Exception as e:
-        logger.error(f"❌ Error getting capsules: {e}")
+        logger.error(f"[ERROR] Error getting capsules: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -194,7 +191,7 @@ async def get_capsule(capsule_id: str):
                 text(
                     """
                 SELECT c.capsule_id, c.capsule_type, c.version, c.timestamp, c.status,
-                       c.verification, c.payload, a.platform, a.significance_score, 
+                       c.verification, c.payload, a.platform, a.significance_score,
                        a.user_id, a.conversation_id, a.metadata
                 FROM capsules_filter c
                 JOIN attributions_filter a ON c.capsule_id = a.capsule_id
@@ -231,7 +228,7 @@ async def get_capsule(capsule_id: str):
             return jsonify(capsule)
 
     except Exception as e:
-        logger.error(f"❌ Error getting capsule {capsule_id}: {e}")
+        logger.error(f"[ERROR] Error getting capsule {capsule_id}: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -390,7 +387,7 @@ async def search_capsules():
         )
 
     except Exception as e:
-        logger.error(f"❌ Error searching capsules: {e}")
+        logger.error(f"[ERROR] Error searching capsules: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -474,7 +471,7 @@ async def get_capsule_stats():
         )
 
     except Exception as e:
-        logger.error(f"❌ Error getting capsule stats: {e}")
+        logger.error(f"[ERROR] Error getting capsule stats: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -490,7 +487,7 @@ async def get_recent_capsules():
         return jsonify({"capsules": recent_capsules, "count": len(recent_capsules)})
 
     except Exception as e:
-        logger.error(f"❌ Error getting recent capsules: {e}")
+        logger.error(f"[ERROR] Error getting recent capsules: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -498,7 +495,7 @@ async def get_recent_capsules():
 async def capsule_stream():
     """WebSocket endpoint for real-time capsule updates."""
 
-    logger.info("🔄 New WebSocket connection for capsule stream")
+    logger.info(" New WebSocket connection for capsule stream")
 
     try:
         # Send initial connection message
@@ -537,7 +534,7 @@ async def capsule_stream():
             )
 
     except Exception as e:
-        logger.error(f"❌ WebSocket error: {e}")
+        logger.error(f"[ERROR] WebSocket error: {e}")
         await websocket.send(
             json.dumps(
                 {
@@ -576,7 +573,7 @@ async def health_check():
         return jsonify(health_status), status_code
 
     except Exception as e:
-        logger.error(f"❌ Health check error: {e}")
+        logger.error(f"[ERROR] Health check error: {e}")
         return (
             jsonify(
                 {
@@ -602,7 +599,7 @@ async def method_not_allowed(error):
 
 @app.errorhandler(500)
 async def internal_error(error):
-    logger.error(f"❌ Internal server error: {error}")
+    logger.error(f"[ERROR] Internal server error: {error}")
     return jsonify({"error": "Internal server error"}), 500
 
 

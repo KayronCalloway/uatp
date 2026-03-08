@@ -24,9 +24,9 @@ if result.temporal_relevance < 1.0:
 ```
 
 This ensures:
-- ✅ No value is lost to temporal decay
-- ✅ Older contributions still benefit society through commons
-- ✅ Generational fairness through gradual redistribution
+- [OK] No value is lost to temporal decay
+- [OK] Older contributions still benefit society through commons
+- [OK] Generational fairness through gradual redistribution
 
 ### 3. Universal Basic Attribution (UBA)
 - **15% of all AI usage value** automatically goes to global commons fund

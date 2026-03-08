@@ -389,7 +389,7 @@ class APICSRFProtection:
 
 # Example usage and testing
 if __name__ == "__main__":
-    print("🛡️ Testing CSRF Protection...")
+    print(" Testing CSRF Protection...")
 
     # Test token generation and validation
     token = csrf_protection.generate_token("test_session")
@@ -408,4 +408,4 @@ if __name__ == "__main__":
     ds_token = double_submit.generate_token()
     print(f"Double submit token: {ds_token[:20]}...")
 
-    print("✅ CSRF Protection tests completed")
+    print("[OK] CSRF Protection tests completed")

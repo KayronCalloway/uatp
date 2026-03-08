@@ -222,7 +222,7 @@ class CriticalPathAnalyzer:
             bottleneck_step = step_map.get(analysis.bottleneck_steps[0])
             if bottleneck_step:
                 recommendations.append(
-                    f"⚠️ Strengthen step {bottleneck_step.step} (confidence: {bottleneck_step.confidence:.2f}) - "
+                    f"[WARN] Strengthen step {bottleneck_step.step} (confidence: {bottleneck_step.confidence:.2f}) - "
                     f"this is a bottleneck in your reasoning"
                 )
 
@@ -232,7 +232,7 @@ class CriticalPathAnalyzer:
             confidence = analysis.weakest_link["confidence"]
             if confidence < 0.7:
                 recommendations.append(
-                    f"🔴 Critical: Step {step_id} has low confidence ({confidence:.2f}) and is on the critical path. "
+                    f" Critical: Step {step_id} has low confidence ({confidence:.2f}) and is on the critical path. "
                     f"Consider gathering more evidence or exploring alternatives."
                 )
 
@@ -241,14 +241,14 @@ class CriticalPathAnalyzer:
             step = step_map.get(step_id)
             if step and step.uncertainty_sources and len(step.uncertainty_sources) > 2:
                 recommendations.append(
-                    f"❓ Step {step_id} has multiple uncertainty sources on critical path: "
+                    f" Step {step_id} has multiple uncertainty sources on critical path: "
                     f"{', '.join(step.uncertainty_sources[:2])}. Address these to strengthen reasoning."
                 )
 
         # Recommend expanding shallow reasoning
         if analysis.dependency_depth < 3 and len(step_map) > 3:
             recommendations.append(
-                "📊 Reasoning is relatively shallow (low dependency depth). "
+                " Reasoning is relatively shallow (low dependency depth). "
                 "Consider breaking down complex steps into smaller, more explicit steps."
             )
 
@@ -260,7 +260,7 @@ class CriticalPathAnalyzer:
                 or len(step.alternatives_considered) < 2
             ):
                 recommendations.append(
-                    f"🔀 Step {step_id} is a decision point but only {len(step.alternatives_considered or [])} "
+                    f" Step {step_id} is a decision point but only {len(step.alternatives_considered or [])} "
                     f"alternative(s) documented. Consider explicitly documenting rejected alternatives."
                 )
 
@@ -283,7 +283,7 @@ class CriticalPathAnalyzer:
 
 # Example usage
 if __name__ == "__main__":
-    print("✅ Critical Path Analyzer Ready")
+    print("[OK] Critical Path Analyzer Ready")
     print("\nCapabilities:")
     print("  - Identify critical steps on dependency path")
     print("  - Find bottleneck steps (lowest confidence)")

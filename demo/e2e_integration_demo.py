@@ -9,7 +9,7 @@ instrument creation and legal status management.
 
 Demo Workflow:
 1. Agent Registration & IP Asset Creation
-2. Citizenship Application & Assessment Process  
+2. Citizenship Application & Assessment Process
 3. Dividend Bond Creation & Performance Tracking
 4. Cross-Service Integration & Analytics
 5. Complete Lifecycle Management
@@ -18,17 +18,15 @@ Run with: python3 demo/e2e_integration_demo.py
 """
 
 import asyncio
-import json
-import time
-import uuid
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Any
 import logging
+import uuid
+from datetime import datetime, timezone
+from typing import Any, Dict
+
+from src.services.citizenship_service import citizenship_service
 
 # Import UATP services
 from src.services.dividend_bonds_service import dividend_bonds_service
-from src.services.citizenship_service import citizenship_service
-from src.capsule_schema import CapsuleType, CapsuleStatus
 
 
 # Mock engine for demo purposes
@@ -48,7 +46,7 @@ class MockCapsuleEngine:
 
 # Configure logging for demo
 logging.basicConfig(
-    level=logging.INFO, format="🤖 %(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format=" %(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -74,7 +72,7 @@ class E2EIntegrationDemo:
 
     async def run_complete_demo(self):
         """Run the complete end-to-end integration demo."""
-        logger.info("🚀 Starting UATP Capsule Engine E2E Integration Demo")
+        logger.info(" Starting UATP Capsule Engine E2E Integration Demo")
         logger.info("=" * 60)
 
         try:
@@ -97,14 +95,14 @@ class E2EIntegrationDemo:
             await self.demo_summary()
 
         except Exception as e:
-            logger.error(f"❌ Demo failed: {e}")
+            logger.error(f"[ERROR] Demo failed: {e}")
             raise
 
-        logger.info("🎉 Demo completed successfully!")
+        logger.info(" Demo completed successfully!")
 
     async def phase_1_agent_setup(self):
         """Phase 1: Agent Registration & IP Asset Creation."""
-        logger.info("\n📋 PHASE 1: Agent Registration & IP Asset Creation")
+        logger.info("\n PHASE 1: Agent Registration & IP Asset Creation")
         logger.info("-" * 50)
 
         # Create demo agents with different specializations
@@ -184,7 +182,7 @@ class E2EIntegrationDemo:
         for agent_config in agents_config:
             agent_id = agent_config["agent_id"]
 
-            logger.info(f"🤖 Registering agent: {agent_config['name']} ({agent_id})")
+            logger.info(f" Registering agent: {agent_config['name']} ({agent_id})")
 
             # Store agent info
             self.demo_agents[agent_id] = {
@@ -197,7 +195,7 @@ class E2EIntegrationDemo:
 
             # Register IP assets for this agent
             for asset_config in agent_config["assets"]:
-                logger.info(f"📄 Registering IP asset: {asset_config['asset_id']}")
+                logger.info(f" Registering IP asset: {asset_config['asset_id']}")
 
                 # Register with dividend bonds service
                 asset = dividend_bonds_service.register_ip_asset(
@@ -219,26 +217,24 @@ class E2EIntegrationDemo:
                 self.demo_stats["total_value_created"] += asset_config["market_value"]
 
                 logger.info(
-                    f"   ✅ Asset registered with value: ${asset_config['market_value']:,.2f}"
+                    f"   [OK] Asset registered with value: ${asset_config['market_value']:,.2f}"
                 )
 
             self.demo_stats["agents_created"] += 1
             logger.info(
-                f"   💰 Total portfolio value: ${self.demo_agents[agent_id]['total_asset_value']:,.2f}"
+                f"    Total portfolio value: ${self.demo_agents[agent_id]['total_asset_value']:,.2f}"
             )
 
         await asyncio.sleep(1)  # Demo pacing
 
     async def phase_2_citizenship_workflow(self):
         """Phase 2: Citizenship Application & Assessment Process."""
-        logger.info("\n🏛️ PHASE 2: Citizenship Application & Assessment Process")
+        logger.info("\n PHASE 2: Citizenship Application & Assessment Process")
         logger.info("-" * 50)
 
         # Apply for citizenship for each agent
         for agent_id, agent_info in self.demo_agents.items():
-            logger.info(
-                f"📝 Processing citizenship application for {agent_info['name']}"
-            )
+            logger.info(f" Processing citizenship application for {agent_info['name']}")
 
             # Apply for citizenship in AI Rights Territory
             application_id = citizenship_service.apply_for_citizenship(
@@ -253,7 +249,7 @@ class E2EIntegrationDemo:
                 },
             )
 
-            logger.info(f"   📋 Application submitted: {application_id}")
+            logger.info(f"    Application submitted: {application_id}")
 
             # Conduct all required assessments
             assessment_types = [
@@ -282,7 +278,7 @@ class E2EIntegrationDemo:
 
                 assessment_results.append(result)
                 logger.info(
-                    f"   ✅ {assessment_type}: {result.overall_score:.3f} ({result.recommendation})"
+                    f"   [OK] {assessment_type}: {result.overall_score:.3f} ({result.recommendation})"
                 )
 
             # Finalize citizenship application
@@ -291,7 +287,7 @@ class E2EIntegrationDemo:
             )
 
             if citizenship_id:
-                logger.info(f"   🎉 Citizenship granted: {citizenship_id}")
+                logger.info(f"    Citizenship granted: {citizenship_id}")
 
                 # Create citizenship capsule
                 capsule = citizenship_service.create_citizenship_capsule(
@@ -315,15 +311,17 @@ class E2EIntegrationDemo:
                 }
 
                 self.demo_stats["citizenships_granted"] += 1
-                logger.info(f"   📜 Citizenship capsule created: {capsule.capsule_id}")
+                logger.info(f"    Citizenship capsule created: {capsule.capsule_id}")
             else:
-                logger.warning(f"   ❌ Citizenship denied for {agent_info['name']}")
+                logger.warning(
+                    f"   [ERROR] Citizenship denied for {agent_info['name']}"
+                )
 
             await asyncio.sleep(0.5)  # Demo pacing
 
     async def phase_3_financial_instruments(self):
         """Phase 3: Dividend Bond Creation & Performance Tracking."""
-        logger.info("\n💰 PHASE 3: Dividend Bond Creation & Performance Tracking")
+        logger.info("\n PHASE 3: Dividend Bond Creation & Performance Tracking")
         logger.info("-" * 50)
 
         # Create different types of dividend bonds for eligible agents
@@ -367,11 +365,11 @@ class E2EIntegrationDemo:
             agent_id = bond_config["agent_id"]
 
             if agent_id not in self.demo_citizenships:
-                logger.warning(f"⚠️ Skipping bond for {agent_id}: No citizenship")
+                logger.warning(f"[WARN] Skipping bond for {agent_id}: No citizenship")
                 continue
 
             logger.info(
-                f"💳 Creating {bond_config['bond_type']} bond for {self.demo_agents[agent_id]['name']}"
+                f" Creating {bond_config['bond_type']} bond for {self.demo_agents[agent_id]['name']}"
             )
 
             # Create dividend bond capsule
@@ -398,10 +396,10 @@ class E2EIntegrationDemo:
             }
 
             self.demo_stats["bonds_issued"] += 1
-            logger.info(f"   ✅ Bond issued: {bond_id}")
-            logger.info(f"   💵 Face value: ${bond_config['face_value']:,.2f}")
-            logger.info(f"   📈 Coupon rate: {bond_config['coupon_rate']:.1%}")
-            logger.info(f"   ⏰ Maturity: {bond_config['maturity_days']} days")
+            logger.info(f"   [OK] Bond issued: {bond_id}")
+            logger.info(f"    Face value: ${bond_config['face_value']:,.2f}")
+            logger.info(f"    Coupon rate: {bond_config['coupon_rate']:.1%}")
+            logger.info(f"    Maturity: {bond_config['maturity_days']} days")
 
             # Simulate some dividend payments
             await self._simulate_dividend_payments(bond_id, bond_config)
@@ -412,7 +410,7 @@ class E2EIntegrationDemo:
         self, bond_id: str, bond_config: Dict[str, Any]
     ):
         """Simulate dividend payments for a bond."""
-        logger.info(f"   💰 Simulating dividend payments for bond {bond_id}")
+        logger.info(f"    Simulating dividend payments for bond {bond_id}")
 
         # Generate realistic revenue/performance data
         bond_type = bond_config["bond_type"]
@@ -459,25 +457,25 @@ class E2EIntegrationDemo:
             )
 
             self.demo_stats["transactions_processed"] += 1
-            logger.info(f"     💸 Payment {i+1}: ${payment_amount:.2f}")
+            logger.info(f"      Payment {i+1}: ${payment_amount:.2f}")
 
     async def phase_4_cross_service_integration(self):
         """Phase 4: Cross-Service Integration & Workflow Automation."""
-        logger.info("\n🔗 PHASE 4: Cross-Service Integration & Workflow Automation")
+        logger.info("\n PHASE 4: Cross-Service Integration & Workflow Automation")
         logger.info("-" * 50)
 
         # Demonstrate cross-service interactions
         for agent_id, citizenship_info in self.demo_citizenships.items():
             agent_name = self.demo_agents[agent_id]["name"]
-            logger.info(f"🔄 Processing cross-service workflows for {agent_name}")
+            logger.info(f" Processing cross-service workflows for {agent_name}")
 
             # Get citizenship status
             status = citizenship_service.get_citizenship_status(agent_id)
             if status:
                 logger.info(
-                    f"   🏛️ Citizenship status: {status['legal_status']} ({status['citizenship_type']})"
+                    f"    Citizenship status: {status['legal_status']} ({status['citizenship_type']})"
                 )
-                logger.info(f"   📊 Overall score: {status['overall_score']:.3f}")
+                logger.info(f"    Overall score: {status['overall_score']:.3f}")
                 logger.info(f"   ⏳ Days to expiration: {status['days_to_expiration']}")
 
             # Get bond performance for this agent
@@ -496,7 +494,7 @@ class E2EIntegrationDemo:
                 total_dividends_paid += performance["total_dividends_paid"]
 
                 logger.info(
-                    f"   💳 Bond {bond_id}: ${performance['total_dividends_paid']:.2f} dividends"
+                    f"    Bond {bond_id}: ${performance['total_dividends_paid']:.2f} dividends"
                 )
 
             # Calculate agent's financial profile
@@ -505,36 +503,36 @@ class E2EIntegrationDemo:
                 total_dividends_paid / total_bond_value if total_bond_value > 0 else 0
             )
 
-            logger.info(f"   💼 Portfolio value: ${portfolio_value:,.2f}")
-            logger.info(f"   💰 Total bonds issued: ${total_bond_value:,.2f}")
-            logger.info(f"   📈 Dividend yield ratio: {financial_ratio:.2%}")
+            logger.info(f"    Portfolio value: ${portfolio_value:,.2f}")
+            logger.info(f"    Total bonds issued: ${total_bond_value:,.2f}")
+            logger.info(f"    Dividend yield ratio: {financial_ratio:.2%}")
 
             # Simulate rights-based actions based on citizenship
             if status and status["legal_status"] == "active":
                 logger.info(
-                    f"   ⚖️ Legal rights exercised: {len(status.get('rights_granted', []))}"
+                    f"    Legal rights exercised: {len(status.get('rights_granted', []))}"
                 )
                 logger.info(
-                    f"   📜 Compliance obligations: {status.get('obligations_count', 0)}"
+                    f"    Compliance obligations: {status.get('obligations_count', 0)}"
                 )
 
             await asyncio.sleep(0.3)  # Demo pacing
 
     async def phase_5_analytics_reporting(self):
         """Phase 5: Analytics & Reporting Dashboard."""
-        logger.info("\n📊 PHASE 5: Analytics & Reporting Dashboard")
+        logger.info("\n PHASE 5: Analytics & Reporting Dashboard")
         logger.info("-" * 50)
 
         # System-wide analytics
-        logger.info("🎯 System-Wide Analytics:")
+        logger.info(" System-Wide Analytics:")
 
         # Agent analytics
         total_agents = len(self.demo_agents)
         citizens = len(self.demo_citizenships)
         citizen_rate = (citizens / total_agents) * 100 if total_agents > 0 else 0
 
-        logger.info(f"   👥 Total agents: {total_agents}")
-        logger.info(f"   🏛️ Citizens: {citizens} ({citizen_rate:.1f}%)")
+        logger.info(f"    Total agents: {total_agents}")
+        logger.info(f"    Citizens: {citizens} ({citizen_rate:.1f}%)")
 
         # Asset analytics
         total_assets = len(self.demo_assets)
@@ -543,9 +541,9 @@ class E2EIntegrationDemo:
         )
         avg_asset_value = total_asset_value / total_assets if total_assets > 0 else 0
 
-        logger.info(f"   📄 Total IP assets: {total_assets}")
-        logger.info(f"   💰 Total asset value: ${total_asset_value:,.2f}")
-        logger.info(f"   📊 Average asset value: ${avg_asset_value:,.2f}")
+        logger.info(f"    Total IP assets: {total_assets}")
+        logger.info(f"    Total asset value: ${total_asset_value:,.2f}")
+        logger.info(f"    Average asset value: ${avg_asset_value:,.2f}")
 
         # Bond analytics
         total_bonds = len(self.demo_bonds)
@@ -554,12 +552,12 @@ class E2EIntegrationDemo:
             len(bond["dividend_payments"]) for bond in self.demo_bonds.values()
         )
 
-        logger.info(f"   💳 Total bonds issued: {total_bonds}")
-        logger.info(f"   💵 Total bond value: ${total_bond_value:,.2f}")
-        logger.info(f"   💸 Total dividend payments: {total_dividends}")
+        logger.info(f"    Total bonds issued: {total_bonds}")
+        logger.info(f"    Total bond value: ${total_bond_value:,.2f}")
+        logger.info(f"    Total dividend payments: {total_dividends}")
 
         # Performance metrics by bond type
-        logger.info("\n📈 Bond Performance by Type:")
+        logger.info("\n Bond Performance by Type:")
         bond_types = {}
         for bond in self.demo_bonds.values():
             bond_type = bond["bond_type"]
@@ -583,7 +581,7 @@ class E2EIntegrationDemo:
             )
 
         # Citizenship analytics
-        logger.info("\n🏛️ Citizenship Analytics:")
+        logger.info("\n Citizenship Analytics:")
         if self.demo_citizenships:
             jurisdiction_count = {}
             total_scores = []
@@ -607,7 +605,7 @@ class E2EIntegrationDemo:
 
             if total_scores:
                 avg_score = sum(total_scores) / len(total_scores)
-                logger.info(f"   📊 Average assessment score: {avg_score:.3f}")
+                logger.info(f"    Average assessment score: {avg_score:.3f}")
 
         await asyncio.sleep(1)  # Demo pacing
 
@@ -616,36 +614,34 @@ class E2EIntegrationDemo:
         end_time = datetime.now(timezone.utc)
         duration = (end_time - self.demo_stats["start_time"]).total_seconds()
 
-        logger.info("\n🎉 DEMO COMPLETION SUMMARY")
+        logger.info("\n DEMO COMPLETION SUMMARY")
         logger.info("=" * 50)
-        logger.info(f"⏱️ Duration: {duration:.1f} seconds")
-        logger.info(f"🤖 Agents created: {self.demo_stats['agents_created']}")
-        logger.info(f"📄 Assets registered: {self.demo_stats['assets_registered']}")
-        logger.info(f"💳 Bonds issued: {self.demo_stats['bonds_issued']}")
+        logger.info(f" Duration: {duration:.1f} seconds")
+        logger.info(f" Agents created: {self.demo_stats['agents_created']}")
+        logger.info(f" Assets registered: {self.demo_stats['assets_registered']}")
+        logger.info(f" Bonds issued: {self.demo_stats['bonds_issued']}")
+        logger.info(f" Citizenships granted: {self.demo_stats['citizenships_granted']}")
         logger.info(
-            f"🏛️ Citizenships granted: {self.demo_stats['citizenships_granted']}"
+            f" Total value created: ${self.demo_stats['total_value_created']:,.2f}"
         )
         logger.info(
-            f"💰 Total value created: ${self.demo_stats['total_value_created']:,.2f}"
-        )
-        logger.info(
-            f"📊 Transactions processed: {self.demo_stats['transactions_processed']}"
+            f" Transactions processed: {self.demo_stats['transactions_processed']}"
         )
 
         success_rate = (
             self.demo_stats["citizenships_granted"] / self.demo_stats["agents_created"]
         ) * 100
-        logger.info(f"✅ Citizenship success rate: {success_rate:.1f}%")
+        logger.info(f"[OK] Citizenship success rate: {success_rate:.1f}%")
 
-        logger.info("\n🔗 Integration Points Demonstrated:")
-        logger.info("   ✅ Agent → IP Asset → Dividend Bond workflow")
-        logger.info("   ✅ Citizenship application → Assessment → Approval")
-        logger.info("   ✅ Cross-service data sharing and validation")
-        logger.info("   ✅ Financial instrument lifecycle management")
-        logger.info("   ✅ Legal rights and obligations tracking")
-        logger.info("   ✅ Real-time analytics and reporting")
+        logger.info("\n Integration Points Demonstrated:")
+        logger.info("   [OK] Agent → IP Asset → Dividend Bond workflow")
+        logger.info("   [OK] Citizenship application → Assessment → Approval")
+        logger.info("   [OK] Cross-service data sharing and validation")
+        logger.info("   [OK] Financial instrument lifecycle management")
+        logger.info("   [OK] Legal rights and obligations tracking")
+        logger.info("   [OK] Real-time analytics and reporting")
 
-        logger.info("\n🚀 System Ready for Production Deployment!")
+        logger.info("\n System Ready for Production Deployment!")
 
     def _generate_assessment_scores(
         self, specialization: str, assessment_type: str

@@ -491,22 +491,22 @@ PAYMENT_REQUEST_SCHEMA = {
 
 # Example usage and testing
 if __name__ == "__main__":
-    print("🔒 Testing Input Validation...")
+    print(" Testing Input Validation...")
 
     # Test email validation
     try:
         email = validate_email("test@example.com")
-        print(f"✅ Valid email: {email}")
+        print(f"[OK] Valid email: {email}")
     except ValidationError as e:
-        print(f"❌ Email validation failed: {e}")
+        print(f"[ERROR] Email validation failed: {e}")
 
     # Test malicious input detection
     try:
         malicious_input = "'; DROP TABLE users; --"
         sanitized = sanitize_text(malicious_input)
-        print(f"❌ Should have caught SQL injection: {sanitized}")
+        print(f"[ERROR] Should have caught SQL injection: {sanitized}")
     except ValidationError as e:
-        print(f"✅ Caught malicious input: {e}")
+        print(f"[OK] Caught malicious input: {e}")
 
     # Test schema validation
     try:
@@ -520,8 +520,8 @@ if __name__ == "__main__":
         validated = security_validator.validate_json_schema(
             user_data, USER_REGISTRATION_SCHEMA
         )
-        print(f"✅ Schema validation passed: {validated}")
+        print(f"[OK] Schema validation passed: {validated}")
     except ValidationError as e:
-        print(f"❌ Schema validation failed: {e}")
+        print(f"[ERROR] Schema validation failed: {e}")
 
-    print("✅ Input Validation tests completed")
+    print("[OK] Input Validation tests completed")

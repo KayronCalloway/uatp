@@ -34,7 +34,7 @@ def make_auditable_decision_with_claude(task: str, max_tokens: int = 1024):
     print("=" * 60)
 
     # Get Claude's response
-    print("🤖 Asking Claude...")
+    print(" Asking Claude...")
     message = anthropic_client.messages.create(
         model="claude-3-5-sonnet-20241022",
         max_tokens=max_tokens,
@@ -45,7 +45,7 @@ def make_auditable_decision_with_claude(task: str, max_tokens: int = 1024):
     print(f"\nClaude's Response:\n{decision[:200]}...\n")
 
     # Certify with UATP
-    print("🔒 Certifying with UATP...")
+    print(" Certifying with UATP...")
     result = uatp_client.certify(
         task=task,
         decision=decision,
@@ -75,7 +75,7 @@ def make_auditable_decision_with_claude(task: str, max_tokens: int = 1024):
         },
     )
 
-    print("✅ Decision certified!")
+    print("[OK] Decision certified!")
     print(f"   Capsule ID: {result.capsule_id}")
     print(f"   Proof URL: {result.proof_url}")
     print(f"   Timestamp: {result.timestamp}")
@@ -94,14 +94,14 @@ if os.getenv("ANTHROPIC_API_KEY"):
         "Provide specific reasoning for your recommendation."
     )
 
-    print(f"\n💡 Proof available at: {proof}")
+    print(f"\n Proof available at: {proof}")
     print("   This proof can be shared with:")
     print("   - Your financial advisor")
     print("   - Compliance teams")
     print("   - Insurance companies")
     print("   - Regulators")
 else:
-    print("\n⚠️  ANTHROPIC_API_KEY not set. Skipping live example.")
+    print("\n[WARN]  ANTHROPIC_API_KEY not set. Skipping live example.")
     print("   Set it with: export ANTHROPIC_API_KEY='your-key-here'")
 
 
@@ -116,13 +116,13 @@ if os.getenv("ANTHROPIC_API_KEY"):
         "Should this patient seek emergency care, schedule an appointment, or use self-care?"
     )
 
-    print(f"\n💡 Proof available at: {proof}")
+    print(f"\n Proof available at: {proof}")
     print("   This proof provides:")
     print("   - Court-admissible evidence of AI reasoning")
     print("   - Audit trail for medical compliance")
     print("   - Insurance readiness for liability coverage")
 else:
-    print("\n⚠️  ANTHROPIC_API_KEY not set. Skipping live example.")
+    print("\n[WARN]  ANTHROPIC_API_KEY not set. Skipping live example.")
 
 
 # Example 3: Legal contract review
@@ -136,21 +136,21 @@ if os.getenv("ANTHROPIC_API_KEY"):
         "within a 100-mile radius covering any similar industry.' Is this reasonable?"
     )
 
-    print(f"\n💡 Proof available at: {proof}")
+    print(f"\n Proof available at: {proof}")
     print("   This proof is:")
     print("   - Daubert-compliant (admissible in court)")
     print("   - EU AI Act ready (conformity assessment)")
     print("   - Insurance-backed (actuarial data available)")
 else:
-    print("\n⚠️  ANTHROPIC_API_KEY not set. Skipping live example.")
+    print("\n[WARN]  ANTHROPIC_API_KEY not set. Skipping live example.")
 
 
 print("\n" + "=" * 60)
-print("✨ Integration Complete!")
+print(" Integration Complete!")
 print("=" * 60)
 print("\nEvery Claude decision is now:")
-print("  ✅ Cryptographically signed (Ed25519)")
-print("  ✅ Immutably stored")
-print("  ✅ Court-admissible")
-print("  ✅ Auditable")
-print("\nShip auditable AI with confidence! 🚀")
+print("  [OK] Cryptographically signed (Ed25519)")
+print("  [OK] Immutably stored")
+print("  [OK] Court-admissible")
+print("  [OK] Auditable")
+print("\nShip auditable AI with confidence! ")

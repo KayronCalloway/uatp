@@ -8,12 +8,13 @@ and builds user confidence.
 
 import asyncio
 import logging
-import psutil
 import time
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +166,7 @@ class SystemHealthMonitor:
             return
 
         self.monitoring_active = True
-        logger.info("🏥 Starting system health monitoring...")
+        logger.info(" Starting system health monitoring...")
 
         # Start monitoring tasks
         monitoring_tasks = [
@@ -185,7 +186,7 @@ class SystemHealthMonitor:
     async def stop_monitoring(self):
         """Stop health monitoring"""
         self.monitoring_active = False
-        logger.info("🏥 Stopping system health monitoring")
+        logger.info(" Stopping system health monitoring")
 
     async def get_system_health(self) -> SystemHealthReport:
         """Get current system health report"""
@@ -399,8 +400,8 @@ class SystemHealthMonitor:
         """Check AI integrations health"""
 
         try:
-            from ..integrations.openai_client import OpenAIClient
             from ..integrations.anthropic_client import AnthropicAttributionClient
+            from ..integrations.openai_client import OpenAIClient
 
             healthy_integrations = 0
             total_integrations = 2

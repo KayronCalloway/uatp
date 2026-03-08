@@ -6,16 +6,15 @@ Provides a unified interface that orchestrates all onboarding components
 for maximum simplicity and effectiveness.
 """
 
-import asyncio
 import logging
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, Callable
 from enum import Enum
-from dataclasses import dataclass, field, asdict
+from typing import Any, Callable, Dict, List, Optional
 
-from .setup_wizard import InteractiveSetupWizard
-from .integration_manager import IntegrationManager
 from .health_monitor import SystemHealthMonitor
+from .integration_manager import IntegrationManager
+from .setup_wizard import InteractiveSetupWizard
 from .support_assistant import SupportAssistant
 
 logger = logging.getLogger(__name__)
@@ -339,9 +338,9 @@ class OnboardingOrchestrator:
         if progress_dict.get("start_time"):
             progress_dict["start_time"] = progress.start_time.isoformat()
         if progress_dict.get("estimated_completion_time"):
-            progress_dict[
-                "estimated_completion_time"
-            ] = progress.estimated_completion_time.isoformat()
+            progress_dict["estimated_completion_time"] = (
+                progress.estimated_completion_time.isoformat()
+            )
 
         # Convert enums to values
         progress_dict["user_type"] = progress.user_type.value
@@ -362,27 +361,27 @@ class OnboardingOrchestrator:
         # Show personalized welcome based on user type
         welcome_messages = {
             UserType.CASUAL_USER: {
-                "title": "Welcome to UATP! 🚀",
+                "title": "Welcome to UATP! ",
                 "message": "Let's get you creating AI capsules in under 5 minutes. No technical knowledge required!",
                 "next_action": "Start Quick Setup",
             },
             UserType.DEVELOPER: {
-                "title": "Welcome, Developer! 👨‍💻",
+                "title": "Welcome, Developer! ‍",
                 "message": "Let's set up your UATP development environment with full attribution tracking.",
                 "next_action": "Analyze Dev Environment",
             },
             UserType.ENTERPRISE: {
-                "title": "Welcome to UATP Enterprise 🏢",
+                "title": "Welcome to UATP Enterprise ",
                 "message": "Setting up enterprise-grade AI trust infrastructure for your organization.",
                 "next_action": "Begin Security Assessment",
             },
             UserType.RESEARCHER: {
-                "title": "Welcome, Researcher! 🔬",
+                "title": "Welcome, Researcher! ",
                 "message": "Let's configure UATP for your research needs with full transparency and attribution.",
                 "next_action": "Configure Research Environment",
             },
             UserType.BUSINESS_USER: {
-                "title": "Welcome to UATP! 💼",
+                "title": "Welcome to UATP! ",
                 "message": "We'll have you using AI with full attribution in just a few minutes.",
                 "next_action": "Quick Business Setup",
             },

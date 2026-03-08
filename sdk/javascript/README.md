@@ -2,17 +2,17 @@
 
 > Official JavaScript/TypeScript SDK for UATP civilization-grade AI attribution infrastructure
 
-## 🚀 Features
+##  Features
 
 - **Simple Attribution Tracking** - Track AI interactions across platforms
-- **Real-time Economic Attribution** - Earn rewards for contributions  
+- **Real-time Economic Attribution** - Earn rewards for contributions
 - **Constitutional Governance** - Participate in democratic decision-making
 - **Zero-knowledge Privacy** - Privacy-preserving proofs and anonymization
 - **C2PA Content Credentials** - Industry-standard content authentication
 - **2025 Breakthrough Watermarking** - Meta Stable Signature, IMATAG, SynthID compatibility
 - **Global Federation** - Connect to planetary-scale coordination network
 
-## 📦 Installation
+##  Installation
 
 ```bash
 npm install @uatp/sdk
@@ -20,7 +20,7 @@ npm install @uatp/sdk
 yarn add @uatp/sdk
 ```
 
-## 🎯 Quick Start
+##  Quick Start
 
 ```typescript
 import { UATP } from '@uatp/sdk';
@@ -52,7 +52,7 @@ await client.participateInGovernance({
 });
 ```
 
-## 🛠️ Core Modules
+##  Core Modules
 
 ### Attribution Tracking
 
@@ -159,7 +159,7 @@ await client.federation.joinFederation({
 });
 ```
 
-## ⚙️ Configuration
+##  Configuration
 
 ```typescript
 const client = new UATP({
@@ -174,7 +174,7 @@ const client = new UATP({
 });
 ```
 
-## 📊 Event Handling
+##  Event Handling
 
 ```typescript
 // Listen for attribution events
@@ -193,7 +193,7 @@ client.on('rewards_retrieved', (event) => {
 });
 ```
 
-## 🔧 Advanced Usage
+##  Advanced Usage
 
 ### Custom HTTP Client Configuration
 
@@ -221,7 +221,7 @@ if (!support.supportsZeroKnowledge) {
 }
 ```
 
-## 🌐 Browser Support
+##  Browser Support
 
 The SDK works in both Node.js and browser environments:
 
@@ -230,25 +230,25 @@ The SDK works in both Node.js and browser environments:
 - **React Native**: Supported with appropriate polyfills
 - **Electron**: Fully supported
 
-## 📚 API Reference
+##  API Reference
 
 For complete API documentation, visit: [https://docs.uatp.org/sdk/javascript](https://docs.uatp.org/sdk/javascript)
 
-## 🤝 Contributing
+##  Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-## 📄 License
+##  License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
-- 📖 Documentation: [https://docs.uatp.org](https://docs.uatp.org)
-- 🐛 Issues: [GitHub Issues](https://github.com/uatp/sdk-javascript/issues)
-- 💬 Discord: [UATP Community](https://discord.gg/uatp)
-- 📧 Email: support@uatp.org
+-  Documentation: [https://docs.uatp.org](https://docs.uatp.org)
+-  Issues: [GitHub Issues](https://github.com/KayronCalloway/sdk-javascript/issues)
+-  Discord: [UATP Community](https://discord.gg/uatp)
+-  Email: Kayron@houseofcalloway.com
 
 ---
 
-**Powering the future of AI attribution and democratic governance** 🌟
+**Powering the future of AI attribution and democratic governance**

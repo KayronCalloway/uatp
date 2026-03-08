@@ -111,7 +111,7 @@ def render_validation_view(trace: ReasoningTrace, capsule_id: str):
         st.subheader("Issues Identified")
         for issue in validation_result.issues:
             severity = issue["severity"]
-            icon = "🔴" if severity == "error" else "🟡"
+            icon = "" if severity == "error" else ""
             st.markdown(f"{icon} **{severity.upper()}:** {issue['message']}")
     else:
         st.success("No issues found in the reasoning trace.")
@@ -119,7 +119,7 @@ def render_validation_view(trace: ReasoningTrace, capsule_id: str):
     if validation_result.suggestions:
         st.subheader("Improvement Suggestions")
         for suggestion in validation_result.suggestions:
-            st.markdown(f"💡 {suggestion}")
+            st.markdown(f" {suggestion}")
 
 
 def render_pattern_analysis(trace: ReasoningTrace, capsule_id: str):
@@ -158,7 +158,7 @@ def render_pattern_analysis(trace: ReasoningTrace, capsule_id: str):
     if "patterns" in analysis and analysis["patterns"]:
         st.markdown("### Detected Reasoning Patterns")
         for pattern in analysis["patterns"]:
-            st.markdown(f"✓ **{pattern.replace('_', ' ').title()}**")
+            st.markdown(f" **{pattern.replace('_', ' ').title()}**")
     else:
         st.info("No specific reasoning patterns detected.")
 
@@ -335,7 +335,7 @@ def render_comparison_view(
         common_patterns = comparison.get("common_patterns", [])
         if common_patterns:
             for pattern in common_patterns:
-                st.markdown(f"✓ {pattern.replace('_', ' ').title()}")
+                st.markdown(f" {pattern.replace('_', ' ').title()}")
         else:
             st.info("No common patterns found.")
 

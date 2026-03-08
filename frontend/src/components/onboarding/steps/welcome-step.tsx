@@ -14,35 +14,35 @@ interface WelcomeStepProps {
 const USER_TYPE_OPTIONS = [
   {
     type: UserType.CASUAL_USER,
-    icon: '👋',
+    icon: '',
     title: 'Just Getting Started',
     description: 'I want to try UATP with minimal setup (5 min)',
     benefits: ['Quick setup', 'Smart defaults', 'Guided experience'],
   },
   {
     type: UserType.DEVELOPER,
-    icon: '👨‍💻',
+    icon: '‍',
     title: 'Developer',
     description: 'I want to integrate UATP into my applications (10 min)',
     benefits: ['API access', 'Development tools', 'Code examples'],
   },
   {
     type: UserType.BUSINESS_USER,
-    icon: '💼',
+    icon: '',
     title: 'Business User',
     description: 'I need AI attribution for business use (7 min)',
     benefits: ['Business features', 'Team collaboration', 'Reporting'],
   },
   {
     type: UserType.RESEARCHER,
-    icon: '🔬',
+    icon: '',
     title: 'Researcher',
     description: 'I need transparent AI for research (10 min)',
     benefits: ['Research tools', 'Data transparency', 'Export features'],
   },
   {
     type: UserType.ENTERPRISE,
-    icon: '🏢',
+    icon: '',
     title: 'Enterprise',
     description: 'I need enterprise-grade AI governance (20 min)',
     benefits: ['Enterprise security', 'Compliance tools', 'Advanced governance'],
@@ -67,7 +67,7 @@ export function WelcomeStep({ onComplete, isLoading, error }: WelcomeStepProps) 
     };
 
     console.log('Starting onboarding with preferences:', preferences);
-    
+
     try {
       await actions.startOnboarding(preferences);
       console.log('Onboarding started successfully');
@@ -105,9 +105,9 @@ export function WelcomeStep({ onComplete, isLoading, error }: WelcomeStepProps) 
                 <label className="text-sm text-gray-700">Python experience:</label>
                 <select
                   className="ml-2 text-sm border rounded px-2 py-1"
-                  onChange={(e) => setAdditionalPreferences(prev => ({ 
-                    ...prev, 
-                    python_experience: e.target.value as 'beginner' | 'intermediate' | 'advanced' 
+                  onChange={(e) => setAdditionalPreferences(prev => ({
+                    ...prev,
+                    python_experience: e.target.value as 'beginner' | 'intermediate' | 'advanced'
                   }))}
                 >
                   <option value="beginner">Beginner</option>
@@ -128,9 +128,9 @@ export function WelcomeStep({ onComplete, isLoading, error }: WelcomeStepProps) 
                 <label className="text-sm text-gray-700">Organization size:</label>
                 <select
                   className="ml-2 text-sm border rounded px-2 py-1"
-                  onChange={(e) => setAdditionalPreferences(prev => ({ 
-                    ...prev, 
-                    organization_size: parseInt(e.target.value) 
+                  onChange={(e) => setAdditionalPreferences(prev => ({
+                    ...prev,
+                    organization_size: parseInt(e.target.value)
                   }))}
                 >
                   <option value="50">50-100 employees</option>
@@ -150,9 +150,9 @@ export function WelcomeStep({ onComplete, isLoading, error }: WelcomeStepProps) 
                 <label className="text-sm text-gray-700">Scalability needs:</label>
                 <select
                   className="ml-2 text-sm border rounded px-2 py-1"
-                  onChange={(e) => setAdditionalPreferences(prev => ({ 
-                    ...prev, 
-                    scalability_needs: e.target.value as 'low' | 'medium' | 'high' 
+                  onChange={(e) => setAdditionalPreferences(prev => ({
+                    ...prev,
+                    scalability_needs: e.target.value as 'low' | 'medium' | 'high'
                   }))}
                 >
                   <option value="medium">Medium</option>
@@ -192,7 +192,7 @@ export function WelcomeStep({ onComplete, isLoading, error }: WelcomeStepProps) 
       {/* Header */}
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Welcome to UATP! 🚀
+          Welcome to UATP!
         </h2>
         <p className="text-gray-600">
           Choose your experience level to get personalized setup that works best for you.
@@ -207,8 +207,8 @@ export function WelcomeStep({ onComplete, isLoading, error }: WelcomeStepProps) 
             className={`
               border-2 rounded-lg p-4 cursor-pointer transition-all duration-200
               hover:border-blue-300 hover:bg-blue-50
-              ${selectedUserType === option.type 
-                ? 'border-blue-500 bg-blue-50' 
+              ${selectedUserType === option.type
+                ? 'border-blue-500 bg-blue-50'
                 : 'border-gray-200 bg-white'
               }
             `}
@@ -221,8 +221,8 @@ export function WelcomeStep({ onComplete, isLoading, error }: WelcomeStepProps) 
                   <h3 className="font-semibold text-gray-900">{option.title}</h3>
                   <div className={`
                     w-5 h-5 rounded-full border-2 transition-colors
-                    ${selectedUserType === option.type 
-                      ? 'border-blue-500 bg-blue-500' 
+                    ${selectedUserType === option.type
+                      ? 'border-blue-500 bg-blue-500'
                       : 'border-gray-300'
                     }
                   `}>

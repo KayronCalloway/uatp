@@ -8,25 +8,25 @@
 **Root Cause**: The application uses FastAPI, but 39 route files are written for Quart (incompatible framework). Only 8 FastAPI-compatible routers are currently available and registered.
 
 **Current Status**:
-- ✅ **7 Routers Registered** (working)
-- ⚠️ **1 FastAPI Router Available** but not registered
-- ❌ **39 Quart Blueprints** require conversion to FastAPI before registration
+- [OK] **7 Routers Registered** (working)
+- [WARN] **1 FastAPI Router Available** but not registered
+- [ERROR] **39 Quart Blueprints** require conversion to FastAPI before registration
 
 ---
 
-## Currently Registered Routers (Working ✅)
+## Currently Registered Routers (Working [OK])
 
 These routers are registered in `app_factory.py` and fully functional:
 
 | Router | File | Status | Endpoints |
 |--------|------|--------|-----------|
-| auth | src/auth/auth_routes.py | ✅ Working | /auth/* |
-| constellations | src/api/constellations_routes.py | ✅ Working | /constellations/* |
-| capsules | src/api/capsules_fastapi_router.py | ✅ Working | /capsules, /capsules/{id}, /capsules/stats |
-| live_capture | src/api/live_capture_fastapi_router.py | ✅ Working | /live_capture/* |
-| trust | src/api/trust_fastapi_router.py | ✅ Working | /trust/metrics, /trust/* |
-| onboarding | src/api/onboarding_fastapi_router.py | ✅ Working | /onboarding/* |
-| insurance | src/insurance/api.py | ✅ Working | /insurance/* |
+| auth | src/auth/auth_routes.py | [OK] Working | /auth/* |
+| constellations | src/api/constellations_routes.py | [OK] Working | /constellations/* |
+| capsules | src/api/capsules_fastapi_router.py | [OK] Working | /capsules, /capsules/{id}, /capsules/stats |
+| live_capture | src/api/live_capture_fastapi_router.py | [OK] Working | /live_capture/* |
+| trust | src/api/trust_fastapi_router.py | [OK] Working | /trust/metrics, /trust/* |
+| onboarding | src/api/onboarding_fastapi_router.py | [OK] Working | /onboarding/* |
+| insurance | src/insurance/api.py | [OK] Working | /insurance/* |
 
 ---
 
@@ -42,7 +42,7 @@ These routers are FastAPI-compatible and can be registered immediately:
 
 ---
 
-## Quart Blueprints (Require Conversion ⚠️)
+## Quart Blueprints (Require Conversion [WARN])
 
 These 39 files use Quart framework and CANNOT be registered without conversion to FastAPI:
 
@@ -192,7 +192,7 @@ After each router is registered:
 
 ## Recommended Immediate Actions
 
-1. ✅ **Register enterprise_api** (5 minutes, immediate impact)
+1. [OK] **Register enterprise_api** (5 minutes, immediate impact)
 2. **Convert governance_routes.py** (first critical route with mock data already implemented)
 3. **Convert economics_routes.py** (second critical route with mock data)
 4. **Convert federation_routes.py** (third critical route with mock data)
@@ -210,9 +210,9 @@ After each router is registered:
 **Cannot be done**: Quart uses async Flask patterns with Blueprints, FastAPI uses Starlette with APIRouters. They are fundamentally incompatible ASGI frameworks.
 
 **Options**:
-1. ✅ Convert Quart → FastAPI (recommended, maintains single framework)
-2. ❌ Run separate Quart app (doubles infrastructure, confusing)
-3. ❌ Proxy Quart through FastAPI (overly complex, performance overhead)
+1. [OK] Convert Quart → FastAPI (recommended, maintains single framework)
+2. [ERROR] Run separate Quart app (doubles infrastructure, confusing)
+3. [ERROR] Proxy Quart through FastAPI (overly complex, performance overhead)
 
 ### FastAPI Conversion Benefits
 
@@ -228,7 +228,7 @@ After each router is registered:
 
 **Total API Files**: 63
 - **FastAPI-compatible**: 8 (13%)
-  - Already registered: 7 ✅
+  - Already registered: 7 [OK]
   - Not registered: 1 (enterprise_api.py)
 - **Quart-based**: 39 (62%)
   - High priority: 7

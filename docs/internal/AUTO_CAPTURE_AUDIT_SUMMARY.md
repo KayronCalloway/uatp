@@ -10,15 +10,15 @@
 **Finding**: Auto capture system has **excellent core** but **architectural sprawl**
 
 **Status:**
-- ✅ **Critical bugs FIXED immediately** (import paths, timezone)
-- 📋 **Comprehensive remediation plan created**
-- 📊 **Grade: C+ → path to A with 6-hour refactor**
+- [OK] **Critical bugs FIXED immediately** (import paths, timezone)
+-  **Comprehensive remediation plan created**
+-  **Grade: C+ → path to A with 6-hour refactor**
 
 ---
 
 ## What Was Found
 
-### The Good ✅
+### The Good [OK]
 
 **Production-Quality Core:**
 - 13 well-written modules in `src/live_capture/` (5,038 lines)
@@ -32,7 +32,7 @@
 - `rich_capture_integration.py` - Metadata enrichment (405 lines)
 - Platform hooks functional and actively used
 
-### The Bad ❌
+### The Bad [ERROR]
 
 **Architectural Sprawl:**
 - **79 total files** (way too many)
@@ -48,20 +48,20 @@
 - Inconsistent naming patterns
 - Unmaintained experimental code
 
-### The Critical 🚨
+### The Critical
 
 **Bugs Fixed Immediately:**
-1. ✅ **Import path bugs** - 4 files using `from live_capture.` (broken)
-2. ✅ **Timezone bug** - `claude_code_hook.py` using naive `datetime.now()`
+1. [OK] **Import path bugs** - 4 files using `from live_capture.` (broken)
+2. [OK] **Timezone bug** - `claude_code_hook.py` using naive `datetime.now()`
 
 **Still Need Attention:**
-3. ⚠️  **Duplicate processes** - 2 capture processes running (investigate overlap)
-4. ⚠️  **Code duplication** - 70% duplicate code across hooks (needs refactor)
-5. ⚠️  **File sprawl** - 44 experimental files need archiving
+3. [WARN]  **Duplicate processes** - 2 capture processes running (investigate overlap)
+4. [WARN]  **Code duplication** - 70% duplicate code across hooks (needs refactor)
+5. [WARN]  **File sprawl** - 44 experimental files need archiving
 
 ---
 
-## Critical Bugs - FIXED ✅
+## Critical Bugs - FIXED [OK]
 
 ### Bug #1: Import Path Errors (FIXED)
 
@@ -76,12 +76,12 @@ from live_capture.real_time_capsule_generator import ...
 ```bash
 $ python3 scripts/fix_capture_imports.py
 
-✅ Fixed 1 import(s) in openai_hook.py
-✅ Fixed 1 import(s) in cursor_hook.py
-✅ Fixed 1 import(s) in windsurf_hook.py
-✅ Fixed 1 import(s) in anthropic_hook.py
+[OK] Fixed 1 import(s) in openai_hook.py
+[OK] Fixed 1 import(s) in cursor_hook.py
+[OK] Fixed 1 import(s) in windsurf_hook.py
+[OK] Fixed 1 import(s) in anthropic_hook.py
 
-📊 Total imports fixed: 4
+ Total imports fixed: 4
 ```
 
 **Files Fixed:**
@@ -90,7 +90,7 @@ $ python3 scripts/fix_capture_imports.py
 - `src/live_capture/windsurf_hook.py`
 - `src/live_capture/anthropic_hook.py`
 
-**Status:** ✅ **ALL FIXED** - These files will now import correctly at runtime
+**Status:** [OK] **ALL FIXED** - These files will now import correctly at runtime
 
 ### Bug #2: Timezone Issue (FIXED)
 
@@ -105,10 +105,10 @@ $ python3 scripts/fix_capture_imports.py
 # FIXED:
 from src.utils.timezone_utils import utc_now
 
-"timestamp": utc_now().isoformat()  # Timezone-aware UTC ✅
+"timestamp": utc_now().isoformat()  # Timezone-aware UTC [OK]
 ```
 
-**Status:** ✅ **FIXED** - All timestamps now timezone-aware
+**Status:** [OK] **FIXED** - All timestamps now timezone-aware
 
 ---
 
@@ -118,13 +118,13 @@ from src.utils.timezone_utils import utc_now
 
 | Category | Count | Status | Action |
 |----------|-------|--------|--------|
-| **Production core** (`src/live_capture/`) | 13 | ✅ Good | Keep, maintain |
-| **API routes** (`src/api/*capture*`) | 3 | ✅ Good | Keep |
-| **Experimental root scripts** | 44 | ❌ Sprawl | Archive 39, keep 5 |
-| **Test files** (misplaced in root) | 10 | ⚠️  Wrong location | Move to `tests/` |
-| **Duplicate/obsolete** | 4 | ❌ Obsolete | Delete |
-| **Setup scripts** | 2 | ⚠️  Redundant | Keep 1 |
-| **Claude hooks** | 2 | ✅ Active | Keep |
+| **Production core** (`src/live_capture/`) | 13 | [OK] Good | Keep, maintain |
+| **API routes** (`src/api/*capture*`) | 3 | [OK] Good | Keep |
+| **Experimental root scripts** | 44 | [ERROR] Sprawl | Archive 39, keep 5 |
+| **Test files** (misplaced in root) | 10 | [WARN]  Wrong location | Move to `tests/` |
+| **Duplicate/obsolete** | 4 | [ERROR] Obsolete | Delete |
+| **Setup scripts** | 2 | [WARN]  Redundant | Keep 1 |
+| **Claude hooks** | 2 | [OK] Active | Keep |
 
 ### Code Duplication Analysis
 
@@ -178,7 +178,7 @@ PostgreSQL
 
 ## Recommendations (Prioritized)
 
-### Immediate (Done ✅)
+### Immediate (Done [OK])
 - [x] Fix import path bugs (4 files)
 - [x] Fix timezone bug (1 file)
 - [x] Create comprehensive remediation plan
@@ -206,9 +206,9 @@ PostgreSQL
 ## Files to Keep (13 Production Files)
 
 ### Core Modules (`src/live_capture/`):
-1. `claude_code_capture.py` - Main capture engine ⭐
-2. `real_time_capsule_generator.py` - Significance analysis ⭐
-3. `rich_capture_integration.py` - Metadata enrichment ⭐
+1. `claude_code_capture.py` - Main capture engine
+2. `real_time_capsule_generator.py` - Significance analysis
+3. `rich_capture_integration.py` - Metadata enrichment
 4. `openai_hook.py` - OpenAI integration
 5. `cursor_hook.py` - Cursor IDE support
 6. `windsurf_hook.py` - Windsurf IDE support
@@ -285,10 +285,10 @@ PostgreSQL
 | Metric | Status | Grade |
 |--------|--------|-------|
 | File count | 79 files (needs cleanup) | D |
-| Import bugs | ✅ 0 (all fixed) | A |
-| Timezone bugs | ✅ 0 (all fixed) | A |
+| Import bugs | [OK] 0 (all fixed) | A |
+| Timezone bugs | [OK] 0 (all fixed) | A |
 | Code duplication | 70% (needs refactor) | D |
-| Architecture docs | ✅ Created | A |
+| Architecture docs | [OK] Created | A |
 | Test organization | Needs work | D |
 | **Overall Grade** | Critical bugs fixed | **B-** |
 
@@ -329,10 +329,10 @@ PostgreSQL
 3. `scripts/fix_capture_imports.py` - Automated import fix script
 
 ### Fixes Applied:
-1. ✅ Fixed 4 import path bugs
-2. ✅ Fixed 1 timezone bug
-3. ✅ Created comprehensive architecture assessment
-4. ✅ Created detailed remediation roadmap
+1. [OK] Fixed 4 import path bugs
+2. [OK] Fixed 1 timezone bug
+3. [OK] Created comprehensive architecture assessment
+4. [OK] Created detailed remediation roadmap
 
 ---
 
@@ -351,13 +351,13 @@ PostgreSQL
 | **Result** | Bug returns | System improved forever |
 
 ### Principles Demonstrated:
-1. ✅ **Root cause analysis** - Found systemic issues, not just symptoms
-2. ✅ **Fix while analyzing** - Didn't just document, fixed critical bugs immediately
-3. ✅ **Comprehensive scope** - Audited entire system (79 files)
-4. ✅ **Prioritized actions** - Critical bugs first, then architecture
-5. ✅ **Prevention mindset** - Created remediation plan to prevent recurrence
-6. ✅ **Documentation** - Complete guides for team
-7. ✅ **Measurable outcomes** - Clear metrics (C+ → A path)
+1. [OK] **Root cause analysis** - Found systemic issues, not just symptoms
+2. [OK] **Fix while analyzing** - Didn't just document, fixed critical bugs immediately
+3. [OK] **Comprehensive scope** - Audited entire system (79 files)
+4. [OK] **Prioritized actions** - Critical bugs first, then architecture
+5. [OK] **Prevention mindset** - Created remediation plan to prevent recurrence
+6. [OK] **Documentation** - Complete guides for team
+7. [OK] **Measurable outcomes** - Clear metrics (C+ → A path)
 
 ---
 
@@ -396,11 +396,11 @@ ps aux | grep capture
 The auto capture system is **functional and well-designed at its core**, but suffers from **experimental sprawl and maintenance debt**.
 
 **What we accomplished:**
-1. ✅ Fixed critical bugs immediately (import paths, timezone)
-2. ✅ Comprehensive audit of 79 files
-3. ✅ Created detailed remediation plan (7 phases)
-4. ✅ Documented current architecture
-5. ✅ Established path from C+ to A
+1. [OK] Fixed critical bugs immediately (import paths, timezone)
+2. [OK] Comprehensive audit of 79 files
+3. [OK] Created detailed remediation plan (7 phases)
+4. [OK] Documented current architecture
+5. [OK] Established path from C+ to A
 
 **The world-class difference:**
 - Didn't just fix the bug you asked about

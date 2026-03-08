@@ -22,7 +22,7 @@ from engine.specialized_engine import SpecializedCapsuleEngine
 def demo_pragmatic_attribution():
     """Demonstrate the pragmatic attribution system."""
 
-    print("🚀 UATP Pragmatic Attribution System Demo")
+    print(" UATP Pragmatic Attribution System Demo")
     print("=" * 50)
 
     # Initialize the engines
@@ -32,13 +32,13 @@ def demo_pragmatic_attribution():
 
     economic_engine = UatpEconomicEngine(base_engine)
 
-    print("📊 Initial State:")
+    print(" Initial State:")
     print(f"Commons Fund: ${economic_engine.commons_fund_balance:.2f}")
     print(f"UBA Percentage: {economic_engine.uba_percentage * 100}%")
     print()
 
     # Register some historical conversations
-    print("📝 Registering historical conversations...")
+    print(" Registering historical conversations...")
 
     # Alice's conversation from 2 years ago (will have temporal decay)
     alice_conv_time = datetime.utcnow() - timedelta(days=730)  # 2 years ago
@@ -70,11 +70,11 @@ def demo_pragmatic_attribution():
         metadata={"topic": "economics", "quality": "medium"},
     )
 
-    print(f"✅ Registered {len(economic_engine.conversation_registry)} conversations")
+    print(f"[OK] Registered {len(economic_engine.conversation_registry)} conversations")
     print()
 
     # Simulate AI generating value that references these conversations
-    print("🤖 AI generates valuable content...")
+    print(" AI generates valuable content...")
 
     ai_output = """
     The key to fair economic attribution is implementing a system where
@@ -87,18 +87,18 @@ def demo_pragmatic_attribution():
 
     value_generated = 1000.0  # $1000 worth of economic value
 
-    print(f"💰 AI Output Value: ${value_generated}")
-    print("🧠 Content relates to attribution and economic distribution")
+    print(f" AI Output Value: ${value_generated}")
+    print(" Content relates to attribution and economic distribution")
     print()
 
     # Perform pragmatic attribution
-    print("🔍 Performing pragmatic attribution analysis...")
+    print(" Performing pragmatic attribution analysis...")
 
     attribution_results = economic_engine.attribute_ai_output(
         ai_output, value_generated
     )
 
-    print("📈 Attribution Analysis Results:")
+    print(" Attribution Analysis Results:")
     for i, result in enumerate(attribution_results[:3]):  # Show top 3
         print(f"  {i+1}. {result.source_id}: {result.confidence:.3f} confidence")
         print(
@@ -112,7 +112,7 @@ def demo_pragmatic_attribution():
         attribution_results, value_generated
     )
 
-    print("💸 Pragmatic Distribution Results:")
+    print(" Pragmatic Distribution Results:")
     print(
         f"  Direct Attributions: ${sum(distribution.direct_attributions.values()):.2f}"
     )
@@ -140,13 +140,13 @@ def demo_pragmatic_attribution():
         context={"domain": "economics", "type": "analysis"},
     )
 
-    print("📦 Created attribution payment capsule:")
+    print(" Created attribution payment capsule:")
     print(f"  Capsule ID: {capsule.capsule_id}")
     print(f"  Transaction Type: {capsule.economic_event_type}")
     print()
 
     # Show updated economic state
-    print("📊 Updated Economic State:")
+    print(" Updated Economic State:")
     summary = economic_engine.get_economic_summary()
 
     print("  Agent Balances:")
@@ -166,7 +166,7 @@ def demo_pragmatic_attribution():
     print()
 
     # Demonstrate commons fund distribution (Universal Basic Attribution)
-    print("🌍 Demonstrating Universal Basic Attribution...")
+    print(" Demonstrating Universal Basic Attribution...")
 
     if summary["commons_fund_balance"] > 0:
         # Simple equal distribution to all participants
@@ -181,7 +181,7 @@ def demo_pragmatic_attribution():
             distribution_reason="Monthly Universal Basic Attribution distribution",
         )
 
-        print("✅ Distributed Universal Basic Attribution")
+        print("[OK] Distributed Universal Basic Attribution")
         print(f"  Capsule ID: {uba_capsule.capsule_id}")
 
         # Show final state
@@ -192,14 +192,14 @@ def demo_pragmatic_attribution():
         print(f"  Final Commons Fund: ${final_summary['commons_fund_balance']:.2f}")
 
     print()
-    print("🎯 Key Insights Demonstrated:")
-    print("  1. ✅ High-confidence attributions → direct compensation")
-    print("  2. ✅ Low-confidence/unattributable → commons fund")
-    print("  3. ✅ Temporal decay value → commons fund (not lost)")
-    print("  4. ✅ 15% Universal Basic Attribution to global commons")
-    print("  5. ✅ Pragmatic approach: work with what we can attribute")
+    print(" Key Insights Demonstrated:")
+    print("  1. [OK] High-confidence attributions → direct compensation")
+    print("  2. [OK] Low-confidence/unattributable → commons fund")
+    print("  3. [OK] Temporal decay value → commons fund (not lost)")
+    print("  4. [OK] 15% Universal Basic Attribution to global commons")
+    print("  5. [OK] Pragmatic approach: work with what we can attribute")
     print()
-    print("🚀 The system successfully implements the core principle:")
+    print(" The system successfully implements the core principle:")
     print("   'What we can attribute we do, what we can't goes to")
     print("    general fund until we can'")
 

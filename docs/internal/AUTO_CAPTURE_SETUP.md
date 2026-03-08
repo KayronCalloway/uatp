@@ -24,10 +24,10 @@ cd /Users/kay/uatp-capsule-engine
 ```
 
 **That's it!** The service will now:
-- ✅ Run continuously in the background
-- ✅ Start automatically on system boot
-- ✅ Restart automatically if it crashes
-- ✅ Capture all Claude Code sessions as capsules
+- [OK] Run continuously in the background
+- [OK] Start automatically on system boot
+- [OK] Restart automatically if it crashes
+- [OK] Capture all Claude Code sessions as capsules
 
 ---
 

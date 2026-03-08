@@ -21,37 +21,37 @@ interface QualityDetailsModalProps {
 const DIMENSION_INFO = {
   completeness: {
     label: "Completeness",
-    icon: "✓",
+    icon: "",
     description: "Are all necessary components present?",
     weight: 25,
   },
   coherence: {
     label: "Coherence",
-    icon: "🔗",
+    icon: "",
     description: "Does the reasoning flow logically?",
     weight: 20,
   },
   evidence_quality: {
     label: "Evidence Quality",
-    icon: "📊",
+    icon: "",
     description: "How strong is the supporting evidence?",
     weight: 20,
   },
   logical_validity: {
     label: "Logical Validity",
-    icon: "⚖️",
+    icon: "",
     description: "Are the logical inferences sound?",
     weight: 20,
   },
   bias_detection: {
     label: "Bias Detection",
-    icon: "👁️",
+    icon: "️",
     description: "Are potential biases identified?",
     weight: 10,
   },
   clarity: {
     label: "Clarity",
-    icon: "💡",
+    icon: "",
     description: "Is the reasoning clear and understandable?",
     weight: 5,
   },
@@ -290,7 +290,7 @@ function DimensionScores({ assessment }: { assessment: any }) {
             <div key={dimension} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">{info?.icon || "📊"}</span>
+                  <span className="text-lg">{info?.icon || ""}</span>
                   <span className="text-sm font-medium text-gray-700">
                     {info?.label || dimension}
                   </span>

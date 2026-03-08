@@ -132,7 +132,7 @@ async def register():
         authenticator = get_authenticator()
         user = authenticator.create_user(username, email, password, roles)
 
-        logger.info(f"🆕 User registered: {username}")
+        logger.info(f" User registered: {username}")
 
         return (
             jsonify(
@@ -183,7 +183,7 @@ async def login():
         access_token = authenticator.generate_access_token(user)
         refresh_token = authenticator.generate_refresh_token(user)
 
-        logger.info(f"🔓 User logged in: {username}")
+        logger.info(f" User logged in: {username}")
 
         return (
             jsonify(
@@ -231,7 +231,7 @@ async def refresh_token():
         if not new_access_token:
             raise Unauthorized("Invalid or expired refresh token")
 
-        logger.info("🔄 Token refreshed")
+        logger.info(" Token refreshed")
 
         return (
             jsonify(
@@ -263,7 +263,7 @@ async def logout():
             authenticator = get_authenticator()
             authenticator.revoke_refresh_token(refresh_token)
 
-        logger.info(f"🚪 User logged out: {g.current_user.username}")
+        logger.info(f" User logged out: {g.current_user.username}")
 
         return jsonify({"message": "Logout successful"}), 200
 
@@ -337,7 +337,7 @@ async def add_user_role(username: str):
         if not success:
             raise BadRequest("User not found")
 
-        logger.info(f"🎭 Role '{role}' added to user: {username}")
+        logger.info(f" Role '{role}' added to user: {username}")
 
         return jsonify({"message": f"Role '{role}' added to user '{username}'"}), 200
 
@@ -367,7 +367,7 @@ async def remove_user_role(username: str):
         if not success:
             raise BadRequest("User not found")
 
-        logger.info(f"🎭 Role '{role}' removed from user: {username}")
+        logger.info(f" Role '{role}' removed from user: {username}")
 
         return (
             jsonify({"message": f"Role '{role}' removed from user '{username}'"}),
@@ -392,7 +392,7 @@ async def activate_user(username: str):
         if not success:
             raise BadRequest("User not found")
 
-        logger.info(f"✅ User activated: {username}")
+        logger.info(f"[OK] User activated: {username}")
 
         return jsonify({"message": f"User '{username}' activated"}), 200
 
@@ -414,7 +414,7 @@ async def deactivate_user(username: str):
         if not success:
             raise BadRequest("User not found")
 
-        logger.info(f"🚫 User deactivated: {username}")
+        logger.info(f" User deactivated: {username}")
 
         return jsonify({"message": f"User '{username}' deactivated"}), 200
 
@@ -485,11 +485,11 @@ async def handle_internal_error(e):
 async def main():
     """Test the authentication API."""
 
-    print("🔐 Testing Authentication API")
+    print(" Testing Authentication API")
     print("=" * 40)
 
     # Start the server in test mode
-    logger.info("🚀 Starting authentication API server...")
+    logger.info(" Starting authentication API server...")
 
     # Create a test admin user
     authenticator = get_authenticator()
@@ -497,7 +497,7 @@ async def main():
         admin_user = authenticator.create_user(
             "admin", "admin@uatp.com", "admin123", ["user", "admin"]
         )
-        logger.info(f"✅ Created admin user: {admin_user.username}")
+        logger.info(f"[OK] Created admin user: {admin_user.username}")
     except ValueError:
         logger.info("Admin user already exists")
 

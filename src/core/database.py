@@ -163,9 +163,9 @@ class SQLAlchemyDB:
                 del params[key]
 
         # Debug logging to trace SQL conversion
-        logger.info(f"🔍 DATABASE FETCH - Original query: {query[:200]}...")
-        logger.info(f"🔍 DATABASE FETCH - Converted query: {converted_query[:200]}...")
-        logger.info(f"🔍 DATABASE FETCH - Params: {params}")
+        logger.info(f" DATABASE FETCH - Original query: {query[:200]}...")
+        logger.info(f" DATABASE FETCH - Converted query: {converted_query[:200]}...")
+        logger.info(f" DATABASE FETCH - Params: {params}")
 
         async with self.engine.connect() as conn:
             result = await conn.execute(text(converted_query), params)
@@ -175,7 +175,7 @@ class SQLAlchemyDB:
                 # Convert Row to dict
                 row_dict = dict(row._mapping)
                 rows.append(row_dict)
-            logger.info(f"🔍 DATABASE FETCH - Retrieved {len(rows)} rows")
+            logger.info(f" DATABASE FETCH - Retrieved {len(rows)} rows")
             return rows
 
 

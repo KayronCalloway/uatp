@@ -99,7 +99,7 @@ def _derive_key_password() -> bytes:
     derived = hashlib.pbkdf2_hmac("sha256", combined, b"uatp-v7-salt", 100000)
 
     logger.warning(
-        "⚠️ Using derived key password. Set UATP_KEY_PASSWORD for production."
+        "[WARN] Using derived key password. Set UATP_KEY_PASSWORD for production."
     )
     return derived
 
@@ -133,7 +133,7 @@ class UATPCryptoV7:
         is_production = os.getenv("UATP_ENV") == "production"
         if is_production and not PQ_AVAILABLE:
             logger.critical(
-                "🚨 SECURITY FAILURE: Post-quantum crypto required in production but liboqs not available"
+                " SECURITY FAILURE: Post-quantum crypto required in production but liboqs not available"
             )
             raise RuntimeError(
                 "CRITICAL: Post-quantum cryptography (liboqs) is required in production. "
@@ -143,14 +143,14 @@ class UATPCryptoV7:
         # In production, force PQ enabled
         if is_production:
             self.enable_pq = True
-            logger.info("🔐 Production mode: Post-quantum signatures ENFORCED")
+            logger.info(" Production mode: Post-quantum signatures ENFORCED")
         else:
             self.enable_pq = enable_pq and PQ_AVAILABLE
 
         # Check Ed25519 availability
         if not ED25519_AVAILABLE:
             logger.error(
-                "❌ cryptography library not installed. Ed25519 signing disabled."
+                "[ERROR] cryptography library not installed. Ed25519 signing disabled."
             )
             logger.error("   Install: pip install cryptography")
             self.enabled = False
@@ -166,15 +166,15 @@ class UATPCryptoV7:
         self._verify_key_permissions()
 
         if self.enable_pq:
-            logger.info("🔐 Post-quantum signatures enabled (ML-DSA-65 / FIPS 204)")
+            logger.info(" Post-quantum signatures enabled (ML-DSA-65 / FIPS 204)")
 
-        logger.info(f"🔐 UATP v7 Crypto initialized for signer: {self.signer_id}")
+        logger.info(f" UATP v7 Crypto initialized for signer: {self.signer_id}")
 
     def _ensure_keys_exist(self) -> None:
         """Generate Ed25519 and ML-DSA-65 keypairs if they don't exist. Uses encrypted storage."""
         if not self.key_dir.exists():
             self.key_dir.mkdir(parents=True, exist_ok=True)
-            logger.info(f"📁 Created key directory: {self.key_dir}")
+            logger.info(f" Created key directory: {self.key_dir}")
 
         # Ed25519 keys - check encrypted first, then legacy
         ed25519_priv_enc = self.key_dir / "ed25519_private.pem.enc"
@@ -197,7 +197,7 @@ class UATPCryptoV7:
         self._ed25519_pub_path = ed25519_pub
 
         if not self._ed25519_priv_path.exists() or not ed25519_pub.exists():
-            logger.info("🔑 Generating Ed25519 keypair with encrypted storage...")
+            logger.info(" Generating Ed25519 keypair with encrypted storage...")
             private_key = ed25519.Ed25519PrivateKey.generate()
             public_key = private_key.public_key()
 
@@ -231,7 +231,7 @@ class UATPCryptoV7:
             except (OSError, AttributeError):
                 pass
 
-            logger.info(f"✅ Ed25519 encrypted keys saved to {self.key_dir}")
+            logger.info(f"[OK] Ed25519 encrypted keys saved to {self.key_dir}")
 
         # ML-DSA-65 keys (post-quantum, FIPS 204) - encrypted storage
         # Also check for legacy Dilithium3 keys and migrate them
@@ -257,7 +257,7 @@ class UATPCryptoV7:
                 # Legacy Dilithium3 keys exist - need to generate new ML-DSA-65 keys
                 # (ML-DSA-65 is the standardized version, keys are not interchangeable)
                 logger.info(
-                    "🔄 Found legacy Dilithium3 keys, generating new ML-DSA-65 keys..."
+                    " Found legacy Dilithium3 keys, generating new ML-DSA-65 keys..."
                 )
                 self._pq_priv_path = pq_priv_enc
                 self._pq_encrypted = True
@@ -269,7 +269,7 @@ class UATPCryptoV7:
 
             if not self._pq_priv_path.exists() or not pq_pub.exists():
                 logger.info(
-                    "🔑 Generating ML-DSA-65 (FIPS 204) keypair with encrypted storage..."
+                    " Generating ML-DSA-65 (FIPS 204) keypair with encrypted storage..."
                 )
                 with oqs.Signature("ML-DSA-65") as sig:
                     public_key = sig.generate_keypair()
@@ -289,7 +289,7 @@ class UATPCryptoV7:
                     except (OSError, AttributeError):
                         pass
 
-                logger.info(f"✅ ML-DSA-65 encrypted keys saved to {self.key_dir}")
+                logger.info(f"[OK] ML-DSA-65 encrypted keys saved to {self.key_dir}")
 
     def _encrypt_binary_key(self, key_data: bytes) -> bytes:
         """Encrypt binary key data using AES-256-GCM."""
@@ -327,7 +327,7 @@ class UATPCryptoV7:
     def _migrate_ed25519_to_encrypted(self, old_path: Path, new_path: Path) -> None:
         """Migrate an unencrypted Ed25519 private key to encrypted storage."""
         try:
-            logger.info("🔄 Migrating Ed25519 key to encrypted storage...")
+            logger.info(" Migrating Ed25519 key to encrypted storage...")
 
             # Load unencrypted key
             with open(old_path, "rb") as f:
@@ -361,16 +361,16 @@ class UATPCryptoV7:
                 f.write(os.urandom(1024))
             old_path.unlink()
 
-            logger.info("✅ Ed25519 key migration complete.")
+            logger.info("[OK] Ed25519 key migration complete.")
 
         except Exception as e:
-            logger.error(f"❌ Ed25519 key migration failed: {e}")
+            logger.error(f"[ERROR] Ed25519 key migration failed: {e}")
             raise
 
     def _migrate_pq_to_encrypted(self, old_path: Path, new_path: Path) -> None:
         """Migrate an unencrypted ML-DSA-65 private key to encrypted storage."""
         try:
-            logger.info("🔄 Migrating ML-DSA-65 key to encrypted storage...")
+            logger.info(" Migrating ML-DSA-65 key to encrypted storage...")
 
             # Load unencrypted key
             with open(old_path, "rb") as f:
@@ -392,10 +392,10 @@ class UATPCryptoV7:
                 f.write(os.urandom(len(private_key)))
             old_path.unlink()
 
-            logger.info("✅ ML-DSA-65 key migration complete.")
+            logger.info("[OK] ML-DSA-65 key migration complete.")
 
         except Exception as e:
-            logger.error(f"❌ ML-DSA-65 key migration failed: {e}")
+            logger.error(f"[ERROR] ML-DSA-65 key migration failed: {e}")
             raise
 
     def _load_keys(self) -> None:
@@ -410,7 +410,7 @@ class UATPCryptoV7:
                 )
         except TypeError:
             # Key might be unencrypted if migration failed
-            logger.warning("⚠️ Attempting to load Ed25519 key without password...")
+            logger.warning("[WARN] Attempting to load Ed25519 key without password...")
             with open(self._ed25519_priv_path, "rb") as f:
                 self.ed25519_private = serialization.load_pem_private_key(
                     f.read(), password=None
@@ -419,7 +419,7 @@ class UATPCryptoV7:
         with open(self._ed25519_pub_path, "rb") as f:
             self.ed25519_public = serialization.load_pem_public_key(f.read())
 
-        logger.info("🔐 Ed25519 keys loaded successfully")
+        logger.info(" Ed25519 keys loaded successfully")
 
         # Load ML-DSA-65 keys (if enabled)
         if self.enable_pq:
@@ -433,7 +433,7 @@ class UATPCryptoV7:
                     else:
                         self.ml_dsa_65_private = encrypted_data
             except Exception as e:
-                logger.warning(f"⚠️ ML-DSA-65 private key load failed: {e}")
+                logger.warning(f"[WARN] ML-DSA-65 private key load failed: {e}")
                 # Try loading as unencrypted
                 with open(self._pq_priv_path, "rb") as f:
                     self.ml_dsa_65_private = f.read()
@@ -441,7 +441,7 @@ class UATPCryptoV7:
             with open(self._pq_pub_path, "rb") as f:
                 self.ml_dsa_65_public = f.read()
 
-            logger.info("🔐 ML-DSA-65 keys loaded successfully")
+            logger.info(" ML-DSA-65 keys loaded successfully")
 
     def _verify_key_permissions(self) -> None:
         """
@@ -480,7 +480,7 @@ class UATPCryptoV7:
 
         if insecure_keys:
             for key_path, perms in insecure_keys:
-                msg = f"🚨 INSECURE KEY PERMISSIONS: {key_path} has permissions {perms} (should be 0o600)"
+                msg = f" INSECURE KEY PERMISSIONS: {key_path} has permissions {perms} (should be 0o600)"
 
                 if is_production:
                     logger.critical(msg)
@@ -489,7 +489,7 @@ class UATPCryptoV7:
                     # Try to fix permissions in development
                     try:
                         os.chmod(key_path, 0o600)
-                        logger.info(f"✅ Fixed permissions on {key_path}")
+                        logger.info(f"[OK] Fixed permissions on {key_path}")
                     except OSError as e:
                         logger.warning(f"Could not fix permissions: {e}")
 
@@ -681,7 +681,7 @@ class UATPCryptoV7:
         except ValueError as e:
             return False, f"Hex decode error: {e}"
         except Exception as e:
-            logger.error(f"❌ Post-quantum verification error: {e}", exc_info=True)
+            logger.error(f"[ERROR] Post-quantum verification error: {e}", exc_info=True)
             return False, f"Verification error: {e}"
 
     def _get_public_key_hex(self) -> str:
@@ -717,10 +717,10 @@ class UATPCryptoV7:
 
             if timestamp.get("trusted"):
                 logger.info(
-                    f"🕐 Got trusted timestamp from {timestamp.get('tsa_url', 'TSA')}"
+                    f" Got trusted timestamp from {timestamp.get('tsa_url', 'TSA')}"
                 )
             else:
-                logger.debug("🕐 Using local timestamp (not independently verifiable)")
+                logger.debug(" Using local timestamp (not independently verifiable)")
 
             return timestamp
 
@@ -756,7 +756,9 @@ class UATPCryptoV7:
             }
         """
         if not self.enabled:
-            logger.warning("⚠️ Crypto not enabled - returning placeholder verification")
+            logger.warning(
+                "[WARN] Crypto not enabled - returning placeholder verification"
+            )
             return self._create_placeholder_verification()
 
         try:
@@ -785,12 +787,12 @@ class UATPCryptoV7:
             }
 
             logger.debug(
-                f"✅ Signed capsule {capsule_data.get('capsule_id', 'unknown')}"
+                f"[OK] Signed capsule {capsule_data.get('capsule_id', 'unknown')}"
             )
             return verification
 
         except Exception as e:
-            logger.error(f"❌ Signing failed: {e}", exc_info=True)
+            logger.error(f"[ERROR] Signing failed: {e}", exc_info=True)
             return self._create_placeholder_verification()
 
     def verify_capsule(
@@ -861,12 +863,12 @@ class UATPCryptoV7:
                     if pq_signature.startswith("ml-dsa-65:")
                     else "Dilithium3"
                 )
-                logger.info(f"✅ {algo} post-quantum signature verified")
+                logger.info(f"[OK] {algo} post-quantum signature verified")
 
             return True, "Signature valid"
 
         except Exception as e:
-            logger.error(f"❌ Verification failed: {e}", exc_info=True)
+            logger.error(f"[ERROR] Verification failed: {e}", exc_info=True)
             return False, f"Verification error: {e}"
 
     def _create_placeholder_verification(self) -> Dict[str, Any]:

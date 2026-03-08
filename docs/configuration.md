@@ -128,10 +128,10 @@ def validate_config():
     missing = [var for var in required if not os.getenv(var)]
 
     if missing:
-        print(f"❌ Missing required variables: {missing}")
+        print(f"[ERROR] Missing required variables: {missing}")
         return False
 
-    print("✅ All required configuration present")
+    print("[OK] All required configuration present")
     return True
 
 if __name__ == "__main__":

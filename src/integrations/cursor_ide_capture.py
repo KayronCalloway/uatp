@@ -4,30 +4,26 @@ UATP Cursor IDE Integration
 Captures development workflow, AI-assisted coding sessions, and decision traces from Cursor IDE
 """
 
-import os
-import sys
-import json
 import asyncio
-import logging
-import sqlite3
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
-from pathlib import Path
-import subprocess
-import time
 import hashlib
+import json
+import logging
+import os
+import sqlite3
+import sys
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.live_capture.claude_code_capture import (
-    ConversationSession,
-    ConversationMessage,
-    capture_system,
-)
+from src.capsule_schema import CapsuleStatus
 from src.engine.capsule_engine import CapsuleEngine
-from src.capsule_schema import CapsuleStatus, CapsuleType
+from src.live_capture.claude_code_capture import (
+    ConversationMessage,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -92,7 +88,7 @@ class CursorIDECapture:
         )
         self.monitoring_active = False
         self.init_database()
-        logger.info("🎯 Cursor IDE Capture System initialized")
+        logger.info(" Cursor IDE Capture System initialized")
 
     def init_database(self):
         """Initialize the Cursor IDE capture database."""
@@ -139,9 +135,9 @@ class CursorIDECapture:
 
             conn.commit()
             conn.close()
-            logger.info("✅ Cursor IDE database initialized successfully")
+            logger.info("[OK] Cursor IDE database initialized successfully")
         except Exception as e:
-            logger.error(f"❌ Cursor IDE database initialization failed: {e}")
+            logger.error(f"[ERROR] Cursor IDE database initialization failed: {e}")
 
     def generate_session_id(self, project_path: str) -> str:
         """Generate a unique session ID for Cursor IDE session."""
@@ -169,7 +165,7 @@ class CursorIDECapture:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO cursor_sessions 
+                INSERT INTO cursor_sessions
                 (session_id, user_id, project_path, start_time)
                 VALUES (?, ?, ?, ?)
             """,
@@ -178,10 +174,10 @@ class CursorIDECapture:
             conn.commit()
             conn.close()
             logger.info(
-                f"🎯 Started Cursor session: {session_id} for project: {Path(project_path).name}"
+                f" Started Cursor session: {session_id} for project: {Path(project_path).name}"
             )
         except Exception as e:
-            logger.error(f"❌ Failed to save Cursor session: {e}")
+            logger.error(f"[ERROR] Failed to save Cursor session: {e}")
 
         return session_id
 
@@ -194,7 +190,7 @@ class CursorIDECapture:
     ) -> str:
         """Capture AI interaction within Cursor IDE."""
         if session_id not in self.active_sessions:
-            logger.warning(f"⚠️ Cursor session {session_id} not found")
+            logger.warning(f"[WARN] Cursor session {session_id} not found")
             return None
 
         session = self.active_sessions[session_id]
@@ -247,7 +243,7 @@ class CursorIDECapture:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO cursor_events 
+                INSERT INTO cursor_events
                 (event_id, session_id, event_type, timestamp, user_id, content, metadata, significance_score)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -264,9 +260,9 @@ class CursorIDECapture:
             )
             conn.commit()
             conn.close()
-            logger.info(f"🤖 Captured AI interaction in Cursor session {session_id}")
+            logger.info(f" Captured AI interaction in Cursor session {session_id}")
         except Exception as e:
-            logger.error(f"❌ Failed to save AI interaction: {e}")
+            logger.error(f"[ERROR] Failed to save AI interaction: {e}")
 
         return event_id
 
@@ -280,7 +276,7 @@ class CursorIDECapture:
     ) -> str:
         """Capture code changes in Cursor IDE."""
         if session_id not in self.active_sessions:
-            logger.warning(f"⚠️ Cursor session {session_id} not found")
+            logger.warning(f"[WARN] Cursor session {session_id} not found")
             return None
 
         session = self.active_sessions[session_id]
@@ -317,7 +313,7 @@ class CursorIDECapture:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO cursor_events 
+                INSERT INTO cursor_events
                 (event_id, session_id, event_type, timestamp, user_id, content, metadata, significance_score)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -334,9 +330,9 @@ class CursorIDECapture:
             )
             conn.commit()
             conn.close()
-            logger.info(f"📝 Captured code change in {Path(file_path).name}")
+            logger.info(f" Captured code change in {Path(file_path).name}")
         except Exception as e:
-            logger.error(f"❌ Failed to save code change: {e}")
+            logger.error(f"[ERROR] Failed to save code change: {e}")
 
         return event_id
 
@@ -451,7 +447,7 @@ class CursorIDECapture:
     async def end_cursor_session(self, session_id: str) -> Optional[CursorSession]:
         """End a Cursor IDE session and calculate final metrics."""
         if session_id not in self.active_sessions:
-            logger.warning(f"⚠️ Cursor session {session_id} not found")
+            logger.warning(f"[WARN] Cursor session {session_id} not found")
             return None
 
         session = self.active_sessions[session_id]
@@ -465,7 +461,7 @@ class CursorIDECapture:
             cursor.execute(
                 """
                 UPDATE cursor_sessions SET
-                end_time = ?, event_count = ?, ai_interaction_count = ?, 
+                end_time = ?, event_count = ?, ai_interaction_count = ?,
                 files_modified_count = ?, significance_score = ?
                 WHERE session_id = ?
             """,
@@ -481,10 +477,10 @@ class CursorIDECapture:
             conn.commit()
             conn.close()
             logger.info(
-                f"🏁 Cursor session {session_id} ended. Significance: {session.significance_score:.2f}"
+                f" Cursor session {session_id} ended. Significance: {session.significance_score:.2f}"
             )
         except Exception as e:
-            logger.error(f"❌ Failed to update Cursor session: {e}")
+            logger.error(f"[ERROR] Failed to update Cursor session: {e}")
 
         # Remove from active sessions
         completed_session = self.active_sessions.pop(session_id)
@@ -514,7 +510,7 @@ class CursorIDECapture:
         """Create a UATP capsule from a Cursor IDE session."""
         if not await self.should_create_capsule(session):
             logger.info(
-                f"📝 Cursor session {session.session_id} doesn't meet capsule criteria"
+                f" Cursor session {session.session_id} doesn't meet capsule criteria"
             )
             return None
 
@@ -610,7 +606,7 @@ class CursorIDECapture:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                UPDATE cursor_sessions SET capsule_created = TRUE 
+                UPDATE cursor_sessions SET capsule_created = TRUE
                 WHERE session_id = ?
             """,
                 (session.session_id,),
@@ -619,12 +615,12 @@ class CursorIDECapture:
             conn.close()
 
             logger.info(
-                f"🎯 Created UATP capsule {capsule.capsule_id} from Cursor session {session.session_id}"
+                f" Created UATP capsule {capsule.capsule_id} from Cursor session {session.session_id}"
             )
             return capsule.capsule_id
 
         except Exception as e:
-            logger.error(f"❌ Failed to create capsule from Cursor session: {e}")
+            logger.error(f"[ERROR] Failed to create capsule from Cursor session: {e}")
             return None
 
     async def get_active_cursor_sessions(self) -> List[Dict[str, Any]]:
@@ -696,7 +692,7 @@ async def end_cursor_capture_session(session_id: str) -> Optional[str]:
 if __name__ == "__main__":
     # Test the Cursor capture system
     async def test_cursor_capture():
-        logger.info("🧪 Testing Cursor IDE capture system...")
+        logger.info(" Testing Cursor IDE capture system...")
 
         # Start a session
         session_id = await start_cursor_capture_session(
@@ -727,9 +723,9 @@ if __name__ == "__main__":
         # End session and create capsule
         capsule_id = await end_cursor_capture_session(session_id)
         if capsule_id:
-            logger.info(f"✅ Test completed - Capsule created: {capsule_id}")
+            logger.info(f"[OK] Test completed - Capsule created: {capsule_id}")
         else:
-            logger.info("📝 Test completed - No capsule created (didn't meet criteria)")
+            logger.info(" Test completed - No capsule created (didn't meet criteria)")
 
     # Run test
     asyncio.run(test_cursor_capture())

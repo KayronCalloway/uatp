@@ -18,7 +18,7 @@ from uatp import (
 )
 
 print("\n" + "=" * 70)
-print("🏛️  UATP Rich Data Example - Court-Admissible AI Evidence")
+print("  UATP Rich Data Example - Court-Admissible AI Evidence")
 print("=" * 70)
 
 # Initialize client
@@ -28,7 +28,7 @@ client = UATP()
 # Example 1: Loan Approval (Financial Services)
 # ============================================================================
 
-print("\n📊 Example 1: Loan Approval (Court-Admissible Format)")
+print("\n Example 1: Loan Approval (Court-Admissible Format)")
 print("-" * 70)
 
 result = client.certify_rich(
@@ -204,7 +204,7 @@ result = client.certify_rich(
     },
 )
 
-print("✅ Loan decision certified (COURT-ADMISSIBLE)")
+print("[OK] Loan decision certified (COURT-ADMISSIBLE)")
 print(f"   Capsule ID: {result.capsule_id}")
 print(f"   Proof URL: {result.proof_url}")
 print("   Data Richness: Court-admissible, Insurance-ready")
@@ -214,7 +214,7 @@ print("   Data Richness: Court-admissible, Insurance-ready")
 # Example 2: Healthcare Diagnosis (HIPAA-Compliant)
 # ============================================================================
 
-print("\n🏥 Example 2: Healthcare Diagnosis (HIPAA + EU AI Act Compliant)")
+print("\n Example 2: Healthcare Diagnosis (HIPAA + EU AI Act Compliant)")
 print("-" * 70)
 
 result2 = client.certify_rich(
@@ -299,42 +299,42 @@ result2 = client.certify_rich(
     },
 )
 
-print("✅ Healthcare triage certified (HIPAA-COMPLIANT)")
+print("[OK] Healthcare triage certified (HIPAA-COMPLIANT)")
 print(f"   Capsule ID: {result2.capsule_id}")
 print(f"   Proof URL: {result2.proof_url}")
 
 
 print("\n" + "=" * 70)
-print("✨ Rich Data Implementation Complete!")
+print(" Rich Data Implementation Complete!")
 print("=" * 70)
 
-print("\n📊 What Makes This Data 'Court-Admissible':")
-print("   ✅ Data provenance (where every fact came from)")
-print("   ✅ Decision methodology (how AI reached conclusion)")
-print("   ✅ Alternatives evaluated (not just final answer)")
-print("   ✅ Risk quantification (probability + financial impact)")
-print("   ✅ Safeguards documented (what protections exist)")
-print("   ✅ Plain language explanations (EU AI Act compliance)")
-print("   ✅ Historical benchmarking (similar cases track record)")
+print("\n What Makes This Data 'Court-Admissible':")
+print("   [OK] Data provenance (where every fact came from)")
+print("   [OK] Decision methodology (how AI reached conclusion)")
+print("   [OK] Alternatives evaluated (not just final answer)")
+print("   [OK] Risk quantification (probability + financial impact)")
+print("   [OK] Safeguards documented (what protections exist)")
+print("   [OK] Plain language explanations (EU AI Act compliance)")
+print("   [OK] Historical benchmarking (similar cases track record)")
 
-print("\n🏛️  Daubert Standard Met:")
-print("   ✅ Methodology clearly shown")
-print("   ✅ Data sources verifiable")
-print("   ✅ Error rates quantified")
-print("   ✅ Peer review possible (historical accuracy)")
+print("\n  Daubert Standard Met:")
+print("   [OK] Methodology clearly shown")
+print("   [OK] Data sources verifiable")
+print("   [OK] Error rates quantified")
+print("   [OK] Peer review possible (historical accuracy)")
 
-print("\n💼 Insurance Value:")
-print("   ✅ Risk probabilities (can build actuarial models)")
-print("   ✅ Financial impacts (expected value, VaR)")
-print("   ✅ Safeguards (reduces premium)")
-print("   ✅ Historical accuracy (validates risk models)")
+print("\n Insurance Value:")
+print("   [OK] Risk probabilities (can build actuarial models)")
+print("   [OK] Financial impacts (expected value, VaR)")
+print("   [OK] Safeguards (reduces premium)")
+print("   [OK] Historical accuracy (validates risk models)")
 
 print("\n🇪🇺 EU AI Act Compliance:")
-print("   ✅ Article 12: Automatic logging ✓")
-print("   ✅ Article 13: Transparency to users ✓")
-print("   ✅ Article 9: Risk assessment ✓")
+print("   [OK] Article 12: Automatic logging ")
+print("   [OK] Article 13: Transparency to users ")
+print("   [OK] Article 9: Risk assessment ")
 
 print("\n" + "=" * 70)
-print("🚀 This is the format that wins in court, gets insurance, and passes audits!")
+print(" This is the format that wins in court, gets insurance, and passes audits!")
 print("=" * 70)
 print()

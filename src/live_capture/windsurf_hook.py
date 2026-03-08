@@ -22,12 +22,14 @@ logger = logging.getLogger(__name__)
 class WindsurfLiveCapture(BaseHook):
     """Live capture integration for Windsurf IDE."""
 
-    def __init__(self, user_id: str = "windsurf_user", workspace_path: Optional[str] = None):
+    def __init__(
+        self, user_id: str = "windsurf_user", workspace_path: Optional[str] = None
+    ):
         self.workspace_path = workspace_path or os.getcwd()
         super().__init__(platform="windsurf", user_id=user_id)
 
     def get_platform_emoji(self) -> str:
-        return "🌊"
+        return ""
 
     def get_platform_specific_metadata(self, **kwargs) -> Dict:
         """Get Windsurf-specific metadata."""
@@ -213,11 +215,11 @@ async def capture_windsurf_interaction(
 async def main():
     """Test the Windsurf integration."""
 
-    print("🌊 Testing Windsurf Live Capture Integration (with BaseHook)")
+    print(" Testing Windsurf Live Capture Integration (with BaseHook)")
     print("=" * 50)
 
     # Test code completion
-    print("\n📝 Testing code completion capture...")
+    print("\n Testing code completion capture...")
     capsule_id = await capture_windsurf_interaction(
         user_input="Create a React component for user authentication",
         assistant_response="""Here's a React authentication component:
@@ -297,12 +299,12 @@ This component includes:
     )
 
     if capsule_id:
-        print(f"✅ Windsurf interaction captured: {capsule_id}")
+        print(f"[OK] Windsurf interaction captured: {capsule_id}")
     else:
-        print("❌ No capsule created - interaction not significant enough")
+        print("[ERROR] No capsule created - interaction not significant enough")
 
     # Test debugging session
-    print("\n🐛 Testing debugging session capture...")
+    print("\n Testing debugging session capture...")
     debug_capsule = await capture_windsurf_interaction(
         user_input="I'm getting a TypeError: Cannot read property 'map' of undefined in my React component",
         assistant_response="""This error occurs when you're trying to use .map() on a value that is undefined. Here's how to fix it:
@@ -351,11 +353,11 @@ Make sure to handle the loading and error states properly.""",
     )
 
     if debug_capsule:
-        print(f"✅ Debugging session captured: {debug_capsule}")
+        print(f"[OK] Debugging session captured: {debug_capsule}")
     else:
-        print("❌ No capsule created - interaction not significant enough")
+        print("[ERROR] No capsule created - interaction not significant enough")
 
-    print("\n✅ Windsurf integration test completed (with BaseHook refactoring)!")
+    print("\n[OK] Windsurf integration test completed (with BaseHook refactoring)!")
 
 
 if __name__ == "__main__":

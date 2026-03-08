@@ -108,7 +108,7 @@ class System3Star:
 ---
 
 ### System 4: Intelligence (Strategy & Future)
-**⚠️ CURRENTLY MISSING - Major Gap!**
+**[WARN] CURRENTLY MISSING - Major Gap!**
 
 **Beer's Principle:**
 > "System 4 scans the environment, models the future, and plans strategy."

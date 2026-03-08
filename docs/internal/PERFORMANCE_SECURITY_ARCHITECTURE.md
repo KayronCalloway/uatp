@@ -25,7 +25,7 @@
 ### Capsule Read Operations (Critical Path)
 ```
 Benchmark: 10,000 capsule reads
-├─ asyncpg (raw SQL):     ~150ms  ✓ USING THIS
+├─ asyncpg (raw SQL):     ~150ms   USING THIS
 ├─ SQLAlchemy ORM:        ~600ms
 └─ Performance Gain:      4x faster
 ```
@@ -33,8 +33,8 @@ Benchmark: 10,000 capsule reads
 ### Capsule Write Operations
 ```
 Benchmark: 1,000 capsule inserts
-├─ asyncpg (COPY):        ~50ms   ✓ OPTIMAL
-├─ asyncpg (INSERT):      ~150ms  ✓ USING THIS
+├─ asyncpg (COPY):        ~50ms    OPTIMAL
+├─ asyncpg (INSERT):      ~150ms   USING THIS
 ├─ SQLAlchemy ORM:        ~450ms
 └─ Performance Gain:      3x faster
 ```
@@ -67,10 +67,10 @@ class QueryValidator:
 ```
 
 **Protection Against**:
-- SQL injection ✓
-- Type confusion attacks ✓
-- Integer overflow ✓
-- Malformed input ✓
+- SQL injection
+- Type confusion attacks
+- Integer overflow
+- Malformed input
 
 ### Layer 2: Parameterized Queries
 **Location**: `src/database/secure_queries.py`
@@ -87,9 +87,9 @@ class SecureCapsuleQueries:
 ```
 
 **Protection Against**:
-- SQL injection ✓
-- Query tampering ✓
-- Command injection ✓
+- SQL injection
+- Query tampering
+- Command injection
 
 ### Layer 3: Connection Security
 **Location**: `src/database/connection.py`
@@ -104,9 +104,9 @@ class DatabaseManager:
 ```
 
 **Protection Against**:
-- Man-in-the-middle attacks ✓ (SSL)
-- Connection exhaustion ✓ (pooling)
-- Slow query DoS ✓ (timeouts)
+- Man-in-the-middle attacks  (SSL)
+- Connection exhaustion  (pooling)
+- Slow query DoS  (timeouts)
 
 ### Layer 4: Application-Level Validation
 **Location**: `src/capsule_schema.py` (Pydantic)
@@ -119,9 +119,9 @@ class BaseCapsule(BaseModel):
 ```
 
 **Protection Against**:
-- Malformed data ✓
-- Type confusion ✓
-- Schema violations ✓
+- Malformed data
+- Type confusion
+- Schema violations
 
 ---
 
@@ -225,7 +225,7 @@ Shard 3: Capsules 2025+ (hot data)
 
 ## Monitoring & Observability
 
-### ✅ IMPLEMENTED - See MONITORING_IMPLEMENTATION_GUIDE.md
+### [OK] IMPLEMENTED - See MONITORING_IMPLEMENTATION_GUIDE.md
 
 **Status**: Production-ready monitoring system deployed
 **Date**: 2025-11-19
@@ -253,39 +253,39 @@ Shard 3: Capsules 2025+ (hot data)
 ### Key Metrics Tracked (Live)
 ```python
 # Query Performance
-✅ Query latency (p50, p95, p99) - < 0.01ms overhead
-✅ Slow query count (>100ms) - Real-time detection
-✅ Connection pool utilization - Automatic tracking
+[OK] Query latency (p50, p95, p99) - < 0.01ms overhead
+[OK] Slow query count (>100ms) - Real-time detection
+[OK] Connection pool utilization - Automatic tracking
 
 # Security
-✅ SQL injection attempts - Immediate detection
-✅ Query validation failures - Logged with context
-✅ Authentication failures - Pattern detection
-✅ Attack patterns - 5+ events trigger alert
+[OK] SQL injection attempts - Immediate detection
+[OK] Query validation failures - Logged with context
+[OK] Authentication failures - Pattern detection
+[OK] Attack patterns - 5+ events trigger alert
 
 # Scale
-✅ Query count per second - Real-time metrics
-✅ Database health - 30-second intervals
-✅ Error rates - Automatic calculation
+[OK] Query count per second - Real-time metrics
+[OK] Database health - 30-second intervals
+[OK] Error rates - Automatic calculation
 ```
 
 ### Alerting Thresholds (Active)
 ```
-CRITICAL: Query latency p95 > 500ms      ✅ MONITORING
-WARNING:  Query latency p95 > 200ms      ✅ MONITORING
-CRITICAL: Pool utilization > 90%         ✅ MONITORING
-WARNING:  Pool utilization > 70%         ✅ MONITORING
-CRITICAL: SQL injection detected         ✅ MONITORING
-WARNING:  Auth failures > 10/hour        ✅ MONITORING
+CRITICAL: Query latency p95 > 500ms      [OK] MONITORING
+WARNING:  Query latency p95 > 200ms      [OK] MONITORING
+CRITICAL: Pool utilization > 90%         [OK] MONITORING
+WARNING:  Pool utilization > 70%         [OK] MONITORING
+CRITICAL: SQL injection detected         [OK] MONITORING
+WARNING:  Auth failures > 10/hour        [OK] MONITORING
 ```
 
 ### Test Results
 ```bash
 $ python3 test_monitoring.py
-✅ Performance monitoring: WORKING
-✅ Security monitoring: WORKING
-✅ API endpoints: WORKING
-✅ Alert system: WORKING
+[OK] Performance monitoring: WORKING
+[OK] Security monitoring: WORKING
+[OK] API endpoints: WORKING
+[OK] Alert system: WORKING
 ```
 
 ### Performance Impact
@@ -355,10 +355,10 @@ python scripts/load_test_data.py --count 1000000
 ## Summary
 
 ### Architecture Choices
-✓ **asyncpg for capsules** - Maximum performance
-✓ **SQLAlchemy for business logic** - Convenience where it matters
-✓ **Parameterized queries** - Security without overhead
-✓ **Connection pooling** - Efficient resource usage
+ **asyncpg for capsules** - Maximum performance
+ **SQLAlchemy for business logic** - Convenience where it matters
+ **Parameterized queries** - Security without overhead
+ **Connection pooling** - Efficient resource usage
 
 ### Performance Gains
 - 3-4x faster than ORM approach

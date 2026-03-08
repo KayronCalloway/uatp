@@ -632,7 +632,7 @@ if __name__ == "__main__":
 
     def test_telemetry():
         """Test the telemetry system."""
-        print("📊 UATP Telemetry System Test")
+        print(" UATP Telemetry System Test")
         print("=" * 40)
 
         # Test basic metrics
@@ -655,29 +655,29 @@ if __name__ == "__main__":
 
         # Get metrics summary
         summary = telemetry.get_metrics_summary()
-        print("\n📈 Metrics Summary:")
+        print("\n Metrics Summary:")
         for key, value in summary.items():
             print(f"  {key}: {value}")
 
         # Get recent traces
         traces = telemetry.get_recent_traces(5)
-        print(f"\n🔍 Recent Traces ({len(traces)}):")
+        print(f"\n Recent Traces ({len(traces)}):")
         for trace in traces:
             print(f"  {trace.name}: {trace.duration_ms:.2f}ms")
 
-        print("\n✅ Telemetry system test complete!")
+        print("\n[OK] Telemetry system test complete!")
 
         if PROMETHEUS_AVAILABLE:
-            print("\n🔧 Prometheus metrics available at: http://localhost:8000/metrics")
+            print("\n Prometheus metrics available at: http://localhost:8000/metrics")
         else:
-            print("\n📈 Sample metric data:")
+            print("\n Sample metric data:")
             metric_data = telemetry.get_metric_data("uatp_capsules_created_total")
             if metric_data:
                 print(f"  {metric_data['name']}: {metric_data['value']}")
 
         if OTEL_AVAILABLE:
-            print("📡 OpenTelemetry tracing enabled")
+            print(" OpenTelemetry tracing enabled")
         else:
-            print("📡 Using fallback tracing (OpenTelemetry not available)")
+            print(" Using fallback tracing (OpenTelemetry not available)")
 
     test_telemetry()

@@ -1,11 +1,11 @@
 # What's Left To Do - ARM64 Migration & System Status
 
 **Date**: 2025-12-03
-**Migration Status**: ✅ ARM64 Complete - System Operational
+**Migration Status**: [OK] ARM64 Complete - System Operational
 
 ---
 
-## ✅ COMPLETED (ARM64 Migration)
+## [OK] COMPLETED (ARM64 Migration)
 
 - [x] Fixed post-quantum crypto import hang
 - [x] Reinstalled numpy, scipy, sklearn for ARM64
@@ -20,7 +20,7 @@
 
 ---
 
-## 🔴 CRITICAL (Must Fix for Production)
+##  CRITICAL (Must Fix for Production)
 
 ### 1. Post-Quantum Cryptography (Optional but Recommended)
 **Current**: Using graceful fallback in development
@@ -47,7 +47,7 @@ cmake --install .
 
 ---
 
-## 🟡 MEDIUM PRIORITY (Pre-existing Issues - Not ARM64)
+##  MEDIUM PRIORITY (Pre-existing Issues - Not ARM64)
 
 ### 2. Test Suite Import Errors
 **Files**:
@@ -70,7 +70,7 @@ pip3 install asgiref
 
 ---
 
-## 🟢 LOW PRIORITY (Nice to Have)
+##  LOW PRIORITY (Nice to Have)
 
 ### 4. Pydantic V1 → V2 Migration Warnings
 **Current**: 13 deprecation warnings about Pydantic V1 validators
@@ -106,7 +106,7 @@ killall python3 pytest cmake git 2>/dev/null
 
 ---
 
-## 📋 OPTIONAL ENHANCEMENTS
+##  OPTIONAL ENHANCEMENTS
 
 ### 6. Compile liboqs for ARM64 (Development)
 **Why**: Get full PQ crypto in development mode
@@ -126,7 +126,7 @@ killall python3 pytest cmake git 2>/dev/null
 
 ---
 
-## 🚀 SYSTEM IS READY TO USE
+##  SYSTEM IS READY TO USE
 
 ### Current Working State:
 ```bash
@@ -138,24 +138,24 @@ python3 -m pytest tests/test_basic_functionality.py -v
 ```
 
 ### What Works:
-- ✅ CapsuleEngine imports and runs
-- ✅ API server imports and runs
-- ✅ All Python packages ARM64-native
-- ✅ Basic functionality tests pass
-- ✅ Main test suite 22/23 passing
-- ✅ Graceful PQ crypto fallback
+- [OK] CapsuleEngine imports and runs
+- [OK] API server imports and runs
+- [OK] All Python packages ARM64-native
+- [OK] Basic functionality tests pass
+- [OK] Main test suite 22/23 passing
+- [OK] Graceful PQ crypto fallback
 
 ### What Doesn't (Not Blocking):
-- ⚠️ Full PQ crypto (optional, fallback working)
-- ⚠️ Some test imports (pre-existing issues)
-- ⚠️ Pydantic deprecation warnings (cosmetic)
+- [WARN] Full PQ crypto (optional, fallback working)
+- [WARN] Some test imports (pre-existing issues)
+- [WARN] Pydantic deprecation warnings (cosmetic)
 
 ---
 
-## 📝 RECOMMENDED NEXT STEPS
+##  RECOMMENDED NEXT STEPS
 
 ### For Development (Now):
-1. ✅ System ready - start developing!
+1. [OK] System ready - start developing!
 2. Use `python3 run.py` to start API server
 3. Ignore PQ crypto warning (graceful fallback active)
 
@@ -172,7 +172,7 @@ python3 -m pytest tests/test_basic_functionality.py -v
 
 ---
 
-## 🎯 PRIORITY SUMMARY
+##  PRIORITY SUMMARY
 
 **Must Do Now**: Nothing - system operational!
 
@@ -190,16 +190,16 @@ python3 -m pytest tests/test_basic_functionality.py -v
 
 ---
 
-## 📊 HEALTH METRICS
+##  HEALTH METRICS
 
-**System Health**: 🟢 Excellent
-**ARM64 Compatibility**: 🟢 100%
-**Test Coverage**: 🟢 95% (22/23 passing)
-**Critical Features**: 🟢 All Working
-**Production Ready**: 🟡 Yes (with PQ crypto fallback)
+**System Health**:  Excellent
+**ARM64 Compatibility**:  100%
+**Test Coverage**:  95% (22/23 passing)
+**Critical Features**:  All Working
+**Production Ready**:  Yes (with PQ crypto fallback)
 
 ---
 
 **Bottom Line**: The ARM64 migration is complete and the system is fully operational. Everything left is either optional enhancements or pre-existing minor issues unrelated to the migration.
 
-**You can start using the system immediately!** 🚀
+**You can start using the system immediately!**

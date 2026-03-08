@@ -57,7 +57,7 @@ if not demo_mode:
 ```
 
 **Behavior:**
-- `demo_mode=false` (default) → Returns 67 capsules ✅
+- `demo_mode=false` (default) → Returns 67 capsules [OK]
 - `demo_mode=true` → Returns 115 capsules (all)
 
 **Current API Calls:**
@@ -185,7 +185,7 @@ Capsules with trust_score:              0 capsules (0%)
 
 ## Solutions
 
-### Option 1: Make Stats Endpoint Respect Demo Mode ⭐ RECOMMENDED
+### Option 1: Make Stats Endpoint Respect Demo Mode  RECOMMENDED
 Add `demo_mode` parameter to stats endpoint:
 
 ```python
@@ -233,7 +233,7 @@ const queryParams: ListCapsulesQuery = {
 - Doesn't fix stats inconsistency
 - User still sees "115" in dashboard but "67" in list
 
-### Option 3: Separate Demo/Live Completely ⭐⭐ BEST LONG-TERM
+### Option 3: Separate Demo/Live Completely  BEST LONG-TERM
 Add separate endpoints:
 
 ```
@@ -327,16 +327,16 @@ curl -s "http://localhost:8000/capsules?demo_mode=true&per_page=1" | jq '.total'
 ## Summary
 
 **Current State:**
-- ✅ Backend has demo filtering on list endpoint
-- ❌ Backend stats endpoint ignores demo filtering
-- ⚠️ Frontend has demo context but doesn't use it correctly
-- ❌ User sees 115 in dashboards, 67 in lists
+- [OK] Backend has demo filtering on list endpoint
+- [ERROR] Backend stats endpoint ignores demo filtering
+- [WARN] Frontend has demo context but doesn't use it correctly
+- [ERROR] User sees 115 in dashboards, 67 in lists
 
 **After Fix:**
-- ✅ Stats endpoint respects demo_mode parameter
-- ✅ Frontend explicitly passes demo_mode=false for live data
-- ✅ Consistent counts: 67 live capsules everywhere
-- ✅ Optional: demo_mode=true shows all 115
+- [OK] Stats endpoint respects demo_mode parameter
+- [OK] Frontend explicitly passes demo_mode=false for live data
+- [OK] Consistent counts: 67 live capsules everywhere
+- [OK] Optional: demo_mode=true shows all 115
 
 **Live Capsule Analysis:**
 - 67 live capsules (confirmed)

@@ -48,14 +48,14 @@ def test_create_capsule_direct():
         response.raise_for_status()
         result = response.json()
 
-        print("✅ Success!")
+        print("[OK] Success!")
         print(f"Capsule ID: {result['capsule_id']}")
         print(f"Message: {result['message']}")
 
         return result["capsule_id"]
 
     except Exception as e:
-        print(f"❌ Failed: {e}")
+        print(f"[ERROR] Failed: {e}")
         if hasattr(e, "response"):
             print(f"Response: {e.response.text}")
         return None
@@ -75,7 +75,7 @@ def test_retrieve_capsule(capsule_id):
 
         if result["capsules"]:
             capsule = result["capsules"][0]
-            print("✅ Retrieved capsule:")
+            print("[OK] Retrieved capsule:")
             print(f"ID: {capsule['capsule_id']}")
             print(f"Type: {capsule['type']}")
             print(f"Status: {capsule['status']}")
@@ -84,10 +84,10 @@ def test_retrieve_capsule(capsule_id):
                 print(f"Task: {capsule['payload']['task']}")
                 print(f"Decision: {capsule['payload'].get('decision', 'N/A')}")
         else:
-            print("❌ No capsules found")
+            print("[ERROR] No capsules found")
 
     except Exception as e:
-        print(f"❌ Failed: {e}")
+        print(f"[ERROR] Failed: {e}")
 
 
 def test_verify_capsule(capsule_id):
@@ -102,12 +102,12 @@ def test_verify_capsule(capsule_id):
         response.raise_for_status()
         result = response.json()
 
-        print("✅ Verification result:")
+        print("[OK] Verification result:")
         print(f"Verified: {result['verified']}")
         print(f"Message: {result['message']}")
 
     except Exception as e:
-        print(f"❌ Failed: {e}")
+        print(f"[ERROR] Failed: {e}")
 
 
 def test_stats():
@@ -122,16 +122,16 @@ def test_stats():
         response.raise_for_status()
         result = response.json()
 
-        print("✅ Stats:")
+        print("[OK] Stats:")
         print(f"Total capsules: {result['total_capsules']}")
         print(f"By type: {json.dumps(result['capsules_by_type'], indent=2)}")
 
     except Exception as e:
-        print(f"❌ Failed: {e}")
+        print(f"[ERROR] Failed: {e}")
 
 
 if __name__ == "__main__":
-    print("\n🚀 UATP SDK Test Suite")
+    print("\n UATP SDK Test Suite")
     print("Testing against: http://localhost:8000")
     print()
 
@@ -145,5 +145,5 @@ if __name__ == "__main__":
     test_stats()
 
     print("\n" + "=" * 60)
-    print("✅ All tests completed!")
+    print("[OK] All tests completed!")
     print("=" * 60)

@@ -846,17 +846,17 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                           <div className="flex items-center gap-2">
                             {isCritical && (
                               <span className="px-2 py-1 bg-orange-200 text-orange-800 rounded text-xs font-semibold">
-                                🎯 Critical Path
+                                 Critical Path
                               </span>
                             )}
                             {isBottleneck && (
                               <span className="px-2 py-1 bg-red-200 text-red-800 rounded text-xs font-semibold">
-                                ⚠️ Bottleneck
+                                [WARN] Bottleneck
                               </span>
                             )}
                             {isDecisionPoint && (
                               <span className="px-2 py-1 bg-purple-200 text-purple-800 rounded text-xs font-semibold">
-                                🔀 Decision Point
+                                 Decision Point
                               </span>
                             )}
                             {hasConfidence && (
@@ -885,13 +885,13 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                         {step.measurements?.confidence_explanation && (
                           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="text-sm font-semibold text-blue-900">💡 Confidence Analysis</span>
+                              <span className="text-sm font-semibold text-blue-900"> Confidence Analysis</span>
                             </div>
                             <div className="space-y-2">
                               {/* Boosting factors */}
                               {step.measurements.confidence_explanation.boosting_factors?.length > 0 && (
                                 <div>
-                                  <div className="text-xs font-semibold text-green-700 mb-1">✓ Boosting Factors</div>
+                                  <div className="text-xs font-semibold text-green-700 mb-1"> Boosting Factors</div>
                                   <ul className="text-xs text-green-600 space-y-0.5">
                                     {step.measurements.confidence_explanation.boosting_factors.map((factor: string, i: number) => (
                                       <li key={i} className="flex items-start gap-1">
@@ -906,7 +906,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                               {/* Limiting factors */}
                               {step.measurements.confidence_explanation.limiting_factors?.length > 0 && (
                                 <div>
-                                  <div className="text-xs font-semibold text-red-700 mb-1">⚠ Limiting Factors</div>
+                                  <div className="text-xs font-semibold text-red-700 mb-1">[WARN] Limiting Factors</div>
                                   <ul className="text-xs text-red-600 space-y-0.5">
                                     {step.measurements.confidence_explanation.limiting_factors.map((factor: string, i: number) => (
                                       <li key={i} className="flex items-start gap-1">
@@ -921,7 +921,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                               {/* Improvement suggestions */}
                               {step.measurements.confidence_explanation.improvement_suggestions?.length > 0 && (
                                 <div>
-                                  <div className="text-xs font-semibold text-blue-700 mb-1">💬 Improvement Suggestions</div>
+                                  <div className="text-xs font-semibold text-blue-700 mb-1"> Improvement Suggestions</div>
                                   <ul className="text-xs text-blue-600 space-y-0.5">
                                     {step.measurements.confidence_explanation.improvement_suggestions.map((suggestion: string, i: number) => (
                                       <li key={i} className="flex items-start gap-1">
@@ -1018,7 +1018,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                 {/* Overall confidence methodology */}
                 {(capsule.reasoning_trace?.confidence_methodology || capsule.payload?.confidence_methodology) && (
                   <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm font-medium text-gray-700 mb-2">📈 Confidence Computation Method</div>
+                    <div className="text-sm font-medium text-gray-700 mb-2"> Confidence Computation Method</div>
                     {(() => {
                       const methodology = capsule.reasoning_trace?.confidence_methodology || capsule.payload?.confidence_methodology;
                       return (
@@ -1048,7 +1048,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                 {/* NEW: Critical Path Analysis Summary */}
                 {capsule.payload?.critical_path_analysis && (
                   <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <div className="text-sm font-medium text-orange-900 mb-3">🎯 Critical Path Analysis</div>
+                    <div className="text-sm font-medium text-orange-900 mb-3"> Critical Path Analysis</div>
 
                     <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                       <div>
@@ -1084,7 +1084,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
 
                     {capsule.payload.critical_path_analysis.weakest_link && (
                       <div className="bg-red-50 border border-red-200 rounded p-2 mt-2">
-                        <div className="text-xs font-medium text-red-800">⚠️ Weakest Link:</div>
+                        <div className="text-xs font-medium text-red-800">[WARN] Weakest Link:</div>
                         <div className="text-xs text-red-700 mt-1">
                           Step {capsule.payload.critical_path_analysis.weakest_link.step_id}
                           {' '}({(capsule.payload.critical_path_analysis.weakest_link.confidence * 100).toFixed(1)}% confidence)
@@ -1106,7 +1106,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                 {/* NEW: Improvement Recommendations */}
                 {capsule.payload?.improvement_recommendations && capsule.payload.improvement_recommendations.length > 0 && (
                   <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="text-sm font-medium text-blue-900 mb-2">💡 Improvement Recommendations</div>
+                    <div className="text-sm font-medium text-blue-900 mb-2"> Improvement Recommendations</div>
                     <ul className="space-y-1 text-xs text-blue-800">
                       {capsule.payload.improvement_recommendations.map((rec: string, i: number) => (
                         <li key={i} className="flex items-start">
@@ -1130,7 +1130,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <span className="text-lg">🧠</span>
+              <span className="text-lg"></span>
               <span>AI Enrichment</span>
               <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
                 {capsule.payload.ai_enrichment.extraction_method || 'local'}
@@ -1315,7 +1315,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                         <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                              <span className="text-white text-lg">🎯</span>
+                              <span className="text-white text-lg"></span>
                             </div>
                             <div className="text-sm font-bold text-blue-900">User Goal</div>
                           </div>
@@ -1328,7 +1328,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                         <div className="bg-indigo-50 border-2 border-indigo-200 rounded-lg p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center">
-                              <span className="text-white text-lg">🎬</span>
+                              <span className="text-white text-lg"></span>
                             </div>
                             <div className="text-sm font-bold text-indigo-900">Expected Outcome</div>
                           </div>
@@ -1477,7 +1477,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                 </pre>
                 {capsule.reasoning_trace.reasoning_steps[0].metadata.economic_attribution && (
                   <div className="border-t pt-3">
-                    <div className="text-sm font-medium text-gray-700 mb-2">💰 Economic Attribution:</div>
+                    <div className="text-sm font-medium text-gray-700 mb-2"> Economic Attribution:</div>
                     {Object.entries(capsule.reasoning_trace.reasoning_steps[0].metadata.economic_attribution).map(([key, value]: [string, any]) => (
                       <div key={key} className="text-xs text-gray-600">
                         • {key.replace('_', ' ')}: {value.weight * 100}% (${value.value})

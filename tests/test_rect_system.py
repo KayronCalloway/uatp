@@ -299,4 +299,4 @@ if __name__ == "__main__":
     test_false_positive_reporting()
     test_rule_pattern_matching()
     test_system_enable_disable()
-    print("✅ All RECT system tests passed!")
+    print("[OK] All RECT system tests passed!")

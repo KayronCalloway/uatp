@@ -13,11 +13,6 @@ if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
 from engine.legacy_capsule_engine import LegacyCapsuleEngine
-from utils.database_loader import (
-    load_capsules_cached,
-    get_capsule_stats_cached,
-    search_capsules_cached,
-)
 
 # Try to import specialized components, fallback if not available
 try:
@@ -90,15 +85,15 @@ from visualizer.components.protocol_guidelines import render_protocol_guidelines
 from visualizer.components.reference_capsules_viewer import (
     render_reference_capsules_viewer,
 )
-from visualizer.utils.colors import CAPSULE_TYPE_COLORS
 from visualizer.utils.capsule_compat import (
     get_capsule_id,
     get_capsule_type,
-    get_parent_capsule_id,
     get_confidence_score,
+    get_parent_capsule_id,
     get_reasoning_steps,
     is_valid_capsule,
 )
+from visualizer.utils.colors import CAPSULE_TYPE_COLORS
 
 # Settings
 AGENT_ID = os.getenv("UATP_AGENT_ID", "demo-agent-007")
@@ -367,9 +362,9 @@ def display_capsule_details(capsule, index):
 if SPECIALIZED_ENGINE_AVAILABLE and SpecializedCapsuleEngine:
     try:
         engine = SpecializedCapsuleEngine(agent_id=AGENT_ID, storage_path=CHAIN_PATH)
-        st.sidebar.success("✅ Using specialized UATP 7.0 capsule engine")
+        st.sidebar.success("[OK] Using specialized UATP 7.0 capsule engine")
     except Exception as e:
-        st.sidebar.warning(f"⚠️ Falling back to basic capsule engine: {str(e)}")
+        st.sidebar.warning(f"[WARN] Falling back to basic capsule engine: {str(e)}")
         engine = LegacyCapsuleEngine(agent_id=AGENT_ID, storage_path=CHAIN_PATH)
 else:
     st.sidebar.info("ℹ️ Using basic capsule engine (specialized engine not available)")
@@ -388,7 +383,7 @@ if not chain:
         st.info(f"File size: {os.path.getsize(CHAIN_PATH)} bytes")
 else:
     # Show successful load info in sidebar
-    st.sidebar.success(f"✅ Loaded {len(chain)} capsules from chain")
+    st.sidebar.success(f"[OK] Loaded {len(chain)} capsules from chain")
     # --- Sidebar Controls ---
     st.sidebar.header("Chain Controls & Info")
 
@@ -1886,10 +1881,10 @@ else:
 
                         # Show if target was achieved
                         if report.get("target_achieved", False):
-                            st.success("✅ Target score achieved!")
+                            st.success("[OK] Target score achieved!")
                         else:
                             st.warning(
-                                "⚠️ Target score not achieved with current constraints."
+                                "[WARN] Target score not achieved with current constraints."
                             )
 
                         # Show changes made
@@ -1905,8 +1900,8 @@ else:
 try:
     from visualizer.components import (
         inspector,
-        visualization_filters,
         specialized_creator,
+        visualization_filters,
     )
 except ImportError as e:
     st.error(f"Error importing components: {e}")

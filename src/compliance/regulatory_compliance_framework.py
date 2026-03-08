@@ -8,7 +8,7 @@ including GDPR, AI Act, data protection, algorithmic transparency, and ethical A
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
@@ -628,7 +628,7 @@ class RegulatoryComplianceFramework:
                         "score": latest.score,
                         "last_assessed": latest.assessed_at.isoformat(),
                         "systems_assessed": len(
-                            set(a.system_id for a in framework_assessments)
+                            {a.system_id for a in framework_assessments}
                         ),
                     }
                 else:
@@ -700,22 +700,22 @@ if __name__ == "__main__":
 
         framework = create_regulatory_compliance_framework()
 
-        print("🏛️ Regulatory Compliance Framework Demo")
+        print(" Regulatory Compliance Framework Demo")
 
         # Check overall status
         status = framework.get_compliance_status()
-        print(f"\n📊 Overall Status:")
+        print("\n Overall Status:")
         print(f"   Active Frameworks: {status['active_frameworks']}")
         print(f"   Total Assessments: {status['total_assessments']}")
 
         # Get GDPR requirements
         gdpr_reqs = framework.get_compliance_requirements(RegulatoryFramework.GDPR)
-        print(f"\n📋 GDPR Requirements: {len(gdpr_reqs)}")
+        print(f"\n GDPR Requirements: {len(gdpr_reqs)}")
         for req in gdpr_reqs[:2]:  # Show first 2
             print(f"   {req['requirement_id']}: {req['title']}")
 
         # Conduct compliance assessment
-        print("\n🔍 Conducting GDPR Assessment...")
+        print("\n Conducting GDPR Assessment...")
         assessment = await framework.conduct_compliance_assessment(
             RegulatoryFramework.GDPR, "uatp_capsule_engine", "compliance_officer"
         )
@@ -726,13 +726,13 @@ if __name__ == "__main__":
         )
 
         # Generate compliance report
-        print("\n📄 Generating Compliance Report...")
+        print("\n Generating Compliance Report...")
         report = await framework.generate_compliance_report(90)
         print(f"   Report ID: {report.report_id}")
         print(f"   Overall Status: {report.overall_status.value}")
         print(f"   Overall Score: {report.overall_score:.1%}")
         print(f"   High Risk Items: {len(report.high_risk_items)}")
 
-        print("\n✅ Compliance framework demo completed!")
+        print("\n[OK] Compliance framework demo completed!")
 
     asyncio.run(demo_compliance_framework())

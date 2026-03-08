@@ -10,19 +10,18 @@ from capsule_schema import Capsule
 from cqss.scorer import CQSSScorer
 
 from visualizer.components.reasoning_analysis import render_reasoning_analysis
-from visualizer.utils.colors import CAPSULE_TYPE_COLORS, get_cqss_color
-from visualizer.utils.database_loader import convert_to_serializable
-from visualizer.utils.state import get_pinned_capsule, toggle_pin_capsule
 from visualizer.utils.capsule_compat import (
-    get_capsule_id,
-    get_capsule_type,
-    get_parent_capsule_id,
-    get_confidence_score,
-    get_reasoning_steps,
-    get_capsule_metadata,
     capsule_to_dict,
     get_capsule_attr,
+    get_capsule_id,
+    get_capsule_metadata,
+    get_capsule_type,
+    get_confidence_score,
+    get_parent_capsule_id,
+    get_reasoning_steps,
 )
+from visualizer.utils.colors import CAPSULE_TYPE_COLORS, get_cqss_color
+from visualizer.utils.state import get_pinned_capsule, toggle_pin_capsule
 
 
 def render_inspector(capsule: Optional[Capsule] = None):
@@ -81,7 +80,7 @@ def render_inspector(capsule: Optional[Capsule] = None):
 
             with col2:
                 # Actions for this capsule
-                if st.button("📌 Pin", help="Pin this capsule for comparison"):
+                if st.button(" Pin", help="Pin this capsule for comparison"):
                     toggle_pin_capsule(get_capsule_id(capsule))
                     st.rerun()
 

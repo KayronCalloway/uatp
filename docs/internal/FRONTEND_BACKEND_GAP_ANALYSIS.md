@@ -10,13 +10,13 @@
 
 | Level | Backend Status | Frontend Status | Match? |
 |-------|---------------|-----------------|--------|
-| **Level 1** | ✅ Complete | ✅ Complete | ✅ YES |
-| **Level 2** | ✅ Complete | ⚠️ Partial | ⚠️ PARTIAL |
-| **Level 3** | ✅ Complete | ❌ None | ❌ NO |
+| **Level 1** | [OK] Complete | [OK] Complete | [OK] YES |
+| **Level 2** | [OK] Complete | [WARN] Partial | [WARN] PARTIAL |
+| **Level 3** | [OK] Complete | [ERROR] None | [ERROR] NO |
 
 ---
 
-## Level 1: Foundation ✅ MATCHED
+## Level 1: Foundation [OK] MATCHED
 
 ### Backend Capabilities
 - Enhanced context extraction
@@ -24,7 +24,7 @@
 - Confidence explanation
 
 ### Frontend Display
-✅ **All Level 1 features displayed** in `capsule-detail.tsx`:
+[OK] **All Level 1 features displayed** in `capsule-detail.tsx`:
 - Enhanced context shown (user goal, domain, constraints, etc.)
 - Critical path steps highlighted with orange borders
 - Bottleneck warnings displayed
@@ -32,20 +32,20 @@
 - Confidence explanations with boosting/limiting factors
 - Improvement recommendations shown
 
-**Status**: Frontend fully matches backend ✅
+**Status**: Frontend fully matches backend [OK]
 
 ---
 
-## Level 2: Validation & Learning ⚠️ PARTIAL MATCH
+## Level 2: Validation & Learning [WARN] PARTIAL MATCH
 
 ### Backend Capabilities (All Complete)
-1. ✅ Outcome tracking system with full CRUD
-2. ✅ Confidence calibration engine (ECE, MCE, Brier score)
-3. ✅ Pattern mining (sequences, decisions, failure modes)
+1. [OK] Outcome tracking system with full CRUD
+2. [OK] Confidence calibration engine (ECE, MCE, Brier score)
+3. [OK] Pattern mining (sequences, decisions, failure modes)
 
 ### Frontend Status
 
-#### ✅ Outcome Recording - COMPLETE
+#### [OK] Outcome Recording - COMPLETE
 **File**: `frontend/src/components/capsules/outcome-recorder.tsx`
 - Record actual outcomes
 - Quality score slider
@@ -53,9 +53,9 @@
 - Notes input
 - Integration with capsule detail view
 
-**Status**: ✅ Users can record outcomes
+**Status**: [OK] Users can record outcomes
 
-#### ❌ Calibration Visualization - MISSING
+#### [ERROR] Calibration Visualization - MISSING
 **Backend API Available**:
 - `GET /outcomes/calibration/data` - Returns calibration by domain/bucket
 - `POST /outcomes/calibration/update` - Recalculates calibration
@@ -75,7 +75,7 @@
 - Recommended adjustments table
 ```
 
-#### ❌ Pattern Visualization - MISSING
+#### [ERROR] Pattern Visualization - MISSING
 **Backend API Available**:
 - `GET /outcomes/patterns` - Returns discovered patterns with filters
 - Pattern types: sequence, decision_tree, failure_mode
@@ -96,7 +96,7 @@
 - Click to see example capsules
 ```
 
-#### ❌ Outcome Statistics Dashboard - MISSING
+#### [ERROR] Outcome Statistics Dashboard - MISSING
 **Backend API Available**:
 - `GET /outcomes/stats` - Total outcomes, avg quality, by method
 
@@ -114,21 +114,21 @@
 - Trends over time line chart
 ```
 
-**Level 2 Status**: ⚠️ Can record outcomes, but CANNOT VIEW learned insights
+**Level 2 Status**: [WARN] Can record outcomes, but CANNOT VIEW learned insights
 
 ---
 
-## Level 3: Intelligence & Causation ❌ NO FRONTEND
+## Level 3: Intelligence & Causation [ERROR] NO FRONTEND
 
 ### Backend Capabilities (All Complete)
-1. ✅ Causal reasoning engine (DAG, SCM, interventions, counterfactuals)
-2. ✅ Meta-learning system (strategy extraction and recommendation)
-3. ✅ Uncertainty quantification (Bayesian, epistemic/aleatoric)
-4. ✅ Quality assessment (6-dimension grading)
+1. [OK] Causal reasoning engine (DAG, SCM, interventions, counterfactuals)
+2. [OK] Meta-learning system (strategy extraction and recommendation)
+3. [OK] Uncertainty quantification (Bayesian, epistemic/aleatoric)
+4. [OK] Quality assessment (6-dimension grading)
 
-### Frontend Status: ❌ NOTHING EXISTS
+### Frontend Status: [ERROR] NOTHING EXISTS
 
-#### ❌ Causal Graph Visualization - MISSING
+#### [ERROR] Causal Graph Visualization - MISSING
 **Backend Capabilities**:
 - Build causal DAGs from capsules
 - Find causal paths
@@ -157,7 +157,7 @@
 - Visual path from cause to effect
 ```
 
-#### ❌ Strategy Recommendation Display - MISSING
+#### [ERROR] Strategy Recommendation Display - MISSING
 **Backend Capabilities**:
 - Extract reasoning strategies from successful capsules
 - Recommend strategies for new problems
@@ -182,7 +182,7 @@
 - Click to see strategy details
 ```
 
-#### ❌ Uncertainty Visualization - MISSING
+#### [ERROR] Uncertainty Visualization - MISSING
 **Backend Capabilities**:
 - Bayesian confidence intervals
 - Epistemic vs. aleatoric uncertainty
@@ -210,7 +210,7 @@
 - Show risk factors
 ```
 
-#### ❌ Quality Assessment Display - MISSING
+#### [ERROR] Quality Assessment Display - MISSING
 **Backend Capabilities**:
 - 6-dimension quality scoring
 - Completeness, coherence, evidence, logic, bias, clarity
@@ -242,7 +242,7 @@
 - Improvement tracking
 ```
 
-**Level 3 Status**: ❌ All intelligence features are INVISIBLE to users
+**Level 3 Status**: [ERROR] All intelligence features are INVISIBLE to users
 
 ---
 
@@ -384,8 +384,8 @@
 
 ## Current Situation
 
-**Backend**: Sophisticated reasoning intelligence with causation, learning, and quality assessment ✅
-**Frontend**: Beautiful display of Level 1, can record outcomes, but CANNOT SEE what the system learned ❌
+**Backend**: Sophisticated reasoning intelligence with causation, learning, and quality assessment [OK]
+**Frontend**: Beautiful display of Level 1, can record outcomes, but CANNOT SEE what the system learned [ERROR]
 
 **Analogy**: It's like having a brilliant AI assistant that learns from every interaction, but you can only see its first draft - never the insights, patterns, or improvements it discovered.
 
@@ -445,8 +445,8 @@ This enables users to EXPLORE and BENEFIT from advanced features.
 
 **Does frontend match backend?** NO
 
-**Backend**: Advanced reasoning intelligence ✅
-**Frontend**: Beautiful but shows <30% of capabilities ❌
+**Backend**: Advanced reasoning intelligence [OK]
+**Frontend**: Beautiful but shows <30% of capabilities [ERROR]
 
 **Gap**: ~30 hours of frontend work to match backend
 

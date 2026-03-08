@@ -415,4 +415,4 @@ if __name__ == "__main__":
     test_violation_clearing()
     test_contract_enabling_disabling()
     test_contract_violation_recording()
-    print("✅ All formal verification tests passed!")
+    print("[OK] All formal verification tests passed!")

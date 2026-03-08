@@ -184,11 +184,11 @@ export function SystemGraphView() {
           <div>
             <h3 className="font-semibold text-blue-600 mb-2">Node Types:</h3>
             <ul className="space-y-1 text-gray-700">
-              <li>🔴 <span className="text-red-500 font-medium">Core Engine</span> - UATP Capsule Engine</li>
-              <li>🟢 <span className="text-green-500 font-medium">LLM Providers</span> - OpenAI, Anthropic, Claude</li>
-              <li>🔵 <span className="text-blue-500 font-medium">Spatial Providers</span> - Cameras, LiDAR, Controllers</li>
-              <li>🟦 <span className="text-cyan-500 font-medium">Capsule Types</span> - All capsule types</li>
-              <li>🔶 <span className="text-orange-500 font-medium">System Components</span> - Trust, FCDE, Insurance, etc.</li>
+              <li> <span className="text-red-500 font-medium">Core Engine</span> - UATP Capsule Engine</li>
+              <li> <span className="text-green-500 font-medium">LLM Providers</span> - OpenAI, Anthropic, Claude</li>
+              <li> <span className="text-blue-500 font-medium">Spatial Providers</span> - Cameras, LiDAR, Controllers</li>
+              <li> <span className="text-cyan-500 font-medium">Capsule Types</span> - All capsule types</li>
+              <li> <span className="text-orange-500 font-medium">System Components</span> - Trust, FCDE, Insurance, etc.</li>
             </ul>
           </div>
           <div>
@@ -226,7 +226,7 @@ export function SystemGraphView() {
       </div>
 
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-200">
-        <h3 className="text-lg font-semibold mb-2">💡 Interaction Tips</h3>
+        <h3 className="text-lg font-semibold mb-2"> Interaction Tips</h3>
         <ul className="space-y-1 text-sm text-gray-700">
           <li>• <strong>Drag nodes</strong> to rearrange the graph layout</li>
           <li>• <strong>Scroll</strong> to zoom in/out</li>

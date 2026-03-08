@@ -451,7 +451,7 @@ def probabilistic_mechanism(parents: List[str], probability_fn: Callable) -> Cal
 
 # Example usage
 if __name__ == "__main__":
-    print("✅ Structural Causal Model Ready")
+    print("[OK] Structural Causal Model Ready")
     print("\nCapabilities:")
     print("  - Define causal mechanisms mathematically")
     print("  - Simulate SCM under normal conditions")

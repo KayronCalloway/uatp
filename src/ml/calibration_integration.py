@@ -388,7 +388,7 @@ class CapsuleCalibrator:
             # Determine status
             diff = predicted - actual
             if abs(diff) < 0.1:
-                status = "✓ Good"
+                status = " Good"
             elif diff > 0:
                 status = f"↓ Over by {diff:.0%}"
             else:
@@ -473,7 +473,7 @@ if __name__ == "__main__":
         if report.get("drift_alerts"):
             print("\nDrift Alerts:")
             for alert in report["drift_alerts"]:
-                print(f"  ⚠ {alert}")
+                print(f"  [WARN] {alert}")
 
     if args.table:
         print("\nReliability Table:")

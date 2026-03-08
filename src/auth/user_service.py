@@ -6,9 +6,9 @@ for the governance and economic systems.
 """
 
 import logging
-from typing import Dict, List, Optional, Set
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class UserService:
     def __init__(self):
         self.users: Dict[str, User] = {}
         self.username_to_id: Dict[str, str] = {}
-        logger.info("🔐 User Service initialized")
+        logger.info(" User Service initialized")
 
     def get_user(self, user_id: str) -> Optional[User]:
         """Get user by ID."""
@@ -80,7 +80,7 @@ class UserService:
         self.users[user_id] = user
         self.username_to_id[username] = user_id
 
-        logger.info(f"👤 Created user: {username} ({user_id})")
+        logger.info(f" Created user: {username} ({user_id})")
         return user
 
     def authenticate_user(self, username: str, password: str) -> Optional[User]:
@@ -112,7 +112,7 @@ class UserService:
         user = self.get_user(user_id)
         if user:
             user.roles.add(role)
-            logger.info(f"👤 Added role {role} to user {user.username}")
+            logger.info(f" Added role {role} to user {user.username}")
             return True
         return False
 
@@ -121,7 +121,7 @@ class UserService:
         user = self.get_user(user_id)
         if user and role in user.roles:
             user.roles.remove(role)
-            logger.info(f"👤 Removed role {role} from user {user.username}")
+            logger.info(f" Removed role {role} from user {user.username}")
             return True
         return False
 
@@ -131,7 +131,7 @@ class UserService:
         if user:
             user.reputation_score = max(0.0, min(1.0, reputation_score))
             logger.info(
-                f"👤 Updated reputation for {user.username}: {user.reputation_score}"
+                f" Updated reputation for {user.username}: {user.reputation_score}"
             )
             return True
         return False
@@ -142,7 +142,7 @@ class UserService:
         if user:
             user.governance_stake = max(0.0, stake)
             logger.info(
-                f"👤 Updated governance stake for {user.username}: {user.governance_stake}"
+                f" Updated governance stake for {user.username}: {user.governance_stake}"
             )
             return True
         return False
@@ -168,7 +168,7 @@ class UserService:
         user = self.get_user(user_id)
         if user:
             user.is_active = False
-            logger.info(f"👤 Deactivated user: {user.username}")
+            logger.info(f" Deactivated user: {user.username}")
             return True
         return False
 
@@ -217,7 +217,7 @@ try:
         permissions={"governance_vote", "economic_parameters", "attribution_review"},
     )
 
-    logger.info("✅ Default users created for governance system")
+    logger.info("[OK] Default users created for governance system")
 
 except ValueError as e:
     # Users might already exist

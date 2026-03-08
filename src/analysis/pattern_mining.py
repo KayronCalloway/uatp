@@ -489,7 +489,7 @@ class PatternMiner:
 
 # Example usage
 if __name__ == "__main__":
-    print("✅ Pattern Mining System Ready")
+    print("[OK] Pattern Mining System Ready")
     print("\nCapabilities:")
     print("  - Mine reasoning step sequences")
     print("  - Discover decision-making patterns")

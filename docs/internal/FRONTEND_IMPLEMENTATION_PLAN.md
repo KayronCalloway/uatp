@@ -174,12 +174,12 @@ interface QualityBadgeProps {
 5. **Suggestions**: Blue action list (prioritized)
 
 **Dimensions** (with icons):
-- Completeness ✓
-- Coherence 🔗
-- Evidence 📊
-- Logic ⚖️
-- Bias 👁️
-- Clarity 💡
+- Completeness
+- Coherence
+- Evidence
+- Logic
+- Bias ️
+- Clarity
 
 ### 3. Pattern Browser (Priority: CRITICAL)
 
@@ -247,7 +247,7 @@ After:
 Confidence: 0.85 [0.78 - 0.92]  ← 95% CI
 ├─ Epistemic: 0.05 (reducible)
 └─ Aleatoric: 0.02 (irreducible)
-Risk: ⚠️ Medium
+Risk: [WARN] Medium
 ```
 
 **Components**:
@@ -265,9 +265,9 @@ Risk: ⚠️ Medium
 **Layout**:
 ```
 ┌─────────────────────────────────────────────┐
-│ 💡 Recommended Strategies                   │
+│  Recommended Strategies                   │
 ├─────────────────────────────────────────────┤
-│ ✓ Analysis → Measurement → Decision        │
+│  Analysis → Measurement → Decision        │
 │   Success rate: 85% | Match: 92%           │
 │   "Used successfully in 12 similar cases"  │
 │   [View Examples] [Apply Strategy]         │
@@ -472,12 +472,12 @@ interface CalibrationData {
 ## Success Metrics
 
 ### Functional
-- ✅ All backend intelligence visible in UI
-- ✅ Quality grades shown on all capsules
-- ✅ Patterns browsable and filterable
-- ✅ Calibration data visualized
-- ✅ Uncertainty displayed with intervals
-- ✅ Causal graphs interactive
+- [OK] All backend intelligence visible in UI
+- [OK] Quality grades shown on all capsules
+- [OK] Patterns browsable and filterable
+- [OK] Calibration data visualized
+- [OK] Uncertainty displayed with intervals
+- [OK] Causal graphs interactive
 
 ### Performance
 - Page load < 1s
@@ -495,12 +495,12 @@ interface CalibrationData {
 ## Technical Stack
 
 **Already Have**:
-- React 19.1.0 ✅
-- Next.js 15.4.1 ✅
-- TanStack Query 5.83.0 ✅
-- Tailwind CSS ✅
-- lucide-react (icons) ✅
-- vis-network (graphs) ✅
+- React 19.1.0 [OK]
+- Next.js 15.4.1 [OK]
+- TanStack Query 5.83.0 [OK]
+- Tailwind CSS [OK]
+- lucide-react (icons) [OK]
+- vis-network (graphs) [OK]
 
 **Need to Add**:
 - Recharts (for analytics charts)

@@ -42,14 +42,14 @@ print(result.proof_url)
 
 ```bash
 git clone https://github.com/KayronCalloway/uatp
-cd uatp-capsule-engine
+cd uatp
 ```
 
 ### 2. Start Backend
 
 ```bash
 ./start_backend_dev.sh
-# Wait for: ✓ Server running on http://localhost:8000
+# Wait for: Server running on http://localhost:8000
 ```
 
 ### 3. Install Python SDK
@@ -67,15 +67,15 @@ python3 test_actual_sdk.py
 
 You should see:
 ```
-🚀 UATP SDK Full Test - Using Actual SDK
+UATP SDK Full Test - Using Actual SDK
 ============================================================
 
-✅ Client initialized
-✅ Capsule created successfully!
-✅ Proof retrieved!
-✅ Signature valid: True
+[OK] Client initialized
+[OK] Capsule created successfully!
+[OK] Proof retrieved!
+[OK] Signature valid: True
 
-🎉 All SDK tests passed!
+All SDK tests passed!
 ```
 
 ### 5. Make Your First Decision Auditable
@@ -152,13 +152,13 @@ print(f"Proof: {result.proof_url}")
 
 ## What's Working Today
 
-✅ **Backend API** - FastAPI server with all endpoints working
-✅ **Python SDK** - Full-featured client library
-✅ **PostgreSQL database** - Persistent storage with 73+ capsules
-✅ **Ed25519 signatures** - Cryptographic proof generation
-✅ **Test suite** - All tests passing
-✅ **Documentation** - Complete with examples
-✅ **Integration examples** - OpenAI and Anthropic ready
+- **Backend API** - FastAPI server with all endpoints working
+- **Python SDK** - Full-featured client library
+- **PostgreSQL database** - Persistent storage with 73+ capsules
+- **Ed25519 signatures** - Cryptographic proof generation
+- **Test suite** - All tests passing
+- **Documentation** - Complete with examples
+- **Integration examples** - OpenAI and Anthropic ready
 
 See [TECHNICAL_READINESS.md](TECHNICAL_READINESS.md) for detailed status.
 
@@ -220,35 +220,35 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## Why Cryptographic Proof Matters
 
 ### Without UATP:
-- ❌ AI decisions are black boxes
-- ❌ No audit trail for regulators
-- ❌ Insurance companies won't cover
-- ❌ Users don't trust the system
-- ❌ Liability is unclear
+- AI decisions are black boxes
+- No audit trail for regulators
+- Insurance companies won't cover
+- Users don't trust the system
+- Liability is unclear
 
 ### With UATP:
-- ✅ Cryptographic evidence of reasoning
-- ✅ Court-admissible proof (Daubert-compliant)
-- ✅ EU AI Act conformity assessments ready
-- ✅ Insurance-ready actuarial data
-- ✅ User transparency via proof URLs
+- Cryptographic evidence of reasoning
+- Court-admissible proof (Daubert-compliant)
+- EU AI Act conformity assessments ready
+- Insurance-ready actuarial data
+- User transparency via proof URLs
 
 ## Roadmap
 
 **Shipping now (Beta):**
-- ✅ Python SDK
-- ✅ Backend API
-- ✅ Cryptographic signatures
-- ✅ PostgreSQL storage
+- Python SDK
+- Backend API
+- Cryptographic signatures
+- PostgreSQL storage
 
 **Coming soon:**
-- 🔄 Web dashboard for viewing proofs
-- 🔄 JavaScript/TypeScript SDK
-- 🔄 API key authentication
-- 🔄 PyPI package
-- 🔄 Hosted service (SaaS)
-- 🔄 Payment integration
-- 🔄 Data marketplace
+- Web dashboard for viewing proofs
+- JavaScript/TypeScript SDK
+- API key authentication
+- PyPI package
+- Hosted service (SaaS)
+- Payment integration
+- Data marketplace
 
 **Future releases:**
 - Advanced consensus mechanisms
@@ -260,7 +260,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ```bash
 git clone https://github.com/KayronCalloway/uatp
-cd uatp-capsule-engine
+cd uatp
 ./start_backend_dev.sh
 
 cd sdk/python
@@ -268,7 +268,7 @@ pip install -e .
 python3 test_actual_sdk.py
 ```
 
-**Ship auditable AI in 5 minutes.** 🚀
+**Ship auditable AI in 5 minutes.**
 
 ---
 

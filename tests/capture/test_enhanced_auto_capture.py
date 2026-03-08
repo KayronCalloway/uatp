@@ -20,11 +20,11 @@ async def test_auto_capture():
             analyze_conversation_significance,
         )
 
-        print("🧪 Testing Enhanced Auto-Capture System")
+        print(" Testing Enhanced Auto-Capture System")
         print("=" * 50)
 
         # Test 1: Technical content
-        print("\n📝 Test 1: Technical Content Analysis")
+        print("\n Test 1: Technical Content Analysis")
         technical_content = """
         I need to implement a UATP capsule system with automatic significance detection.
         Here's my approach:
@@ -56,7 +56,7 @@ async def test_auto_capture():
         print(f"   Reason: {result['reason']}")
 
         # Test 2: Simple content (should not be captured)
-        print("\n📝 Test 2: Simple Content Analysis")
+        print("\n Test 2: Simple Content Analysis")
         simple_content = "Hello, how are you today? Nice weather we're having."
 
         result2 = await analyze_content_significance(
@@ -71,7 +71,7 @@ async def test_auto_capture():
         print(f"   Reason: {result2['reason']}")
 
         # Test 3: Conversation analysis
-        print("\n💬 Test 3: Conversation Analysis")
+        print("\n Test 3: Conversation Analysis")
         test_messages = [
             {
                 "role": "user",
@@ -103,19 +103,19 @@ async def test_auto_capture():
         print(f"   Should create capsule: {result3['create_capsule']}")
         print(f"   Reason: {result3['reason']}")
 
-        print("\n✅ Enhanced Auto-Capture System Test Complete!")
+        print("\n[OK] Enhanced Auto-Capture System Test Complete!")
         print("\nKey Features Verified:")
-        print("• ✅ Advanced significance detection")
-        print("• ✅ Technical keyword recognition")
-        print("• ✅ Code pattern detection")
-        print("• ✅ Conversation-level analysis")
-        print("• ✅ Automatic capture decisions")
-        print("• ✅ Capsule creation triggers")
+        print("• [OK] Advanced significance detection")
+        print("• [OK] Technical keyword recognition")
+        print("• [OK] Code pattern detection")
+        print("• [OK] Conversation-level analysis")
+        print("• [OK] Automatic capture decisions")
+        print("• [OK] Capsule creation triggers")
 
         return True
 
     except Exception as e:
-        print(f"❌ Test failed: {e}")
+        print(f"[ERROR] Test failed: {e}")
         import traceback
 
         traceback.print_exc()

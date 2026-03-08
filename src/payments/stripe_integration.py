@@ -422,7 +422,7 @@ def get_stripe_fees(amount: Decimal, payout_method: str = "ach") -> Dict[str, De
 
 # Example usage and testing
 if __name__ == "__main__":
-    print("💳 Testing Stripe Integration...")
+    print(" Testing Stripe Integration...")
 
     # Test connection
     try:
@@ -436,4 +436,4 @@ if __name__ == "__main__":
     fees = stripe_integration.calculate_fees(test_amount)
     print(f"Fees for ${test_amount}: {fees}")
 
-    print("✅ Stripe Integration tests completed")
+    print("[OK] Stripe Integration tests completed")

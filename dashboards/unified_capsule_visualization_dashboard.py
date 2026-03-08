@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import streamlit as st
-
 from capsules.specialized_capsules import (
     CapsuleExpirationCapsule,
     ConsentCapsule,
@@ -12,6 +11,7 @@ from capsules.specialized_capsules import (
     SimulatedMaliceCapsule,
     TrustRenewalCapsule,
 )
+
 from visualizer.components.uatp7_inspector import (
     render_capsule_expiration_content,
     render_consent_content,
@@ -301,7 +301,7 @@ def main():
         # Display UATP icon or logo
         st.markdown(
             """
-        <div style='text-align:center;font-size:42px;'>🔐</div>
+        <div style='text-align:center;font-size:42px;'></div>
         """,
             unsafe_allow_html=True,
         )
@@ -970,7 +970,7 @@ def display_self_hallucination_visualization(capsule=None):
         capsule: Optional capsule instance. If None, creates a sample capsule.
     """
     st.header(
-        f"{CAPSULE_ICONS.get('Self Hallucination', '🔍')} Self Hallucination Capsule Visualization"
+        f"{CAPSULE_ICONS.get('Self Hallucination', '')} Self Hallucination Capsule Visualization"
     )
     st.markdown(
         f"""
@@ -1026,7 +1026,7 @@ def display_value_inception_visualization(capsule=None):
         capsule: Optional capsule instance. If None, creates a sample capsule.
     """
     st.header(
-        f"{CAPSULE_ICONS.get('Value Inception', '⚖️')} Value Inception Capsule Visualization"
+        f"{CAPSULE_ICONS.get('Value Inception', '')} Value Inception Capsule Visualization"
     )
     st.markdown(
         f"""
@@ -1083,7 +1083,7 @@ def display_temporal_signature_visualization(capsule=None):
         capsule: Optional capsule instance. If None, creates a sample capsule.
     """
     st.header(
-        f"{CAPSULE_ICONS.get('Temporal Signature', '🕒')} Temporal Signature Capsule Visualization"
+        f"{CAPSULE_ICONS.get('Temporal Signature', '')} Temporal Signature Capsule Visualization"
     )
     st.markdown(
         f"""
@@ -1139,7 +1139,7 @@ def display_remix_visualization(capsule=None):
     Args:
         capsule: Optional capsule instance. If None, creates a sample capsule.
     """
-    st.header(f"{CAPSULE_ICONS.get('Remix', '🔀')} Remix Capsule Visualization")
+    st.header(f"{CAPSULE_ICONS.get('Remix', '')} Remix Capsule Visualization")
     st.markdown(
         f"""
     <div style='padding:10px;background-color:{CAPSULE_COLORS.get('Remix', '#8a2be2')}22;border-radius:5px;margin-bottom:20px;'>

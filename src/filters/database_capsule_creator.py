@@ -10,27 +10,27 @@ the universal filter system.
 
 import json
 import logging
-import time
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
-
-import sys
 import os
+import sys
+import time
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.database.connection import get_database_manager
-from src.models.capsule import CapsuleModel
+import uuid
+
 from src.capsule_schema import (
+    CapsuleStatus,
+    ReasoningStep,
     ReasoningTraceCapsule,
     ReasoningTracePayload,
-    ReasoningStep,
     Verification,
-    CapsuleStatus,
 )
+from src.database.connection import get_database_manager
 from src.filters.capsule_creator import FilterCapsuleCreator
-import uuid
+from src.models.capsule import CapsuleModel
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ class DatabaseCapsuleCreator:
         self.jsonl_creator = FilterCapsuleCreator() if fallback_to_jsonl else None
         self._db_connected = False
 
-        logger.info("🗄️  Database Capsule Creator initialized")
+        logger.info("️  Database Capsule Creator initialized")
         logger.info(f"   Fallback to JSONL: {fallback_to_jsonl}")
 
     async def initialize(self):
@@ -72,13 +72,13 @@ class DatabaseCapsuleCreator:
             # Test database connection
             await self.db_manager.execute("SELECT 1")
             self._db_connected = True
-            logger.info("✅ Database capsule creator connected to PostgreSQL")
+            logger.info("[OK] Database capsule creator connected to PostgreSQL")
 
         except Exception as e:
-            logger.error(f"❌ Database connection failed: {e}")
+            logger.error(f"[ERROR] Database connection failed: {e}")
             if not self.fallback_to_jsonl:
                 raise
-            logger.info("🔄 Falling back to JSONL storage")
+            logger.info(" Falling back to JSONL storage")
             self._db_connected = False
 
     async def create_capsule_from_filter_result(
@@ -110,10 +110,10 @@ class DatabaseCapsuleCreator:
                     filter_result, messages, user_id, platform, session_id
                 )
             except Exception as e:
-                logger.error(f"❌ Database capsule creation failed: {e}")
+                logger.error(f"[ERROR] Database capsule creation failed: {e}")
                 if not self.fallback_to_jsonl:
                     raise
-                logger.info("🔄 Falling back to JSONL storage")
+                logger.info(" Falling back to JSONL storage")
 
         # Fallback to JSONL
         if self.jsonl_creator:
@@ -188,7 +188,7 @@ class DatabaseCapsuleCreator:
             await conn.execute(
                 """
                 INSERT INTO capsules (
-                    capsule_id, capsule_type, version, timestamp, status, 
+                    capsule_id, capsule_type, version, timestamp, status,
                     verification, payload
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             """,
@@ -230,12 +230,12 @@ class DatabaseCapsuleCreator:
             },
         }
 
-        logger.info(f"🗄️  Created database capsule: {capsule_id}")
+        logger.info(f"️  Created database capsule: {capsule_id}")
         logger.info(f"   Platform: {platform}")
         logger.info(
             f"   Significance: {filter_result.get('significance_score', 0.0):.2f}"
         )
-        logger.info(f"   Storage: PostgreSQL")
+        logger.info("   Storage: PostgreSQL")
 
         return capsule_data
 
@@ -297,7 +297,7 @@ class DatabaseCapsuleCreator:
                 # Auto-filtered capsules
                 auto_filtered_count = await conn.fetchval(
                     """
-                    SELECT COUNT(*) FROM capsules 
+                    SELECT COUNT(*) FROM capsules
                     WHERE payload->>'analysis_metadata'->>'auto_filtered' = 'true'
                 """
                 )
@@ -316,10 +316,10 @@ class DatabaseCapsuleCreator:
                 # Platform distribution
                 platform_stats = await conn.fetch(
                     """
-                    SELECT 
+                    SELECT
                         payload->>'analysis_metadata'->>'platform' as platform,
                         COUNT(*) as count
-                    FROM capsules 
+                    FROM capsules
                     WHERE payload->>'analysis_metadata'->>'platform' IS NOT NULL
                     GROUP BY platform
                 """
@@ -330,15 +330,15 @@ class DatabaseCapsuleCreator:
                 # Significance distribution
                 significance_stats = await conn.fetch(
                     """
-                    SELECT 
-                        CASE 
+                    SELECT
+                        CASE
                             WHEN (payload->>'analysis_metadata'->>'significance_score')::float < 0.6 THEN 'low'
                             WHEN (payload->>'analysis_metadata'->>'significance_score')::float < 1.0 THEN 'medium'
                             WHEN (payload->>'analysis_metadata'->>'significance_score')::float < 2.0 THEN 'high'
                             ELSE 'very_high'
                         END as significance_level,
                         COUNT(*) as count
-                    FROM capsules 
+                    FROM capsules
                     WHERE payload->>'analysis_metadata'->>'significance_score' IS NOT NULL
                     GROUP BY significance_level
                 """
@@ -374,9 +374,9 @@ class DatabaseCapsuleCreator:
                 rows = await conn.fetch(
                     """
                     SELECT capsule_id, capsule_type, timestamp, payload
-                    FROM capsules 
+                    FROM capsules
                     WHERE payload->>'analysis_metadata'->>'auto_filtered' = 'true'
-                    ORDER BY timestamp DESC 
+                    ORDER BY timestamp DESC
                     LIMIT $1
                 """,
                     limit,
@@ -423,9 +423,9 @@ class DatabaseCapsuleCreator:
         }
 
         try:
-            logger.info(f"🔄 Starting migration from {jsonl_file}")
+            logger.info(f" Starting migration from {jsonl_file}")
 
-            with open(jsonl_file, "r", encoding="utf-8") as f:
+            with open(jsonl_file, encoding="utf-8") as f:
                 for line_num, line in enumerate(f, 1):
                     if not line.strip():
                         continue
@@ -461,14 +461,14 @@ class DatabaseCapsuleCreator:
                         )
                         logger.error(f"Migration error on line {line_num}: {e}")
 
-            logger.info(f"✅ Migration completed:")
+            logger.info("[OK] Migration completed:")
             logger.info(f"   Total processed: {migration_stats['total_processed']}")
             logger.info(f"   Successful: {migration_stats['successful_migrations']}")
             logger.info(f"   Failed: {migration_stats['failed_migrations']}")
             logger.info(f"   Skipped: {migration_stats['skipped_duplicates']}")
 
         except Exception as e:
-            logger.error(f"❌ Migration failed: {e}")
+            logger.error(f"[ERROR] Migration failed: {e}")
             migration_stats["errors"].append({"error": str(e)})
 
         return migration_stats
@@ -525,7 +525,7 @@ class DatabaseCapsuleCreator:
             await conn.execute(
                 """
                 INSERT INTO capsules (
-                    capsule_id, capsule_type, version, timestamp, status, 
+                    capsule_id, capsule_type, version, timestamp, status,
                     verification, payload
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             """,

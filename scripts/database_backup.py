@@ -9,17 +9,16 @@ capsule database, supporting both SQLite and PostgreSQL backends.
 
 import asyncio
 import datetime
+import hashlib
 import json
 import logging
 import os
 import shutil
 import sqlite3
-import subprocess
 import sys
-from pathlib import Path
-from typing import Dict, List, Optional, Any
 import zipfile
-import hashlib
+from pathlib import Path
+from typing import Any, Dict, List
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
@@ -48,7 +47,7 @@ class DatabaseBackupManager:
         # Backup retention (days)
         self.retention_days = 30
 
-        logger.info(f"🔒 Database Backup Manager initialized")
+        logger.info(" Database Backup Manager initialized")
         logger.info(f"   Backup directory: {self.backup_dir}")
         logger.info(f"   Retention period: {self.retention_days} days")
 
@@ -86,7 +85,7 @@ class DatabaseBackupManager:
             backup_name = self.generate_backup_filename("sqlite")
             backup_zip = self.backup_dir / f"{backup_name}.zip"
 
-            logger.info(f"📦 Creating SQLite backup: {backup_name}")
+            logger.info(f" Creating SQLite backup: {backup_name}")
 
             # Create backup directory structure
             temp_backup_dir = self.backup_dir / f"temp_{backup_name}"
@@ -148,7 +147,7 @@ class DatabaseBackupManager:
                 backup_info["backup_size"] = backup_zip.stat().st_size
                 backup_info["status"] = "completed"
 
-                logger.info(f"✅ SQLite backup completed: {backup_zip}")
+                logger.info(f"[OK] SQLite backup completed: {backup_zip}")
                 logger.info(f"   Files backed up: {len(backup_info['files'])}")
                 logger.info(
                     f"   Backup size: {backup_info['backup_size'] / 1024 / 1024:.1f} MB"
@@ -162,7 +161,7 @@ class DatabaseBackupManager:
         except Exception as e:
             backup_info["status"] = "failed"
             backup_info["error"] = str(e)
-            logger.error(f"❌ SQLite backup failed: {e}")
+            logger.error(f"[ERROR] SQLite backup failed: {e}")
 
         return backup_info
 
@@ -174,9 +173,9 @@ class DatabaseBackupManager:
                 for line in conn.iterdump():
                     f.write(f"{line}\n")
             conn.close()
-            logger.info(f"📄 SQL dump created: {output_path}")
+            logger.info(f" SQL dump created: {output_path}")
         except Exception as e:
-            logger.error(f"❌ SQL dump creation failed: {e}")
+            logger.error(f"[ERROR] SQL dump creation failed: {e}")
             raise
 
     async def _get_database_stats(self) -> Dict[str, Any]:
@@ -236,7 +235,7 @@ class DatabaseBackupManager:
                 }
 
         except Exception as e:
-            logger.error(f"❌ Database stats collection failed: {e}")
+            logger.error(f"[ERROR] Database stats collection failed: {e}")
             return {"error": str(e)}
 
     async def restore_from_backup(self, backup_file: str) -> Dict[str, Any]:
@@ -254,7 +253,7 @@ class DatabaseBackupManager:
         }
 
         try:
-            logger.info(f"🔄 Starting database restore from: {backup_file}")
+            logger.info(f" Starting database restore from: {backup_file}")
 
             # Create temporary extraction directory
             temp_restore_dir = (
@@ -271,7 +270,7 @@ class DatabaseBackupManager:
                 # Load backup metadata
                 metadata_path = temp_restore_dir / "backup_metadata.json"
                 if metadata_path.exists():
-                    with open(metadata_path, "r") as f:
+                    with open(metadata_path) as f:
                         backup_metadata = json.load(f)
                     restore_info["backup_metadata"] = backup_metadata
 
@@ -282,24 +281,22 @@ class DatabaseBackupManager:
                     if self.sqlite_db_path.exists():
                         current_backup = self.sqlite_db_path.with_suffix(".db.backup")
                         shutil.copy2(self.sqlite_db_path, current_backup)
-                        logger.info(
-                            f"📋 Current database backed up to: {current_backup}"
-                        )
+                        logger.info(f" Current database backed up to: {current_backup}")
 
                     # Restore database
                     shutil.copy2(db_backup_path, self.sqlite_db_path)
                     restore_info["restored_files"].append("uatp_database.db")
-                    logger.info(f"✅ Database restored: {self.sqlite_db_path}")
+                    logger.info(f"[OK] Database restored: {self.sqlite_db_path}")
 
                 # Restore JSONL file if exists
                 jsonl_backup_path = temp_restore_dir / "capsule_chain.jsonl"
                 if jsonl_backup_path.exists():
                     shutil.copy2(jsonl_backup_path, self.jsonl_backup_path)
                     restore_info["restored_files"].append("capsule_chain.jsonl")
-                    logger.info(f"✅ JSONL file restored: {self.jsonl_backup_path}")
+                    logger.info(f"[OK] JSONL file restored: {self.jsonl_backup_path}")
 
                 restore_info["status"] = "completed"
-                logger.info(f"✅ Database restore completed successfully")
+                logger.info("[OK] Database restore completed successfully")
 
             finally:
                 # Clean up temporary directory
@@ -309,7 +306,7 @@ class DatabaseBackupManager:
         except Exception as e:
             restore_info["status"] = "failed"
             restore_info["error"] = str(e)
-            logger.error(f"❌ Database restore failed: {e}")
+            logger.error(f"[ERROR] Database restore failed: {e}")
 
         return restore_info
 
@@ -339,21 +336,21 @@ class DatabaseBackupManager:
                     cleanup_info["deleted_files"].append(
                         {"name": backup_file.name, "date": file_mtime.isoformat()}
                     )
-                    logger.info(f"🗑️ Deleted old backup: {backup_file.name}")
+                    logger.info(f"️ Deleted old backup: {backup_file.name}")
                 else:
                     cleanup_info["kept_files"].append(
                         {"name": backup_file.name, "date": file_mtime.isoformat()}
                     )
 
             cleanup_info["status"] = "completed"
-            logger.info(f"✅ Backup cleanup completed")
+            logger.info("[OK] Backup cleanup completed")
             logger.info(f"   Deleted: {len(cleanup_info['deleted_files'])} files")
             logger.info(f"   Kept: {len(cleanup_info['kept_files'])} files")
 
         except Exception as e:
             cleanup_info["status"] = "failed"
             cleanup_info["error"] = str(e)
-            logger.error(f"❌ Backup cleanup failed: {e}")
+            logger.error(f"[ERROR] Backup cleanup failed: {e}")
 
         return cleanup_info
 
@@ -391,7 +388,9 @@ class DatabaseBackupManager:
                 backups.append(backup_info)
 
             except Exception as e:
-                logger.warning(f"⚠️ Could not read backup info for {backup_file}: {e}")
+                logger.warning(
+                    f"[WARN] Could not read backup info for {backup_file}: {e}"
+                )
 
         return backups
 
@@ -410,7 +409,7 @@ class DatabaseBackupManager:
         }
 
         try:
-            logger.info(f"🔍 Verifying backup: {backup_file}")
+            logger.info(f" Verifying backup: {backup_file}")
 
             # Check if it's a valid ZIP file
             try:
@@ -487,7 +486,7 @@ class DatabaseBackupManager:
             else:
                 verification_info["status"] = "passed"
 
-            logger.info(f"✅ Backup verification completed")
+            logger.info("[OK] Backup verification completed")
             logger.info(f"   Status: {verification_info['status']}")
             logger.info(
                 f"   Checks passed: {len([c for c in verification_info['checks'] if c['status'] == 'passed'])}"
@@ -496,7 +495,7 @@ class DatabaseBackupManager:
         except Exception as e:
             verification_info["status"] = "failed"
             verification_info["error"] = str(e)
-            logger.error(f"❌ Backup verification failed: {e}")
+            logger.error(f"[ERROR] Backup verification failed: {e}")
 
         return verification_info
 
@@ -504,38 +503,38 @@ class DatabaseBackupManager:
 async def main():
     """Main backup management function."""
 
-    print("🔒 UATP Database Backup and Recovery System")
+    print(" UATP Database Backup and Recovery System")
     print("=" * 50)
 
     backup_manager = DatabaseBackupManager()
 
     # Create backup
-    print("\n📦 Creating database backup...")
+    print("\n Creating database backup...")
     backup_result = await backup_manager.create_sqlite_backup()
 
     if backup_result["status"] == "completed":
-        print(f"✅ Backup created successfully: {backup_result['backup_file']}")
+        print(f"[OK] Backup created successfully: {backup_result['backup_file']}")
         print(f"   Size: {backup_result['backup_size'] / 1024 / 1024:.1f} MB")
         print(f"   Files: {len(backup_result['files'])}")
 
         # Verify backup
-        print("\n🔍 Verifying backup...")
+        print("\n Verifying backup...")
         verification_result = await backup_manager.verify_backup(
             backup_result["backup_file"]
         )
 
         if verification_result["status"] == "passed":
-            print("✅ Backup verification passed")
+            print("[OK] Backup verification passed")
         else:
             print(
-                f"❌ Backup verification failed: {verification_result.get('error', 'Unknown error')}"
+                f"[ERROR] Backup verification failed: {verification_result.get('error', 'Unknown error')}"
             )
 
     else:
-        print(f"❌ Backup failed: {backup_result.get('error', 'Unknown error')}")
+        print(f"[ERROR] Backup failed: {backup_result.get('error', 'Unknown error')}")
 
     # List all backups
-    print("\n📋 Available backups:")
+    print("\n Available backups:")
     backups = backup_manager.list_backups()
 
     if backups:
@@ -547,17 +546,17 @@ async def main():
         print("   No backups found")
 
     # Cleanup old backups
-    print("\n🗑️ Cleaning up old backups...")
+    print("\n️ Cleaning up old backups...")
     cleanup_result = backup_manager.cleanup_old_backups()
 
     if cleanup_result["status"] == "completed":
         print(
-            f"✅ Cleanup completed: {len(cleanup_result['deleted_files'])} files deleted"
+            f"[OK] Cleanup completed: {len(cleanup_result['deleted_files'])} files deleted"
         )
     else:
-        print(f"❌ Cleanup failed: {cleanup_result.get('error', 'Unknown error')}")
+        print(f"[ERROR] Cleanup failed: {cleanup_result.get('error', 'Unknown error')}")
 
-    print("\n✅ Database backup and recovery system ready!")
+    print("\n[OK] Database backup and recovery system ready!")
     print("   Use this script to create automated backups and recovery procedures")
 
 

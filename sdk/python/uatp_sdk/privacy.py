@@ -4,14 +4,13 @@ UATP Python SDK - Privacy Engine Module
 Provides zero-knowledge proof generation and privacy-preserving functionality.
 """
 
-import asyncio
-import logging
 import hashlib
+import json
+import logging
 import secrets
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any, Union
 from datetime import datetime, timezone
-import json
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +73,7 @@ class PrivacyEngine:
         self.client = client
         self.proof_cache = {}
         self.privacy_policies = {}
-        logger.info("🔐 Privacy Engine initialized with zero-knowledge capabilities")
+        logger.info(" Privacy Engine initialized with zero-knowledge capabilities")
 
     async def create_proof(
         self,
@@ -138,11 +137,11 @@ class PrivacyEngine:
             # Cache the proof
             self.proof_cache[proof_id] = zk_proof
 
-            logger.info(f"🔒 Created zero-knowledge proof: {proof_id}")
+            logger.info(f" Created zero-knowledge proof: {proof_id}")
             return zk_proof
 
         except Exception as e:
-            logger.error(f"❌ ZK proof creation failed: {e}")
+            logger.error(f"[ERROR] ZK proof creation failed: {e}")
 
             # Create fallback proof
             fallback_proof = ZKProof(
@@ -230,12 +229,12 @@ class PrivacyEngine:
             }
 
             logger.info(
-                f"🔍 Verified proof {proof_id}: {verification_result['verified']}"
+                f" Verified proof {proof_id}: {verification_result['verified']}"
             )
             return verification_result
 
         except Exception as e:
-            logger.error(f"❌ Proof verification failed for {proof_id}: {e}")
+            logger.error(f"[ERROR] Proof verification failed for {proof_id}: {e}")
             return {"verified": False, "error": str(e), "proof_id": proof_id}
 
     async def get_proof(self, proof_id: str) -> Optional[ZKProof]:
@@ -269,7 +268,7 @@ class PrivacyEngine:
             return proof
 
         except Exception as e:
-            logger.error(f"❌ Failed to get proof {proof_id}: {e}")
+            logger.error(f"[ERROR] Failed to get proof {proof_id}: {e}")
             return None
 
     async def anonymize_data(
@@ -299,11 +298,11 @@ class PrivacyEngine:
             response.raise_for_status()
 
             result = response.json()
-            logger.info(f"🎭 Anonymized data with level: {anonymization_level}")
+            logger.info(f" Anonymized data with level: {anonymization_level}")
             return result.get("anonymized_data", {})
 
         except Exception as e:
-            logger.error(f"❌ Data anonymization failed: {e}")
+            logger.error(f"[ERROR] Data anonymization failed: {e}")
 
             # Fallback local anonymization
             return self._local_anonymize(data, anonymization_level)
@@ -370,11 +369,11 @@ class PrivacyEngine:
             # Cache the policy
             self.privacy_policies[user_id] = policy
 
-            logger.info(f"📋 Updated privacy policy for user {user_id}")
+            logger.info(f" Updated privacy policy for user {user_id}")
             return True
 
         except Exception as e:
-            logger.error(f"❌ Failed to update privacy policy for {user_id}: {e}")
+            logger.error(f"[ERROR] Failed to update privacy policy for {user_id}: {e}")
             return False
 
     async def get_privacy_policy(self, user_id: str) -> Optional[PrivacyPolicy]:
@@ -407,7 +406,7 @@ class PrivacyEngine:
             return policy
 
         except Exception as e:
-            logger.error(f"❌ Failed to get privacy policy for {user_id}: {e}")
+            logger.error(f"[ERROR] Failed to get privacy policy for {user_id}: {e}")
             return None
 
     async def encrypt_sensitive_data(
@@ -433,11 +432,11 @@ class PrivacyEngine:
             response.raise_for_status()
 
             result = response.json()
-            logger.info("🔐 Data encrypted successfully")
+            logger.info(" Data encrypted successfully")
             return result
 
         except Exception as e:
-            logger.error(f"❌ Data encryption failed: {e}")
+            logger.error(f"[ERROR] Data encryption failed: {e}")
 
             # Fallback local encryption (simplified)
             encrypted_data = {}
@@ -464,4 +463,4 @@ class PrivacyEngine:
         """Clear all cached privacy data."""
         self.proof_cache.clear()
         self.privacy_policies.clear()
-        logger.info("🧹 Privacy cache cleared")
+        logger.info(" Privacy cache cleared")

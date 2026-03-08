@@ -51,12 +51,12 @@ export function OnboardingComplete() {
       <div className="w-full max-w-4xl space-y-8">
         {/* Success Header */}
         <div className="text-center space-y-4">
-          <div className="text-8xl animate-bounce">🎉</div>
+          <div className="text-8xl animate-bounce"></div>
           <h1 className="text-4xl font-bold text-gray-900">
             Congratulations!
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Your UATP system is fully configured and ready to provide 
+            Your UATP system is fully configured and ready to provide
             world-class AI trust and attribution tracking.
           </p>
         </div>
@@ -65,7 +65,7 @@ export function OnboardingComplete() {
         <Card className="p-8 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
           <div className="text-center space-y-6">
             <h2 className="text-2xl font-semibold text-green-900">
-              Setup Complete! ✨
+              Setup Complete!
             </h2>
 
             {stats && (
@@ -101,19 +101,19 @@ export function OnboardingComplete() {
               <h3 className="font-semibold text-green-900 mb-3">What You've Accomplished:</h3>
               <div className="grid md:grid-cols-2 gap-3 text-sm text-green-800">
                 <div className="flex items-center">
-                  <span className="mr-2">✅</span>
+                  <span className="mr-2">[OK]</span>
                   Environment optimized for your needs
                 </div>
                 <div className="flex items-center">
-                  <span className="mr-2">✅</span>
+                  <span className="mr-2">[OK]</span>
                   AI platform connected and verified
                 </div>
                 <div className="flex items-center">
-                  <span className="mr-2">✅</span>
+                  <span className="mr-2">[OK]</span>
                   First capsule created with full attribution
                 </div>
                 <div className="flex items-center">
-                  <span className="mr-2">✅</span>
+                  <span className="mr-2">[OK]</span>
                   System ready for production use
                 </div>
               </div>
@@ -124,13 +124,13 @@ export function OnboardingComplete() {
         {/* What's Next */}
         <Card className="p-8">
           <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">
-            What's Next? 🚀
+            What's Next?
           </h2>
-          
+
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-800 flex items-center">
-                <span className="mr-2">🎯</span>
+                <span className="mr-2"></span>
                 Immediate Next Steps
               </h3>
               <ul className="space-y-3 text-sm text-gray-600">
@@ -163,30 +163,30 @@ export function OnboardingComplete() {
 
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-800 flex items-center">
-                <span className="mr-2">📚</span>
+                <span className="mr-2"></span>
                 Learning Resources
               </h3>
               <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-start">
-                  <span className="mr-2 text-purple-500">📖</span>
+                  <span className="mr-2 text-purple-500"></span>
                   <div>
                     <strong>User Guide:</strong> Complete documentation for all UATP features
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="mr-2 text-purple-500">🎥</span>
+                  <span className="mr-2 text-purple-500"></span>
                   <div>
                     <strong>Video Tutorials:</strong> Step-by-step guides for advanced workflows
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="mr-2 text-purple-500">💬</span>
+                  <span className="mr-2 text-purple-500"></span>
                   <div>
                     <strong>Community Forum:</strong> Connect with other UATP users and experts
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="mr-2 text-purple-500">🔧</span>
+                  <span className="mr-2 text-purple-500"></span>
                   <div>
                     <strong>API Documentation:</strong> Integrate UATP into your existing workflows
                   </div>
@@ -202,9 +202,9 @@ export function OnboardingComplete() {
             onClick={handleLaunchDashboard}
             className="px-8 py-3 text-lg font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
           >
-            Launch UATP Dashboard 🚀
+            Launch UATP Dashboard
           </Button>
-          
+
           <Button
             onClick={handleRestartOnboarding}
             variant="outline"
@@ -241,7 +241,7 @@ export function OnboardingComplete() {
         {/* Footer Message */}
         <div className="text-center text-gray-500 text-sm space-y-2">
           <p>
-            🌟 Welcome to the future of AI trust and attribution!
+             Welcome to the future of AI trust and attribution!
           </p>
           <p>
             Thank you for choosing UATP - Universal AI Trust Protocol

@@ -28,13 +28,13 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from src.analysis.quality_assessment import QualityAssessor
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,11 @@ async def backfill_quality(dry_run: bool = False, limit: int = None):
             capsule_id = row["capsule_id"]
 
             try:
-                payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
+                payload = (
+                    json.loads(row["payload"])
+                    if isinstance(row["payload"], str)
+                    else row["payload"]
+                )
             except (json.JSONDecodeError, TypeError):
                 logger.warning(f"Invalid payload JSON for {capsule_id}")
                 stats["failed"] += 1
@@ -102,7 +106,9 @@ async def backfill_quality(dry_run: bool = False, limit: int = None):
                 # Still run assessment to show what would happen
                 try:
                     assessment = QualityAssessor.assess_capsule(capsule)
-                    logger.info(f"  [DRY RUN] Grade: {assessment.quality_grade} ({assessment.overall_quality:.2f})")
+                    logger.info(
+                        f"  [DRY RUN] Grade: {assessment.quality_grade} ({assessment.overall_quality:.2f})"
+                    )
                     stats["grades"][assessment.quality_grade] += 1
                     stats["assessed"] += 1
                 except Exception as e:
@@ -139,16 +145,18 @@ async def backfill_quality(dry_run: bool = False, limit: int = None):
                 # Update database
                 await db.execute(
                     "UPDATE capsules SET payload = ? WHERE id = ?",
-                    (json.dumps(payload), row["id"])
+                    (json.dumps(payload), row["id"]),
                 )
                 await db.commit()
 
-                logger.info(f"  ✅ Grade: {assessment.quality_grade} ({assessment.overall_quality:.2f})")
+                logger.info(
+                    f"  [OK] Grade: {assessment.quality_grade} ({assessment.overall_quality:.2f})"
+                )
                 stats["grades"][assessment.quality_grade] += 1
                 stats["assessed"] += 1
 
             except Exception as e:
-                logger.error(f"  ❌ Assessment failed: {e}")
+                logger.error(f"  [ERROR] Assessment failed: {e}")
                 stats["failed"] += 1
 
     # Print summary
@@ -174,8 +182,14 @@ async def backfill_quality(dry_run: bool = False, limit: int = None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Backfill quality assessment for existing capsules")
-    parser.add_argument("--dry-run", action="store_true", help="Preview changes without modifying database")
+    parser = argparse.ArgumentParser(
+        description="Backfill quality assessment for existing capsules"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without modifying database",
+    )
     parser.add_argument("--limit", type=int, help="Limit number of capsules to process")
     args = parser.parse_args()
 

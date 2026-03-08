@@ -31,7 +31,7 @@ class ReasoningExtractor:
 
         if not self.enabled:
             logger.info(
-                "🔬 AI Enrichment disabled (set ENABLE_AI_ENRICHMENT=true to enable)"
+                " AI Enrichment disabled (set ENABLE_AI_ENRICHMENT=true to enable)"
             )
             return
 
@@ -56,7 +56,7 @@ class ReasoningExtractor:
 
                 self.llm_client = AsyncOpenAI(api_key=openai_key)
                 self.provider = "openai"
-                logger.info(f"🤖 AI Enrichment enabled using OpenAI ({self.model})")
+                logger.info(f" AI Enrichment enabled using OpenAI ({self.model})")
                 return
         except Exception as e:
             logger.warning(f"Failed to initialize OpenAI client: {e}")
@@ -70,13 +70,13 @@ class ReasoningExtractor:
                 self.llm_client = anthropic.AsyncAnthropic(api_key=anthropic_key)
                 self.provider = "anthropic"
                 self.model = "claude-3-haiku-20240307"  # Fast, cheap model
-                logger.info(f"🤖 AI Enrichment enabled using Anthropic ({self.model})")
+                logger.info(f" AI Enrichment enabled using Anthropic ({self.model})")
                 return
         except Exception as e:
             logger.warning(f"Failed to initialize Anthropic client: {e}")
 
         # Use local rule-based extraction as fallback (no API key needed)
-        logger.info("🧠 AI Enrichment using local rule-based extraction (no API key)")
+        logger.info(" AI Enrichment using local rule-based extraction (no API key)")
         self.provider = "local"
         self.llm_client = None  # Not needed for local extraction
         # Keep enabled=True so we can use local extraction
@@ -140,7 +140,7 @@ class ReasoningExtractor:
             return {"steps": steps, "suggested_score": round(base_score, 2)}
 
         except Exception as e:
-            logger.error(f"❌ Reasoning extraction failed: {e}", exc_info=True)
+            logger.error(f"[ERROR] Reasoning extraction failed: {e}", exc_info=True)
             return {"steps": [], "suggested_score": 0.0}
 
     def _construct_prompt(self, user_input: str, ai_response: str) -> str:
@@ -313,7 +313,7 @@ class ReasoningExtractor:
         if code_blocks:
             base_score += 0.1  # Bonus for code
 
-        logger.debug(f"🧠 Local extraction: {len(steps)} steps, score={base_score:.2f}")
+        logger.debug(f" Local extraction: {len(steps)} steps, score={base_score:.2f}")
 
         return {
             "steps": steps[:10],  # Limit to 10 steps

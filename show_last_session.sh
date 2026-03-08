@@ -3,7 +3,7 @@
 
 UATP_DIR="/Users/kay/uatp-capsule-engine"
 
-echo "📖 Last Session Walkthrough"
+echo " Last Session Walkthrough"
 echo "=" | head -c 60 && echo ""
 echo ""
 

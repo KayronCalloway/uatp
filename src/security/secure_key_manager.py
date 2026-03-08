@@ -413,7 +413,7 @@ if __name__ == "__main__":
 
     def test_secure_key_manager():
         """Test the secure key manager."""
-        print("🔐 UATP Secure Key Manager Test")
+        print(" UATP Secure Key Manager Test")
         print("=" * 40)
 
         # Create key manager
@@ -437,9 +437,9 @@ if __name__ == "__main__":
         pq_key = key_manager.get_key("pq_signing")
         enc_key = key_manager.get_key("encryption_key")
 
-        print(f"✅ Signing key retrieved: {bool(signing_key)}")
-        print(f"✅ PQ key retrieved: {bool(pq_key)}")
-        print(f"✅ Encryption key retrieved: {bool(enc_key)}")
+        print(f"[OK] Signing key retrieved: {bool(signing_key)}")
+        print(f"[OK] PQ key retrieved: {bool(pq_key)}")
+        print(f"[OK] Encryption key retrieved: {bool(enc_key)}")
 
         # Test key rotation
         print("Testing key rotation...")
@@ -447,26 +447,26 @@ if __name__ == "__main__":
         key_manager.rotate_key("capsule_signing")
         new_key = key_manager.get_key("capsule_signing")
 
-        print(f"✅ Key rotated: {old_key != new_key}")
+        print(f"[OK] Key rotated: {old_key != new_key}")
 
         # Get key status
         status = key_manager.get_key_status()
-        print(f"✅ Total keys managed: {len(status)}")
+        print(f"[OK] Total keys managed: {len(status)}")
 
-        print("\n🎯 Secure Key Manager Capabilities:")
-        print("   ✅ Secure memory management with memory locking")
-        print("   ✅ HKDF-based key derivation from master key")
-        print("   ✅ Automatic key rotation with versioning")
-        print("   ✅ Secure key deletion with memory zeroing")
-        print("   ✅ Multiple key types support")
-        print("   ✅ Thread-safe operations")
-        print("   ✅ Key lifecycle management")
+        print("\n Secure Key Manager Capabilities:")
+        print("   [OK] Secure memory management with memory locking")
+        print("   [OK] HKDF-based key derivation from master key")
+        print("   [OK] Automatic key rotation with versioning")
+        print("   [OK] Secure key deletion with memory zeroing")
+        print("   [OK] Multiple key types support")
+        print("   [OK] Thread-safe operations")
+        print("   [OK] Key lifecycle management")
 
         # Cleanup
         key_manager.delete_key("capsule_signing")
         key_manager.delete_key("pq_signing")
         key_manager.delete_key("encryption_key")
 
-        print("\n✅ Secure key manager test complete!")
+        print("\n[OK] Secure key manager test complete!")
 
     test_secure_key_manager()

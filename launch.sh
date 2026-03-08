@@ -1,12 +1,12 @@
 #!/bin/bash
 # UATP Capsule Engine Quick Launcher
 
-echo "🚀 UATP Capsule Engine Launcher"
+echo " UATP Capsule Engine Launcher"
 echo "================================"
 echo ""
 echo "Select launch option:"
 echo "1) Full System API (port 8000)"
-echo "2) Full System + Visualizer (ports 8000 + 8500)"  
+echo "2) Full System + Visualizer (ports 8000 + 8500)"
 echo "3) Initialize DB + Start Server (port 9090)"
 echo "4) Simple Mock Server (port 9090)"
 echo ""

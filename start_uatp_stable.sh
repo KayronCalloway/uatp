@@ -9,27 +9,27 @@ echo ""
 
 # Check if production server exists
 if [[ ! -f "start_production_server.py" ]]; then
-    echo "❌ Production server not found. Using fallback..."
+    echo "[ERROR] Production server not found. Using fallback..."
     if [[ -f "start_real_server.py" ]]; then
-        echo "🔄 Starting with real server (fallback)..."
+        echo " Starting with real server (fallback)..."
         python3 start_real_server.py
     else
-        echo "❌ No server scripts found!"
+        echo "[ERROR] No server scripts found!"
         exit 1
     fi
 else
-    echo "🚀 Starting production server with Uvicorn..."
+    echo " Starting production server with Uvicorn..."
     echo "   Host: 0.0.0.0"
     echo "   Port: 9090"
     echo "   Frontend URL: http://localhost:9090"
     echo ""
-    echo "✅ Production-grade ASGI server for stability"
-    echo "✅ Automatic restart on crashes"
-    echo "✅ Better performance than development server"
+    echo "[OK] Production-grade ASGI server for stability"
+    echo "[OK] Automatic restart on crashes"
+    echo "[OK] Better performance than development server"
     echo ""
     echo "Press Ctrl+C to stop"
     echo "=" * 50
-    
+
     # Start the production server
     python3 start_production_server.py
 fi

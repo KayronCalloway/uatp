@@ -15,7 +15,7 @@ Supported Platforms:
 
 Usage:
     from filters.integration_layer import process_ai_interaction
-    
+
     result = await process_ai_interaction(
         messages=conversation_messages,
         user_id="kay",
@@ -24,24 +24,22 @@ Usage:
     )
 """
 
-import asyncio
 import json
 import logging
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass
-
-import sys
 import os
+import sys
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.filters.universal_filter import (
-    get_universal_filter,
-    FilterResult,
-    FilterDecision,
-)
 from src.filters.capsule_creator import get_capsule_creator
+from src.filters.universal_filter import (
+    FilterDecision,
+    FilterResult,
+    get_universal_filter,
+)
 
 # from src.engine.capsule_engine import CapsuleEngine
 
@@ -88,7 +86,7 @@ class IntegrationLayer:
         )
         self.universal_filter.add_callback(FilterDecision.REVIEW, self._handle_review)
 
-        logger.info("🔗 Integration layer initialized")
+        logger.info(" Integration layer initialized")
 
     async def process_ai_interaction(
         self,
@@ -175,10 +173,12 @@ class IntegrationLayer:
                 session_id=session_id,
             )
 
-            logger.info(f"✅ Successfully created capsule: {capsule_data['capsule_id']}")
+            logger.info(
+                f"[OK] Successfully created capsule: {capsule_data['capsule_id']}"
+            )
 
         except Exception as e:
-            logger.error(f"❌ Error creating capsule: {e}")
+            logger.error(f"[ERROR] Error creating capsule: {e}")
 
     async def _handle_review(
         self, result: FilterResult, interaction_data: Dict[str, Any]
@@ -187,7 +187,7 @@ class IntegrationLayer:
 
         # In a production system, this would queue for human review
         logger.info(
-            f"👁️ Interaction queued for review - Score: {result.significance_score:.2f}"
+            f"️ Interaction queued for review - Score: {result.significance_score:.2f}"
         )
 
         # For now, just log the details
@@ -213,7 +213,7 @@ class IntegrationLayer:
         }
 
         # In production, this would go to a proper logging system
-        logger.debug(f"📊 Interaction logged: {json.dumps(log_entry, indent=2)}")
+        logger.debug(f" Interaction logged: {json.dumps(log_entry, indent=2)}")
 
     def _format_conversation_content(
         self, messages: List[Dict[str, Any]], context: Dict[str, Any]
@@ -258,7 +258,7 @@ class IntegrationLayer:
             del self.active_sessions[session_id]
 
         if expired_sessions:
-            logger.info(f"🧹 Cleaned up {len(expired_sessions)} expired sessions")
+            logger.info(f" Cleaned up {len(expired_sessions)} expired sessions")
 
 
 # Global integration layer instance

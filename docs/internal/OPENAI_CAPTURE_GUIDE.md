@@ -42,7 +42,7 @@ async def main():
     )
 
     print(result['response'])
-    # 🎯 Automatically saved to UATP database!
+    #  Automatically saved to UATP database!
 
 asyncio.run(main())
 ```
@@ -71,7 +71,7 @@ async def main():
         model="gpt-4",
         user_id="kay"
     )
-    # 🎯 Now it's in UATP!
+    #  Now it's in UATP!
 
 asyncio.run(main())
 ```
@@ -105,7 +105,7 @@ async def my_chatgpt():
         conversation.append({"role": "assistant", "content": ai_response})
 
         print(f"AI: {ai_response}")
-        # 🎯 Every exchange automatically saved!
+        #  Every exchange automatically saved!
 
 asyncio.run(my_chatgpt())
 ```
@@ -132,11 +132,11 @@ All of this is saved as a UATP capsule with cryptographic verification.
 
 ## Benefits
 
-✅ **Automatic Audit Trail**: Every OpenAI interaction is logged
-✅ **Compliance Ready**: Cryptographically signed capsules for regulatory proof
-✅ **Attribution Tracking**: Know exactly what you asked and what the AI said
-✅ **Quality Analysis**: Get quality scores for AI responses
-✅ **Cross-Platform**: OpenAI + Claude Code + other platforms in one place
+[OK] **Automatic Audit Trail**: Every OpenAI interaction is logged
+[OK] **Compliance Ready**: Cryptographically signed capsules for regulatory proof
+[OK] **Attribution Tracking**: Know exactly what you asked and what the AI said
+[OK] **Quality Analysis**: Get quality scores for AI responses
+[OK] **Cross-Platform**: OpenAI + Claude Code + other platforms in one place
 
 ## Technical Details
 
@@ -168,9 +168,9 @@ psql -U uatp_user -d uatp_capsule_engine -c "SELECT 1;"
 
 ## What This Does NOT Do
 
-❌ **Does NOT capture ChatGPT web UI** (chat.openai.com) - Use web export for that
-❌ **Does NOT capture ChatGPT desktop app** - Desktop app uses proprietary storage
-❌ **Does NOT intercept existing app conversations** - Only captures API calls you make
+[ERROR] **Does NOT capture ChatGPT web UI** (chat.openai.com) - Use web export for that
+[ERROR] **Does NOT capture ChatGPT desktop app** - Desktop app uses proprietary storage
+[ERROR] **Does NOT intercept existing app conversations** - Only captures API calls you make
 
 This is for **programmatic use** - when you write code that calls OpenAI API.
 

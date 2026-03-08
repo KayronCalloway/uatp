@@ -387,7 +387,7 @@ class UncertaintyQuantifier:
 
 # Example usage
 if __name__ == "__main__":
-    print("✅ Uncertainty Quantification Ready")
+    print("[OK] Uncertainty Quantification Ready")
     print("\nCapabilities:")
     print("  - Bayesian confidence intervals")
     print("  - Epistemic vs. aleatoric uncertainty decomposition")

@@ -3,7 +3,7 @@ UATP Live AI Platform Integration (2025 Cutting-Edge Edition)
 
 Provides real-time integration with major AI platforms for live attribution tracking.
 
-🔗 SUPPORTED PLATFORMS:
+ SUPPORTED PLATFORMS:
 - OpenAI GPT-4/o1 with real-time attribution hooks
 - Anthropic Claude 3.5/4 with conversation tracking
 - HuggingFace Transformers (15,000+ models) with custom attribution
@@ -12,7 +12,7 @@ Provides real-time integration with major AI platforms for live attribution trac
 - DeepSeek-Coder R1 with reinforcement learning attribution
 - Mixtral 8x7B with specialized task attribution
 
-🚀 2025 BREAKTHROUGH FEATURES:
+ 2025 BREAKTHROUGH FEATURES:
 - Real-time capsule generation during AI conversations
 - Live watermarking with World Economic Forum Top 10 technology
 - C2PA content credentials for every AI generation
@@ -23,18 +23,16 @@ Provides real-time integration with major AI platforms for live attribution trac
 """
 
 import asyncio
-import json
 import logging
 import secrets
-import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Union, AsyncIterator
+from typing import Any, Dict, List, Optional
+
+from ..attribution.advanced_semantic_engine import advanced_semantic_engine
 
 # UATP imports
 from ..crypto.watermarking import uatp_watermarking
-from ..compliance.c2pa_integration import c2pa_integration
-from ..attribution.advanced_semantic_engine import advanced_semantic_engine
 from ..engine.economic_engine import UatpEconomicEngine
 
 logger = logging.getLogger(__name__)
@@ -55,8 +53,8 @@ except ImportError:
     ANTHROPIC_AVAILABLE = False
 
 try:
-    from transformers import pipeline, AutoTokenizer, AutoModel
     import torch
+    from transformers import AutoModel, AutoTokenizer, pipeline
 
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
@@ -124,7 +122,7 @@ class LiveAIPlatformIntegration:
         self.economic_tracking = True
 
         logger.info(
-            "🔗 Live AI Platform Integration initialized with 2025 breakthrough features"
+            " Live AI Platform Integration initialized with 2025 breakthrough features"
         )
 
     def _initialize_platform_clients(self):
@@ -136,19 +134,19 @@ class LiveAIPlatformIntegration:
         if OPENAI_AVAILABLE:
             try:
                 self.clients["openai"] = openai.OpenAI()  # Uses OPENAI_API_KEY env var
-                logger.info("✅ OpenAI GPT-4/o1 client initialized")
+                logger.info("[OK] OpenAI GPT-4/o1 client initialized")
             except Exception as e:
-                logger.warning(f"⚠️ OpenAI client initialization failed: {e}")
+                logger.warning(f"[WARN] OpenAI client initialization failed: {e}")
 
         # Anthropic Claude integration
         if ANTHROPIC_AVAILABLE:
             try:
-                self.clients[
-                    "anthropic"
-                ] = anthropic.Anthropic()  # Uses ANTHROPIC_API_KEY env var
-                logger.info("✅ Anthropic Claude client initialized")
+                self.clients["anthropic"] = (
+                    anthropic.Anthropic()
+                )  # Uses ANTHROPIC_API_KEY env var
+                logger.info("[OK] Anthropic Claude client initialized")
             except Exception as e:
-                logger.warning(f"⚠️ Anthropic client initialization failed: {e}")
+                logger.warning(f"[WARN] Anthropic client initialization failed: {e}")
 
         # HuggingFace Transformers integration
         if TRANSFORMERS_AVAILABLE:
@@ -162,13 +160,13 @@ class LiveAIPlatformIntegration:
                         "microsoft/DialoGPT-medium"
                     ),
                 }
-                logger.info("✅ HuggingFace Transformers client initialized")
+                logger.info("[OK] HuggingFace Transformers client initialized")
             except Exception as e:
-                logger.warning(f"⚠️ HuggingFace client initialization failed: {e}")
+                logger.warning(f"[WARN] HuggingFace client initialization failed: {e}")
 
         if not self.clients:
             logger.warning(
-                "⚠️ No AI platform clients available - using mock implementations"
+                "[WARN] No AI platform clients available - using mock implementations"
             )
 
     async def start_live_attribution_session(
@@ -195,7 +193,7 @@ class LiveAIPlatformIntegration:
 
         self.active_sessions[session_id] = session_data
 
-        logger.info(f"🎯 Live attribution session started: {session_id}")
+        logger.info(f" Live attribution session started: {session_id}")
         return session_id
 
     async def generate_with_openai(
@@ -302,7 +300,7 @@ class LiveAIPlatformIntegration:
             self.active_sessions[session_id]["generations"].append(event)
             self.active_sessions[session_id]["total_value"] += estimated_value
 
-        logger.info(f"✅ OpenAI generation with attribution: {event.event_id}")
+        logger.info(f"[OK] OpenAI generation with attribution: {event.event_id}")
         return event
 
     async def generate_with_anthropic(
@@ -399,7 +397,7 @@ class LiveAIPlatformIntegration:
             self.active_sessions[session_id]["generations"].append(event)
             self.active_sessions[session_id]["total_value"] += estimated_value
 
-        logger.info(f"✅ Anthropic generation with attribution: {event.event_id}")
+        logger.info(f"[OK] Anthropic generation with attribution: {event.event_id}")
         return event
 
     async def generate_with_huggingface(
@@ -505,7 +503,7 @@ class LiveAIPlatformIntegration:
             self.active_sessions[session_id]["generations"].append(event)
             self.active_sessions[session_id]["total_value"] += estimated_value
 
-        logger.info(f"✅ HuggingFace generation with attribution: {event.event_id}")
+        logger.info(f"[OK] HuggingFace generation with attribution: {event.event_id}")
         return event
 
     async def finalize_attribution_session(
@@ -573,7 +571,7 @@ class LiveAIPlatformIntegration:
         session["final_attribution"] = result
         session["end_time"] = datetime.now(timezone.utc)
 
-        logger.info(f"🏁 Attribution session finalized: {session_id}")
+        logger.info(f" Attribution session finalized: {session_id}")
         return result
 
     def _calculate_generation_value(
@@ -684,7 +682,9 @@ class LiveAIPlatformIntegration:
             commons_contribution=estimated_value * 0.15,
         )
 
-        logger.info(f"✅ Mock {platform} generation with attribution: {event.event_id}")
+        logger.info(
+            f"[OK] Mock {platform} generation with attribution: {event.event_id}"
+        )
         return event
 
     def get_platform_status(self) -> Dict[str, Any]:

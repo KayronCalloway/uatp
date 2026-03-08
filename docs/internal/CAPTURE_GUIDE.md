@@ -1,6 +1,6 @@
 # UATP Capture Guide
 
-## 🚨 For Life-Defining Moments
+##  For Life-Defining Moments
 
 ### Option 1: Use Critical Keywords (INSTANT)
 Just include these words in your message for **immediate capture**:
@@ -48,7 +48,7 @@ Create macOS Quick Action:
 
 ---
 
-## 🔄 Normal Auto-Capture
+##  Normal Auto-Capture
 
 **Throttled Capture** (every 5 interactions):
 - Regular conversations
@@ -58,7 +58,7 @@ Create macOS Quick Action:
 
 ---
 
-## 📊 Check Status
+##  Check Status
 
 ```bash
 ./check_capture_status.sh
@@ -72,7 +72,7 @@ Shows:
 
 ---
 
-## 🎯 Best Practice
+##  Best Practice
 
 **For critical moments:**
 1. Include "critical" or "capture now" in your message, OR
@@ -85,7 +85,7 @@ Shows:
 
 ---
 
-## 🔍 Verify Capture
+##  Verify Capture
 
 ```bash
 # See recent capsules
@@ -98,11 +98,11 @@ tail -f instant_capture.log   # Instant capture log
 
 ---
 
-## 🚀 All Active Systems
+##  All Active Systems
 
 1. **Antigravity** → Captures immediately when files change
 2. **Claude Code Keywords** → Captures immediately on critical words
 3. **Claude Code Throttled** → Captures every 5 interactions
 4. **Manual Capture** → `/capture` or `./capture_now.sh`
 
-**You're fully protected!** 🛡️
+**You're fully protected!**

@@ -23,14 +23,14 @@ Performed a comprehensive analysis of your UATP Capsule Engine, examining every 
 
 ## What We Have (Strengths)
 
-✅ **Solid Foundation**:
+[OK] **Solid Foundation**:
 - Rich metadata system with per-step confidence, measurements, uncertainty, alternatives
 - 28+ capsule types for diverse scenarios
 - Excellent frontend display with color-coded confidence
 - Real-time capture from Claude Code sessions
 - PostgreSQL storage with cryptographic verification
 
-✅ **Working Features**:
+[OK] **Working Features**:
 - Confidence tracking (0.0-1.0) based on message characteristics
 - Uncertainty detection from language patterns
 - Measurement extraction (tokens, timing, content)
@@ -40,37 +40,37 @@ Performed a comprehensive analysis of your UATP Capsule Engine, examining every 
 
 ## What We're Missing (Gaps)
 
-### Gap 1: Context Depth ⚠️
+### Gap 1: Context Depth [WARN]
 **Current**: Basic session metadata (session_id, platform, topics)
 **Missing**: User goals, problem domain, constraints, success criteria, prior context, expertise level
 
 **Impact**: Can't understand WHY reasoning happened, only WHAT happened
 
-### Gap 2: Decision Structure ⚠️
+### Gap 2: Decision Structure [WARN]
 **Current**: Linear sequence of steps
 **Missing**: Decision trees, counterfactuals, critical path identification, failure modes
 
 **Impact**: We see the path taken, not the decision landscape navigated
 
-### Gap 3: Confidence Calibration ⚠️
+### Gap 3: Confidence Calibration [WARN]
 **Current**: Heuristic confidence (0.88 because "has code")
 **Missing**: Ground truth validation, outcome tracking, learning from errors
 
 **Impact**: No way to know if 0.88 confidence actually means 88% success rate
 
-### Gap 4: Learning Loops ❌
+### Gap 4: Learning Loops [ERROR]
 **Current**: Each capsule is independent
 **Missing**: Pattern recognition, failure analysis, best practices mining, meta-learning
 
 **Impact**: System doesn't get smarter from experience
 
-### Gap 5: Causal Understanding ❌
+### Gap 5: Causal Understanding [ERROR]
 **Current**: `depends_on_steps` shows dependencies
 **Missing**: Causal graphs, intervention analysis, sensitivity analysis, counterfactuals
 
 **Impact**: Know correlation but not causation
 
-### Gap 6: Social Context ❌
+### Gap 6: Social Context [ERROR]
 **Current**: Basic attribution
 **Missing**: Collaboration patterns, influence networks, consensus building, multi-agent dynamics
 
@@ -224,4 +224,4 @@ You have a strong foundation. The immediate enhancements add critical missing pi
 **The path**: Start with context and critical path (4-6 hours).
 **The vision**: AI that gets smarter by studying its own reasoning.
 
-Ready to implement when you are. 🚀
+Ready to implement when you are.

@@ -117,7 +117,7 @@ export function OutcomeRecorder({
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <span className="text-2xl">📊</span>
+          <span className="text-2xl"></span>
           Record Outcome
         </CardTitle>
         <CardDescription>

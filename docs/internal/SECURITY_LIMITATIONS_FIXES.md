@@ -1,12 +1,12 @@
 # UATP Security Limitations & Fixes
 
-## ✅ **FIXED** - Software Dependencies
+## [OK] **FIXED** - Software Dependencies
 ### Fixed by installing libraries:
-- ✅ **py_ecc installed** - Elliptic curve cryptography now using optimized implementations
-- ✅ **scipy/scikit-learn installed** - Machine learning security analysis operational
-- ✅ **Core crypto libraries** - All essential cryptographic operations working
+- [OK] **py_ecc installed** - Elliptic curve cryptography now using optimized implementations
+- [OK] **scipy/scikit-learn installed** - Machine learning security analysis operational
+- [OK] **Core crypto libraries** - All essential cryptographic operations working
 
-## ⚠️ **PARTIALLY FIXABLE** - Development vs Production
+## [WARN] **PARTIALLY FIXABLE** - Development vs Production
 
 ### Can be fixed with additional setup:
 1. **zkay library** - Available with additional cryptographic compiler setup
@@ -25,7 +25,7 @@ git clone https://github.com/dalek-cryptography/bulletproofs
 cd bulletproofs && pip install .
 ```
 
-## 🔒 **HARDWARE LIMITATIONS** - Require Infrastructure Changes
+##  **HARDWARE LIMITATIONS** - Require Infrastructure Changes
 
 ### Cannot be fixed in development environment:
 1. **Memory locking** - Requires root privileges or specialized OS configuration
@@ -42,21 +42,21 @@ Production Hardware Setup:
   - Network HSMs: Thales, Utimaco, or nCipher modules
 ```
 
-## 📊 **Current Status After Fixes**
+##  **Current Status After Fixes**
 
 ### Fixed Issues:
-- ✅ **py_ecc operational** - Advanced elliptic curve cryptography
-- ✅ **100% verification rate** - All core security operations working
-- ✅ **6/8 systems fully operational** (improved from 6/8)
+- [OK] **py_ecc operational** - Advanced elliptic curve cryptography
+- [OK] **100% verification rate** - All core security operations working
+- [OK] **6/8 systems fully operational** (improved from 6/8)
 
 ### Remaining Limitations:
-- ⚠️ **Memory locking** - Software protection only
-- ⚠️ **zkay/bulletproofs** - Using secure fallback implementations
-- ⚠️ **HSM simulation** - No physical hardware access
+- [WARN] **Memory locking** - Software protection only
+- [WARN] **zkay/bulletproofs** - Using secure fallback implementations
+- [WARN] **HSM simulation** - No physical hardware access
 
-## 🎯 **Recommendation**
+##  **Recommendation**
 
-**Current State: PRODUCTION READY** ✅
+**Current State: PRODUCTION READY** [OK]
 
 The system achieves:
 - **100% security verification success**
@@ -66,7 +66,7 @@ The system achieves:
 
 The remaining limitations are **performance optimizations** and **enterprise hardware features**, not core security functionality.
 
-## 🚀 **Next Steps for Full Optimization**
+##  **Next Steps for Full Optimization**
 
 ### Development Environment:
 1. Install additional ZK libraries

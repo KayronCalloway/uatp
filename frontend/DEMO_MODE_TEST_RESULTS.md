@@ -8,14 +8,14 @@
 
 Each dashboard was tested with the following criteria:
 
-### Demo Mode ON ✓
+### Demo Mode ON
 - [ ] Orange "Demo Data" badge visible in header
 - [ ] Sample/mock data displayed
 - [ ] All visualizations render with mock data
 - [ ] No API calls made to backend
 - [ ] Header shows demo mode description
 
-### Demo Mode OFF ✓
+### Demo Mode OFF
 - [ ] No "Demo Data" badge visible
 - [ ] Blue "Live Data Mode" notice appears when no real data exists
 - [ ] Real API data displayed when available

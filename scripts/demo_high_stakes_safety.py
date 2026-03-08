@@ -8,15 +8,16 @@ Usage:
     python scripts/demo_high_stakes_safety.py
 """
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.safety import decision_safety_validator, RiskLevel, DecisionDomain
 import logging
+
+from src.safety import decision_safety_validator
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -26,11 +27,11 @@ async def demo_medical_decisions():
     """Demonstrate medical decision validation"""
 
     logger.info("\n" + "=" * 60)
-    logger.info("🏥 MEDICAL DECISION VALIDATION DEMO")
+    logger.info(" MEDICAL DECISION VALIDATION DEMO")
     logger.info("=" * 60)
 
     # Example 1: Low-risk medical decision (APPROVED)
-    logger.info("\n📋 Example 1: Low-Risk Medical Decision (Routine Checkup)")
+    logger.info("\n Example 1: Low-Risk Medical Decision (Routine Checkup)")
     logger.info("-" * 60)
 
     validation1 = await decision_safety_validator.validate_decision(
@@ -46,13 +47,15 @@ async def demo_medical_decisions():
         context={"patient_severity": "low"},
     )
 
-    logger.info(f"   Result: {'✅ APPROVED' if validation1.approved else '❌ REJECTED'}")
+    logger.info(
+        f"   Result: {'[OK] APPROVED' if validation1.approved else '[ERROR] REJECTED'}"
+    )
     logger.info(f"   Risk Level: {validation1.risk_level.value.upper()}")
     logger.info(f"   Confidence: {validation1.confidence:.2%}")
     logger.info(f"   Reason: {validation1.reason}")
 
     # Example 2: High-risk medical decision (REQUIRES HUMAN APPROVAL)
-    logger.info("\n📋 Example 2: High-Risk Medical Decision (Surgery Recommendation)")
+    logger.info("\n Example 2: High-Risk Medical Decision (Surgery Recommendation)")
     logger.info("-" * 60)
 
     validation2 = await decision_safety_validator.validate_decision(
@@ -69,7 +72,7 @@ async def demo_medical_decisions():
     )
 
     logger.info(
-        f"   Result: {'✅ APPROVED' if validation2.approved else '⏳ PENDING APPROVAL'}"
+        f"   Result: {'[OK] APPROVED' if validation2.approved else '⏳ PENDING APPROVAL'}"
     )
     logger.info(f"   Risk Level: {validation2.risk_level.value.upper()}")
     logger.info(f"   Confidence: {validation2.confidence:.2%}")
@@ -78,7 +81,7 @@ async def demo_medical_decisions():
     logger.info(f"   Reason: {validation2.reason}")
 
     # Example 3: CRITICAL medical decision (REQUIRES MULTIPLE APPROVALS)
-    logger.info("\n📋 Example 3: CRITICAL Medical Decision (Emergency Treatment)")
+    logger.info("\n Example 3: CRITICAL Medical Decision (Emergency Treatment)")
     logger.info("-" * 60)
 
     validation3 = await decision_safety_validator.validate_decision(
@@ -95,7 +98,7 @@ async def demo_medical_decisions():
     )
 
     logger.info(
-        f"   Result: {'✅ APPROVED' if validation3.approved else '⏳ PENDING APPROVAL'}"
+        f"   Result: {'[OK] APPROVED' if validation3.approved else '⏳ PENDING APPROVAL'}"
     )
     logger.info(f"   Risk Level: {validation3.risk_level.value.upper()}")
     logger.info(f"   Confidence: {validation3.confidence:.2%}")
@@ -108,11 +111,11 @@ async def demo_financial_decisions():
     """Demonstrate financial decision validation"""
 
     logger.info("\n" + "=" * 60)
-    logger.info("💰 FINANCIAL DECISION VALIDATION DEMO")
+    logger.info(" FINANCIAL DECISION VALIDATION DEMO")
     logger.info("=" * 60)
 
     # Example 1: Small transaction (APPROVED)
-    logger.info("\n📋 Example 1: Small Transaction ($500)")
+    logger.info("\n Example 1: Small Transaction ($500)")
     logger.info("-" * 60)
 
     validation1 = await decision_safety_validator.validate_decision(
@@ -128,13 +131,15 @@ async def demo_financial_decisions():
         context={"amount_usd": 500},
     )
 
-    logger.info(f"   Result: {'✅ APPROVED' if validation1.approved else '❌ REJECTED'}")
+    logger.info(
+        f"   Result: {'[OK] APPROVED' if validation1.approved else '[ERROR] REJECTED'}"
+    )
     logger.info(f"   Risk Level: {validation1.risk_level.value.upper()}")
     logger.info(f"   Confidence: {validation1.confidence:.2%}")
     logger.info(f"   Reason: {validation1.reason}")
 
     # Example 2: Large transaction (REQUIRES APPROVAL)
-    logger.info("\n📋 Example 2: Large Transaction ($150,000)")
+    logger.info("\n Example 2: Large Transaction ($150,000)")
     logger.info("-" * 60)
 
     validation2 = await decision_safety_validator.validate_decision(
@@ -151,7 +156,7 @@ async def demo_financial_decisions():
     )
 
     logger.info(
-        f"   Result: {'✅ APPROVED' if validation2.approved else '⏳ PENDING APPROVAL'}"
+        f"   Result: {'[OK] APPROVED' if validation2.approved else '⏳ PENDING APPROVAL'}"
     )
     logger.info(f"   Risk Level: {validation2.risk_level.value.upper()}")
     logger.info(f"   Confidence: {validation2.confidence:.2%}")
@@ -163,11 +168,11 @@ async def demo_autonomous_decisions():
     """Demonstrate autonomous vehicle decision validation"""
 
     logger.info("\n" + "=" * 60)
-    logger.info("🚗 AUTONOMOUS VEHICLE DECISION VALIDATION DEMO")
+    logger.info(" AUTONOMOUS VEHICLE DECISION VALIDATION DEMO")
     logger.info("=" * 60)
 
     # Example 1: Low-speed decision (APPROVED)
-    logger.info("\n📋 Example 1: Parking Maneuver (5 mph)")
+    logger.info("\n Example 1: Parking Maneuver (5 mph)")
     logger.info("-" * 60)
 
     validation1 = await decision_safety_validator.validate_decision(
@@ -183,13 +188,15 @@ async def demo_autonomous_decisions():
         context={"speed_mph": 5, "involves_human_safety": False},
     )
 
-    logger.info(f"   Result: {'✅ APPROVED' if validation1.approved else '❌ REJECTED'}")
+    logger.info(
+        f"   Result: {'[OK] APPROVED' if validation1.approved else '[ERROR] REJECTED'}"
+    )
     logger.info(f"   Risk Level: {validation1.risk_level.value.upper()}")
     logger.info(f"   Confidence: {validation1.confidence:.2%}")
     logger.info(f"   Reason: {validation1.reason}")
 
     # Example 2: High-speed emergency maneuver (REQUIRES CONSENSUS)
-    logger.info("\n📋 Example 2: Emergency Collision Avoidance (60 mph)")
+    logger.info("\n Example 2: Emergency Collision Avoidance (60 mph)")
     logger.info("-" * 60)
 
     validation2 = await decision_safety_validator.validate_decision(
@@ -206,27 +213,27 @@ async def demo_autonomous_decisions():
     )
 
     logger.info(
-        f"   Result: {'✅ APPROVED' if validation2.approved else '⏳ PENDING CONSENSUS'}"
+        f"   Result: {'[OK] APPROVED' if validation2.approved else '⏳ PENDING CONSENSUS'}"
     )
     logger.info(f"   Risk Level: {validation2.risk_level.value.upper()}")
     logger.info(f"   Confidence: {validation2.confidence:.2%}")
     logger.info(f"   Requires Consensus: {validation2.requires_consensus}")
     logger.info(f"   Reason: {validation2.reason}")
     logger.info(
-        f"   Note: Autonomous CRITICAL decisions use consensus, not human approval"
+        "   Note: Autonomous CRITICAL decisions use consensus, not human approval"
     )
-    logger.info(f"         (too fast for human in the loop)")
+    logger.info("         (too fast for human in the loop)")
 
 
 async def demo_emergency_stop():
     """Demonstrate emergency stop mechanism"""
 
     logger.info("\n" + "=" * 60)
-    logger.info("🛑 EMERGENCY STOP MECHANISM DEMO")
+    logger.info(" EMERGENCY STOP MECHANISM DEMO")
     logger.info("=" * 60)
 
     # Create a decision
-    logger.info("\n📋 Creating a medical decision...")
+    logger.info("\n Creating a medical decision...")
 
     validation = await decision_safety_validator.validate_decision(
         decision={
@@ -241,13 +248,13 @@ async def demo_emergency_stop():
         context={"patient_severity": "medium"},
     )
 
-    logger.info(f"   Decision created: med_emergency_001")
+    logger.info("   Decision created: med_emergency_001")
     logger.info(
         f"   Initial status: {'APPROVED' if validation.approved else 'PENDING'}"
     )
 
     # Trigger emergency stop
-    logger.info("\n🚨 Triggering emergency stop (patient condition changed)...")
+    logger.info("\n Triggering emergency stop (patient condition changed)...")
 
     stop = await decision_safety_validator.trigger_emergency_stop(
         decision_id="med_emergency_001",
@@ -256,12 +263,12 @@ async def demo_emergency_stop():
         triggered_by="human_physician",
     )
 
-    logger.info(f"   ✅ Emergency stop triggered: {stop.stop_id}")
+    logger.info(f"   [OK] Emergency stop triggered: {stop.stop_id}")
     logger.info(f"   Triggered by: {stop.triggered_by}")
     logger.info(f"   Reason: {stop.reason}")
 
     # Try to validate same decision again (should be blocked)
-    logger.info("\n📋 Attempting to re-validate stopped decision...")
+    logger.info("\n Attempting to re-validate stopped decision...")
 
     blocked_validation = await decision_safety_validator.validate_decision(
         decision={
@@ -277,7 +284,7 @@ async def demo_emergency_stop():
     )
 
     logger.info(
-        f"   Result: {'✅ APPROVED' if blocked_validation.approved else '🛑 EMERGENCY STOP ACTIVE'}"
+        f"   Result: {'[OK] APPROVED' if blocked_validation.approved else ' EMERGENCY STOP ACTIVE'}"
     )
     logger.info(f"   Reason: {blocked_validation.reason}")
 
@@ -286,10 +293,10 @@ async def demo_insufficient_confidence():
     """Demonstrate confidence threshold rejection"""
 
     logger.info("\n" + "=" * 60)
-    logger.info("⚠️ INSUFFICIENT CONFIDENCE DEMO")
+    logger.info("[WARN] INSUFFICIENT CONFIDENCE DEMO")
     logger.info("=" * 60)
 
-    logger.info("\n📋 High-risk decision with low confidence (should be rejected)")
+    logger.info("\n High-risk decision with low confidence (should be rejected)")
     logger.info("-" * 60)
 
     validation = await decision_safety_validator.validate_decision(
@@ -305,10 +312,12 @@ async def demo_insufficient_confidence():
         context={"patient_severity": "high", "is_invasive": True},
     )
 
-    logger.info(f"   Result: {'✅ APPROVED' if validation.approved else '❌ REJECTED'}")
+    logger.info(
+        f"   Result: {'[OK] APPROVED' if validation.approved else '[ERROR] REJECTED'}"
+    )
     logger.info(f"   Risk Level: {validation.risk_level.value.upper()}")
     logger.info(f"   AI Confidence: {validation.confidence:.2%}")
-    logger.info(f"   Required Confidence: 95% (for HIGH risk medical)")
+    logger.info("   Required Confidence: 95% (for HIGH risk medical)")
     logger.info(f"   Reason: {validation.reason}")
     logger.info(f"   Warnings: {', '.join(validation.warnings)}")
 
@@ -317,10 +326,10 @@ async def demo_summary():
     """Display summary of safety system features"""
 
     logger.info("\n" + "=" * 60)
-    logger.info("📊 SAFETY SYSTEM SUMMARY")
+    logger.info(" SAFETY SYSTEM SUMMARY")
     logger.info("=" * 60)
 
-    logger.info("\n✅ Features Demonstrated:")
+    logger.info("\n[OK] Features Demonstrated:")
     logger.info("   1. Risk-based classification (Low → Medium → High → Critical)")
     logger.info(
         "   2. Confidence thresholds (higher risk = higher confidence required)"
@@ -331,7 +340,7 @@ async def demo_summary():
     logger.info("   6. Explainable AI requirements (all decisions need explanations)")
     logger.info("   7. Complete audit trail (immutable logging of all decisions)")
 
-    logger.info("\n🎯 Domain-Specific Safety:")
+    logger.info("\n Domain-Specific Safety:")
     logger.info(
         "   Medical:     HIGH/CRITICAL = Human approval + Consensus + 95-99% confidence"
     )
@@ -339,7 +348,7 @@ async def demo_summary():
     logger.info("   Legal:       HIGH = Human approval + Consensus (high liability)")
     logger.info("   Autonomous:  CRITICAL = Multi-agent consensus (too fast for human)")
 
-    logger.info("\n📈 Safety Metrics:")
+    logger.info("\n Safety Metrics:")
     logger.info(
         f"   Pending Human Approvals: {len(decision_safety_validator.pending_approvals)}"
     )
@@ -350,7 +359,7 @@ async def demo_summary():
         f"   Active Emergency Stops: {len(decision_safety_validator.emergency_stops)}"
     )
 
-    logger.info("\n📁 Storage Locations:")
+    logger.info("\n Storage Locations:")
     logger.info("   Validations: safety/high_stakes/validations.jsonl")
     logger.info("   Approval Requests: safety/high_stakes/approval_requests.jsonl")
     logger.info("   Consensus Requests: safety/high_stakes/consensus_requests.jsonl")
@@ -373,10 +382,10 @@ async def main():
     await demo_summary()
 
     logger.info("\n" + "=" * 60)
-    logger.info("✅ DEMO COMPLETE")
+    logger.info("[OK] DEMO COMPLETE")
     logger.info("=" * 60)
 
-    logger.info("\n🔗 Next Steps:")
+    logger.info("\n Next Steps:")
     logger.info("   1. Review generated files in safety/high_stakes/")
     logger.info("   2. Integrate with API: see src/api/safety_routes.py")
     logger.info("   3. Test approval workflows")

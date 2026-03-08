@@ -109,7 +109,7 @@ Uses TF-IDF embeddings to find similar past capsules and learn from their outcom
 
 ### Example Output
 ```
-📈 Historical accuracy: 10 similar capsules, accuracy=53%,
+ Historical accuracy: 10 similar capsules, accuracy=53%,
    confidence adjusted 85% -> 76%
 ```
 
@@ -257,10 +257,10 @@ Uses Platt scaling to calibrate confidence based on actual outcomes:
 ### Current Calibration Stats (50 samples)
 ```
 Confidence | Actual Rate | Status
-   0.5     |    50%     | ✓ Good
-   0.6     |    50%     | ✓ Good
+   0.5     |    50%     |  Good
+   0.6     |    50%     |  Good
    0.7     |   100%     | ↑ Under by 30%
-   0.8     |    78%     | ✓ Good
+   0.8     |    78%     |  Good
 
 Brier Score: 0.0187 (excellent, lower is better)
 Calibration Error: 7.85%

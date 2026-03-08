@@ -36,9 +36,9 @@ try:
     print(f"Response: {response.text}")
 
     if response.ok:
-        print("\n✅ API works correctly!")
+        print("\n[OK] API works correctly!")
     else:
-        print("\n❌ API returned an error")
+        print("\n[ERROR] API returned an error")
 
 except Exception as e:
-    print(f"\n❌ Exception: {e}")
+    print(f"\n[ERROR] Exception: {e}")

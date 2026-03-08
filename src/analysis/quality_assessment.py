@@ -523,7 +523,7 @@ class QualityAssessor:
 
 # Example usage
 if __name__ == "__main__":
-    print("✅ Automated Quality Assessment Ready")
+    print("[OK] Automated Quality Assessment Ready")
     print("\nCapabilities:")
     print("  - Completeness checking")
     print("  - Coherence analysis")

@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 
 import streamlit as st
-
 from capsules.specialized_capsules import GovernanceCapsule
+
 from visualizer.components.uatp7_inspector import render_governance_content
 
 
@@ -16,7 +16,7 @@ def main():
         initial_sidebar_state="collapsed",
     )
 
-    st.title("🏛️ Governance Capsule Visualization Test")
+    st.title(" Governance Capsule Visualization Test")
     st.markdown(
         """
     This test demonstrates the enhanced visualization components for UATP 7.0 Governance capsules.

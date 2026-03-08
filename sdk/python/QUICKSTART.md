@@ -11,14 +11,14 @@ Get your first AI decision certified in **under 5 minutes**.
 
 ```bash
 # Clone the repo (if you haven't already)
-git clone https://github.com/your-org/uatp-capsule-engine
+git clone https://github.com/KayronCalloway/uatp
 cd uatp-capsule-engine
 
 # Start the backend API
 ./start_backend_dev.sh
 ```
 
-Wait for: `✓ Server running on http://localhost:8000`
+Wait for: ` Server running on http://localhost:8000`
 
 ## Step 2: Install the SDK (10 seconds)
 
@@ -36,27 +36,27 @@ python3 test_actual_sdk.py
 
 You should see:
 ```
-🚀 UATP SDK Full Test - Using Actual SDK
+ UATP SDK Full Test - Using Actual SDK
 ============================================================
 
 1. Initializing UATP client...
-✅ Client initialized
+[OK] Client initialized
 
 2. Creating capsule via SDK...
-✅ Capsule created successfully!
+[OK] Capsule created successfully!
    Capsule ID: cap_...
    Proof URL: http://localhost:8000/capsules/cap_.../verify
 
 3. Retrieving proof...
-✅ Proof retrieved!
+[OK] Proof retrieved!
 
 4. Listing recent capsules...
-✅ Retrieved 5 capsules
+[OK] Retrieved 5 capsules
 
 5. Verifying signature...
-✅ Signature valid: True
+[OK] Signature valid: True
 
-🎉 All SDK tests passed!
+ All SDK tests passed!
 ```
 
 ## Step 4: Write Your First Script (3 minutes)
@@ -96,7 +96,7 @@ result = client.certify(
     }
 )
 
-print(f"✅ Decision certified!")
+print(f"[OK] Decision certified!")
 print(f"Capsule ID: {result.capsule_id}")
 print(f"Proof URL: {result.proof_url}")
 print(f"Timestamp: {result.timestamp}")
@@ -124,14 +124,14 @@ You'll see:
 }
 ```
 
-## That's It! 🎉
+## That's It!
 
 You just:
-1. ✅ Started the UATP backend
-2. ✅ Installed the SDK
-3. ✅ Created a certified AI decision
-4. ✅ Got cryptographic proof
-5. ✅ Verified the signature
+1. [OK] Started the UATP backend
+2. [OK] Installed the SDK
+3. [OK] Created a certified AI decision
+4. [OK] Got cryptographic proof
+5. [OK] Verified the signature
 
 ## What You Have Now
 
@@ -295,10 +295,10 @@ curl http://localhost:8000/capsules?demo_mode=false&per_page=5
 ## Support
 
 Questions? Issues?
-- GitHub Issues: https://github.com/your-org/uatp-sdk/issues
-- Email: support@uatp.ai
+- GitHub Issues: https://github.com/KayronCalloway/uatp/issues
+- Email: Kayron@houseofcalloway.com
 - Docs: https://docs.uatp.ai
 
 ---
 
-**You're ready to ship auditable AI.** 🚀
+**You're ready to ship auditable AI.**

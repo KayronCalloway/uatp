@@ -44,7 +44,7 @@ uatp-capsule-engine/
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-org/uatp-capsule-engine.git
+   git clone https://github.com/KayronCalloway/uatp.git
    cd uatp-capsule-engine
    ```
 

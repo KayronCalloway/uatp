@@ -17,7 +17,7 @@ The UATP Capsule Engine represents a sophisticated technical achievement with re
 
 ## Core Mission Alignment Analysis
 
-### ✅ **Successfully Implemented**
+### [OK] **Successfully Implemented**
 - **Cryptographic Trust Infrastructure**: Ed25519 signatures, tamper-proof capsule chains
 - **Pragmatic Attribution System**: Confidence-based attribution with temporal decay
 - **Universal Basic Attribution**: 15% allocation to global commons fund
@@ -25,7 +25,7 @@ The UATP Capsule Engine represents a sophisticated technical achievement with re
 - **Ethics Framework**: Real-time ethical triggers and refusal mechanisms
 - **Enterprise Security**: Vault integration, observability, deployment automation
 
-### ❌ **Critical Missing Components**
+### [ERROR] **Critical Missing Components**
 
 #### 1. **Real-World Economic Integration**
 - **No actual payment processing**: No Stripe, PayPal, crypto wallet integration

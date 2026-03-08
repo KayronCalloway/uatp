@@ -96,7 +96,7 @@ export function OutcomeCard({ outcome }: OutcomeCardProps) {
                 <span className={`text-lg font-bold ${
                   outcome.ai_was_correct ? 'text-green-700' : 'text-red-700'
                 }`}>
-                  {outcome.ai_was_correct ? 'Correct ✓' : 'Incorrect ✗'}
+                  {outcome.ai_was_correct ? 'Correct ' : 'Incorrect '}
                 </span>
               </div>
               {outcome.actual_vs_predicted && (
@@ -177,7 +177,7 @@ export function OutcomeCard({ outcome }: OutcomeCardProps) {
               <ul className="space-y-2">
                 {outcome.complications.map((complication, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
-                    <span className="text-orange-500 mt-1">⚠</span>
+                    <span className="text-orange-500 mt-1">[WARN]</span>
                     <span className="text-gray-800">{complication}</span>
                   </li>
                 ))}

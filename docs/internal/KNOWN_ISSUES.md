@@ -3,7 +3,7 @@
 
 ---
 
-## 🚨 **Active Issues**
+##  **Active Issues**
 
 ### 1. SQLAlchemy ORM Query Failures in Standalone Scripts
 **Severity:** Medium
@@ -25,12 +25,12 @@ capsules = result.scalars().all()
 ```
 
 **Working Contexts:**
-- ✅ FastAPI routes (dependency injection handles session properly)
-- ✅ Direct SQL queries (bypass ORM)
+- [OK] FastAPI routes (dependency injection handles session properly)
+- [OK] Direct SQL queries (bypass ORM)
 
 **Failing Contexts:**
-- ❌ Standalone Python scripts with manual session management
-- ❌ Enrichment/migration scripts
+- [ERROR] Standalone Python scripts with manual session management
+- [ERROR] Enrichment/migration scripts
 
 **Impact:**
 - Cannot use ORM convenience methods in batch scripts
@@ -60,15 +60,15 @@ rows = result.fetchall()  # Works correctly
 **File:** `enrich_existing_capsules.py` (lines 249-263)
 
 **Problem:**
-Enrichment script executes successfully and reports "✅ Success" but database updates don't persist.
+Enrichment script executes successfully and reports "[OK] Success" but database updates don't persist.
 
 **Evidence:**
 ```bash
 # Script output
-📦 Processing: caps_2025_12_04_69a818b7636743e2
+ Processing: caps_2025_12_04_69a818b7636743e2
   → Adding critical path analysis...
-  ✅ Enrichment complete!
-  💾 Updated in database
+  [OK] Enrichment complete!
+   Updated in database
 
 # But query shows original data
 SELECT payload FROM capsules WHERE capsule_id = 'caps_2025_12_04_69a818b7636743e2';
@@ -76,10 +76,10 @@ SELECT payload FROM capsules WHERE capsule_id = 'caps_2025_12_04_69a818b7636743e
 ```
 
 **Attempted:**
-- ✅ Explicit `await session.commit()`
-- ✅ Verified no exceptions thrown
-- ✅ Checked transaction scope
-- ❌ Still not persisting
+- [OK] Explicit `await session.commit()`
+- [OK] Verified no exceptions thrown
+- [OK] Checked transaction scope
+- [ERROR] Still not persisting
 
 **Possible Causes:**
 1. SQLite async transaction handling
@@ -99,7 +99,7 @@ Accept that old capsules remain simple; new capsules automatically have rich met
 
 ### 3. PostgreSQL vs SQLite Syntax Incompatibility
 **Severity:** Low
-**Status:** ✅ Resolved
+**Status:** [OK] Resolved
 **File:** `enrich_existing_capsules.py` (fixed in lines 252-257)
 
 **Problem:**
@@ -120,11 +120,11 @@ UPDATE capsules SET payload = :payload
 # Pass JSON as string: json.dumps(payload)
 ```
 
-**Status:** ✅ Fixed - code now compatible with both databases
+**Status:** [OK] Fixed - code now compatible with both databases
 
 ---
 
-## 📊 **Impact Assessment**
+##  **Impact Assessment**
 
 ### Critical Path Impact: **LOW**
 
@@ -143,26 +143,26 @@ UPDATE capsules SET payload = :payload
 
 ---
 
-## ✅ **Working Systems**
+## [OK] **Working Systems**
 
 ### These Work Perfectly:
-- ✅ FastAPI API routes (all CRUD operations)
-- ✅ New capsule creation via `RichCaptureEnhancer`
-- ✅ Stats endpoint with filtering
-- ✅ Frontend display of capsule data
-- ✅ Uncertainty quantification integration
-- ✅ Critical path analysis
-- ✅ Trust score calculation
-- ✅ Direct SQL queries
+- [OK] FastAPI API routes (all CRUD operations)
+- [OK] New capsule creation via `RichCaptureEnhancer`
+- [OK] Stats endpoint with filtering
+- [OK] Frontend display of capsule data
+- [OK] Uncertainty quantification integration
+- [OK] Critical path analysis
+- [OK] Trust score calculation
+- [OK] Direct SQL queries
 
 ### These Need Attention:
-- ⚠️ Standalone script ORM usage
-- ⚠️ Batch database updates
-- ⚠️ Migration/enrichment scripts
+- [WARN] Standalone script ORM usage
+- [WARN] Batch database updates
+- [WARN] Migration/enrichment scripts
 
 ---
 
-## 🔍 **Debugging Notes**
+##  **Debugging Notes**
 
 ### To Reproduce ORM Issue:
 ```bash
@@ -199,7 +199,7 @@ curl "http://localhost:8000/capsules?per_page=1"
 
 ---
 
-## 📝 **Next Steps**
+##  **Next Steps**
 
 ### If Issue Escalates:
 1. Test with PostgreSQL (rule out SQLite-specific issues)
@@ -219,7 +219,7 @@ curl "http://localhost:8000/capsules?per_page=1"
 
 ---
 
-## 📚 **Related Documentation**
+##  **Related Documentation**
 
 - **Detailed Analysis:** `SQL_ORM_ISSUES_REPORT.md`
 - **Integration Summary:** `INTEGRATION_COMPLETE_SUMMARY.md`
@@ -228,7 +228,7 @@ curl "http://localhost:8000/capsules?per_page=1"
 
 ---
 
-## 🎯 **Recommendation**
+##  **Recommendation**
 
 **Action:** Monitor but don't block on these issues
 

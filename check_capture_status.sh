@@ -2,28 +2,28 @@
 # Check UATP Auto-Capture Status
 
 echo "======================================"
-echo "🚀 UATP Auto-Capture Status"
+echo " UATP Auto-Capture Status"
 echo "======================================"
 echo ""
 
 # Check API Server
 if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo "✅ API Server (Port 8000): Running"
+    echo "[OK] API Server (Port 8000): Running"
 else
-    echo "❌ API Server (Port 8000): Not Running"
+    echo "[ERROR] API Server (Port 8000): Not Running"
 fi
 
 # Check Antigravity Capture
 if pgrep -f "antigravity_capture_integration.py" > /dev/null; then
-    echo "✅ Antigravity Capture: Running"
+    echo "[OK] Antigravity Capture: Running"
     echo "   Log: tail -f antigravity_capture.log"
 else
-    echo "❌ Antigravity Capture: Not Running"
+    echo "[ERROR] Antigravity Capture: Not Running"
 fi
 
 # Check Claude Code Hook
 if [ -f ".claude/hooks/auto_capture.sh" ] && [ -x ".claude/hooks/auto_capture.sh" ]; then
-    echo "✅ Claude Code Hook: Configured"
+    echo "[OK] Claude Code Hook: Configured"
     if [ -f "hook_capture.log" ]; then
         LAST_CAPTURE=$(tail -1 hook_capture.log 2>/dev/null | grep -oE '\[[^]]+\]' | head -1)
         if [ -n "$LAST_CAPTURE" ]; then
@@ -38,11 +38,11 @@ if [ -f ".claude/hooks/auto_capture.sh" ] && [ -x ".claude/hooks/auto_capture.sh
         echo "   Next capture in $REMAINING interactions"
     fi
 else
-    echo "❌ Claude Code Hook: Not Configured"
+    echo "[ERROR] Claude Code Hook: Not Configured"
 fi
 
 echo ""
-echo "📊 Recent Capsules:"
+echo " Recent Capsules:"
 curl -s "http://localhost:8000/capsules?limit=3" 2>/dev/null | python3 -c "
 import sys, json
 try:

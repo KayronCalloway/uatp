@@ -222,7 +222,7 @@ def verify_password(password: str, hashed_password: str) -> bool:
 # Example usage and testing
 if __name__ == "__main__":
     # Test JWT functionality
-    print("🔐 Testing JWT Manager...")
+    print(" Testing JWT Manager...")
 
     # Test password hashing
     password = "test_password_123"
@@ -255,4 +255,4 @@ if __name__ == "__main__":
     new_tokens = jwt_manager.refresh_access_token(refresh_token)
     print(f"New tokens: {new_tokens}")
 
-    print("✅ JWT Manager tests completed")
+    print("[OK] JWT Manager tests completed")

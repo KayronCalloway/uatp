@@ -4,7 +4,7 @@
 
 ---
 
-## ✅ **Successfully Completed Tasks**
+## [OK] **Successfully Completed Tasks**
 
 ### 1. **Fixed Stats Endpoint Demo/Test Filtering**
 **File:** `src/api/capsules_fastapi_router.py` (lines 50-148)
@@ -72,7 +72,7 @@ List endpoint (demo_mode=false):  67 capsules
 
 - `improvement_recommendations` - Specific actionable suggestions
 
-**Status:** ✅ Already integrated, confirmed working
+**Status:** [OK] Already integrated, confirmed working
 
 ---
 
@@ -101,7 +101,7 @@ python3 enrich_existing_capsules.py
 python3 enrich_existing_capsules.py --capsule-id caps_xxx
 ```
 
-**Status:** ✅ Script created and tested
+**Status:** [OK] Script created and tested
 
 ---
 
@@ -128,7 +128,7 @@ Live capsules by type:
 
 ---
 
-## 📊 **What's Now Available in New Capsules**
+##  **What's Now Available in New Capsules**
 
 When capsules are created using the integrated system (`RichCaptureEnhancer`), they will have:
 
@@ -166,8 +166,8 @@ When capsules are created using the integrated system (`RichCaptureEnhancer`), t
     "dependency_depth": 3
   },
   "improvement_recommendations": [
-    "⚠️ Strengthen step 2 (confidence: 0.75)...",
-    "🔴 Critical: Step 3 has low confidence..."
+    "[WARN] Strengthen step 2 (confidence: 0.75)...",
+    " Critical: Step 3 has low confidence..."
   ],
   "uncertainty_analysis": {
     "epistemic_uncertainty": 0.042,
@@ -193,7 +193,7 @@ When capsules are created using the integrated system (`RichCaptureEnhancer`), t
 
 ---
 
-## 🔄 **How New Capsules Get Rich Metadata**
+##  **How New Capsules Get Rich Metadata**
 
 ### Automatic Integration Points:
 
@@ -216,9 +216,9 @@ When capsules are created using the integrated system (`RichCaptureEnhancer`), t
 
 ---
 
-## ⚠️ **Known Issues**
+## [WARN] **Known Issues**
 
-### ⚠️⚠️⚠️ CRITICAL: SQL/ORM Issues - SEE DETAILED REPORT
+### [WARN][WARN][WARN] CRITICAL: SQL/ORM Issues - SEE DETAILED REPORT
 
 **File:** `SQL_ORM_ISSUES_REPORT.md` (comprehensive documentation)
 
@@ -248,7 +248,7 @@ sqlite3.ProgrammingError: Incorrect number of bindings supplied
 ```
 
 **Solution:** Remove `::jsonb` casts, pass JSON as strings
-**Status:** ✅ Fixed
+**Status:** [OK] Fixed
 
 ---
 
@@ -256,7 +256,7 @@ sqlite3.ProgrammingError: Incorrect number of bindings supplied
 **Problem:** Enrichment script runs successfully but changes don't save
 
 **Evidence:**
-- Script shows "✅ Success: 6"
+- Script shows "[OK] Success: 6"
 - Database queries show original (non-enriched) data
 - No errors during execution
 
@@ -274,7 +274,7 @@ sqlite3.ProgrammingError: Incorrect number of bindings supplied
 
 ---
 
-## 📋 **Remaining Tasks**
+##  **Remaining Tasks**
 
 ### 1. Update Frontend Demo Mode Handling
 **File:** `frontend/src/lib/api-client.ts`, `frontend/src/components/capsules/capsule-list.tsx`
@@ -318,29 +318,29 @@ const queryParams: ListCapsulesQuery = {
 
 ---
 
-## 🎯 **Integration Success Metrics**
+##  **Integration Success Metrics**
 
-✅ **Backend Integration:** 100% Complete
+[OK] **Backend Integration:** 100% Complete
 - All analysis modules integrated into capsule creation pipeline
 - Trust score calculation implemented
 - Uncertainty quantification wired up
 - Critical path analysis confirmed working
 
-✅ **API Consistency:** 100% Complete
+[OK] **API Consistency:** 100% Complete
 - Stats endpoint now respects filtering
 - Live capsule count: 67 (consistent across all endpoints)
 
-⚠️ **Data Enrichment:** Partial
-- New capsules: ✅ Will have full rich metadata
-- Existing 6 capsules: ⚠️ Enrichment script needs debugging for persistence
+[WARN] **Data Enrichment:** Partial
+- New capsules: [OK] Will have full rich metadata
+- Existing 6 capsules: [WARN] Enrichment script needs debugging for persistence
 
-🔄 **Frontend Updates:** Pending
+ **Frontend Updates:** Pending
 - Demo mode parameter needs to be passed
 - Display verification needed once rich capsules exist
 
 ---
 
-## 🚀 **Next Steps for Testing**
+##  **Next Steps for Testing**
 
 ### Create a Test Rich Capsule:
 ```python
@@ -369,15 +369,15 @@ steps = [
 2. Query `/capsules/{id}` to get enriched capsule
 3. Open capsule in frontend detail view
 4. Confirm all sections render:
-   - ✓ Uncertainty Analysis section
-   - ✓ Critical Path Analysis section
-   - ✓ Improvement Recommendations
-   - ✓ Trust Score badge
-   - ✓ Step-level metadata
+   -  Uncertainty Analysis section
+   -  Critical Path Analysis section
+   -  Improvement Recommendations
+   -  Trust Score badge
+   -  Step-level metadata
 
 ---
 
-## 📝 **Files Modified**
+##  **Files Modified**
 
 1. `src/api/capsules_fastapi_router.py` - Stats endpoint filtering
 2. `src/live_capture/rich_capture_integration.py` - Uncertainty integration
@@ -388,7 +388,7 @@ steps = [
 
 ---
 
-## 💡 **Key Achievements**
+##  **Key Achievements**
 
 1. **Consistent Data Reporting:** Fixed 115 vs 67 discrepancy
 2. **Sophisticated Analysis:** All backend analysis modules now integrated
@@ -398,7 +398,7 @@ steps = [
 
 ---
 
-## ✨ **Summary**
+##  **Summary**
 
 The integration is **functionally complete** for new capsules. The backend now automatically enriches capsules with:
 - Uncertainty quantification (epistemic/aleatoric)

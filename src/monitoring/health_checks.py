@@ -8,15 +8,14 @@ including database, external services, and application health.
 """
 
 import asyncio
-import json
 import logging
 import os
 import sys
 import time
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass, asdict
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -64,7 +63,7 @@ class HealthCheckManager:
         self.results_history = []
         self.max_history = 1000
 
-        logger.info("🏥 Health Check Manager initialized")
+        logger.info(" Health Check Manager initialized")
 
     def register_check(self, name: str, check_func, interval: int = 30):
         """Register a health check."""
@@ -76,7 +75,7 @@ class HealthCheckManager:
             "last_result": None,
         }
 
-        logger.info(f"📋 Registered health check: {name} (interval: {interval}s)")
+        logger.info(f" Registered health check: {name} (interval: {interval}s)")
 
     async def run_check(self, name: str) -> HealthCheckResult:
         """Run a specific health check."""
@@ -132,7 +131,7 @@ class HealthCheckManager:
             check["last_result"] = health_result
             self.results_history.append(health_result)
 
-            logger.error(f"❌ Health check failed for {name}: {e}")
+            logger.error(f"[ERROR] Health check failed for {name}: {e}")
             return health_result
 
     async def run_all_checks(self) -> Dict[str, HealthCheckResult]:
@@ -225,7 +224,7 @@ async def check_database_health():
     """Check database health."""
 
     try:
-        from config.database_config import get_database_config, get_database_adapter
+        from config.database_config import get_database_adapter, get_database_config
 
         config = get_database_config()
         adapter = get_database_adapter()
@@ -473,24 +472,24 @@ def get_health_manager() -> HealthCheckManager:
 async def main():
     """Test health check system."""
 
-    print("🏥 Testing Health Check System")
+    print(" Testing Health Check System")
     print("=" * 40)
 
     # Get health manager
     health_manager = get_health_manager()
 
     # Run individual checks
-    print("\n🔍 Running individual health checks...")
+    print("\n Running individual health checks...")
 
     for check_name in ["database", "capsule_engine", "disk_space", "memory"]:
-        print(f"\n📋 Checking {check_name}...")
+        print(f"\n Checking {check_name}...")
         result = await health_manager.run_check(check_name)
 
         status_emoji = {
-            HealthStatus.HEALTHY: "✅",
-            HealthStatus.DEGRADED: "⚠️",
-            HealthStatus.UNHEALTHY: "❌",
-            HealthStatus.UNKNOWN: "❓",
+            HealthStatus.HEALTHY: "[OK]",
+            HealthStatus.DEGRADED: "[WARN]",
+            HealthStatus.UNHEALTHY: "[ERROR]",
+            HealthStatus.UNKNOWN: "",
         }
 
         print(f"{status_emoji[result.status]} {check_name}: {result.status.value}")
@@ -503,19 +502,19 @@ async def main():
             print(f"   Error: {result.error}")
 
     # Get overall system health
-    print("\n🌐 Overall system health...")
+    print("\n Overall system health...")
     system_health = await health_manager.get_system_health()
 
     print(f"Overall Status: {system_health['overall_status']}")
     print(f"Summary: {system_health['summary']}")
 
     # Show uptime stats
-    print("\n📊 Uptime statistics (last 24h)...")
+    print("\n Uptime statistics (last 24h)...")
     uptime = health_manager.get_uptime_stats()
     print(f"Uptime: {uptime['uptime_percentage']:.1f}%")
     print(f"Total checks: {uptime['total_checks']}")
 
-    print("\n✅ Health check system test completed!")
+    print("\n[OK] Health check system test completed!")
 
 
 if __name__ == "__main__":

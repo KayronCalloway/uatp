@@ -55,7 +55,7 @@ GET /capsules?environment=production  # Only production data
 
 ## Implementation Plan
 
-### Phase 1: Immediate (This Session) ✅ COMPLETED
+### Phase 1: Immediate (This Session) [OK] COMPLETED
 - [x] Document strategy
 - [x] Add environment filter to capsule queries (`src/api/capsules_fastapi_router.py`)
 - [x] Update .env.example with TEST_DATABASE_URL, DEV_DATABASE_URL
@@ -188,13 +188,13 @@ For the current 43 capsules:
 ## Dashboard Indicators
 
 Add visual indicators in the UI:
-- 🧪 Test Data badge
-- 🔧 Development environment banner
-- 🚀 Production mode indicator
+-  Test Data badge
+-  Development environment banner
+-  Production mode indicator
 
 ## Phase 1 Implementation Summary (2025-11-18)
 
-**Status:** ✅ COMPLETE
+**Status:** [OK] COMPLETE
 
 ### What Was Implemented:
 
@@ -212,10 +212,10 @@ Add visual indicators in the UI:
    - Documented all three database connection patterns
 
 3. **Testing Results:**
-   - ✅ Default query: `GET /capsules` excludes test data
-   - ✅ With test data: `GET /capsules?include_test=true` includes all
-   - ✅ By environment: `GET /capsules?environment=production` filters correctly
-   - ✅ Legacy capsules (no environment field) treated as production data
+   - [OK] Default query: `GET /capsules` excludes test data
+   - [OK] With test data: `GET /capsules?include_test=true` includes all
+   - [OK] By environment: `GET /capsules?environment=production` filters correctly
+   - [OK] Legacy capsules (no environment field) treated as production data
 
 ### API Usage Examples:
 

@@ -8,8 +8,8 @@ interactions for automatic attribution tracking.
 """
 
 import asyncio
-import sys
 import os
+import sys
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -20,41 +20,41 @@ from src.live_capture.windsurf_hook import capture_windsurf_interaction
 async def example_windsurf_integration():
     """Example of how to integrate UATP with Windsurf interactions."""
 
-    print("🌊 Windsurf UATP Integration Example")
+    print(" Windsurf UATP Integration Example")
     print("=" * 40)
 
     # Example 1: Code completion
     print("\n1. Code Completion Example")
     completion_capsule = await capture_windsurf_interaction(
         user_input="Create a TypeScript function to validate email addresses",
-        assistant_response="""Here's a TypeScript function for email validation:
+        assistant_response=r"""Here's a TypeScript function for email validation:
 
 ```typescript
 export function validateEmail(email: string): boolean {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  
+
   // Basic format check
   if (!emailRegex.test(email)) {
     return false;
   }
-  
+
   // Additional checks
   if (email.length > 320) { // RFC 5321 limit
     return false;
   }
-  
+
   const [localPart, domain] = email.split('@');
-  
+
   // Local part checks
   if (localPart.length > 64) { // RFC 5321 limit
     return false;
   }
-  
+
   // Domain checks
   if (domain.length > 255) { // RFC 5321 limit
     return false;
   }
-  
+
   return true;
 }
 
@@ -76,7 +76,7 @@ This function includes:
     )
 
     if completion_capsule:
-        print(f"✅ Code completion capsule created: {completion_capsule}")
+        print(f"[OK] Code completion capsule created: {completion_capsule}")
 
     # Example 2: Debugging help
     print("\n2. Debugging Session Example")
@@ -125,7 +125,7 @@ Use `await` consistently and ensure your function is marked as `async`.""",
     )
 
     if debug_capsule:
-        print(f"✅ Debugging session capsule created: {debug_capsule}")
+        print(f"[OK] Debugging session capsule created: {debug_capsule}")
 
     # Example 3: Refactoring
     print("\n3. Refactoring Example")
@@ -204,13 +204,13 @@ Benefits of this refactoring:
     )
 
     if refactor_capsule:
-        print(f"✅ Refactoring capsule created: {refactor_capsule}")
+        print(f"[OK] Refactoring capsule created: {refactor_capsule}")
 
     # Example 4: Code explanation
     print("\n4. Code Explanation Example")
     explanation_capsule = await capture_windsurf_interaction(
         user_input="Can you explain how this regex pattern works?",
-        assistant_response="""Let me break down this regex pattern for you:
+        assistant_response=r"""Let me break down this regex pattern for you:
 
 ```javascript
 /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
@@ -233,14 +233,14 @@ Benefits of this refactoring:
 - `$` - End of string anchor
 
 **Examples it matches:**
-- `user@example.com` ✅
-- `john.doe+tag@company.co.uk` ✅
-- `test123@sub.domain.org` ✅
+- `user@example.com` [OK]
+- `john.doe+tag@company.co.uk` [OK]
+- `test123@sub.domain.org` [OK]
 
 **Examples it rejects:**
-- `user@domain` ❌ (no TLD)
-- `@domain.com` ❌ (no local part)
-- `user@` ❌ (no domain)
+- `user@domain` [ERROR] (no TLD)
+- `@domain.com` [ERROR] (no local part)
+- `user@` [ERROR] (no domain)
 
 This pattern provides basic email validation but isn't 100% RFC-compliant.""",
         interaction_type="code_explanation",
@@ -251,9 +251,9 @@ This pattern provides basic email validation but isn't 100% RFC-compliant.""",
     )
 
     if explanation_capsule:
-        print(f"✅ Code explanation capsule created: {explanation_capsule}")
+        print(f"[OK] Code explanation capsule created: {explanation_capsule}")
 
-    print("\n🎉 All Windsurf integration examples completed!")
+    print("\n All Windsurf integration examples completed!")
     print("   The system is now tracking Windsurf interactions automatically.")
 
 

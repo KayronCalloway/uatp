@@ -207,11 +207,11 @@ At the end of the pilot, we will simulate a regulatory audit or insurance claim 
 
 The pilot will be considered successful if we achieve:
 
-1. ✅ **95%+ capsule coverage** - Nearly all AI actions captured in chains
-2. ✅ **<50ms latency overhead** - Minimal performance impact
-3. ✅ **Zero security incidents** - No breaches or tamper events
-4. ✅ **Positive stakeholder feedback** - Risk officers and auditors find evidence valuable
-5. ✅ **Clear ROI path** - Demonstrable cost savings or premium reductions
+1. [OK] **95%+ capsule coverage** - Nearly all AI actions captured in chains
+2. [OK] **<50ms latency overhead** - Minimal performance impact
+3. [OK] **Zero security incidents** - No breaches or tamper events
+4. [OK] **Positive stakeholder feedback** - Risk officers and auditors find evidence valuable
+5. [OK] **Clear ROI path** - Demonstrable cost savings or premium reductions
 
 ---
 
@@ -383,12 +383,12 @@ UATP provides that proof. It's the **green lock for AI trust**.
 
 ### Supported AI Platforms
 
-- ✅ OpenAI (GPT-3.5, GPT-4, o1)
-- ✅ Anthropic (Claude 2, Claude 3, Claude 3.5)
-- ✅ Custom models (via API wrapper)
-- ✅ LangChain integrations
-- ✅ LlamaIndex integrations
-- ✅ Open-source models (via adapters)
+- [OK] OpenAI (GPT-3.5, GPT-4, o1)
+- [OK] Anthropic (Claude 2, Claude 3, Claude 3.5)
+- [OK] Custom models (via API wrapper)
+- [OK] LangChain integrations
+- [OK] LlamaIndex integrations
+- [OK] Open-source models (via adapters)
 
 ---
 

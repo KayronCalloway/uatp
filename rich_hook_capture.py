@@ -55,7 +55,7 @@ async def capture_rich_session():
                 "started": datetime.now(timezone.utc).isoformat(),
             }
     except Exception as e:
-        print(f"⚠️  Session file error: {e}, creating new session")
+        print(f"[WARN]  Session file error: {e}, creating new session")
         session_id = await capture.start_session(user_id="kay")
         session_data = {
             "session_id": session_id,
@@ -80,7 +80,7 @@ async def capture_rich_session():
             session_data["message_count"] += 1
             session_data["last_user_message"] = user_message[:100]
 
-            print(f"✅ Captured user message (session: {session_id[:8]}...)")
+            print(f"[OK] Captured user message (session: {session_id[:8]}...)")
             print(f"   Message #{session_data['message_count']}")
             print(f"   Tokens: ~{int(estimated_tokens)}")
 
@@ -90,14 +90,14 @@ async def capture_rich_session():
                 outcome_result = process_user_message_for_outcome(user_message)
                 if outcome_result and outcome_result.get("updated_capsule"):
                     print(
-                        f"   📊 Outcome inferred: {outcome_result['status']} "
+                        f"    Outcome inferred: {outcome_result['status']} "
                         f"(confidence: {outcome_result['confidence']:.0%})"
                     )
             except Exception:
                 pass  # Outcome tracking is optional, don't fail capture
 
         except Exception as e:
-            print(f"❌ Failed to capture user message: {e}")
+            print(f"[ERROR] Failed to capture user message: {e}")
 
     # Capture recent assistant responses from Claude Code conversation transcript
     try:
@@ -164,11 +164,11 @@ async def capture_rich_session():
                     session_data["message_count"] += 1
                     session_data["last_assistant_response"] = assistant_response[:100]
                     print(
-                        f"✅ Captured assistant response ({len(assistant_response)} chars)"
+                        f"[OK] Captured assistant response ({len(assistant_response)} chars)"
                     )
 
     except Exception as e:
-        print(f"⚠️ Assistant capture skipped: {e}")
+        print(f"[WARN] Assistant capture skipped: {e}")
 
     # Every 10 messages, create a checkpoint capsule
     if (
@@ -184,23 +184,23 @@ async def capture_rich_session():
                 capsule_id = await capture.create_capsule_from_session(session)
 
                 if capsule_id:
-                    print(f"🔥 Created RICH checkpoint capsule: {capsule_id}")
+                    print(f" Created RICH checkpoint capsule: {capsule_id}")
                     print(f"   Messages: {len(session.messages)}")
                     print(f"   Significance: {session.significance_score:.2f}")
                     print(f"   Topics: {', '.join(session.topics)}")
 
         except Exception as e:
-            print(f"⚠️  Checkpoint capsule creation skipped: {e}")
+            print(f"[WARN]  Checkpoint capsule creation skipped: {e}")
 
     # Update session file
     try:
         with open(session_file, "w") as f:
             json.dump(session_data, f, indent=2)
     except Exception as e:
-        print(f"⚠️  Could not save session state: {e}")
+        print(f"[WARN]  Could not save session state: {e}")
 
     # Show session stats
-    print(f"📊 Session: {session_id[:16]}...")
+    print(f" Session: {session_id[:16]}...")
     print(f"   Total messages: {session_data.get('message_count', 0)}")
     print(f"   Duration: Active since {session_data.get('started', 'unknown')[:19]}")
 
@@ -211,7 +211,7 @@ async def end_session_and_create_capsule():
     session_file = Path("/tmp/claude_code_active_session.json")
 
     if not session_file.exists():
-        print("⚠️  No active session found")
+        print("[WARN]  No active session found")
         return
 
     try:
@@ -220,7 +220,7 @@ async def end_session_and_create_capsule():
             session_id = session_data.get("session_id")
 
         if not session_id:
-            print("❌ Invalid session data")
+            print("[ERROR] Invalid session data")
             return
 
         capture = ClaudeCodeCapture()
@@ -233,7 +233,7 @@ async def end_session_and_create_capsule():
             capsule_id = await capture.create_capsule_from_session(session)
 
             if capsule_id:
-                print(f"✨ Created final RICH capsule: {capsule_id}")
+                print(f" Created final RICH capsule: {capsule_id}")
                 print(f"   Messages: {len(session.messages)}")
                 print(f"   Significance: {session.significance_score:.2f}")
                 print(f"   Topics: {', '.join(session.topics)}")
@@ -245,10 +245,10 @@ async def end_session_and_create_capsule():
 
         # Remove session file
         session_file.unlink()
-        print("🧹 Session ended and cleaned up")
+        print(" Session ended and cleaned up")
 
     except Exception as e:
-        print(f"❌ Error ending session: {e}")
+        print(f"[ERROR] Error ending session: {e}")
         import traceback
 
         traceback.print_exc()

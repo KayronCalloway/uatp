@@ -74,7 +74,7 @@ class JWTAuthenticator:
         ] = {}  # In-memory user store (replace with DB in production)
         self.refresh_tokens: Dict[str, str] = {}  # Store refresh tokens
 
-        logger.info("🔐 JWT Authenticator initialized")
+        logger.info(" JWT Authenticator initialized")
         logger.info(f"   Algorithm: {algorithm}")
         logger.info(f"   Token expiration: {JWT_EXPIRATION_HOURS} hours")
         logger.info(f"   Refresh expiration: {JWT_REFRESH_EXPIRATION_DAYS} days")
@@ -125,7 +125,7 @@ class JWTAuthenticator:
         )
 
         self.users[username] = user
-        logger.info(f"👤 User created: {username} ({email})")
+        logger.info(f" User created: {username} ({email})")
         return user
 
     def authenticate_user(self, username: str, password: str) -> Optional[User]:
@@ -143,7 +143,7 @@ class JWTAuthenticator:
 
         # Update last login
         user.last_login = utc_now()
-        logger.info(f"🔓 User authenticated: {username}")
+        logger.info(f" User authenticated: {username}")
         return user
 
     def generate_access_token(self, user: User) -> str:
@@ -163,7 +163,7 @@ class JWTAuthenticator:
         )
 
         token = jwt.encode(asdict(payload), self.secret_key, algorithm=self.algorithm)
-        logger.info(f"🎫 Access token generated for: {user.username}")
+        logger.info(f" Access token generated for: {user.username}")
         return token
 
     def generate_refresh_token(self, user: User) -> str:
@@ -187,7 +187,7 @@ class JWTAuthenticator:
         # Store refresh token
         self.refresh_tokens[token] = user.user_id
 
-        logger.info(f"🔄 Refresh token generated for: {user.username}")
+        logger.info(f" Refresh token generated for: {user.username}")
         return token
 
     def verify_token(self, token: str) -> Optional[TokenPayload]:
@@ -197,10 +197,10 @@ class JWTAuthenticator:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             return TokenPayload(**payload)
         except jwt.ExpiredSignatureError:
-            logger.warning("🚫 Token expired")
+            logger.warning(" Token expired")
             return None
         except jwt.InvalidTokenError:
-            logger.warning("🚫 Invalid token")
+            logger.warning(" Invalid token")
             return None
 
     def refresh_access_token(self, refresh_token: str) -> Optional[str]:
@@ -228,7 +228,7 @@ class JWTAuthenticator:
 
         if refresh_token in self.refresh_tokens:
             del self.refresh_tokens[refresh_token]
-            logger.info("🗑️ Refresh token revoked")
+            logger.info("️ Refresh token revoked")
             return True
         return False
 
@@ -258,7 +258,7 @@ class JWTAuthenticator:
 
         if role not in user.roles:
             user.roles.append(role)
-            logger.info(f"🎭 Role '{role}' added to user: {username}")
+            logger.info(f" Role '{role}' added to user: {username}")
 
         return True
 
@@ -271,7 +271,7 @@ class JWTAuthenticator:
 
         if role in user.roles:
             user.roles.remove(role)
-            logger.info(f"🎭 Role '{role}' removed from user: {username}")
+            logger.info(f" Role '{role}' removed from user: {username}")
 
         return True
 
@@ -283,7 +283,7 @@ class JWTAuthenticator:
             return False
 
         user.is_active = False
-        logger.info(f"🚫 User deactivated: {username}")
+        logger.info(f" User deactivated: {username}")
         return True
 
     def activate_user(self, username: str) -> bool:
@@ -294,7 +294,7 @@ class JWTAuthenticator:
             return False
 
         user.is_active = True
-        logger.info(f"✅ User activated: {username}")
+        logger.info(f"[OK] User activated: {username}")
         return True
 
     def list_users(self) -> List[Dict[str, Any]]:
@@ -380,52 +380,52 @@ def require_auth(required_roles: List[str] = None):
 async def main():
     """Test the JWT authentication system."""
 
-    print("🔐 Testing JWT Authentication System")
+    print(" Testing JWT Authentication System")
     print("=" * 50)
 
     # Initialize authenticator
     auth = get_authenticator()
 
     # Test user creation
-    print("\n👤 Testing user creation...")
+    print("\n Testing user creation...")
     try:
         user1 = auth.create_user(
             "alice", "alice@example.com", "password123", ["user", "admin"]
         )
         user2 = auth.create_user("bob", "bob@example.com", "password456", ["user"])
-        print(f"✅ Created users: {user1.username}, {user2.username}")
+        print(f"[OK] Created users: {user1.username}, {user2.username}")
     except ValueError as e:
-        print(f"❌ User creation failed: {e}")
+        print(f"[ERROR] User creation failed: {e}")
 
     # Test authentication
-    print("\n🔓 Testing authentication...")
+    print("\n Testing authentication...")
     user = auth.authenticate_user("alice", "password123")
     if user:
-        print(f"✅ Authentication successful: {user.username}")
+        print(f"[OK] Authentication successful: {user.username}")
 
         # Generate tokens
         access_token = auth.generate_access_token(user)
         refresh_token = auth.generate_refresh_token(user)
 
-        print(f"🎫 Access token: {access_token[:50]}...")
-        print(f"🔄 Refresh token: {refresh_token[:50]}...")
+        print(f" Access token: {access_token[:50]}...")
+        print(f" Refresh token: {refresh_token[:50]}...")
 
         # Verify tokens
-        print("\n🔍 Testing token verification...")
+        print("\n Testing token verification...")
         payload = auth.verify_token(access_token)
         if payload:
-            print(f"✅ Token valid for: {payload.username}")
+            print(f"[OK] Token valid for: {payload.username}")
             print(f"   Roles: {payload.roles}")
             print(f"   Expires: {datetime.fromtimestamp(payload.exp)}")
 
         # Test token refresh
-        print("\n🔄 Testing token refresh...")
+        print("\n Testing token refresh...")
         new_access_token = auth.refresh_access_token(refresh_token)
         if new_access_token:
-            print(f"✅ New access token: {new_access_token[:50]}...")
+            print(f"[OK] New access token: {new_access_token[:50]}...")
 
         # Test role management
-        print("\n🎭 Testing role management...")
+        print("\n Testing role management...")
         auth.add_role("bob", "moderator")
         auth.remove_role("alice", "admin")
 
@@ -436,20 +436,20 @@ async def main():
         print(f"   Alice's roles: {user_alice.roles}")
 
         # Test user stats
-        print("\n📊 User statistics:")
+        print("\n User statistics:")
         stats = auth.get_user_stats()
         for key, value in stats.items():
             print(f"   {key}: {value}")
     else:
-        print("❌ Authentication failed")
+        print("[ERROR] Authentication failed")
 
     # Test failed authentication
-    print("\n🚫 Testing failed authentication...")
+    print("\n Testing failed authentication...")
     failed_user = auth.authenticate_user("alice", "wrongpassword")
     if not failed_user:
-        print("✅ Failed authentication correctly rejected")
+        print("[OK] Failed authentication correctly rejected")
 
-    print("\n✅ JWT authentication test completed!")
+    print("\n[OK] JWT authentication test completed!")
 
 
 if __name__ == "__main__":

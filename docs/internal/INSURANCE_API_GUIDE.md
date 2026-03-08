@@ -6,7 +6,7 @@ The UATP Insurance API provides comprehensive AI liability coverage through cryp
 
 ---
 
-## 🎯 Core Concept
+##  Core Concept
 
 **Problem:** AI assistants are sandboxed because their decisions aren't auditable or insurable.
 
@@ -21,7 +21,7 @@ The UATP Insurance API provides comprehensive AI liability coverage through cryp
 
 ---
 
-## 📊 API Overview
+##  API Overview
 
 **Base URL:** `https://api.uatp.app/api/v1/insurance`
 
@@ -34,7 +34,7 @@ The UATP Insurance API provides comprehensive AI liability coverage through cryp
 
 ---
 
-## 🔍 Risk Assessment
+##  Risk Assessment
 
 ### POST `/risk-assessment`
 
@@ -158,7 +158,7 @@ Analyze a capsule chain to determine insurability and premium.
 
 ---
 
-## 📋 Policy Management
+##  Policy Management
 
 ### POST `/policies`
 
@@ -323,7 +323,7 @@ Cancel a policy.
 
 ---
 
-## 🏥 Claims Processing
+##  Claims Processing
 
 ### POST `/claims`
 
@@ -478,7 +478,7 @@ Appeal a denied claim.
 
 ---
 
-## 💰 Pricing
+##  Pricing
 
 ### Base Premium Rates
 
@@ -521,7 +521,7 @@ Customer service multiplier: $25 × 1.2 = $30/month
 
 ---
 
-## 🔐 Authentication
+##  Authentication
 
 All endpoints require API key authentication.
 
@@ -540,7 +540,7 @@ curl -X POST https://api.uatp.app/api/v1/insurance/risk-assessment \
 
 ---
 
-## 🚨 Error Handling
+##  Error Handling
 
 **Standard Error Response:**
 ```json
@@ -570,7 +570,7 @@ curl -X POST https://api.uatp.app/api/v1/insurance/risk-assessment \
 
 ---
 
-## 📊 Webhooks (Coming Soon)
+##  Webhooks (Coming Soon)
 
 Subscribe to real-time events:
 
@@ -587,7 +587,7 @@ Subscribe to real-time events:
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 **Test Environment:** `https://api-test.uatp.app/api/v1/insurance`
 
@@ -599,7 +599,7 @@ Subscribe to real-time events:
 
 ---
 
-## 📚 SDKs
+##  SDKs
 
 **Python:**
 ```python

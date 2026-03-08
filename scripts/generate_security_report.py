@@ -261,13 +261,13 @@ def generate_html_report(reports: Dict[str, Any], summary: Dict[str, Any]) -> st
     </head>
     <body>
         <div class="header">
-            <h1>🔒 UATP Security Scan Report</h1>
+            <h1> UATP Security Scan Report</h1>
             <p><strong>Generated:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")}</p>
             <p><strong>Repository:</strong> UATP Capsule Engine</p>
         </div>
 
         <div class="summary">
-            <h2>📊 Executive Summary</h2>
+            <h2> Executive Summary</h2>
             <div class="stats">
                 <div class="stat">
                     <div class="risk-score">{summary["risk_score"]}</div>
@@ -301,7 +301,7 @@ def generate_html_report(reports: Dict[str, Any], summary: Dict[str, Any]) -> st
     if "dependency" in reports and reports["dependency"]["total_vulnerabilities"] > 0:
         html += f"""
         <div class="section">
-            <h2>🔍 Dependency Vulnerabilities ({reports["dependency"]["total_vulnerabilities"]})</h2>
+            <h2> Dependency Vulnerabilities ({reports["dependency"]["total_vulnerabilities"]})</h2>
         """
         for vuln in reports["dependency"]["vulnerabilities"][:10]:  # Show first 10
             html += f"""
@@ -317,7 +317,7 @@ def generate_html_report(reports: Dict[str, Any], summary: Dict[str, Any]) -> st
     if "code_security" in reports and reports["code_security"]["total_issues"] > 0:
         html += f"""
         <div class="section">
-            <h2>🛡️ Code Security Issues ({reports["code_security"]["total_issues"]})</h2>
+            <h2> Code Security Issues ({reports["code_security"]["total_issues"]})</h2>
         """
         for issue in reports["code_security"]["issues"][:10]:  # Show first 10
             html += f"""
@@ -333,7 +333,7 @@ def generate_html_report(reports: Dict[str, Any], summary: Dict[str, Any]) -> st
     if "licenses" in reports:
         html += f"""
         <div class="section">
-            <h2>📋 License Compliance ({reports["licenses"]["total_packages"]} packages)</h2>
+            <h2> License Compliance ({reports["licenses"]["total_packages"]} packages)</h2>
             <p><strong>License Distribution:</strong></p>
             <ul>
         """
@@ -352,11 +352,11 @@ def generate_html_report(reports: Dict[str, Any], summary: Dict[str, Any]) -> st
 def generate_markdown_summary(summary: Dict[str, Any]) -> str:
     """Generate markdown summary for PR comments"""
 
-    risk_emoji = "🟢"
+    risk_emoji = ""
     if summary["risk_score"] > 50:
-        risk_emoji = "🔴"
+        risk_emoji = ""
     elif summary["risk_score"] > 20:
-        risk_emoji = "🟠"
+        risk_emoji = ""
 
     return f"""
 ### {risk_emoji} Security Scan Summary
@@ -365,15 +365,15 @@ def generate_markdown_summary(summary: Dict[str, Any]) -> str:
 
 | Severity | Count |
 |----------|-------|
-| 🔴 Critical | {summary["critical_issues"]} |
-| 🟠 High | {summary["high_issues"]} |
-| 🟡 Medium | {summary["medium_issues"]} |
-| ⚪ Low | {summary["low_issues"]} |
+|  Critical | {summary["critical_issues"]} |
+|  High | {summary["high_issues"]} |
+|  Medium | {summary["medium_issues"]} |
+|  Low | {summary["low_issues"]} |
 | **Total** | **{summary["total_issues"]}** |
 
-{'⚠️ **Action Required:** Please address critical and high severity issues before merging.' if summary["critical_issues"] + summary["high_issues"] > 0 else '✅ **All Clear:** No critical security issues detected.'}
+{'[WARN] **Action Required:** Please address critical and high severity issues before merging.' if summary["critical_issues"] + summary["high_issues"] > 0 else '[OK] **All Clear:** No critical security issues detected.'}
 
-📊 View the [full security report](../security-report.html) for detailed findings.
+ View the [full security report](../security-report.html) for detailed findings.
     """
 
 
@@ -388,7 +388,7 @@ def main():
         print(f"Error: Results directory {results_dir} does not exist")
         sys.exit(1)
 
-    print("📊 Generating security report...")
+    print(" Generating security report...")
 
     # Parse all security scan results
     reports = {
@@ -423,11 +423,11 @@ def main():
     with open("security-summary.md", "w") as f:
         f.write(md_summary)
 
-    print("✅ Security report generated successfully!")
-    print(f"📊 Risk Score: {summary['risk_score']}/100")
-    print(f"🔍 Total Issues: {summary['total_issues']}")
+    print("[OK] Security report generated successfully!")
+    print(f" Risk Score: {summary['risk_score']}/100")
+    print(f" Total Issues: {summary['total_issues']}")
     print(
-        "📋 Files created: security-report.json, security-report.html, security-summary.md"
+        " Files created: security-report.json, security-report.html, security-summary.md"
     )
 
 

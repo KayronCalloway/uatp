@@ -4,12 +4,11 @@ UATP Python SDK - Governance Module
 Provides democratic governance participation capabilities for UATP network decisions.
 """
 
-import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any, Union
 from datetime import datetime, timezone
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -149,7 +148,7 @@ class GovernanceClient:
         self.client = client
         self.proposal_cache = {}
         self.user_votes = {}
-        logger.info("🏛️ Governance Client initialized")
+        logger.info(" Governance Client initialized")
 
     async def get_active_proposals(self) -> List[Proposal]:
         """Get all currently active proposals for voting."""
@@ -189,11 +188,11 @@ class GovernanceClient:
                 # Cache the proposal
                 self.proposal_cache[proposal.proposal_id] = proposal
 
-            logger.info(f"🗳️ Retrieved {len(proposals)} active proposals")
+            logger.info(f"️ Retrieved {len(proposals)} active proposals")
             return proposals
 
         except Exception as e:
-            logger.error(f"❌ Failed to get active proposals: {e}")
+            logger.error(f"[ERROR] Failed to get active proposals: {e}")
             return []
 
     async def get_proposal(self, proposal_id: str) -> Optional[Proposal]:
@@ -237,7 +236,7 @@ class GovernanceClient:
             return proposal
 
         except Exception as e:
-            logger.error(f"❌ Failed to get proposal {proposal_id}: {e}")
+            logger.error(f"[ERROR] Failed to get proposal {proposal_id}: {e}")
             return None
 
     async def cast_vote(
@@ -301,7 +300,7 @@ class GovernanceClient:
             if proposal_id in self.proposal_cache:
                 del self.proposal_cache[proposal_id]
 
-            logger.info(f"🗳️ Vote cast on proposal {proposal_id}: {choice.value}")
+            logger.info(f"️ Vote cast on proposal {proposal_id}: {choice.value}")
             return {
                 "success": True,
                 "vote_id": result["vote_id"],
@@ -311,7 +310,7 @@ class GovernanceClient:
             }
 
         except Exception as e:
-            logger.error(f"❌ Failed to cast vote on proposal {proposal_id}: {e}")
+            logger.error(f"[ERROR] Failed to cast vote on proposal {proposal_id}: {e}")
             return {"success": False, "error": str(e), "vote_id": None}
 
     async def create_proposal(
@@ -352,11 +351,11 @@ class GovernanceClient:
             response.raise_for_status()
 
             result = response.json()
-            logger.info(f"📝 Created proposal: {result['proposal_id']}")
+            logger.info(f" Created proposal: {result['proposal_id']}")
             return result
 
         except Exception as e:
-            logger.error(f"❌ Failed to create proposal: {e}")
+            logger.error(f"[ERROR] Failed to create proposal: {e}")
             return {"success": False, "error": str(e), "proposal_id": None}
 
     async def get_user_votes(self, user_id: str, limit: int = 50) -> List[Vote]:
@@ -385,11 +384,11 @@ class GovernanceClient:
                 )
                 votes.append(vote)
 
-            logger.info(f"📊 Retrieved {len(votes)} votes for user {user_id}")
+            logger.info(f" Retrieved {len(votes)} votes for user {user_id}")
             return votes
 
         except Exception as e:
-            logger.error(f"❌ Failed to get user votes for {user_id}: {e}")
+            logger.error(f"[ERROR] Failed to get user votes for {user_id}: {e}")
             return []
 
     async def get_governance_stats(self) -> Dict[str, Any]:
@@ -402,7 +401,7 @@ class GovernanceClient:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ Failed to get governance stats: {e}")
+            logger.error(f"[ERROR] Failed to get governance stats: {e}")
             return {
                 "total_proposals": 0,
                 "active_proposals": 0,
@@ -425,7 +424,7 @@ class GovernanceClient:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ Failed to get voting power for user {user_id}: {e}")
+            logger.error(f"[ERROR] Failed to get voting power for user {user_id}: {e}")
             return {
                 "user_id": user_id,
                 "voting_power": 0.0,
@@ -461,11 +460,13 @@ class GovernanceClient:
             response.raise_for_status()
 
             result = response.json()
-            logger.info(f"🤝 Delegated voting power to {delegate_to}")
+            logger.info(f" Delegated voting power to {delegate_to}")
             return result
 
         except Exception as e:
-            logger.error(f"❌ Failed to delegate voting power to {delegate_to}: {e}")
+            logger.error(
+                f"[ERROR] Failed to delegate voting power to {delegate_to}: {e}"
+            )
             return {"success": False, "error": str(e)}
 
     async def get_constitutional_framework(self) -> Dict[str, Any]:
@@ -480,7 +481,7 @@ class GovernanceClient:
             return response.json()
 
         except Exception as e:
-            logger.error(f"❌ Failed to get constitutional framework: {e}")
+            logger.error(f"[ERROR] Failed to get constitutional framework: {e}")
             return {
                 "principles": [],
                 "articles": {},
@@ -492,4 +493,4 @@ class GovernanceClient:
         """Clear all cached governance data."""
         self.proposal_cache.clear()
         self.user_votes.clear()
-        logger.info("🧹 Governance cache cleared")
+        logger.info(" Governance cache cleared")

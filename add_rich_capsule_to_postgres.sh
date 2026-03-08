@@ -3,7 +3,7 @@
 
 # Usage: ./add_rich_capsule_to_postgres.sh
 
-echo "🚀 Adding rich capsule to PostgreSQL..."
+echo " Adding rich capsule to PostgreSQL..."
 
 psql -d uatp_capsule_engine << 'SQL'
 INSERT INTO capsules (capsule_id, capsule_type, version, timestamp, status, verification, payload)
@@ -46,6 +46,6 @@ VALUES (
 );
 SQL
 
-echo "✅ Rich capsule added!"
+echo "[OK] Rich capsule added!"
 echo "   ID: caps_2025_12_05_pg_rich_002"
 echo "   View at: http://localhost:3000 → Capsules → caps_2025_12_05_pg_rich_002"

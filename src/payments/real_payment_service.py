@@ -5,15 +5,14 @@ Production-ready payment service with actual Stripe and PayPal integration
 
 import asyncio
 import logging
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func, select, and_, cast, Date
 from sqlalchemy.orm import aliased
 
 from src.models.payment import PayoutMethodModel, TransactionModel
@@ -650,7 +649,7 @@ if __name__ == "__main__":
     import asyncio
 
     async def test_payment_service():
-        print("💳 Testing Real Payment Service...")
+        print(" Testing Real Payment Service...")
 
         # Mock user service for testing
         class MockUserService:
@@ -686,6 +685,6 @@ if __name__ == "__main__":
             )
             print(f"Transaction details: {details}")
 
-        print("✅ Real Payment Service tests completed")
+        print("[OK] Real Payment Service tests completed")
 
     asyncio.run(test_payment_service())

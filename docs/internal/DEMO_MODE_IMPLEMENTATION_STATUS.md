@@ -3,7 +3,7 @@
 ## Summary
 We've implemented foundational infrastructure for demo/live data separation in the UATP Capsule Engine. The database now contains both demo and real capsules, and filtering logic has been added at multiple layers.
 
-## ✅ Completed Work
+## [OK] Completed Work
 
 ### 1. Database Population
 - **5 demo capsules** successfully added to PostgreSQL database
@@ -48,7 +48,7 @@ We've implemented foundational infrastructure for demo/live data separation in t
 - Fixed Anthropic SDK initialization error with graceful degradation
 - Allows API to start even when Anthropic client fails to initialize
 
-## ⚠️ Current Issue
+## [WARN] Current Issue
 
 ### Filtering Not Working as Expected
 When testing with `demo_mode=false`, the API still returns demo capsules:
@@ -61,7 +61,7 @@ When testing with `demo_mode=false`, the API still returns demo capsules:
 2. **SQLAlchemy Query Conversion**: The `db.fetch()` method converts asyncpg-style queries to SQLAlchemy format - the LIKE clause conversion might be failing
 3. **Missing Logging Output**: Debug logs added aren't appearing, suggesting logging level configuration issues
 
-## 🔧 Next Steps to Debug
+##  Next Steps to Debug
 
 ### Option 1: Direct SQL Test
 Test the SQL query directly at the database level to verify the WHERE clause works:
@@ -93,7 +93,7 @@ Assuming backend filtering works, update frontend to:
    - `frontend/src/lib/api-client.ts` or similar API client
    - Component making capsule list API calls
 
-## 📝 Implementation Notes
+##  Implementation Notes
 
 ### Database Schema
 - Capsules stored with `capsule_id` as primary key column
@@ -112,7 +112,7 @@ The frontend already has `DemoModeContext` infrastructure:
 - File: `frontend/src/contexts/demo-mode-context.tsx`
 - This context should control the `demo_mode` API parameter
 
-## 🎯 User's Goal
+##  User's Goal
 
 > "i want to run real data not demo. we have auto capture set up. yythere is a demo button that all the demo data can go but i want thw live one"
 
@@ -122,7 +122,7 @@ The frontend already has `DemoModeContext` infrastructure:
 - Clean separation at database level (not workarounds)
 - Long-term sustainable architecture
 
-## 📊 Current Database State
+##  Current Database State
 
 ```
 PostgreSQL database: uatp_capsule_engine
@@ -131,7 +131,7 @@ Demo: 5 capsules (demo-* prefix)
 Real: 83 capsules (auto-captured + manual)
 ```
 
-## 🚀 To Complete Implementation
+##  To Complete Implementation
 
 1. **Debug SQL filtering** - Verify WHERE clause is executed correctly
 2. **Add logging configuration** - Make debug logs visible
@@ -141,7 +141,7 @@ Real: 83 capsules (auto-captured + manual)
 4. **Frontend integration** - Connect DemoModeContext to API calls
 5. **Remove debug logging** - Clean up after confirmation works
 
-## ⚡ Quick Test Commands
+##  Quick Test Commands
 
 ```bash
 # Test live mode (should exclude demo)
@@ -154,7 +154,7 @@ curl "http://localhost:8000/capsules?demo_mode=true&per_page=100"
 python3 check_capsule_storage.py
 ```
 
-## 📁 Modified Files
+##  Modified Files
 
 1. `src/engine/capsule_engine.py` - Added exclude_demo filtering
 2. `src/api/schemas.py` - Added demo_mode parameter
@@ -162,7 +162,7 @@ python3 check_capsule_storage.py
 4. `src/integrations/anthropic_client.py` - Fixed initialization error
 5. `add_demo_capsules_to_postgres.py` - Script to populate demo data
 
-## 🏁 Success Criteria
+##  Success Criteria
 
 - [ ] API with `demo_mode=false` returns 0 demo capsules
 - [ ] API with `demo_mode=true` returns 5 demo capsules

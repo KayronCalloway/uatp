@@ -306,7 +306,7 @@ def has_scope(current_user: Dict[str, Any], scope: str) -> bool:
 
 # Example usage and testing
 if __name__ == "__main__":
-    print("🔐 Testing Authentication Middleware...")
+    print(" Testing Authentication Middleware...")
 
     # Test rate limiter
     print("Testing rate limiter...")
@@ -315,4 +315,4 @@ if __name__ == "__main__":
         rate_limiter.record_attempt(f"test_user_{i}")
         print(f"Attempt {i+1}: Rate limited: {is_limited}")
 
-    print("✅ Authentication Middleware tests completed")
+    print("[OK] Authentication Middleware tests completed")

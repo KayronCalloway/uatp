@@ -463,13 +463,13 @@ def get_paypal_fees(amount: Decimal, currency: str = "USD") -> Dict[str, Decimal
 
 # Example usage and testing
 if __name__ == "__main__":
-    print("💰 Testing PayPal Integration...")
+    print(" Testing PayPal Integration...")
 
     # Test authentication
     if paypal_integration.access_token:
-        print("✅ PayPal authentication successful")
+        print("[OK] PayPal authentication successful")
     else:
-        print("❌ PayPal authentication failed")
+        print("[ERROR] PayPal authentication failed")
 
     # Test fee calculation
     test_amount = Decimal("100.00")
@@ -483,4 +483,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Balance retrieval failed: {e}")
 
-    print("✅ PayPal Integration tests completed")
+    print("[OK] PayPal Integration tests completed")

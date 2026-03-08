@@ -8,20 +8,18 @@ including rule-based alerts, notification channels, and alert management.
 """
 
 import asyncio
-import json
 import logging
 import os
 import sys
-import time
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, asdict
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from monitoring.health_checks import get_health_manager, HealthStatus
+from monitoring.health_checks import HealthStatus, get_health_manager
 from monitoring.metrics import get_metrics_collector
 
 logger = logging.getLogger(__name__)
@@ -125,12 +123,12 @@ class LogNotificationChannel(NotificationChannel):
 
             logger.log(
                 log_level,
-                f"🚨 ALERT [{alert.severity.value.upper()}] {alert.name}: {alert.message}",
+                f" ALERT [{alert.severity.value.upper()}] {alert.name}: {alert.message}",
             )
             return True
 
         except Exception as e:
-            logger.error(f"❌ Failed to send log alert: {e}")
+            logger.error(f"[ERROR] Failed to send log alert: {e}")
             return False
 
 
@@ -157,14 +155,14 @@ class WebhookNotificationChannel(NotificationChannel):
                     webhook_url, json=payload, timeout=10
                 ) as response:
                     if response.status == 200:
-                        logger.info(f"✅ Webhook alert sent: {alert.name}")
+                        logger.info(f"[OK] Webhook alert sent: {alert.name}")
                         return True
                     else:
-                        logger.error(f"❌ Webhook alert failed: {response.status}")
+                        logger.error(f"[ERROR] Webhook alert failed: {response.status}")
                         return False
 
         except Exception as e:
-            logger.error(f"❌ Failed to send webhook alert: {e}")
+            logger.error(f"[ERROR] Failed to send webhook alert: {e}")
             return False
 
 
@@ -175,8 +173,8 @@ class EmailNotificationChannel(NotificationChannel):
         """Send alert via email."""
         try:
             import smtplib
-            from email.mime.text import MIMEText
             from email.mime.multipart import MIMEMultipart
+            from email.mime.text import MIMEText
 
             smtp_server = self.config.get("smtp_server")
             smtp_port = self.config.get("smtp_port", 587)
@@ -200,7 +198,7 @@ class EmailNotificationChannel(NotificationChannel):
             Message: {alert.message}
             Time: {alert.timestamp.isoformat()}
             Service: {alert.service or 'Unknown'}
-            
+
             Metric: {alert.metric_name}
             Value: {alert.metric_value}
             Threshold: {alert.threshold}
@@ -215,11 +213,11 @@ class EmailNotificationChannel(NotificationChannel):
             server.send_message(msg)
             server.quit()
 
-            logger.info(f"✅ Email alert sent: {alert.name}")
+            logger.info(f"[OK] Email alert sent: {alert.name}")
             return True
 
         except Exception as e:
-            logger.error(f"❌ Failed to send email alert: {e}")
+            logger.error(f"[ERROR] Failed to send email alert: {e}")
             return False
 
 
@@ -239,7 +237,7 @@ class AlertManager:
         # Default notification channel
         self.notification_channels["log"] = LogNotificationChannel("log")
 
-        logger.info("🚨 Alert Manager initialized")
+        logger.info(" Alert Manager initialized")
 
     def add_rule(self, rule: AlertRule):
         """Add an alert rule."""
@@ -249,12 +247,12 @@ class AlertManager:
             "last_value": None,
             "consecutive_triggers": 0,
         }
-        logger.info(f"📋 Added alert rule: {rule.name}")
+        logger.info(f" Added alert rule: {rule.name}")
 
     def add_notification_channel(self, channel: NotificationChannel):
         """Add a notification channel."""
         self.notification_channels[channel.name] = channel
-        logger.info(f"📢 Added notification channel: {channel.name}")
+        logger.info(f" Added notification channel: {channel.name}")
 
     async def start(self):
         """Start alert monitoring."""
@@ -263,7 +261,7 @@ class AlertManager:
 
         self.running = True
         self.evaluation_task = asyncio.create_task(self._evaluation_loop())
-        logger.info("🚨 Alert monitoring started")
+        logger.info(" Alert monitoring started")
 
     async def stop(self):
         """Stop alert monitoring."""
@@ -274,7 +272,7 @@ class AlertManager:
                 await self.evaluation_task
             except asyncio.CancelledError:
                 pass
-        logger.info("🚨 Alert monitoring stopped")
+        logger.info(" Alert monitoring stopped")
 
     async def _evaluation_loop(self):
         """Main evaluation loop."""
@@ -285,7 +283,7 @@ class AlertManager:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"❌ Error in alert evaluation: {e}")
+                logger.error(f"[ERROR] Error in alert evaluation: {e}")
                 await asyncio.sleep(self.evaluation_interval)
 
     async def _evaluate_rules(self):
@@ -298,7 +296,7 @@ class AlertManager:
             try:
                 await self._evaluate_rule(rule, metrics_collector, health_manager)
             except Exception as e:
-                logger.error(f"❌ Error evaluating rule {rule.name}: {e}")
+                logger.error(f"[ERROR] Error evaluating rule {rule.name}: {e}")
 
     async def _evaluate_rule(self, rule: AlertRule, metrics_collector, health_manager):
         """Evaluate a single alert rule."""
@@ -420,7 +418,7 @@ class AlertManager:
         # Send notifications
         await self._send_notifications(alert)
 
-        logger.warning(f"🚨 Alert fired: {alert.name} - {alert.message}")
+        logger.warning(f" Alert fired: {alert.name} - {alert.message}")
 
     async def _resolve_alert(self, alert_name: str):
         """Resolve an alert."""
@@ -436,7 +434,7 @@ class AlertManager:
             # Send resolution notification
             await self._send_notifications(alert)
 
-            logger.info(f"✅ Alert resolved: {alert_name}")
+            logger.info(f"[OK] Alert resolved: {alert_name}")
 
     async def _send_notifications(self, alert: Alert):
         """Send alert notifications to all channels."""
@@ -445,7 +443,9 @@ class AlertManager:
             try:
                 await channel.send_alert(alert)
             except Exception as e:
-                logger.error(f"❌ Failed to send notification via {channel_name}: {e}")
+                logger.error(
+                    f"[ERROR] Failed to send notification via {channel_name}: {e}"
+                )
 
     def get_active_alerts(self) -> List[Dict[str, Any]]:
         """Get all active alerts."""
@@ -556,7 +556,7 @@ def get_alert_manager() -> AlertManager:
 async def main():
     """Test alerting system."""
 
-    print("🚨 Testing Alerting System")
+    print(" Testing Alerting System")
     print("=" * 40)
 
     # Get alert manager
@@ -577,7 +577,7 @@ async def main():
 
     # Show statistics
     stats = alert_manager.get_alert_stats()
-    print(f"\n📊 Alert Statistics:")
+    print("\n Alert Statistics:")
     print(f"   Total alerts: {stats['total_alerts']}")
     print(f"   Active alerts: {stats['active_alerts']}")
     print(f"   Rules: {stats['rules_count']}")
@@ -586,16 +586,16 @@ async def main():
     # Show active alerts
     active_alerts = alert_manager.get_active_alerts()
     if active_alerts:
-        print(f"\n🚨 Active Alerts:")
+        print("\n Active Alerts:")
         for alert in active_alerts:
             print(f"   - {alert['name']}: {alert['message']}")
     else:
-        print("\n✅ No active alerts")
+        print("\n[OK] No active alerts")
 
     # Stop alert monitoring
     await alert_manager.stop()
 
-    print("\n✅ Alerting system test completed!")
+    print("\n[OK] Alerting system test completed!")
 
 
 if __name__ == "__main__":

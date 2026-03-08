@@ -349,7 +349,7 @@ class ConfidenceCalibrator:
 
 # Example usage
 if __name__ == "__main__":
-    print("✅ Confidence Calibration Engine Ready")
+    print("[OK] Confidence Calibration Engine Ready")
     print("\nCapabilities:")
     print("  - Calculate Expected Calibration Error (ECE)")
     print("  - Calculate Maximum Calibration Error (MCE)")

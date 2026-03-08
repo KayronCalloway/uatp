@@ -13,13 +13,13 @@ import logging
 import os
 import sys
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from database.postgresql_schema import get_postgresql_manager, PostgreSQLManager
+from database.postgresql_schema import PostgreSQLManager, get_postgresql_manager
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class PostgreSQLCapsuleAdapter:
         self.pg_manager = pg_manager or get_postgresql_manager()
         self.initialized = False
 
-        logger.info("🐘 PostgreSQL Capsule Adapter initialized")
+        logger.info(" PostgreSQL Capsule Adapter initialized")
 
     async def initialize(self):
         """Initialize the PostgreSQL adapter."""
@@ -39,7 +39,7 @@ class PostgreSQLCapsuleAdapter:
             if not self.pg_manager.pool:
                 await self.pg_manager.create_connection_pool()
             self.initialized = True
-            logger.info("✅ PostgreSQL adapter initialized")
+            logger.info("[OK] PostgreSQL adapter initialized")
 
     async def create_capsule(self, capsule_data: Dict[str, Any]) -> Optional[str]:
         """Create a new capsule in PostgreSQL."""
@@ -83,11 +83,11 @@ class PostgreSQLCapsuleAdapter:
                     ),
                 )
 
-                logger.info(f"✅ Created capsule: {capsule_id}")
+                logger.info(f"[OK] Created capsule: {capsule_id}")
                 return capsule_id
 
         except Exception as e:
-            logger.error(f"❌ Failed to create capsule: {e}")
+            logger.error(f"[ERROR] Failed to create capsule: {e}")
             return None
 
     async def get_capsule(self, capsule_id: str) -> Optional[Dict[str, Any]]:
@@ -99,7 +99,7 @@ class PostgreSQLCapsuleAdapter:
             async with self.pg_manager.pool.acquire() as conn:
                 row = await conn.fetchrow(
                     """
-                    SELECT 
+                    SELECT
                         c.*,
                         u.username,
                         u.email
@@ -115,7 +115,7 @@ class PostgreSQLCapsuleAdapter:
                 return None
 
         except Exception as e:
-            logger.error(f"❌ Failed to get capsule {capsule_id}: {e}")
+            logger.error(f"[ERROR] Failed to get capsule {capsule_id}: {e}")
             return None
 
     async def list_capsules(
@@ -132,7 +132,7 @@ class PostgreSQLCapsuleAdapter:
         try:
             async with self.pg_manager.pool.acquire() as conn:
                 query = """
-                    SELECT 
+                    SELECT
                         c.*,
                         u.username,
                         u.email
@@ -160,7 +160,7 @@ class PostgreSQLCapsuleAdapter:
                 return [self._row_to_dict(row) for row in rows]
 
         except Exception as e:
-            logger.error(f"❌ Failed to list capsules: {e}")
+            logger.error(f"[ERROR] Failed to list capsules: {e}")
             return []
 
     async def search_capsules(
@@ -199,7 +199,7 @@ class PostgreSQLCapsuleAdapter:
                 return [self._search_row_to_dict(row) for row in rows]
 
         except Exception as e:
-            logger.error(f"❌ Failed to search capsules: {e}")
+            logger.error(f"[ERROR] Failed to search capsules: {e}")
             return []
 
     async def get_capsule_stats(self, user_id: str = None) -> Dict[str, Any]:
@@ -244,7 +244,7 @@ class PostgreSQLCapsuleAdapter:
                 }
 
         except Exception as e:
-            logger.error(f"❌ Failed to get capsule stats: {e}")
+            logger.error(f"[ERROR] Failed to get capsule stats: {e}")
             return {}
 
     async def update_capsule(self, capsule_id: str, updates: Dict[str, Any]) -> bool:
@@ -282,7 +282,7 @@ class PostgreSQLCapsuleAdapter:
                 params.append(capsule_id)
 
                 query = f"""
-                    UPDATE capsules 
+                    UPDATE capsules
                     SET {', '.join(set_clauses)}, updated_at = NOW()
                     WHERE capsule_id = ${param_count}
                 """
@@ -291,7 +291,7 @@ class PostgreSQLCapsuleAdapter:
                 return result == "UPDATE 1"
 
         except Exception as e:
-            logger.error(f"❌ Failed to update capsule {capsule_id}: {e}")
+            logger.error(f"[ERROR] Failed to update capsule {capsule_id}: {e}")
             return False
 
     async def delete_capsule(self, capsule_id: str) -> bool:
@@ -303,7 +303,7 @@ class PostgreSQLCapsuleAdapter:
             async with self.pg_manager.pool.acquire() as conn:
                 result = await conn.execute(
                     """
-                    UPDATE capsules 
+                    UPDATE capsules
                     SET status = 'deleted', updated_at = NOW()
                     WHERE capsule_id = $1
                 """,
@@ -313,7 +313,7 @@ class PostgreSQLCapsuleAdapter:
                 return result == "UPDATE 1"
 
         except Exception as e:
-            logger.error(f"❌ Failed to delete capsule {capsule_id}: {e}")
+            logger.error(f"[ERROR] Failed to delete capsule {capsule_id}: {e}")
             return False
 
     async def get_recent_capsules(self, limit: int = 10) -> List[Dict[str, Any]]:
@@ -325,7 +325,7 @@ class PostgreSQLCapsuleAdapter:
             async with self.pg_manager.pool.acquire() as conn:
                 rows = await conn.fetch(
                     """
-                    SELECT 
+                    SELECT
                         c.*,
                         u.username,
                         u.email
@@ -341,7 +341,7 @@ class PostgreSQLCapsuleAdapter:
                 return [self._row_to_dict(row) for row in rows]
 
         except Exception as e:
-            logger.error(f"❌ Failed to get recent capsules: {e}")
+            logger.error(f"[ERROR] Failed to get recent capsules: {e}")
             return []
 
     async def _get_or_create_user(self, conn, username: str) -> UUID:
@@ -422,7 +422,7 @@ def get_postgresql_adapter() -> PostgreSQLCapsuleAdapter:
 async def main():
     """Test PostgreSQL adapter."""
 
-    print("🐘 Testing PostgreSQL Adapter")
+    print(" Testing PostgreSQL Adapter")
     print("=" * 40)
 
     # Initialize adapter
@@ -430,7 +430,7 @@ async def main():
 
     try:
         # Test capsule creation
-        print("\n📦 Testing capsule creation...")
+        print("\n Testing capsule creation...")
         test_capsule = {
             "capsule_id": "test_pg_capsule_001",
             "type": "interaction_capsule",
@@ -448,38 +448,38 @@ async def main():
 
         capsule_id = await adapter.create_capsule(test_capsule)
         if capsule_id:
-            print(f"✅ Created capsule: {capsule_id}")
+            print(f"[OK] Created capsule: {capsule_id}")
 
             # Test capsule retrieval
-            print("\n🔍 Testing capsule retrieval...")
+            print("\n Testing capsule retrieval...")
             retrieved = await adapter.get_capsule(capsule_id)
             if retrieved:
-                print(f"✅ Retrieved capsule: {retrieved['capsule_id']}")
+                print(f"[OK] Retrieved capsule: {retrieved['capsule_id']}")
                 print(f"   Platform: {retrieved['platform']}")
                 print(f"   Significance: {retrieved['significance_score']}")
 
         # Test capsule listing
-        print("\n📋 Testing capsule listing...")
+        print("\n Testing capsule listing...")
         capsules = await adapter.list_capsules(limit=5)
-        print(f"✅ Found {len(capsules)} capsules")
+        print(f"[OK] Found {len(capsules)} capsules")
 
         # Test statistics
-        print("\n📊 Testing statistics...")
+        print("\n Testing statistics...")
         stats = await adapter.get_capsule_stats()
         print(
-            f"✅ Stats: {stats['total_capsules']} total, {stats['active_capsules']} active"
+            f"[OK] Stats: {stats['total_capsules']} total, {stats['active_capsules']} active"
         )
 
         # Test search
-        print("\n🔍 Testing search...")
+        print("\n Testing search...")
         results = await adapter.search_capsules("test", limit=3)
-        print(f"✅ Search found {len(results)} results")
+        print(f"[OK] Search found {len(results)} results")
 
     except Exception as e:
-        print(f"❌ PostgreSQL adapter test failed: {e}")
+        print(f"[ERROR] PostgreSQL adapter test failed: {e}")
         print("Make sure PostgreSQL is running and schema is created")
 
-    print("\n✅ PostgreSQL adapter test completed!")
+    print("\n[OK] PostgreSQL adapter test completed!")
 
 
 if __name__ == "__main__":

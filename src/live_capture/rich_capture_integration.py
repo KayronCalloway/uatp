@@ -541,7 +541,7 @@ class RichCaptureEnhancer:
             )
 
             if alert:
-                logger.warning(f"🚨 Legibility alert: {alert.message}")
+                logger.warning(f" Legibility alert: {alert.message}")
                 capsule["payload"]["legibility_alert"] = {
                     "severity": alert.severity,
                     "message": alert.message,
@@ -549,7 +549,7 @@ class RichCaptureEnhancer:
                 }
 
             logger.debug(
-                f"📊 Legibility score: {legibility_metrics.score:.2f} "
+                f" Legibility score: {legibility_metrics.score:.2f} "
                 f"(parseable: {legibility_metrics.human_parseable:.2f}, "
                 f"novel: {legibility_metrics.novel_concept_ratio:.2f})"
             )
@@ -580,7 +580,7 @@ class RichCaptureEnhancer:
                 "assessed_at": datetime.now(timezone.utc).isoformat(),
             }
             logger.info(
-                f"📊 Quality assessment: Grade {quality_assessment.quality_grade} "
+                f" Quality assessment: Grade {quality_assessment.quality_grade} "
                 f"({quality_assessment.overall_quality:.2f})"
             )
         except Exception as e:
@@ -592,7 +592,7 @@ class RichCaptureEnhancer:
             environment_context = capture_environment_context()
             capsule["payload"]["environment"] = environment_context
             logger.info(
-                f"🌍 Environment captured: git={environment_context.get('git', {}).get('branch', 'N/A')}, "
+                f" Environment captured: git={environment_context.get('git', {}).get('branch', 'N/A')}, "
                 f"commit={environment_context.get('git', {}).get('commit', 'N/A')}"
             )
         except Exception as e:
@@ -611,7 +611,7 @@ class RichCaptureEnhancer:
                 capsule["payload"]["tool_calls"] = tool_calls_data["tool_calls"]
                 capsule["payload"]["tool_calls_summary"] = tool_calls_data["summary"]
                 logger.info(
-                    f"🔧 Tool calls captured: {tool_calls_data['summary']['total_calls']} calls, "
+                    f" Tool calls captured: {tool_calls_data['summary']['total_calls']} calls, "
                     f"tools: {list(tool_calls_data['summary'].get('by_tool', {}).keys())}"
                 )
             else:
@@ -633,16 +633,16 @@ class RichCaptureEnhancer:
                 ts_info = verification.get("timestamp", {})
                 if ts_info.get("trusted"):
                     logger.info(
-                        f"🔐 Capsule {capsule['capsule_id']} signed with RFC 3161 timestamp "
+                        f" Capsule {capsule['capsule_id']} signed with RFC 3161 timestamp "
                         f"from {ts_info.get('tsa_url', 'TSA')}"
                     )
                 else:
                     logger.info(
-                        f"🔐 Capsule {capsule['capsule_id']} signed with Ed25519 "
+                        f" Capsule {capsule['capsule_id']} signed with Ed25519 "
                         f"(local timestamp fallback)"
                     )
             except Exception as e:
-                logger.warning(f"⚠️ Crypto signing failed, capsule unsigned: {e}")
+                logger.warning(f"[WARN] Crypto signing failed, capsule unsigned: {e}")
         else:
             logger.debug("Crypto not available, capsule will be unsigned")
 
@@ -657,7 +657,7 @@ class RichCaptureEnhancer:
                 capsule["embedding_model"] = _embedder.model_name
                 capsule["embedding_created_at"] = datetime.now(timezone.utc).isoformat()
                 logger.debug(
-                    f"📊 Capsule {capsule['capsule_id']} embedded ({len(embedding)} dims)"
+                    f" Capsule {capsule['capsule_id']} embedded ({len(embedding)} dims)"
                 )
 
                 # HISTORICAL ACCURACY LEARNING (Gap 2)
@@ -684,13 +684,13 @@ class RichCaptureEnhancer:
                         )
 
                         logger.info(
-                            f"📈 Historical accuracy: {historical_result.sample_size} similar capsules, "
+                            f" Historical accuracy: {historical_result.sample_size} similar capsules, "
                             f"accuracy={historical_result.historical_accuracy:.0%}, "
                             f"confidence adjusted {overall_confidence:.0%} -> {historical_result.adjusted_confidence:.0%}"
                         )
                     else:
                         logger.debug(
-                            f"📊 Historical accuracy: {historical_result.sample_size} similar capsules "
+                            f" Historical accuracy: {historical_result.sample_size} similar capsules "
                             f"(need 3+ for confidence adjustment)"
                         )
                 except Exception as e:
@@ -721,7 +721,7 @@ class RichCaptureEnhancer:
                         capsule["payload"]["confidence"] = calibrated_confidence
 
                         logger.info(
-                            f"📏 Calibration applied: {current_confidence:.0%} -> {calibrated_confidence:.0%} "
+                            f" Calibration applied: {current_confidence:.0%} -> {calibrated_confidence:.0%} "
                             f"(adjustment: {calibration_info.get('adjustment', 0):+.1%})"
                         )
                     else:
@@ -755,7 +755,7 @@ class RichCaptureEnhancer:
                     topics=topics,
                 )
                 logger.debug(
-                    f"📋 Capsule {capsule['capsule_id']} registered for outcome tracking"
+                    f" Capsule {capsule['capsule_id']} registered for outcome tracking"
                 )
         except Exception as e:
             logger.debug(f"Outcome tracking registration skipped: {e}")
@@ -765,7 +765,7 @@ class RichCaptureEnhancer:
 
 # Example usage
 if __name__ == "__main__":
-    print("✅ Rich Capture Integration Ready")
+    print("[OK] Rich Capture Integration Ready")
     print("\nTo use in your capture system:")
     print("  from src.live_capture.rich_capture_integration import RichCaptureEnhancer")
     print(

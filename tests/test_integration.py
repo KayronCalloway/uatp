@@ -113,7 +113,7 @@ def test_complete_capsule_lifecycle():
     assert capsule.capsule_id in privacy_engine.private_capsules
     assert optimization_result["space_saved"] >= 0
 
-    print("✅ Complete capsule lifecycle test passed!")
+    print("[OK] Complete capsule lifecycle test passed!")
 
 
 def test_governance_with_economics():
@@ -177,7 +177,7 @@ def test_governance_with_economics():
     assert creator_analytics["total_contributions"] > 0
     assert creator_analytics["unclaimed_dividends"] > 0
 
-    print("✅ Governance with economics test passed!")
+    print("[OK] Governance with economics test passed!")
 
 
 def test_privacy_with_formal_verification():
@@ -235,7 +235,7 @@ def test_privacy_with_formal_verification():
     verification_report = formal_verification.get_violation_report()
     assert verification_report["total_violations"] >= 0
 
-    print("✅ Privacy with formal verification test passed!")
+    print("[OK] Privacy with formal verification test passed!")
 
 
 def test_ethics_with_optimization():
@@ -276,7 +276,7 @@ def test_ethics_with_optimization():
         stats = optimization_engine.get_optimization_statistics()
         assert stats["processing_stats"]["total_processed"] > 0
 
-    print("✅ Ethics with optimization test passed!")
+    print("[OK] Ethics with optimization test passed!")
 
 
 def test_full_system_analytics():
@@ -327,7 +327,7 @@ def test_full_system_analytics():
     assert analytics["governance"]["total_stakeholders"] >= 0
     assert analytics["formal_verification"]["total_violations"] >= 0
 
-    print("✅ Full system analytics test passed!")
+    print("[OK] Full system analytics test passed!")
 
 
 def test_audit_event_integration():
@@ -369,7 +369,7 @@ def test_audit_event_integration():
     # Verify audit events were generated
     assert len(audit_emitter.handlers) >= initial_events
 
-    print("✅ Audit event integration test passed!")
+    print("[OK] Audit event integration test passed!")
 
 
 if __name__ == "__main__":
@@ -381,5 +381,5 @@ if __name__ == "__main__":
     test_full_system_analytics()
     test_audit_event_integration()
 
-    print("\n🎉 ALL INTEGRATION TESTS PASSED!")
-    print("✅ Complete UATP Capsule Engine system integration verified")
+    print("\n ALL INTEGRATION TESTS PASSED!")
+    print("[OK] Complete UATP Capsule Engine system integration verified")

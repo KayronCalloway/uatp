@@ -6,20 +6,20 @@
 
 ---
 
-## 🎯 Current State
+##  Current State
 
-### ✅ DONE: SDK (Python)
+### [OK] DONE: SDK (Python)
 - Rich data models: `DataSource`, `RiskAssessment`, `Alternative`, `ReasoningStep`
 - `certify_rich()` method
 - `record_outcome()` method
 - Working example creating rich capsules
 
-### ⚠️  TODO: Live Capture Mechanisms
+### [WARN]  TODO: Live Capture Mechanisms
 - Claude Code capture
 - Antigravity/Gemini capture
 - Need to output rich format matching SDK
 
-### ⚠️  TODO: Frontend (React/TypeScript)
+### [WARN]  TODO: Frontend (React/TypeScript)
 - TypeScript types for rich data
 - UI components to display:
   - Data sources with provenance
@@ -30,7 +30,7 @@
 
 ---
 
-## 📋 Implementation Checklist
+##  Implementation Checklist
 
 ### Phase 1: TypeScript Types (Frontend)
 - [ ] Add `DataSource` interface
@@ -68,7 +68,7 @@
 
 ---
 
-## 🔧 Technical Details
+##  Technical Details
 
 ### Rich Data Schema (JSON)
 
@@ -144,18 +144,18 @@
 
 ---
 
-## 🎨 Frontend Design Mockups
+##  Frontend Design Mockups
 
 ### Capsule Detail View (Enhanced)
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│ 🏛️ Capsule: cap_abc123                              │
-│ Status: ✅ SEALED | Data Richness: Court-Admissible │
+│  Capsule: cap_abc123                              │
+│ Status: [OK] SEALED | Data Richness: Court-Admissible │
 └─────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────┐
-│ 📊 Decision Summary                                  │
+│  Decision Summary                                  │
 │                                                       │
 │ Task: Approve auto loan application                  │
 │ Decision: Approved: $50,000 at 6.5% APR             │
@@ -163,48 +163,48 @@
 └─────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────┐
-│ 🔍 Data Sources (3)                     [Expand ▼]  │
+│  Data Sources (3)                     [Expand ▼]  │
 ├─────────────────────────────────────────────────────┤
 │ 1. Experian Credit Bureau                            │
 │    Value: 720 (credit score)                         │
-│    Verified: ✅ Cross-checked with TransUnion         │
+│    Verified: [OK] Cross-checked with TransUnion         │
 │    API: https://api.experian.com/v3/...             │
 │    Time: 2025-12-14 15:30:12                         │
 │                                                       │
 │ 2. Income Verification Service                       │
 │    Value: $85,000/year                               │
-│    Verified: ✅ With employer (TechCorp Inc)          │
+│    Verified: [OK] With employer (TechCorp Inc)          │
 │    ...                                                │
 └─────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────┐
-│ ⚖️ Alternatives Considered (3)          [Expand ▼]  │
+│  Alternatives Considered (3)          [Expand ▼]  │
 ├─────────────────────────────────────────────────────┤
-│ ✓ $50k @ 6.5% (Selected)               Score: 0.92  │
-│ ✗ $40k @ 6.0%                           Score: 0.88  │
+│  $50k @ 6.5% (Selected)               Score: 0.92  │
+│  $40k @ 6.0%                           Score: 0.88  │
 │   Why not: User requested $50k                       │
-│ ✗ $50k @ 7.5%                           Score: 0.75  │
+│  $50k @ 7.5%                           Score: 0.75  │
 │   Why not: Rate too high for credit score           │
 └─────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────┐
-│ 📊 Risk Assessment                      [Expand ▼]  │
+│  Risk Assessment                      [Expand ▼]  │
 ├─────────────────────────────────────────────────────┤
 │ Probability Correct: 87%                             │
 │ Expected Value: +$280                                 │
 │ Value at Risk (95%): -$22,500                         │
 │                                                       │
 │ Safeguards (4):                                       │
-│ ✅ Income verified with employer                      │
-│ ✅ Vehicle title held as collateral                   │
-│ ✅ Gap insurance required                             │
-│ ✅ Monthly payment highly affordable (13% of income)  │
+│ [OK] Income verified with employer                      │
+│ [OK] Vehicle title held as collateral                   │
+│ [OK] Gap insurance required                             │
+│ [OK] Monthly payment highly affordable (13% of income)  │
 └─────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────┐
-│ 💬 Plain Language Summary               [Expand ▼]  │
+│  Plain Language Summary               [Expand ▼]  │
 ├─────────────────────────────────────────────────────┤
-│ ✨ For the user:                                     │
+│  For the user:                                     │
 │                                                       │
 │ "We approved your loan because you have excellent    │
 │  credit (720), stable income, and manageable debts." │
@@ -218,10 +218,10 @@
 └─────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────┐
-│ 📈 Outcome (Recorded 30 days later)     [Expand ▼]  │
+│  Outcome (Recorded 30 days later)     [Expand ▼]  │
 ├─────────────────────────────────────────────────────┤
-│ Status: ✅ Successful                                 │
-│ AI was correct: ✅ Yes                                │
+│ Status: [OK] Successful                                 │
+│ AI was correct: [OK] Yes                                │
 │ Financial impact: +$2,500 (interest earned)          │
 │ Customer satisfaction: 4.5/5                          │
 │ Notes: Loan fully paid on time                       │
@@ -230,7 +230,7 @@
 
 ---
 
-## 🔄 Data Flow
+##  Data Flow
 
 ```
 ┌──────────────┐
@@ -258,7 +258,7 @@
 
 ---
 
-## 📝 Code Examples
+##  Code Examples
 
 ### Frontend TypeScript Types
 
@@ -401,7 +401,7 @@ export function RiskAssessmentCard({
 
 ---
 
-## ⏱️ Timeline
+##  Timeline
 
 **Week 1 (Current):**
 - [x] SDK rich data implementation
@@ -420,9 +420,9 @@ export function RiskAssessmentCard({
 
 ---
 
-## 🎯 Success Criteria
+##  Success Criteria
 
-✅ **SDK creates rich capsules** (Done)
+[OK] **SDK creates rich capsules** (Done)
 ⏳ **Capture creates rich capsules** (In Progress)
 ⏳ **Frontend displays all rich data** (In Progress)
 ⏳ **End-to-end test passes** (Pending)

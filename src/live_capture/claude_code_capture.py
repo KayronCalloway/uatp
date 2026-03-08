@@ -85,7 +85,7 @@ class ClaudeCodeCapture:
             os.path.dirname(__file__), "..", "..", "live_capture.db"
         )
         self.init_database()
-        logger.info("🚀 Claude Code Capture System initialized")
+        logger.info(" Claude Code Capture System initialized")
 
     def init_database(self):
         """Initialize the live capture database."""
@@ -131,9 +131,9 @@ class ClaudeCodeCapture:
 
             conn.commit()
             conn.close()
-            logger.info("✅ Database initialized successfully")
+            logger.info("[OK] Database initialized successfully")
         except Exception as e:
-            logger.error(f"❌ Database initialization failed: {e}")
+            logger.error(f"[ERROR] Database initialization failed: {e}")
 
     def generate_session_id(self, user_context: str = None) -> str:
         """Generate a unique session ID."""
@@ -246,13 +246,15 @@ class ClaudeCodeCapture:
             )
             conn.commit()
             conn.close()
-            logger.info(f"📝 Started capture session: {session_id} for user: {user_id}")
+            logger.info(f" Started capture session: {session_id} for user: {user_id}")
         except Exception as e:
-            logger.error(f"❌ Failed to save session: {e}")
+            logger.error(f"[ERROR] Failed to save session: {e}")
 
         return session_id
 
-    async def load_session_from_db(self, session_id: str) -> Optional[ConversationSession]:
+    async def load_session_from_db(
+        self, session_id: str
+    ) -> Optional[ConversationSession]:
         """Load a session and its messages from the database."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -277,7 +279,9 @@ class ClaudeCodeCapture:
                 session_id=session_id,
                 user_id=row[0],
                 platform=row[1],
-                start_time=datetime.fromisoformat(row[2]) if row[2] else datetime.now(timezone.utc),
+                start_time=datetime.fromisoformat(row[2])
+                if row[2]
+                else datetime.now(timezone.utc),
                 end_time=datetime.fromisoformat(row[3]) if row[3] else None,
                 significance_score=row[4] or 0.0,
                 total_tokens=row[5] or 0,
@@ -302,18 +306,22 @@ class ClaudeCodeCapture:
                     session_id=session_id,
                     role=msg_row[1],
                     content=msg_row[2],
-                    timestamp=datetime.fromisoformat(msg_row[3]) if msg_row[3] else datetime.now(timezone.utc),
+                    timestamp=datetime.fromisoformat(msg_row[3])
+                    if msg_row[3]
+                    else datetime.now(timezone.utc),
                     token_count=msg_row[4],
                     model_info=msg_row[5],
                 )
                 session.messages.append(message)
 
             conn.close()
-            logger.info(f"📥 Loaded session {session_id} from DB with {len(session.messages)} messages")
+            logger.info(
+                f" Loaded session {session_id} from DB with {len(session.messages)} messages"
+            )
             return session
 
         except Exception as e:
-            logger.error(f"❌ Failed to load session from DB: {e}")
+            logger.error(f"[ERROR] Failed to load session from DB: {e}")
             return None
 
     async def capture_message(
@@ -330,9 +338,13 @@ class ClaudeCodeCapture:
             loaded_session = await self.load_session_from_db(session_id)
             if loaded_session:
                 self.active_sessions[session_id] = loaded_session
-                logger.info(f"📥 Resumed session {session_id} with {len(loaded_session.messages)} existing messages")
+                logger.info(
+                    f" Resumed session {session_id} with {len(loaded_session.messages)} existing messages"
+                )
             else:
-                logger.warning(f"⚠️ Session {session_id} not found, creating new session")
+                logger.warning(
+                    f"[WARN] Session {session_id} not found, creating new session"
+                )
                 session_id = await self.start_session()
 
         session = self.active_sessions[session_id]
@@ -376,16 +388,16 @@ class ClaudeCodeCapture:
             )
             conn.commit()
             conn.close()
-            logger.info(f"💬 Captured {role} message in session {session_id}")
+            logger.info(f" Captured {role} message in session {session_id}")
         except Exception as e:
-            logger.error(f"❌ Failed to save message: {e}")
+            logger.error(f"[ERROR] Failed to save message: {e}")
 
         return message_id
 
     async def end_session(self, session_id: str) -> Optional[ConversationSession]:
         """End a conversation session and calculate final metrics."""
         if session_id not in self.active_sessions:
-            logger.warning(f"⚠️ Session {session_id} not found")
+            logger.warning(f"[WARN] Session {session_id} not found")
             return None
 
         session = self.active_sessions[session_id]
@@ -416,10 +428,10 @@ class ClaudeCodeCapture:
             conn.commit()
             conn.close()
             logger.info(
-                f"🏁 Session {session_id} ended. Significance: {session.significance_score:.2f}"
+                f" Session {session_id} ended. Significance: {session.significance_score:.2f}"
             )
         except Exception as e:
-            logger.error(f"❌ Failed to update session: {e}")
+            logger.error(f"[ERROR] Failed to update session: {e}")
 
         # Remove from active sessions
         completed_session = self.active_sessions.pop(session_id)
@@ -453,9 +465,7 @@ class ClaudeCodeCapture:
     ) -> Optional[str]:
         """Create a UATP capsule from a conversation session with RICH metadata."""
         if not await self.should_create_capsule(session):
-            logger.info(
-                f"📝 Session {session.session_id} doesn't meet capsule criteria"
-            )
+            logger.info(f" Session {session.session_id} doesn't meet capsule criteria")
             return None
 
         try:
@@ -504,7 +514,7 @@ class ClaudeCodeCapture:
                 capsule_id = capsule_data["capsule_id"]
 
                 logger.info(
-                    f"✨ Created RICH capsule {capsule_id} with per-step metadata"
+                    f" Created RICH capsule {capsule_id} with per-step metadata"
                 )
 
             else:
@@ -512,7 +522,7 @@ class ClaudeCodeCapture:
                 # This shouldn't happen in production but provides safety
                 capsule_id = capsule_data["capsule_id"]
                 logger.warning(
-                    "⚠️ DATABASE_URL not set, capsule data prepared but not persisted"
+                    "[WARN] DATABASE_URL not set, capsule data prepared but not persisted"
                 )
                 logger.info(f"Capsule would be: {capsule_id}")
 
@@ -533,12 +543,12 @@ class ClaudeCodeCapture:
             conn.close()
 
             logger.info(
-                f"🔥 Created RICH UATP capsule {capsule_id} from session {session.session_id}"
+                f" Created RICH UATP capsule {capsule_id} from session {session.session_id}"
             )
             return capsule_id
 
         except Exception as e:
-            logger.error(f"❌ Failed to create capsule: {e}")
+            logger.error(f"[ERROR] Failed to create capsule: {e}")
             return None
 
     async def get_active_sessions(self) -> List[Dict[str, Any]]:
@@ -599,7 +609,7 @@ class ClaudeCodeCapture:
 
             return sessions
         except Exception as e:
-            logger.error(f"❌ Failed to get completed sessions: {e}")
+            logger.error(f"[ERROR] Failed to get completed sessions: {e}")
             return []
 
 
@@ -639,7 +649,7 @@ async def end_capture_session(session_id: str) -> Optional[str]:
 if __name__ == "__main__":
     # Test the capture system
     async def test_capture():
-        logger.info("🧪 Testing Claude Code capture system...")
+        logger.info(" Testing Claude Code capture system...")
 
         # Start a session
         session_id = await start_capture_session("test-user")
@@ -668,9 +678,9 @@ if __name__ == "__main__":
         # End session and create capsule
         capsule_id = await end_capture_session(session_id)
         if capsule_id:
-            logger.info(f"✅ Test completed - Capsule created: {capsule_id}")
+            logger.info(f"[OK] Test completed - Capsule created: {capsule_id}")
         else:
-            logger.info("📝 Test completed - No capsule created (didn't meet criteria)")
+            logger.info(" Test completed - No capsule created (didn't meet criteria)")
 
     # Run test
     asyncio.run(test_capture())

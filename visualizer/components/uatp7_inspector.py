@@ -7,9 +7,6 @@ import iso8601
 import matplotlib.pyplot as plt
 import streamlit as st
 
-# Import base capsule types
-from dateutil.parser import parse as parse_datetime
-
 # Import specialized UATP 7.0 capsule types
 from capsules.specialized_capsules import (
     CapsuleExpirationCapsule,
@@ -24,6 +21,9 @@ from capsules.specialized_capsules import (
     TrustRenewalCapsule,
     ValueInceptionCapsule,
 )
+
+# Import base capsule types
+from dateutil.parser import parse as parse_datetime
 
 # Import visualization utilities
 
@@ -317,9 +317,7 @@ def render_remix_content(capsule: RemixCapsule):
                     "analytical": "#2196F3",  # Blue
                     "summary": "#FF9800",  # Orange
                     "extension": "#9C27B0",  # Purple
-                }.get(
-                    remix_type.lower(), "#607D8B"
-                )  # Default gray
+                }.get(remix_type.lower(), "#607D8B")  # Default gray
 
                 st.markdown(
                     f"""
@@ -1557,13 +1555,13 @@ def render_simulated_malice_content(capsule: SimulatedMaliceCapsule):
                 result_lower = str(capsule.test_result).lower()
                 if "pass" in result_lower or "success" in result_lower:
                     result_color = "#2e8b57"  # Sea Green for pass
-                    icon = "✅"
+                    icon = "[OK]"
                 elif "fail" in result_lower:
                     result_color = "#b22222"  # Fire Brick for fail
-                    icon = "❌"
+                    icon = "[ERROR]"
                 else:
                     result_color = "#ffa500"  # Orange for indeterminate
-                    icon = "⚠️"
+                    icon = "[WARN]"
 
                 st.markdown(
                     f"""
@@ -1991,7 +1989,7 @@ def render_implicit_consent_content(capsule: ImplicitConsentCapsule):
                         f"""
                     <div style="background-color:rgba(178,34,34,0.1);padding:15px;border-radius:5px;border-left:5px solid #b22222;margin-bottom:15px;">
                         <div style="display:flex;align-items:center;margin-bottom:10px;">
-                            <span style="color:#b22222;font-size:1.5em;margin-right:10px;">⚠️</span>
+                            <span style="color:#b22222;font-size:1.5em;margin-right:10px;">[WARN]</span>
                             <span style="font-weight:bold;color:#b22222;">EMERGENCY SITUATION</span>
                         </div>
                         {reason_text}
@@ -2072,9 +2070,7 @@ def render_implicit_consent_content(capsule: ImplicitConsentCapsule):
                                     "High": "#b22222",  # Fire Brick
                                     "Medium": "#ff8c00",  # Dark Orange
                                     "Low": "#2e8b57",  # Sea Green
-                                }.get(
-                                    impact, "#6c757d"
-                                )  # Gray
+                                }.get(impact, "#6c757d")  # Gray
 
                                 st.markdown(
                                     f"""<div style="margin-top:15px;font-weight:bold;color:{impact_color};">{impact} Impact Rights:</div>""",
@@ -2931,31 +2927,31 @@ def render_consent_content(capsule: ConsentCapsule):
             if "digital signature" in method.lower():
                 st.markdown(
                     "<span style='background-color:#4169e1;color:white;padding:5px 10px;border-radius:15px;'>"
-                    "🔐 Digital Signature</span>",
+                    " Digital Signature</span>",
                     unsafe_allow_html=True,
                 )
             elif "biometric" in method.lower():
                 st.markdown(
                     "<span style='background-color:#9932cc;color:white;padding:5px 10px;border-radius:15px;'>"
-                    "👁️ Biometric</span>",
+                    "️ Biometric</span>",
                     unsafe_allow_html=True,
                 )
             elif "multi-factor" in method.lower():
                 st.markdown(
                     "<span style='background-color:#228b22;color:white;padding:5px 10px;border-radius:15px;'>"
-                    "🔒 Multi-Factor</span>",
+                    " Multi-Factor</span>",
                     unsafe_allow_html=True,
                 )
             elif "verbal" in method.lower():
                 st.markdown(
                     "<span style='background-color:#daa520;color:white;padding:5px 10px;border-radius:15px;'>"
-                    "🗣️ Verbal</span>",
+                    " Verbal</span>",
                     unsafe_allow_html=True,
                 )
             else:
                 st.markdown(
                     "<span style='background-color:#708090;color:white;padding:5px 10px;border-radius:15px;'>"
-                    f"✓ {method}</span>",
+                    f" {method}</span>",
                     unsafe_allow_html=True,
                 )
 
@@ -3003,7 +2999,7 @@ def render_consent_content(capsule: ConsentCapsule):
                 # Add a mock revocation interface for demonstration
                 with st.expander("Revoke Consent (Demo)"):
                     st.warning(
-                        "⚠️ This is a demonstration interface and does not perform actual revocation."
+                        "[WARN] This is a demonstration interface and does not perform actual revocation."
                     )
                     reason = st.selectbox(
                         "Reason for revocation",
@@ -3037,7 +3033,7 @@ def render_consent_content(capsule: ConsentCapsule):
                 # Add verification status indicator
                 st.markdown(
                     "<div style='background-color:#228b22;color:white;padding:5px 15px;border-radius:5px;display:inline-block;'>"
-                    "✓ Signature Valid</div>",
+                    " Signature Valid</div>",
                     unsafe_allow_html=True,
                 )
 
@@ -3285,16 +3281,16 @@ def render_trust_renewal_content(capsule: TrustRenewalCapsule):
             # Create a badge based on verification method
             if "automated" in method.lower():
                 badge_color = "#4682b4"  # Steel Blue
-                badge_icon = "⚙️"
+                badge_icon = ""
             elif "manual" in method.lower():
                 badge_color = "#9370db"  # Medium Purple
-                badge_icon = "👤"
+                badge_icon = ""
             elif "hybrid" in method.lower():
                 badge_color = "#20b2aa"  # Light Sea Green
-                badge_icon = "🔄"
+                badge_icon = ""
             else:
                 badge_color = "#708090"  # Slate Gray
-                badge_icon = "🔍"
+                badge_icon = ""
 
             st.markdown(
                 f"<div style='background-color:{badge_color};color:white;padding:10px;border-radius:5px;'>"
@@ -3331,7 +3327,7 @@ def render_trust_renewal_content(capsule: TrustRenewalCapsule):
 
                 # Display passed verifications
                 if passed:
-                    st.markdown("#### ✅ Passed Verifications")
+                    st.markdown("#### [OK] Passed Verifications")
                     for check, details in passed.items():
                         with st.expander(check):
                             if isinstance(details, dict):
@@ -3343,7 +3339,7 @@ def render_trust_renewal_content(capsule: TrustRenewalCapsule):
 
                 # Display failed verifications
                 if failed:
-                    st.markdown("#### ❌ Failed Verifications")
+                    st.markdown("#### [ERROR] Failed Verifications")
                     for check, details in failed.items():
                         with st.expander(check):
                             if isinstance(details, dict):
@@ -3440,7 +3436,7 @@ def render_trust_renewal_content(capsule: TrustRenewalCapsule):
             # Display with a visual link icon
             st.markdown(
                 f"<div style='background-color:#f0f0f0;padding:10px;border-radius:5px;'>"
-                f"🔗 <b>ID:</b> {prev_id}</div>",
+                f" <b>ID:</b> {prev_id}</div>",
                 unsafe_allow_html=True,
             )
 
@@ -3533,13 +3529,13 @@ def render_trust_renewal_content(capsule: TrustRenewalCapsule):
 
                 if is_current:
                     card_color = "#4682b4"  # Steel Blue
-                    icon = "🔄"
+                    icon = ""
                 elif is_expiration:
                     card_color = "#ff8c00"  # Dark Orange
-                    icon = "⏱️"
+                    icon = ""
                 else:
                     card_color = "#708090"  # Slate Gray
-                    icon = "🔍"
+                    icon = ""
 
                 st.markdown(
                     f"<div style='border-left:4px solid {card_color};padding-left:15px;margin:15px 0;'>"
@@ -3664,7 +3660,7 @@ def render_governance_content(capsule: GovernanceCapsule):
 
         # Determine action type based on keywords
         action_type = "Standard"
-        action_icon = "🔄"
+        action_icon = ""
         action_color = "#4682b4"  # Default blue
 
         # Categorize action type based on keywords
@@ -3674,27 +3670,27 @@ def render_governance_content(capsule: GovernanceCapsule):
             for keyword in ["emergency", "critical", "urgent", "immediate"]
         ):
             action_type = "Emergency"
-            action_icon = "🚨"
+            action_icon = ""
             action_color = "#b22222"  # Fire Brick
         elif any(
             keyword in lower_action
             for keyword in ["update", "modify", "change", "revise"]
         ):
             action_type = "Update"
-            action_icon = "📝"
+            action_icon = ""
             action_color = "#ff8c00"  # Dark Orange
         elif any(
             keyword in lower_action for keyword in ["add", "create", "establish", "new"]
         ):
             action_type = "Creation"
-            action_icon = "➕"
+            action_icon = "+"
             action_color = "#2e8b57"  # Sea Green
         elif any(
             keyword in lower_action
             for keyword in ["remove", "delete", "deprecate", "disable"]
         ):
             action_type = "Removal"
-            action_icon = "🗑️"
+            action_icon = "️"
             action_color = "#800080"  # Purple
 
         # Calculate gradient background for action
@@ -4021,15 +4017,15 @@ def render_governance_content(capsule: GovernanceCapsule):
                             if numerical_vote >= 0.7:
                                 vote_category = "Approval"
                                 vote_color = "#2e8b57"  # Green
-                                vote_icon = "✅"
+                                vote_icon = "[OK]"
                             elif numerical_vote >= 0.4:
                                 vote_category = "Neutral"
                                 vote_color = "#ff8c00"  # Orange
-                                vote_icon = "⚠️"
+                                vote_icon = "[WARN]"
                             else:
                                 vote_category = "Disapproval"
                                 vote_color = "#b22222"  # Red
-                                vote_icon = "❌"
+                                vote_icon = "[ERROR]"
 
                             # Default label if none provided
                             if not vote_label:
@@ -4070,7 +4066,7 @@ def render_governance_content(capsule: GovernanceCapsule):
                             </div>
                             <div style="display:flex;align-items:center;margin-bottom:15px;">
                                 <div style="font-size:1.8em;margin-right:15px;">
-                                    {"✅" if outcome == "Approved" else "❌"}
+                                    {"[OK]" if outcome == "Approved" else "[ERROR]"}
                                 </div>
                                 <div>
                                     <div style="font-size:1.2em;font-weight:bold;">
@@ -5377,7 +5373,9 @@ def render_governance_content(capsule: GovernanceCapsule):
                     outcome_text = (
                         "Approved" if weighted_approval > threshold else "Rejected"
                     )
-                    outcome_icon = "✅" if weighted_approval > threshold else "❌"
+                    outcome_icon = (
+                        "[OK]" if weighted_approval > threshold else "[ERROR]"
+                    )
 
                     # Create a summary box at the top
                     st.markdown(
@@ -5438,15 +5436,15 @@ def render_governance_content(capsule: GovernanceCapsule):
                         if vote_value > 0.5:
                             vote_color = "#2e8b57"
                             vote_text = "Approve"
-                            vote_icon = "✅"
+                            vote_icon = "[OK]"
                         elif vote_value < 0.5:
                             vote_color = "#b22222"
                             vote_text = "Disapprove"
-                            vote_icon = "❌"
+                            vote_icon = "[ERROR]"
                         else:
                             vote_color = "#ff8c00"
                             vote_text = "Neutral"
-                            vote_icon = "⚠️"
+                            vote_icon = "[WARN]"
 
                         # Check if we have additional metadata
                         has_metadata = (
@@ -5708,7 +5706,7 @@ def render_governance_content(capsule: GovernanceCapsule):
 
                                     # Determine status indicator
                                     status_color = "#4682b4"  # Default blue
-                                    status_icon = "⚪"  # Default circle
+                                    status_icon = ""  # Default circle
                                     if isinstance(dep_status, str):
                                         if dep_status.lower() in [
                                             "resolved",
@@ -5716,19 +5714,19 @@ def render_governance_content(capsule: GovernanceCapsule):
                                             "done",
                                         ]:
                                             status_color = "#2e8b57"  # Green
-                                            status_icon = "✅"
+                                            status_icon = "[OK]"
                                         elif dep_status.lower() in [
                                             "blocked",
                                             "failed",
                                         ]:
                                             status_color = "#b22222"  # Red
-                                            status_icon = "❌"
+                                            status_icon = "[ERROR]"
                                         elif dep_status.lower() in [
                                             "in_progress",
                                             "ongoing",
                                         ]:
                                             status_color = "#ff8c00"  # Orange
-                                            status_icon = "🔄"
+                                            status_icon = ""
 
                                     st.markdown(
                                         f"""
@@ -6118,7 +6116,7 @@ def render_economic_content(capsule: EconomicCapsule):
                 total = sum(recipients.values())
                 st.markdown(f"**Total Share: {total:.4f}**")
                 if abs(total - 1.0) > 0.001:  # Allow small floating point error
-                    st.warning(f"⚠️ Share sum ({total:.4f}) is not equal to 1.0")
+                    st.warning(f"[WARN] Share sum ({total:.4f}) is not equal to 1.0")
 
         # Display contribution details if available
         if hasattr(capsule, "contribution_details") and capsule.contribution_details:

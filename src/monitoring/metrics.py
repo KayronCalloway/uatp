@@ -8,17 +8,16 @@ including system metrics, application metrics, and custom business metrics.
 """
 
 import asyncio
-import json
 import logging
 import os
 import sys
+import threading
 import time
 from collections import defaultdict, deque
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Callable
-from dataclasses import dataclass, asdict
 from enum import Enum
-import threading
+from typing import Any, Dict, List
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -71,7 +70,7 @@ class MetricsCollector:
         self.max_points = max_points
         self.lock = threading.Lock()
 
-        logger.info("📊 Metrics Collector initialized")
+        logger.info(" Metrics Collector initialized")
 
     def record_counter(
         self, name: str, value: float = 1.0, labels: Dict[str, str] = None
@@ -294,7 +293,7 @@ class SystemMetricsCollector:
 
         self.running = True
         self.task = asyncio.create_task(self._collection_loop())
-        logger.info("📊 System metrics collection started")
+        logger.info(" System metrics collection started")
 
     async def stop(self):
         """Stop collecting system metrics."""
@@ -307,7 +306,7 @@ class SystemMetricsCollector:
             except asyncio.CancelledError:
                 pass
 
-        logger.info("📊 System metrics collection stopped")
+        logger.info(" System metrics collection stopped")
 
     async def _collection_loop(self):
         """Main collection loop."""
@@ -319,7 +318,7 @@ class SystemMetricsCollector:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"❌ Error collecting system metrics: {e}")
+                logger.error(f"[ERROR] Error collecting system metrics: {e}")
                 await asyncio.sleep(self.collection_interval)
 
     async def _collect_system_metrics(self):
@@ -353,7 +352,7 @@ class SystemMetricsCollector:
         except ImportError:
             logger.warning("psutil not available, skipping system metrics")
         except Exception as e:
-            logger.error(f"❌ Error collecting system metrics: {e}")
+            logger.error(f"[ERROR] Error collecting system metrics: {e}")
 
 
 class ApplicationMetricsCollector:
@@ -373,7 +372,7 @@ class ApplicationMetricsCollector:
 
         self.running = True
         self.task = asyncio.create_task(self._collection_loop())
-        logger.info("📊 Application metrics collection started")
+        logger.info(" Application metrics collection started")
 
     async def stop(self):
         """Stop collecting application metrics."""
@@ -386,7 +385,7 @@ class ApplicationMetricsCollector:
             except asyncio.CancelledError:
                 pass
 
-        logger.info("📊 Application metrics collection stopped")
+        logger.info(" Application metrics collection stopped")
 
     async def _collection_loop(self):
         """Main collection loop."""
@@ -398,7 +397,7 @@ class ApplicationMetricsCollector:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"❌ Error collecting application metrics: {e}")
+                logger.error(f"[ERROR] Error collecting application metrics: {e}")
                 await asyncio.sleep(self.collection_interval)
 
     async def _collect_application_metrics(self):
@@ -415,7 +414,7 @@ class ApplicationMetricsCollector:
             await self._collect_auth_metrics()
 
         except Exception as e:
-            logger.error(f"❌ Error collecting application metrics: {e}")
+            logger.error(f"[ERROR] Error collecting application metrics: {e}")
 
     async def _collect_database_metrics(self):
         """Collect database metrics."""
@@ -453,7 +452,7 @@ class ApplicationMetricsCollector:
                     )
 
         except Exception as e:
-            logger.error(f"❌ Error collecting database metrics: {e}")
+            logger.error(f"[ERROR] Error collecting database metrics: {e}")
 
     async def _collect_capsule_metrics(self):
         """Collect capsule engine metrics."""
@@ -482,7 +481,7 @@ class ApplicationMetricsCollector:
                     )
 
         except Exception as e:
-            logger.error(f"❌ Error collecting capsule metrics: {e}")
+            logger.error(f"[ERROR] Error collecting capsule metrics: {e}")
 
     async def _collect_auth_metrics(self):
         """Collect authentication metrics."""
@@ -505,7 +504,7 @@ class ApplicationMetricsCollector:
                 self.metrics.record_gauge("uatp_users_by_role", count, {"role": role})
 
         except Exception as e:
-            logger.error(f"❌ Error collecting auth metrics: {e}")
+            logger.error(f"[ERROR] Error collecting auth metrics: {e}")
 
 
 # Global metrics instances
@@ -550,7 +549,7 @@ def get_app_collector() -> ApplicationMetricsCollector:
 async def main():
     """Test metrics collection system."""
 
-    print("📊 Testing Metrics Collection System")
+    print(" Testing Metrics Collection System")
     print("=" * 40)
 
     # Get collectors
@@ -560,7 +559,7 @@ async def main():
     app_collector = get_app_collector()
 
     # Test basic metrics
-    print("\n📈 Testing basic metrics...")
+    print("\n Testing basic metrics...")
 
     # Record some test metrics
     metrics.record_counter("test_counter", 1.0, {"service": "test"})
@@ -568,7 +567,7 @@ async def main():
     metrics.record_histogram("test_histogram", 1.5, {"service": "test"})
 
     # Test performance monitoring
-    print("\n⏱️ Testing performance monitoring...")
+    print("\n Testing performance monitoring...")
 
     with monitor.timer("test_operation", {"operation": "test"}):
         await asyncio.sleep(0.1)  # Simulate work
@@ -577,21 +576,21 @@ async def main():
     monitor.gauge("test_value", 100.0, {"metric": "test"})
 
     # Test system metrics collection
-    print("\n🖥️ Testing system metrics collection...")
+    print("\n Testing system metrics collection...")
 
     await system_collector.start()
     await asyncio.sleep(2)  # Let it collect some metrics
     await system_collector.stop()
 
     # Test application metrics collection
-    print("\n🏗️ Testing application metrics collection...")
+    print("\n Testing application metrics collection...")
 
     await app_collector.start()
     await asyncio.sleep(2)  # Let it collect some metrics
     await app_collector.stop()
 
     # Show metrics summary
-    print("\n📊 Metrics Summary:")
+    print("\n Metrics Summary:")
     summary = metrics.get_summary()
 
     print(f"Total metrics: {summary['total_metrics']}")
@@ -609,7 +608,7 @@ async def main():
             print(f"    Mean: {stats['mean']:.3f}")
             print(f"    P95: {stats['p95']:.3f}")
 
-    print("\n✅ Metrics collection system test completed!")
+    print("\n[OK] Metrics collection system test completed!")
 
 
 if __name__ == "__main__":

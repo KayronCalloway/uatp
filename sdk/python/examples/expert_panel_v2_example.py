@@ -5,12 +5,12 @@ UATP Capsule Engine v2.0 - Expert Panel Approved Format
 
 This example demonstrates capsules with ALL 6 expert panel fixes:
 
-1. ✅ Chain of Custody (Legal Expert)
-2. ✅ Historical Accuracy (Insurance Actuary)
-3. ✅ Schema Versioning (Enterprise Architect)
-4. ✅ Human Oversight (EU Regulator)
-5. ✅ Confidence Calibration (ML Engineer)
-6. ✅ Query Performance (Enterprise Architect)
+1. [OK] Chain of Custody (Legal Expert)
+2. [OK] Historical Accuracy (Insurance Actuary)
+3. [OK] Schema Versioning (Enterprise Architect)
+4. [OK] Human Oversight (EU Regulator)
+5. [OK] Confidence Calibration (ML Engineer)
+6. [OK] Query Performance (Enterprise Architect)
 
 Expert Panel Score: 8.5/10 "Ready for pilot program"
 """
@@ -47,7 +47,7 @@ def create_v2_loan_approval():
     - Historical accuracy reference
     """
     print("=" * 70)
-    print("🚀 UATP v2.0 - Expert Panel Approved Format")
+    print(" UATP v2.0 - Expert Panel Approved Format")
     print("=" * 70)
 
     # Initialize
@@ -55,7 +55,7 @@ def create_v2_loan_approval():
     chain_manager = get_chain_manager()
     accuracy_tracker = HistoricalAccuracyTracker()
 
-    print("\n📊 Step 1: Fetch data with chain of custody...")
+    print("\n Step 1: Fetch data with chain of custody...")
 
     # NEW: Create cryptographic receipt for credit score
     credit_score_data = {"score": 720, "date": "2025-12-14"}
@@ -69,7 +69,7 @@ def create_v2_loan_approval():
         http_status=200,
         include_data_snapshot=True,
     )
-    print(f"✅ Credit score receipt: {credit_receipt.receipt_id}")
+    print(f"[OK] Credit score receipt: {credit_receipt.receipt_id}")
     print(f"   Data hash: {credit_receipt.data_hash[:32]}...")
     print(f"   Signature valid: {chain_manager.verify_receipt(credit_receipt)}")
 
@@ -85,7 +85,7 @@ def create_v2_loan_approval():
         previous_receipt_id=credit_receipt.receipt_id,
         include_data_snapshot=True,
     )
-    print(f"✅ Income receipt: {income_receipt.receipt_id}")
+    print(f"[OK] Income receipt: {income_receipt.receipt_id}")
     print(f"   Chained to: {credit_receipt.receipt_id}")
 
     # Convert receipts to DataSource format (NEW: includes chain of custody proof)
@@ -94,7 +94,7 @@ def create_v2_loan_approval():
         chain_manager.to_data_source_with_receipt(income_receipt),
     ]
 
-    print("\n🎯 Step 2: Calculate calibrated confidence...")
+    print("\n Step 2: Calculate calibrated confidence...")
 
     # Raw model confidence
     raw_confidence = 0.87
@@ -109,7 +109,7 @@ def create_v2_loan_approval():
     )
     print(f"   Adjustment: {(calibrated_confidence - raw_confidence):.1%}")
 
-    print("\n⚖️  Step 3: Build reasoning steps with schema versioning...")
+    print("\n  Step 3: Build reasoning steps with schema versioning...")
 
     # NEW: Reasoning steps now include schema_version
     reasoning_steps = [
@@ -144,7 +144,7 @@ def create_v2_loan_approval():
         ),
     ]
 
-    print("\n💰 Step 4: Risk assessment with historical accuracy...")
+    print("\n Step 4: Risk assessment with historical accuracy...")
 
     # NEW: Risk assessment now references historical accuracy
     risk_assessment = RiskAssessment(
@@ -178,12 +178,12 @@ def create_v2_loan_approval():
         historical_accuracy=0.89,  # NEW: From historical tracker
     )
 
-    print("✅ Risk assessment created:")
+    print("[OK] Risk assessment created:")
     print(f"   Calibrated probability: {calibrated_confidence:.1%}")
     print(f"   Historical accuracy: {risk_assessment.historical_accuracy:.1%}")
     print(f"   Similar decisions: {risk_assessment.similar_decisions_count}")
 
-    print("\n🔀 Step 5: Alternatives with scoring methodology...")
+    print("\n Step 5: Alternatives with scoring methodology...")
 
     alternatives = [
         Alternative(
@@ -209,7 +209,7 @@ def create_v2_loan_approval():
         ),
     ]
 
-    print("\n📝 Step 6: Plain language summary (EU AI Act Article 13)...")
+    print("\n Step 6: Plain language summary (EU AI Act Article 13)...")
 
     plain_language = PlainLanguageSummary(
         schema_version="2.0",  # NEW
@@ -226,7 +226,7 @@ def create_v2_loan_approval():
         how_to_appeal="Contact our compliance team at compliance@bank.com or call 1-800-APPEALS within 30 days",
     )
 
-    print("\n🤖 Step 7: Create v2.0 capsule with all improvements...")
+    print("\n Step 7: Create v2.0 capsule with all improvements...")
 
     result = client.certify_rich(
         task="Approve auto loan application",
@@ -258,27 +258,27 @@ def create_v2_loan_approval():
         },
     )
 
-    print("\n✅ Capsule v2.0 created successfully!")
+    print("\n[OK] Capsule v2.0 created successfully!")
     print(f"   Capsule ID: {result.capsule_id}")
     print("   Schema version: 2.0")
     print("   Expert panel score: 8.5/10")
     print("   Status: READY FOR PILOT PROGRAM")
 
     # NEW: Verify chain of custody
-    print("\n🔒 Chain of custody verification:")
+    print("\n Chain of custody verification:")
     verification = chain_manager.verify_chain(income_receipt.receipt_id)
     print(f"   Chain valid: {verification['valid']}")
     print(f"   Chain length: {verification['chain_length']} receipts")
-    print(f"   No tampering detected: {'✅' if verification['valid'] else '❌'}")
+    print(f"   No tampering detected: {'[OK]' if verification['valid'] else '[ERROR]'}")
 
     # NEW: Check if human review needed
     if calibrated_confidence < 0.70:
-        print("\n⚠️  Human oversight triggered:")
+        print("\n[WARN]  Human oversight triggered:")
         print(f"   Confidence ({calibrated_confidence:.1%}) below threshold (70%)")
         print("   Action: Added to review queue")
         print(f"   Priority: {'URGENT' if calibrated_confidence < 0.5 else 'HIGH'}")
     else:
-        print("\n✅ No human review needed:")
+        print("\n[OK] No human review needed:")
         print(f"   Confidence ({calibrated_confidence:.1%}) above threshold (70%)")
 
     return result
@@ -287,7 +287,7 @@ def create_v2_loan_approval():
 def compare_v1_vs_v2():
     """Show the difference between v1.0 and v2.0 capsules."""
     print("\n\n" + "=" * 70)
-    print("📊 Version Comparison: v1.0 vs v2.0")
+    print(" Version Comparison: v1.0 vs v2.0")
     print("=" * 70)
 
     comparison = {
@@ -305,26 +305,26 @@ def compare_v1_vs_v2():
             "EU AI Act Compliant",
         ],
         "v1.0 (Court-Admissible)": [
-            "✅ API endpoints tracked",
-            "❌ No cryptographic proof",
-            "❌ Raw model output",
-            "❌ Placeholder (0 samples)",
-            "❌ No versioning",
-            "❌ Manual only",
-            "⚠️  Slow JSONB queries",
+            "[OK] API endpoints tracked",
+            "[ERROR] No cryptographic proof",
+            "[ERROR] Raw model output",
+            "[ERROR] Placeholder (0 samples)",
+            "[ERROR] No versioning",
+            "[ERROR] Manual only",
+            "[WARN]  Slow JSONB queries",
             "6.2/10 - Prototype",
             "7/10 - Expect challenges",
             "5/10 - Need real data",
             "8/10 - Low/medium risk only",
         ],
         "v2.0 (Expert Panel Approved)": [
-            "✅ Full provenance with timestamps",
-            "✅ HMAC-SHA256 signatures",
-            "✅ Calibrated from historical data",
-            "✅ Real tracking system (100+ samples)",
-            "✅ Schema v2.0 with migration",
-            "✅ Auto-flagging < 70% confidence",
-            "✅ Indexed queries (50x faster)",
+            "[OK] Full provenance with timestamps",
+            "[OK] HMAC-SHA256 signatures",
+            "[OK] Calibrated from historical data",
+            "[OK] Real tracking system (100+ samples)",
+            "[OK] Schema v2.0 with migration",
+            "[OK] Auto-flagging < 70% confidence",
+            "[OK] Indexed queries (50x faster)",
             "8.5/10 - Ready for pilot",
             "9/10 - Court-grade proof",
             "8/10 - Framework + tracker ready",
@@ -340,9 +340,9 @@ def compare_v1_vs_v2():
         print(f"| {feature} | {v1} | {v2} |")
 
     print("\n" + "=" * 70)
-    print("🚀 Upgrade Impact")
+    print(" Upgrade Impact")
     print("=" * 70)
-    print("\n✅ Technical Improvements:")
+    print("\n[OK] Technical Improvements:")
     print("   • Chain of custody - Cryptographic proof of data authenticity")
     print("   • Calibrated confidence - Historical data-driven, not raw model")
     print("   • Schema versioning - Safe evolution without breaking changes")
@@ -350,14 +350,14 @@ def compare_v1_vs_v2():
     print("   • Query performance - 50x faster with proper indexes")
     print("   • Historical tracking - Real accuracy data for insurance")
 
-    print("\n✅ Business Improvements:")
+    print("\n[OK] Business Improvements:")
     print("   • Legal: 7/10 → 9/10 (court-grade chain of custody)")
     print("   • Insurance: 5/10 → 8/10 (real data tracking)")
     print("   • EU Compliance: 8/10 → 9.5/10 (Article 14)")
     print("   • ML Production: 6/10 → 9/10 (calibration monitoring)")
     print("   • Scalability: 5/10 → 8.5/10 (indexed + cached)")
 
-    print("\n✅ Market Readiness:")
+    print("\n[OK] Market Readiness:")
     print("   • v1.0: 'Impressive prototype, not production-ready'")
     print("   • v2.0: 'READY FOR 30-DAY PILOT PROGRAM'")
 
@@ -370,25 +370,25 @@ if __name__ == "__main__":
     compare_v1_vs_v2()
 
     print("\n\n" + "=" * 70)
-    print("🎉 UATP v2.0 - Expert Panel Approved!")
+    print(" UATP v2.0 - Expert Panel Approved!")
     print("=" * 70)
-    print("\n📋 What's New:")
-    print("   ✅ Chain of custody with cryptographic receipts")
-    print("   ✅ Confidence calibration from historical data")
-    print("   ✅ Schema versioning for safe evolution")
-    print("   ✅ Human oversight auto-flagging")
-    print("   ✅ Historical accuracy tracking")
-    print("   ✅ Query performance optimization")
+    print("\n What's New:")
+    print("   [OK] Chain of custody with cryptographic receipts")
+    print("   [OK] Confidence calibration from historical data")
+    print("   [OK] Schema versioning for safe evolution")
+    print("   [OK] Human oversight auto-flagging")
+    print("   [OK] Historical accuracy tracking")
+    print("   [OK] Query performance optimization")
 
-    print("\n🎯 Expert Panel Verdict:")
+    print("\n Expert Panel Verdict:")
     print("   'Ready for 30-day pilot program with paying customers'")
 
-    print("\n📞 Next Steps:")
+    print("\n Next Steps:")
     print("   1. Find 3 pilot customers ($5K-$10K each)")
     print("   2. Deploy for 30 days")
     print("   3. Collect 100+ real outcomes")
     print("   4. Generate actuarial report with real data")
     print("   5. Get testimonials for legal/insurance/EU use cases")
 
-    print("\n🚀 Status: READY TO SHIP")
+    print("\n Status: READY TO SHIP")
     print("=" * 70)

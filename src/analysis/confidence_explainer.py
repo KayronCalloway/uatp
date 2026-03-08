@@ -383,7 +383,7 @@ class ConfidenceExplainer:
 
 # Example usage
 if __name__ == "__main__":
-    print("✅ Confidence Explainer Ready")
+    print("[OK] Confidence Explainer Ready")
     print("\nCapabilities:")
     print("  - Explain message-level confidence")
     print("  - Explain step-level confidence")

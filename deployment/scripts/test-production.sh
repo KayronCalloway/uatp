@@ -36,23 +36,23 @@ test_health() {
 
     # Health check
     if curl -f -s "${API_BASE_URL}/health" | grep -q "healthy"; then
-        log "✅ Health check passed"
+        log "[OK] Health check passed"
     else
-        error "❌ Health check failed"
+        error "[ERROR] Health check failed"
     fi
 
     # Readiness check
     if curl -f -s "${API_BASE_URL}/ready" | grep -q "ready"; then
-        log "✅ Readiness check passed"
+        log "[OK] Readiness check passed"
     else
-        error "❌ Readiness check failed"
+        error "[ERROR] Readiness check failed"
     fi
 
     # Startup check
     if curl -f -s "${API_BASE_URL}/startup" | grep -q "started"; then
-        log "✅ Startup check passed"
+        log "[OK] Startup check passed"
     else
-        error "❌ Startup check failed"
+        error "[ERROR] Startup check failed"
     fi
 }
 
@@ -62,23 +62,23 @@ test_api() {
 
     # Root endpoint
     if curl -f -s "${API_BASE_URL}/" | grep -q "UATP"; then
-        log "✅ Root endpoint working"
+        log "[OK] Root endpoint working"
     else
-        error "❌ Root endpoint failed"
+        error "[ERROR] Root endpoint failed"
     fi
 
     # API status
     if curl -f -s "${API_BASE_URL}/api/v1/status" | grep -q "operational"; then
-        log "✅ API status endpoint working"
+        log "[OK] API status endpoint working"
     else
-        error "❌ API status endpoint failed"
+        error "[ERROR] API status endpoint failed"
     fi
 
     # Metrics endpoint
     if curl -f -s "${API_BASE_URL}/metrics" | grep -q "http_requests_total"; then
-        log "✅ Metrics endpoint working"
+        log "[OK] Metrics endpoint working"
     else
-        warn "⚠️  Metrics endpoint not working"
+        warn "[WARN]  Metrics endpoint not working"
     fi
 }
 
@@ -97,11 +97,11 @@ test_user_registration() {
         }")
 
     if echo "$response" | grep -q "success"; then
-        log "✅ User registration working"
+        log "[OK] User registration working"
         USER_ID=$(echo "$response" | grep -o '"user_id":"[^"]*' | cut -d'"' -f4)
         log "User ID: $USER_ID"
     else
-        warn "⚠️  User registration failed (may already exist)"
+        warn "[WARN]  User registration failed (may already exist)"
         USER_ID="test_user_001"  # Use default test user
     fi
 }
@@ -112,7 +112,7 @@ test_ai_integration() {
 
     # Check if API keys are set
     if [ -z "$OPENAI_API_KEY" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
-        warn "⚠️  No AI API keys found, skipping AI integration test"
+        warn "[WARN]  No AI API keys found, skipping AI integration test"
         return
     fi
 
@@ -128,9 +128,9 @@ test_ai_integration() {
         }")
 
     if echo "$response" | grep -q "success"; then
-        log "✅ Attribution tracking working"
+        log "[OK] Attribution tracking working"
     else
-        warn "⚠️  Attribution tracking failed"
+        warn "[WARN]  Attribution tracking failed"
     fi
 }
 
@@ -143,9 +143,9 @@ test_database() {
         response=$(curl -s "${API_BASE_URL}/api/v1/users/${USER_ID}")
 
         if echo "$response" | grep -q "user_id"; then
-            log "✅ Database connection working"
+            log "[OK] Database connection working"
         else
-            warn "⚠️  Database query failed"
+            warn "[WARN]  Database query failed"
         fi
     fi
 }
@@ -164,9 +164,9 @@ test_payments() {
         }")
 
     if echo "$response" | grep -q "success"; then
-        log "✅ Payment endpoints working"
+        log "[OK] Payment endpoints working"
     else
-        warn "⚠️  Payment endpoints failed"
+        warn "[WARN]  Payment endpoints failed"
     fi
 }
 
@@ -178,9 +178,9 @@ test_admin() {
     response=$(curl -s "${API_BASE_URL}/api/v1/admin/stats")
 
     if echo "$response" | grep -q "total_users"; then
-        log "✅ Admin endpoints working"
+        log "[OK] Admin endpoints working"
     else
-        warn "⚠️  Admin endpoints failed"
+        warn "[WARN]  Admin endpoints failed"
     fi
 }
 
@@ -195,9 +195,9 @@ test_rate_limiting() {
 
     # This should still work
     if curl -f -s "${API_BASE_URL}/api/v1/status" | grep -q "operational"; then
-        log "✅ Rate limiting configured properly"
+        log "[OK] Rate limiting configured properly"
     else
-        warn "⚠️  Rate limiting may be too aggressive"
+        warn "[WARN]  Rate limiting may be too aggressive"
     fi
 }
 
@@ -216,9 +216,9 @@ test_performance() {
     duration=$((end_time - start_time))
 
     if [ $duration -lt 5 ]; then
-        log "✅ Performance test passed (${duration}s for 10 requests)"
+        log "[OK] Performance test passed (${duration}s for 10 requests)"
     else
-        warn "⚠️  Performance may be slow (${duration}s for 10 requests)"
+        warn "[WARN]  Performance may be slow (${duration}s for 10 requests)"
     fi
 }
 
@@ -228,9 +228,9 @@ test_monitoring() {
 
     # Check if monitoring endpoints are available
     if curl -f -s "${API_BASE_URL}/metrics" > /dev/null; then
-        log "✅ Monitoring endpoints available"
+        log "[OK] Monitoring endpoints available"
     else
-        warn "⚠️  Monitoring endpoints not available"
+        warn "[WARN]  Monitoring endpoints not available"
     fi
 }
 
@@ -245,13 +245,13 @@ cleanup() {
 
 # Main test function
 main() {
-    log "🚀 Starting UATP production tests..."
+    log " Starting UATP production tests..."
     log "Environment: $ENVIRONMENT"
     log "API Base URL: $API_BASE_URL"
 
     # Check if API is accessible
     if ! curl -f -s "${API_BASE_URL}/health" > /dev/null; then
-        error "❌ API is not accessible at $API_BASE_URL"
+        error "[ERROR] API is not accessible at $API_BASE_URL"
     fi
 
     # Run all tests
@@ -267,17 +267,17 @@ main() {
     test_monitoring
 
     # Summary
-    log "🎉 All production tests completed!"
-    log "✅ Health checks: Working"
-    log "✅ API endpoints: Working"
-    log "✅ User management: Working"
-    log "✅ Database: Working"
-    log "⚠️  AI integration: Depends on API keys"
-    log "⚠️  Payment processing: Mock mode"
-    log "✅ Admin functions: Working"
-    log "✅ Rate limiting: Working"
-    log "✅ Performance: Good"
-    log "✅ Monitoring: Available"
+    log " All production tests completed!"
+    log "[OK] Health checks: Working"
+    log "[OK] API endpoints: Working"
+    log "[OK] User management: Working"
+    log "[OK] Database: Working"
+    log "[WARN]  AI integration: Depends on API keys"
+    log "[WARN]  Payment processing: Mock mode"
+    log "[OK] Admin functions: Working"
+    log "[OK] Rate limiting: Working"
+    log "[OK] Performance: Good"
+    log "[OK] Monitoring: Available"
 
     cleanup
 }

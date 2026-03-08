@@ -10,15 +10,15 @@ import asyncio
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 try:
     from payments.payment_processor_manager import (
-        PaymentProcessorManager,
         PaymentPriority,
+        PaymentProcessorManager,
         RoutingStrategy,
         create_payment_processor_manager,
     )
@@ -31,13 +31,12 @@ try:
     from user_management.user_service import PayoutMethod, create_user_service
 except ImportError:
     # Fallback for testing without full package structure
-    import sys
     import os
+    import sys
 
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
     from payments.payment_processor_manager import (
-        PaymentProcessorManager,
         PaymentPriority,
         RoutingStrategy,
         create_payment_processor_manager,
@@ -841,16 +840,16 @@ if __name__ == "__main__":
         # Wait for initialization
         await asyncio.sleep(2)
 
-        print("💳 External Payment Integration Service Demo")
+        print(" External Payment Integration Service Demo")
 
         # Check service status
         status = await service.get_service_status()
-        print(f"\n📊 Service Status: {status['service_status']}")
+        print(f"\n Service Status: {status['service_status']}")
         print(f"   Active Workflows: {status['active_workflows']}")
         print(f"   Success Rate: {status['metrics']['success_rate']:.1f}%")
 
         # Initiate a payout workflow
-        print("\n🔄 Initiating Payout Workflow:")
+        print("\n Initiating Payout Workflow:")
         result = await service.initiate_payment_workflow(
             workflow_type=TransactionType.PAYOUT,
             user_id="user_123",
@@ -868,13 +867,13 @@ if __name__ == "__main__":
 
             # Check workflow status
             workflow_status = await service.get_workflow_status(workflow_id)
-            print(f"\n📋 Workflow Status:")
+            print("\n Workflow Status:")
             print(f"   Status: {workflow_status['status']}")
             print(f"   Progress: {workflow_status['progress_percentage']:.1f}%")
             print(
                 f"   Current Step: {workflow_status['current_step']}/{workflow_status['total_steps']}"
             )
 
-        print("\n✅ Demo completed!")
+        print("\n[OK] Demo completed!")
 
     asyncio.run(demo_payment_integration_service())

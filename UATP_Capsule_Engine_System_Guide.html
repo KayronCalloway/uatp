@@ -10,45 +10,45 @@
             size: A4;
             margin: 2cm;
         }
-        
+
         @media print {
             body {
                 font-size: 10pt;
                 line-height: 1.4;
             }
-            
+
             h1 {
                 page-break-before: always;
                 font-size: 18pt;
             }
-            
+
             h1:first-child {
                 page-break-before: avoid;
             }
-            
+
             h2 {
                 font-size: 14pt;
                 page-break-after: avoid;
             }
-            
+
             h3 {
                 font-size: 12pt;
                 page-break-after: avoid;
             }
-            
+
             pre, code {
                 font-size: 8pt;
             }
-            
+
             table {
                 font-size: 8pt;
             }
-            
+
             .no-print {
                 display: none;
             }
         }
-        
+
         /* Base styles */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -59,7 +59,7 @@
             padding: 20px;
             background: #fff;
         }
-        
+
         /* Typography */
         h1 {
             color: #2c3e50;
@@ -70,7 +70,7 @@
             padding-bottom: 10px;
             font-weight: 700;
         }
-        
+
         h1:first-child {
             text-align: center;
             font-size: 3em;
@@ -79,7 +79,7 @@
             margin-bottom: 10px;
             border-bottom: none;
         }
-        
+
         h2 {
             color: #34495e;
             font-size: 1.8em;
@@ -89,7 +89,7 @@
             padding-bottom: 8px;
             font-weight: 600;
         }
-        
+
         h3 {
             color: #34495e;
             font-size: 1.4em;
@@ -97,7 +97,7 @@
             margin-bottom: 12px;
             font-weight: 600;
         }
-        
+
         h4 {
             color: #34495e;
             font-size: 1.2em;
@@ -105,7 +105,7 @@
             margin-bottom: 10px;
             font-weight: 600;
         }
-        
+
         h5 {
             color: #34495e;
             font-size: 1.1em;
@@ -113,7 +113,7 @@
             margin-bottom: 8px;
             font-weight: 600;
         }
-        
+
         h6 {
             color: #34495e;
             font-size: 1em;
@@ -121,23 +121,23 @@
             margin-bottom: 8px;
             font-weight: 600;
         }
-        
+
         /* Paragraphs and text */
         p {
             margin-bottom: 15px;
             text-align: justify;
         }
-        
+
         /* Lists */
         ul, ol {
             margin-bottom: 15px;
             padding-left: 25px;
         }
-        
+
         li {
             margin-bottom: 8px;
         }
-        
+
         /* Code */
         code {
             background-color: #f8f9fa;
@@ -148,7 +148,7 @@
             color: #e74c3c;
             border: 1px solid #e9ecef;
         }
-        
+
         pre {
             background-color: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -160,14 +160,14 @@
             font-size: 0.85em;
             line-height: 1.4;
         }
-        
+
         pre code {
             background-color: transparent;
             padding: 0;
             border: none;
             color: #333;
         }
-        
+
         /* Tables */
         table {
             border-collapse: collapse;
@@ -175,23 +175,23 @@
             margin: 20px 0;
             border: 1px solid #ddd;
         }
-        
+
         th, td {
             border: 1px solid #ddd;
             padding: 12px;
             text-align: left;
         }
-        
+
         th {
             background-color: #f8f9fa;
             font-weight: 600;
             color: #2c3e50;
         }
-        
+
         tr:nth-child(even) {
             background-color: #f8f9fa;
         }
-        
+
         /* Blockquotes */
         blockquote {
             border-left: 4px solid #3498db;
@@ -203,17 +203,17 @@
             padding: 15px 20px;
             border-radius: 0 6px 6px 0;
         }
-        
+
         /* Links */
         a {
             color: #3498db;
             text-decoration: none;
         }
-        
+
         a:hover {
             text-decoration: underline;
         }
-        
+
         /* Special boxes */
         .info-box {
             background-color: #d1ecf1;
@@ -222,7 +222,7 @@
             margin: 20px 0;
             border-radius: 6px;
         }
-        
+
         .warning-box {
             background-color: #fff3cd;
             border-left: 4px solid #ffc107;
@@ -230,7 +230,7 @@
             margin: 20px 0;
             border-radius: 6px;
         }
-        
+
         .success-box {
             background-color: #d4edda;
             border-left: 4px solid #28a745;
@@ -238,7 +238,7 @@
             margin: 20px 0;
             border-radius: 6px;
         }
-        
+
         /* Print button */
         .print-button {
             position: fixed;
@@ -253,11 +253,11 @@
             font-size: 14px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        
+
         .print-button:hover {
             background-color: #2980b9;
         }
-        
+
         /* Table of contents */
         .toc {
             background-color: #f8f9fa;
@@ -266,56 +266,56 @@
             padding: 25px;
             margin: 30px 0;
         }
-        
+
         .toc h2 {
             margin-top: 0;
             color: #2c3e50;
             border-bottom: none;
             font-size: 1.5em;
         }
-        
+
         .toc ul {
             list-style-type: none;
             padding-left: 0;
         }
-        
+
         .toc > ul > li {
             margin-bottom: 8px;
         }
-        
+
         .toc ul ul {
             padding-left: 20px;
             margin-top: 5px;
         }
-        
+
         .toc a {
             color: #3498db;
             text-decoration: none;
         }
-        
+
         .toc a:hover {
             text-decoration: underline;
         }
-        
+
         /* Responsive design */
         @media (max-width: 768px) {
             body {
                 padding: 10px;
             }
-            
+
             h1 {
                 font-size: 2em;
             }
-            
+
             h2 {
                 font-size: 1.5em;
             }
-            
+
             pre {
                 padding: 15px;
                 font-size: 0.8em;
             }
-            
+
             table {
                 font-size: 0.9em;
             }
@@ -324,9 +324,9 @@
 </head>
 <body>
     <button class="print-button no-print" onclick="window.print()">Print / Save as PDF</button>
-    
+
     <h1>UATP Capsule Engine System Guide</h1>
-    
+
     <div class="toc">
         <h2>Table of Contents</h2>
         <ul>
@@ -1145,7 +1145,7 @@ report = await compliance_framework.generate_compliance_report(
 
     <div class="info-box">
         <strong>1. Clone Repository:</strong>
-        <pre><code>git clone https://github.com/your-org/uatp-capsule-engine.git
+        <pre><code>git clone https://github.com/KayronCalloway/uatp.git
 cd uatp-capsule-engine</code></pre>
     </div>
 
@@ -1823,10 +1823,10 @@ CACHE_MAX_CONNECTIONS = 20</code></pre>
     <div class="success-box">
         <strong>For additional support:</strong>
         <ul>
-            <li>GitHub Issues: https://github.com/your-org/uatp-capsule-engine/issues</li>
+            <li>GitHub Issues: https://github.com/KayronCalloway/uatp/issues</li>
             <li>Documentation: https://docs.uatp-capsule-engine.com</li>
             <li>Community Forum: https://forum.uatp-capsule-engine.com</li>
-            <li>Email Support: support@uatp-capsule-engine.com</li>
+            <li>Email Support: Kayron@houseofcalloway.com</li>
         </ul>
     </div>
 
@@ -1841,14 +1841,14 @@ CACHE_MAX_CONNECTIONS = 20</code></pre>
         // Add smooth scrolling for anchor links
         document.addEventListener('DOMContentLoaded', function() {
             const links = document.querySelectorAll('a[href^="#"]');
-            
+
             links.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
-                    
+
                     const targetId = this.getAttribute('href').substring(1);
                     const targetElement = document.getElementById(targetId);
-                    
+
                     if (targetElement) {
                         targetElement.scrollIntoView({
                             behavior: 'smooth'

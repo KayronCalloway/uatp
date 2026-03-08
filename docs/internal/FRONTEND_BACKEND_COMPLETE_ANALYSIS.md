@@ -9,7 +9,7 @@ Your backend has **sophisticated analysis capabilities** that exist as productio
 
 ## Current State: What EXISTS vs What's USED
 
-### ✅ Analysis Modules That EXIST (Production-Ready Code)
+### [OK] Analysis Modules That EXIST (Production-Ready Code)
 
 #### 1. **Uncertainty Quantification** (`src/analysis/uncertainty_quantification.py`)
 - **Fields produced:**
@@ -19,7 +19,7 @@ Your backend has **sophisticated analysis capabilities** that exist as productio
   - `risk_score`
   - Confidence intervals (Bayesian)
 
-- **Status:** ❌ **NOT integrated into capsules**
+- **Status:** [ERROR] **NOT integrated into capsules**
 - **Usage:** Module exists, imported in `src/analysis/__init__.py`, but never called during capsule creation
 
 #### 2. **Critical Path Analysis** (`src/analysis/critical_path.py`)
@@ -34,8 +34,8 @@ Your backend has **sophisticated analysis capabilities** that exist as productio
     - `dependency_depth` - max chain depth
   - `improvement_recommendations` - specific suggestions to strengthen reasoning
 
-- **Status:** ✅ **Integrated in rich_capture_integration.py** (lines 276-292)
-- **BUT:** ❌ **No capsules in database have these fields** (checked all 33 reasoning_trace capsules)
+- **Status:** [OK] **Integrated in rich_capture_integration.py** (lines 276-292)
+- **BUT:** [ERROR] **No capsules in database have these fields** (checked all 33 reasoning_trace capsules)
 - **Why:** Rich capture integration exists but hasn't been used to create capsules yet
 
 #### 3. **Chain Quality & Security Score (CQSS)** (`src/engine/cqss.py`)
@@ -46,8 +46,8 @@ Your backend has **sophisticated analysis capabilities** that exist as productio
   - `complexity_score`
   - `diversity_score`
 
-- **Status:** ✅ **USED for chain-level analysis**
-- **BUT:** ❌ **NOT at individual capsule level**
+- **Status:** [OK] **USED for chain-level analysis**
+- **BUT:** [ERROR] **NOT at individual capsule level**
 - **Usage:** Called by quality_optimizer, chain_sharding, fork_resolver - operates on chains, not individual capsules
 
 #### 4. **Confidence Explanation** (`src/analysis/confidence_explainer.py`)
@@ -55,8 +55,8 @@ Your backend has **sophisticated analysis capabilities** that exist as productio
   - `confidence_explanation` - detailed breakdown of confidence factors
   - Factor breakdowns for each confidence score
 
-- **Status:** ✅ **Integrated in rich_capture_integration.py** (lines 183-200)
-- **BUT:** ❌ **No capsules have this yet**
+- **Status:** [OK] **Integrated in rich_capture_integration.py** (lines 183-200)
+- **BUT:** [ERROR] **No capsules have this yet**
 
 ---
 
@@ -65,34 +65,34 @@ Your backend has **sophisticated analysis capabilities** that exist as productio
 ### In `capsule-detail.tsx` - Fields Referenced:
 
 #### Basic Information Section:
-- ✅ `capsule.capsule_id` - EXISTS
-- ✅ `capsule.type` - EXISTS
-- ✅ `capsule.timestamp` - EXISTS
-- ✅ `capsule.status` - EXISTS
-- ❌ `capsule.confidence` - EXISTS only for reasoning_trace in payload
-- ❌ `capsule.epistemic_uncertainty` - DOESN'T EXIST
-- ❌ `capsule.aleatoric_uncertainty` - DOESN'T EXIST
-- ❌ `capsule.previous_capsule_id` - EXISTS but different field name (`parent_capsule`)
+- [OK] `capsule.capsule_id` - EXISTS
+- [OK] `capsule.type` - EXISTS
+- [OK] `capsule.timestamp` - EXISTS
+- [OK] `capsule.status` - EXISTS
+- [ERROR] `capsule.confidence` - EXISTS only for reasoning_trace in payload
+- [ERROR] `capsule.epistemic_uncertainty` - DOESN'T EXIST
+- [ERROR] `capsule.aleatoric_uncertainty` - DOESN'T EXIST
+- [ERROR] `capsule.previous_capsule_id` - EXISTS but different field name (`parent_capsule`)
 
 #### Reasoning Process Section:
-- ✅ `reasoning_steps` - EXISTS for reasoning_trace
-- ✅ `step.reasoning` - EXISTS (as string, not object)
-- ❌ `step.confidence` - DOESN'T EXIST (steps are strings, not objects)
-- ❌ `step.confidence_explanation` - DOESN'T EXIST
-- ❌ `step.measurements` - DOESN'T EXIST
-- ❌ `critical_path_analysis` - Code exists, not in capsules
-- ❌ `improvement_recommendations` - Code exists, not in capsules
+- [OK] `reasoning_steps` - EXISTS for reasoning_trace
+- [OK] `step.reasoning` - EXISTS (as string, not object)
+- [ERROR] `step.confidence` - DOESN'T EXIST (steps are strings, not objects)
+- [ERROR] `step.confidence_explanation` - DOESN'T EXIST
+- [ERROR] `step.measurements` - DOESN'T EXIST
+- [ERROR] `critical_path_analysis` - Code exists, not in capsules
+- [ERROR] `improvement_recommendations` - Code exists, not in capsules
 
 #### Verification Status:
-- ✅ `verification.verified` - EXISTS
-- ✅ `verification.hash` - EXISTS
-- ✅ `verification.signature` - EXISTS
-- ✅ `verification.method` - EXISTS
-- ❌ `trust_score` - Chain-level only, not capsule-level
+- [OK] `verification.verified` - EXISTS
+- [OK] `verification.hash` - EXISTS
+- [OK] `verification.signature` - EXISTS
+- [OK] `verification.method` - EXISTS
+- [ERROR] `trust_score` - Chain-level only, not capsule-level
 
 #### Session Metadata:
-- ✅ `session_metadata` - EXISTS (structure varies)
-- ✅ Various fields - EXISTS but inconsistent structure
+- [OK] `session_metadata` - EXISTS (structure varies)
+- [OK] Various fields - EXISTS but inconsistent structure
 
 ---
 
@@ -167,32 +167,32 @@ Capsules with trust_score: 0
 
 ```
 ┌─────────────────────────────────────┐
-│  Analysis Modules                   │  ✅ Exist (Production Quality)
+│  Analysis Modules                   │  [OK] Exist (Production Quality)
 │  - uncertainty_quantification.py   │
 │  - critical_path.py                 │
 │  - cqss.py                          │
 │  - confidence_explainer.py          │
 └─────────────────────────────────────┘
-              ↓ ❌ Gap Here
+              ↓ [ERROR] Gap Here
 ┌─────────────────────────────────────┐
-│  Rich Capture Integration           │  ⚠️ Partially Connected
+│  Rich Capture Integration           │  [WARN] Partially Connected
 │  - rich_capture_integration.py     │  (Calls critical_path & explainer)
 │                                     │  (NOT called for existing capsules)
 └─────────────────────────────────────┘
-              ↓ ❌ Gap Here
+              ↓ [ERROR] Gap Here
 ┌─────────────────────────────────────┐
-│  Capsule Creation                   │  ❌ Using Simple Format
+│  Capsule Creation                   │  [ERROR] Using Simple Format
 │  - Current capsules are basic       │
 │  - No rich metadata                 │
 └─────────────────────────────────────┘
               ↓
 ┌─────────────────────────────────────┐
-│  API Routes                         │  ✅ Works (Returns DB As-Is)
+│  API Routes                         │  [OK] Works (Returns DB As-Is)
 │  - capsules_fastapi_router.py      │
 └─────────────────────────────────────┘
               ↓
 ┌─────────────────────────────────────┐
-│  Frontend                           │  ⚠️ Over-Engineered
+│  Frontend                           │  [WARN] Over-Engineered
 │  - capsule-detail.tsx               │  (Expects rich metadata)
 │  - Conditional rendering saves it   │
 └─────────────────────────────────────┘
@@ -202,7 +202,7 @@ Capsules with trust_score: 0
 
 ## Three Integration Paths Forward
 
-### **Option 1: Complete the Integration** ⭐ RECOMMENDED
+### **Option 1: Complete the Integration**  RECOMMENDED
 **Make the backend provide what the frontend expects**
 
 **Steps:**
@@ -354,9 +354,9 @@ measurements["aleatoric_uncertainty"] = round(uncertainty_estimate.aleatoric_unc
 **The Solution:** Install the engine (integrate analysis into capsule creation), connect the sensors (add to API responses), and watch the gauges light up (frontend displays rich analysis).
 
 **Current State:**
-- ✅ Backend has all the capabilities
-- ✅ Frontend is ready to display them
-- ❌ The connection layer is incomplete
+- [OK] Backend has all the capabilities
+- [OK] Frontend is ready to display them
+- [ERROR] The connection layer is incomplete
 
 **Your stated goal:** "making sure the frontend captures all the backend offerings"
 

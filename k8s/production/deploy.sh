@@ -22,21 +22,21 @@ echo -e "${GREEN}========================================${NC}\n"
 # Function to check if kubectl is installed
 check_kubectl() {
     if ! command -v kubectl &> /dev/null; then
-        echo -e "${RED}❌ kubectl not found. Please install kubectl first.${NC}"
+        echo -e "${RED}[ERROR] kubectl not found. Please install kubectl first.${NC}"
         exit 1
     fi
-    echo -e "${GREEN}✅ kubectl found${NC}"
+    echo -e "${GREEN}[OK] kubectl found${NC}"
 }
 
 # Function to check cluster connectivity
 check_cluster() {
     echo -e "\n${YELLOW}Checking cluster connectivity...${NC}"
     if ! kubectl cluster-info &> /dev/null; then
-        echo -e "${RED}❌ Cannot connect to Kubernetes cluster${NC}"
+        echo -e "${RED}[ERROR] Cannot connect to Kubernetes cluster${NC}"
         echo "Please check your kubeconfig: $KUBECONFIG"
         exit 1
     fi
-    echo -e "${GREEN}✅ Connected to cluster${NC}"
+    echo -e "${GREEN}[OK] Connected to cluster${NC}"
     kubectl cluster-info | head -1
 }
 
@@ -44,21 +44,21 @@ check_cluster() {
 create_namespace() {
     echo -e "\n${YELLOW}Creating namespace...${NC}"
     kubectl apply -f namespace.yaml
-    echo -e "${GREEN}✅ Namespace ready${NC}"
+    echo -e "${GREEN}[OK] Namespace ready${NC}"
 }
 
 # Function to apply configmap
 apply_configmap() {
     echo -e "\n${YELLOW}Applying ConfigMap...${NC}"
     kubectl apply -f configmap.yaml
-    echo -e "${GREEN}✅ ConfigMap applied${NC}"
+    echo -e "${GREEN}[OK] ConfigMap applied${NC}"
 }
 
 # Function to check if secrets exist
 check_secrets() {
     echo -e "\n${YELLOW}Checking secrets...${NC}"
     if ! kubectl get secret uatp-secrets -n $NAMESPACE &> /dev/null; then
-        echo -e "${YELLOW}⚠️  Secrets not found${NC}"
+        echo -e "${YELLOW}[WARN]  Secrets not found${NC}"
         echo "Please create secrets from secrets-template.yaml"
         echo "Instructions:"
         echo "  1. Copy secrets-template.yaml to secrets.yaml"
@@ -71,7 +71,7 @@ check_secrets() {
             exit 1
         fi
     else
-        echo -e "${GREEN}✅ Secrets found${NC}"
+        echo -e "${GREEN}[OK] Secrets found${NC}"
     fi
 }
 
@@ -80,23 +80,23 @@ deploy_application() {
     echo -e "\n${YELLOW}Deploying application...${NC}"
     kubectl apply -f deployment.yaml
     kubectl apply -f service.yaml
-    echo -e "${GREEN}✅ Application deployed${NC}"
+    echo -e "${GREEN}[OK] Application deployed${NC}"
 }
 
 # Function to apply HPA
 apply_hpa() {
     echo -e "\n${YELLOW}Applying Horizontal Pod Autoscaler...${NC}"
     kubectl apply -f hpa.yaml
-    echo -e "${GREEN}✅ HPA configured${NC}"
+    echo -e "${GREEN}[OK] HPA configured${NC}"
 }
 
 # Function to apply ingress
 apply_ingress() {
     echo -e "\n${YELLOW}Applying Ingress...${NC}"
     if kubectl apply -f ingress.yaml; then
-        echo -e "${GREEN}✅ Ingress configured${NC}"
+        echo -e "${GREEN}[OK] Ingress configured${NC}"
     else
-        echo -e "${YELLOW}⚠️  Ingress configuration failed (may need cert-manager)${NC}"
+        echo -e "${YELLOW}[WARN]  Ingress configuration failed (may need cert-manager)${NC}"
     fi
 }
 
@@ -104,7 +104,7 @@ apply_ingress() {
 wait_for_deployment() {
     echo -e "\n${YELLOW}Waiting for deployment to be ready...${NC}"
     kubectl rollout status deployment/$DEPLOYMENT -n $NAMESPACE --timeout=5m
-    echo -e "${GREEN}✅ Deployment ready${NC}"
+    echo -e "${GREEN}[OK] Deployment ready${NC}"
 }
 
 # Function to show deployment status

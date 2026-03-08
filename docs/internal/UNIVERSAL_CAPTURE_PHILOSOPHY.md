@@ -53,7 +53,7 @@ A conversation about the weather might seem insignificant, but:
 - Low (0.2-0.5): Mostly commons + minimal direct
 - Unknown (<0.2): All to commons fund
 
-**Status**: ✅ This is correct! Keep these thresholds.
+**Status**: [OK] This is correct! Keep these thresholds.
 
 ---
 
@@ -91,16 +91,16 @@ A conversation about the weather might seem insignificant, but:
 
 ### Current System (Elitist):
 ```
-"How do I center a div?" → 0.3 significance → ❌ NOT CAPTURED
-"Implement quantum encryption" → 0.9 significance → ✅ CAPTURED
+"How do I center a div?" → 0.3 significance → [ERROR] NOT CAPTURED
+"Implement quantum encryption" → 0.9 significance → [OK] CAPTURED
 ```
 
 **Problem**: Both are AI decisions! Both involve human labor! Both train future models!
 
 ### Proposed System (Democratic):
 ```
-"How do I center a div?" → 0.3 significance → ✅ CAPTURED, low economic weight
-"Implement quantum encryption" → 0.9 significance → ✅ CAPTURED, high economic weight
+"How do I center a div?" → 0.3 significance → [OK] CAPTURED, low economic weight
+"Implement quantum encryption" → 0.9 significance → [OK] CAPTURED, high economic weight
 ```
 
 **Result**: Universal attribution + fair economic distribution
@@ -189,15 +189,15 @@ const filteredCapsules = allCapsules.filter(c =>
 ## Philosophical Alignment
 
 ### UATP Core Principles:
-1. ✅ **Universal** - Attribution for all, not just "important" interactions
-2. ✅ **Attribution** - Track contributions democratically
-3. ✅ **Trust** - Cryptographic proof for all interactions
-4. ✅ **Protocol** - Standardized, not arbitrary thresholds
+1. [OK] **Universal** - Attribution for all, not just "important" interactions
+2. [OK] **Attribution** - Track contributions democratically
+3. [OK] **Trust** - Cryptographic proof for all interactions
+4. [OK] **Protocol** - Standardized, not arbitrary thresholds
 
 ### Current Bug Violates:
-- ❌ "Universal" - Only captures 60%+ significant interactions
-- ❌ "Democratic" - Arbitrary threshold decides value
-- ❌ "Inclusive" - Excludes "simple" conversations
+- [ERROR] "Universal" - Only captures 60%+ significant interactions
+- [ERROR] "Democratic" - Arbitrary threshold decides value
+- [ERROR] "Inclusive" - Excludes "simple" conversations
 
 ---
 
@@ -250,7 +250,7 @@ self.significance_threshold = 0.0  # Capture everything
 
 ## Next Steps
 
-1. ✅ Document the philosophy (this file)
+1. [OK] Document the philosophy (this file)
 2. ⏭️ Update `conversation_monitor.py` to set threshold = 0.0
 3. ⏭️ Update capsule creation logic to remove significance gate
 4. ⏭️ Add significance as economic weight in distribution

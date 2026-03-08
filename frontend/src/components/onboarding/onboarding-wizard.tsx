@@ -62,48 +62,48 @@ export function OnboardingWizard() {
     switch (currentStage) {
       case OnboardingStage.WELCOME:
         return (
-          <WelcomeStep 
+          <WelcomeStep
             onComplete={handleStepComplete}
             isLoading={state.isLoading}
             error={state.error}
           />
         );
-      
+
       case OnboardingStage.ENVIRONMENT_DETECTION:
         return (
-          <EnvironmentDetectionStep 
+          <EnvironmentDetectionStep
             onComplete={handleStepComplete}
             progress={state.progress}
           />
         );
-      
+
       case OnboardingStage.AI_INTEGRATION:
         return (
-          <PlatformSelectionStep 
+          <PlatformSelectionStep
             onComplete={handleStepComplete}
             availablePlatforms={state.availablePlatforms}
             isLoading={state.isLoading}
             error={state.error}
           />
         );
-      
+
       case OnboardingStage.FIRST_CAPSULE:
         return (
-          <FirstCapsuleStep 
+          <FirstCapsuleStep
             onComplete={handleStepComplete}
             progress={state.progress}
             isLoading={state.isLoading}
           />
         );
-      
+
       case OnboardingStage.SUCCESS_MILESTONE:
         return (
-          <SuccessStep 
+          <SuccessStep
             progress={state.progress}
             onContinue={() => router.push('/onboarding/complete')}
           />
         );
-      
+
       default:
         return (
           <div className="text-center py-8">
@@ -125,7 +125,7 @@ export function OnboardingWizard() {
       [OnboardingStage.FIRST_CAPSULE]: 'Create First Capsule',
       [OnboardingStage.SUCCESS_MILESTONE]: 'Success!',
     };
-    
+
     return titles[STEP_ORDER[currentStepIndex]] || 'Setting Up...';
   };
 
@@ -137,7 +137,7 @@ export function OnboardingWizard() {
       [OnboardingStage.FIRST_CAPSULE]: 'Creating your first attributed capsule',
       [OnboardingStage.SUCCESS_MILESTONE]: 'Your UATP system is ready to use!',
     };
-    
+
     return descriptions[STEP_ORDER[currentStepIndex]] || 'Processing...';
   };
 
@@ -149,7 +149,7 @@ export function OnboardingWizard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                🚀 UATP Setup
+                 UATP Setup
               </h1>
               <p className="text-gray-600 mt-1">
                 Universal AI Trust Protocol
@@ -163,7 +163,7 @@ export function OnboardingWizard() {
       {/* Progress Bar */}
       <div className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <OnboardingProgress 
+          <OnboardingProgress
             currentStep={currentStepIndex + 1}
             totalSteps={STEP_ORDER.length}
             percentage={getProgressPercentage()}
@@ -181,7 +181,7 @@ export function OnboardingWizard() {
             {state.error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <div className="flex items-center">
-                  <div className="text-red-500 mr-3">⚠️</div>
+                  <div className="text-red-500 mr-3">[WARN]</div>
                   <div>
                     <h3 className="text-red-800 font-medium">Setup Error</h3>
                     <p className="text-red-700 text-sm mt-1">{state.error}</p>

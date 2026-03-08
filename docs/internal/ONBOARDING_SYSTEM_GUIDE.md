@@ -1,10 +1,10 @@
-# 🚀 UATP Onboarding System - Complete Guide
+#  UATP Onboarding System - Complete Guide
 
 ## Overview
 
 The UATP Onboarding System provides an **intuitive, frictionless client onboarding experience** that gets users creating AI capsules within **5 minutes**. Built on the philosophy that "things should be intuitive - easy for the average person to do what they're trying to do."
 
-## 🎯 Core Philosophy
+##  Core Philosophy
 
 - **Zero-Friction First Value** - Users achieve success within 2-3 clicks
 - **Progressive Disclosure** - Show only what's needed at each step
@@ -13,26 +13,26 @@ The UATP Onboarding System provides an **intuitive, frictionless client onboardi
 - **Contextual Assistance** - Help appears when and where needed
 - **Success Milestones** - Clear progress indicators and celebration
 
-## 🏗️ System Architecture
+##  System Architecture
 
 ```
-🚀 UATP Onboarding System
-├── 🎭 Onboarding Orchestrator (Master Coordinator)
+ UATP Onboarding System
+├──  Onboarding Orchestrator (Master Coordinator)
 │   ├── User type detection & personalization
 │   ├── Flow management & progress tracking
 │   └── Success metrics & milestone tracking
 │
-├── 🔧 Interactive Setup Wizard
+├──  Interactive Setup Wizard
 │   ├── Environment auto-detection
 │   ├── Smart configuration generation
 │   └── System initialization & validation
 │
-├── 🤖 Integration Manager
+├──  Integration Manager
 │   ├── AI platform discovery & connection
 │   ├── One-click setup flows
 │   └── Guided first capsule creation
 │
-├── 🏥 System Health Monitor
+├──  System Health Monitor
 │   ├── Real-time health tracking
 │   ├── SLA compliance monitoring
 │   └── Proactive issue detection
@@ -42,33 +42,33 @@ The UATP Onboarding System provides an **intuitive, frictionless client onboardi
 │   ├── Automated troubleshooting
 │   └── Smart escalation routing
 │
-└── 🌐 Web Interface
+└──  Web Interface
     ├── Responsive onboarding UI
     ├── Real-time progress updates
     └── Interactive setup wizards
 ```
 
-## 🎨 User Experience Flows
+##  User Experience Flows
 
-### 👋 Casual User Flow (5-minute target)
+###  Casual User Flow (5-minute target)
 ```
 Welcome → Auto-Detect → One-Click Setup → AI Connect → First Capsule → Success!
    30s      15s          60s            120s        90s         DONE
 ```
 
-### 👨‍💻 Developer Flow (10-minute target)
+### ‍ Developer Flow (10-minute target)
 ```
 Welcome → Dev Analysis → API Keys → Integrations → Advanced Capsule → Dev Tools → Success!
    30s       45s         90s       180s          150s           120s       DONE
 ```
 
-### 🏢 Enterprise Flow (15-minute target)
+###  Enterprise Flow (15-minute target)
 ```
 Welcome → Security → Infrastructure → Governance → Team Setup → Success!
    60s      120s       300s           180s        120s        DONE
 ```
 
-## 🛠️ Implementation Components
+##  Implementation Components
 
 ### 1. Onboarding Orchestrator (`onboarding_orchestrator.py`)
 
@@ -227,7 +227,7 @@ Key Features:
 - **Visual Wizards**: Step-by-step visual guidance
 - **Progressive Disclosure**: Information revealed as needed
 
-## 🌐 Web Interface Usage
+##  Web Interface Usage
 
 ### Start the Server
 ```bash
@@ -269,7 +269,7 @@ const data = await response.json();
 console.log('Progress:', data.progress);
 ```
 
-## 🎮 Demo System
+##  Demo System
 
 ### Run Complete Demo
 ```bash
@@ -278,37 +278,37 @@ python demo_onboarding_system.py
 ```
 
 ### Demo Options
-1. **👋 Casual User Experience** - 5-minute onboarding simulation
-2. **👨‍💻 Developer Experience** - 10-minute advanced setup
-3. **🏢 Enterprise Experience** - 15-minute enterprise deployment
-4. **🔧 System Health Monitoring** - Real-time health dashboard
+1. ** Casual User Experience** - 5-minute onboarding simulation
+2. **‍ Developer Experience** - 10-minute advanced setup
+3. ** Enterprise Experience** - 15-minute enterprise deployment
+4. ** System Health Monitoring** - Real-time health dashboard
 5. **🆘 Support Assistant** - Contextual help system
-6. **🌐 Web Interface** - Interactive web experience
+6. ** Web Interface** - Interactive web experience
 
 ### Sample Demo Output
 ```
-👋 CASUAL USER ONBOARDING DEMO
+ CASUAL USER ONBOARDING DEMO
 ========================================
 Target: Get user creating capsules in under 5 minutes
 Philosophy: Zero technical knowledge required
 
-🔄 Starting onboarding for casual user...
-✅ Welcome completed - User type: casual_user
-🔍 Auto-detecting environment...
-✅ Environment detected and configured
-⚙️ Running one-click setup...
-✅ System configured with smart defaults
-🤖 Setting up AI platform integration...
-✅ AI platform connected and tested
-🧪 Creating first capsule...
-✅ First capsule created successfully!
+ Starting onboarding for casual user...
+[OK] Welcome completed - User type: casual_user
+ Auto-detecting environment...
+[OK] Environment detected and configured
+ Running one-click setup...
+[OK] System configured with smart defaults
+ Setting up AI platform integration...
+[OK] AI platform connected and tested
+ Creating first capsule...
+[OK] First capsule created successfully!
 
-🎉 ONBOARDING COMPLETE!
+ ONBOARDING COMPLETE!
    Total time: 157.3 seconds
    Target met: YES (under 5 minutes)
 ```
 
-## 📊 Success Metrics
+##  Success Metrics
 
 ### Target Metrics
 - **Time to First Capsule**: < 5 minutes for casual users
@@ -323,7 +323,7 @@ Philosophy: Zero technical knowledge required
 - **User Satisfaction**: Post-onboarding feedback scores
 - **Support Metrics**: Issue resolution times and success rates
 
-## 🔧 Integration with Existing UATP
+##  Integration with Existing UATP
 
 ### Server Integration
 The onboarding system is automatically integrated into the main UATP server:
@@ -351,7 +351,7 @@ from src.integrations.anthropic_client import AnthropicAttributionClient
 from src.observability.telemetry import get_system_metrics
 ```
 
-## 🛡️ Security & Privacy
+##  Security & Privacy
 
 ### Security Features
 - **Secure Credential Storage**: API keys stored in encrypted vault
@@ -365,7 +365,7 @@ from src.observability.telemetry import get_system_metrics
 - **Data Retention**: Automatic cleanup of temporary onboarding data
 - **GDPR Compliance**: Right to be forgotten and data portability
 
-## 🔮 Future Enhancements
+##  Future Enhancements
 
 ### Planned Features
 - **AI-Powered Personalization**: ML-driven user experience optimization
@@ -380,7 +380,7 @@ from src.observability.telemetry import get_system_metrics
 - **Advanced Governance**: Automated compliance workflow setup
 - **Multi-Language Support**: Internationalization for global users
 
-## 📚 Technical Reference
+##  Technical Reference
 
 ### Key Classes
 - `OnboardingOrchestrator`: Main coordination logic
@@ -413,21 +413,21 @@ class CustomPlatformIntegration:
         return IntegrationResult(success=True)
 ```
 
-## 🎯 Summary
+##  Summary
 
 The UATP Onboarding System delivers on the promise of **intuitive, frictionless client onboarding** through:
 
-✅ **5-Minute Success**: Users create their first capsule within 5 minutes
-✅ **Zero Documentation**: No manual reading required for basic setup
-✅ **Smart Automation**: Auto-detection and configuration with sensible defaults
-✅ **Visual Guidance**: Interactive wizards over text instructions
-✅ **Contextual Help**: Support appears when and where needed
-✅ **Real-Time Feedback**: Immediate validation and success confirmation
-✅ **Progressive Disclosure**: Information revealed at the right time
-✅ **Multi-User Support**: Personalized flows for different user types
+[OK] **5-Minute Success**: Users create their first capsule within 5 minutes
+[OK] **Zero Documentation**: No manual reading required for basic setup
+[OK] **Smart Automation**: Auto-detection and configuration with sensible defaults
+[OK] **Visual Guidance**: Interactive wizards over text instructions
+[OK] **Contextual Help**: Support appears when and where needed
+[OK] **Real-Time Feedback**: Immediate validation and success confirmation
+[OK] **Progressive Disclosure**: Information revealed at the right time
+[OK] **Multi-User Support**: Personalized flows for different user types
 
 The system transforms UATP from a complex, technical platform into an **accessible, user-friendly service** that anyone can start using immediately.
 
 ---
 
-*Ready to experience frictionless AI trust? Start your onboarding journey at `/onboarding`!* 🚀
+*Ready to experience frictionless AI trust? Start your onboarding journey at `/onboarding`!*

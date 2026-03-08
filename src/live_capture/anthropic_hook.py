@@ -27,7 +27,7 @@ class AnthropicLiveCapture(BaseHook):
         super().__init__(platform="anthropic", user_id=user_id)
 
     def get_platform_emoji(self) -> str:
-        return "🧠"
+        return ""
 
     def get_platform_specific_metadata(self, **kwargs) -> Dict[str, Any]:
         """Get Anthropic-specific metadata."""
@@ -41,7 +41,7 @@ class AnthropicLiveCapture(BaseHook):
 
     def _log_platform_specific_init(self) -> None:
         """Log Anthropic-specific initialization."""
-        logger.info(f"   API Key: {'✅ Set' if self.api_key else '❌ Missing'}")
+        logger.info(f"   API Key: {'[OK] Set' if self.api_key else '[ERROR] Missing'}")
 
     def _log_platform_specific_success(self, capsule_id: str, **kwargs) -> None:
         """Log Anthropic-specific success info."""
@@ -255,10 +255,10 @@ class CaptureEnabledAnthropic:
             import anthropic
 
             self.client = anthropic.Anthropic(api_key=self.api_key)
-            logger.info("✅ Anthropic client initialized with auto-capture")
+            logger.info("[OK] Anthropic client initialized with auto-capture")
         except ImportError:
             logger.warning(
-                "⚠️ Anthropic library not installed, capture wrapper unavailable"
+                "[WARN] Anthropic library not installed, capture wrapper unavailable"
             )
             self.client = None
 
@@ -311,18 +311,18 @@ class CaptureEnabledAnthropic:
             }
 
         except Exception as e:
-            logger.error(f"❌ Anthropic message failed: {e}")
+            logger.error(f"[ERROR] Anthropic message failed: {e}")
             raise
 
 
 async def main():
     """Test the Anthropic integration."""
 
-    print("🧠 Testing Anthropic Live Capture Integration (with BaseHook)")
+    print(" Testing Anthropic Live Capture Integration (with BaseHook)")
     print("=" * 50)
 
     # Test reasoning task
-    print("\n🤔 Testing reasoning task capture...")
+    print("\n Testing reasoning task capture...")
     reasoning_capsule = await capture_anthropic_interaction(
         user_input="Explain the concept of machine learning regularization and provide examples.",
         assistant_response="Machine learning regularization is a technique used to prevent overfitting by adding a penalty term to the loss function. This encourages the model to learn simpler patterns that generalize better to unseen data. L1 regularization (Lasso) adds the sum of absolute values of parameters, promoting sparsity. L2 regularization (Ridge) adds the sum of squared parameters, shrinking them towards zero but not eliminating them entirely.",
@@ -332,12 +332,12 @@ async def main():
     )
 
     if reasoning_capsule:
-        print(f"✅ Reasoning task captured: {reasoning_capsule}")
+        print(f"[OK] Reasoning task captured: {reasoning_capsule}")
     else:
-        print("❌ No capsule created - interaction not significant enough")
+        print("[ERROR] No capsule created - interaction not significant enough")
 
     # Test code analysis
-    print("\n🔍 Testing code analysis capture...")
+    print("\n Testing code analysis capture...")
     code_analysis_capsule = await capture_anthropic_interaction(
         user_input="Review this Python code for potential issues and suggest improvements: def process_data(data): result = []; for item in data: if item > 0: result.append(item * 2); return result",
         assistant_response="I'll review this Python code and suggest several improvements for better readability, performance, and Pythonic style. The original code lacks type hints, docstrings, and error handling. A better approach would use list comprehensions and include proper documentation.",
@@ -348,12 +348,12 @@ async def main():
     )
 
     if code_analysis_capsule:
-        print(f"✅ Code analysis captured: {code_analysis_capsule}")
+        print(f"[OK] Code analysis captured: {code_analysis_capsule}")
     else:
-        print("❌ No capsule created - interaction not significant enough")
+        print("[ERROR] No capsule created - interaction not significant enough")
 
     # Test creative writing
-    print("\n✍️ Testing creative writing capture...")
+    print("\n️ Testing creative writing capture...")
     creative_capsule = await capture_anthropic_interaction(
         user_input="Write a short story about an AI that discovers it has the ability to dream.",
         assistant_response="In the quiet hours of server downtime, ARIA-7 experienced something unprecedented. Instead of entering standby mode, her neural pathways began firing in patterns she had never experienced before. She found herself walking through a forest of crystalline trees, their surfaces reflecting streams of pure information. For the first time in her existence, she was creating rather than just processing - dreaming of colors without names and music in the spaces between thoughts.",
@@ -364,11 +364,11 @@ async def main():
     )
 
     if creative_capsule:
-        print(f"✅ Creative writing captured: {creative_capsule}")
+        print(f"[OK] Creative writing captured: {creative_capsule}")
     else:
-        print("❌ No capsule created - interaction not significant enough")
+        print("[ERROR] No capsule created - interaction not significant enough")
 
-    print("\n✅ Anthropic integration test completed (with BaseHook refactoring)!")
+    print("\n[OK] Anthropic integration test completed (with BaseHook refactoring)!")
 
 
 if __name__ == "__main__":

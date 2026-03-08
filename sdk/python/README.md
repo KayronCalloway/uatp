@@ -6,10 +6,10 @@ Make AI decisions auditable with cryptographic proof in 3 lines of code.
 
 ```bash
 # Install from GitHub
-pip install git+https://github.com/your-org/uatp-capsule-engine.git#subdirectory=sdk/python
+pip install git+https://github.com/KayronCalloway/uatp.git#subdirectory=sdk/python
 
 # Or clone and install locally
-git clone https://github.com/your-org/uatp-capsule-engine
+git clone https://github.com/KayronCalloway/uatp
 cd uatp-capsule-engine/sdk/python
 pip install -e .
 ```
@@ -350,8 +350,8 @@ Planned pricing:
 
 ## Support
 
-- **Issues:** https://github.com/your-org/uatp-capsule-engine/issues
-- **Discussions:** https://github.com/your-org/uatp-capsule-engine/discussions
+- **Issues:** https://github.com/KayronCalloway/uatp/issues
+- **Discussions:** https://github.com/KayronCalloway/uatp/discussions
 - **Email:** your@email.com
 
 **Looking for beta testers!** We'd love your feedback.
@@ -363,24 +363,24 @@ MIT License - see LICENSE file for details.
 ## Why Cryptographic Proof Matters
 
 ### Without UATP:
-- ❌ AI decisions are black boxes
-- ❌ No audit trail for regulators
-- ❌ Insurance companies won't cover
-- ❌ Users don't trust the system
-- ❌ Liability is unclear
+- [ERROR] AI decisions are black boxes
+- [ERROR] No audit trail for regulators
+- [ERROR] Insurance companies won't cover
+- [ERROR] Users don't trust the system
+- [ERROR] Liability is unclear
 
 ### With UATP:
-- ✅ Cryptographic evidence of reasoning
-- ✅ Court-admissible proof (Daubert-compliant)
-- ✅ EU AI Act conformity assessments ready
-- ✅ Insurance-ready actuarial data
-- ✅ User transparency via proof URLs
+- [OK] Cryptographic evidence of reasoning
+- [OK] Court-admissible proof (Daubert-compliant)
+- [OK] EU AI Act conformity assessments ready
+- [OK] Insurance-ready actuarial data
+- [OK] User transparency via proof URLs
 
 ## Get Started
 
 1. **Clone & install:**
 ```bash
-git clone https://github.com/your-org/uatp-capsule-engine
+git clone https://github.com/KayronCalloway/uatp
 cd uatp-capsule-engine/sdk/python
 pip install -e .
 ```

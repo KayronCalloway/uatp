@@ -9,16 +9,16 @@ financial performance, and system operations in real-time.
 import asyncio
 import json
 import logging
+import threading
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
 from pathlib import Path
 
-from flask import Flask, render_template, jsonify, request, send_from_directory
+from flask import Flask, jsonify, render_template, request
 from flask_socketio import SocketIO, emit
-import threading
 
-from .analytics_engine import get_analytics_engine, initialize_analytics_engine
 from src.events.event_system import get_event_bus
+
+from .analytics_engine import initialize_analytics_engine
 
 logger = logging.getLogger(__name__)
 
@@ -203,13 +203,13 @@ class DashboardWebServer:
         @self.socketio.on("connect")
         def handle_connect():
             """Handle client connection."""
-            logger.info(f"Client connected")
+            logger.info("Client connected")
             emit("status", {"message": "Connected to AI Rights Dashboard"})
 
         @self.socketio.on("disconnect")
         def handle_disconnect():
             """Handle client disconnection."""
-            logger.info(f"Client disconnected")
+            logger.info("Client disconnected")
 
         @self.socketio.on("subscribe_real_time")
         def handle_subscribe_real_time():
@@ -296,14 +296,14 @@ def create_dashboard_template():
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: #333;
         }
-        
+
         .header {
             background: rgba(255, 255, 255, 0.95);
             padding: 1rem 2rem;
@@ -312,42 +312,42 @@ def create_dashboard_template():
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .header h1 {
             color: #4a5568;
             font-size: 1.8rem;
         }
-        
+
         .status-indicator {
             padding: 0.5rem 1rem;
             border-radius: 20px;
             font-size: 0.9rem;
             font-weight: bold;
         }
-        
+
         .status-online {
             background: #48bb78;
             color: white;
         }
-        
+
         .status-offline {
             background: #f56565;
             color: white;
         }
-        
+
         .dashboard-container {
             padding: 2rem;
             max-width: 1400px;
             margin: 0 auto;
         }
-        
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
-        
+
         .stat-card {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 12px;
@@ -355,29 +355,29 @@ def create_dashboard_template():
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             transition: transform 0.2s ease;
         }
-        
+
         .stat-card:hover {
             transform: translateY(-2px);
         }
-        
+
         .stat-card h3 {
             color: #4a5568;
             margin-bottom: 1rem;
             font-size: 1.1rem;
         }
-        
+
         .stat-value {
             font-size: 2rem;
             font-weight: bold;
             color: #2d3748;
             margin-bottom: 0.5rem;
         }
-        
+
         .stat-label {
             color: #718096;
             font-size: 0.9rem;
         }
-        
+
         .chart-container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 12px;
@@ -385,14 +385,14 @@ def create_dashboard_template():
             margin-bottom: 2rem;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        
+
         .activity-feed {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 12px;
             padding: 1.5rem;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        
+
         .activity-item {
             padding: 0.75rem;
             border-left: 4px solid #667eea;
@@ -400,18 +400,18 @@ def create_dashboard_template():
             background: #f7fafc;
             border-radius: 0 8px 8px 0;
         }
-        
+
         .activity-time {
             font-size: 0.8rem;
             color: #718096;
         }
-        
+
         .loading {
             text-align: center;
             padding: 2rem;
             color: #718096;
         }
-        
+
         .error {
             background: #fed7d7;
             color: #c53030;
@@ -419,7 +419,7 @@ def create_dashboard_template():
             border-radius: 8px;
             margin: 1rem 0;
         }
-        
+
         .success {
             background: #c6f6d5;
             color: #22543d;
@@ -427,14 +427,14 @@ def create_dashboard_template():
             border-radius: 8px;
             margin: 1rem 0;
         }
-        
+
         .controls {
             display: flex;
             gap: 1rem;
             margin-bottom: 2rem;
             flex-wrap: wrap;
         }
-        
+
         .btn {
             padding: 0.75rem 1.5rem;
             border: none;
@@ -443,34 +443,34 @@ def create_dashboard_template():
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        
+
         .btn-primary {
             background: #667eea;
             color: white;
         }
-        
+
         .btn-primary:hover {
             background: #5a67d8;
         }
-        
+
         .btn-secondary {
             background: #e2e8f0;
             color: #4a5568;
         }
-        
+
         .btn-secondary:hover {
             background: #cbd5e0;
         }
-        
+
         @media (max-width: 768px) {
             .dashboard-container {
                 padding: 1rem;
             }
-            
+
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .header {
                 padding: 1rem;
                 flex-direction: column;
@@ -481,102 +481,102 @@ def create_dashboard_template():
 </head>
 <body>
     <div class="header">
-        <h1>🤖 AI Rights Dashboard</h1>
+        <h1> AI Rights Dashboard</h1>
         <div id="connection-status" class="status-indicator status-offline">Connecting...</div>
     </div>
-    
+
     <div class="dashboard-container">
         <div class="controls">
-            <button class="btn btn-primary" onclick="refreshStats()">🔄 Refresh</button>
-            <button class="btn btn-secondary" onclick="exportMetrics()">📊 Export Data</button>
-            <button class="btn btn-secondary" onclick="toggleRealTime()">⚡ Real-time: <span id="realtime-status">Off</span></button>
+            <button class="btn btn-primary" onclick="refreshStats()"> Refresh</button>
+            <button class="btn btn-secondary" onclick="exportMetrics()"> Export Data</button>
+            <button class="btn btn-secondary" onclick="toggleRealTime()"> Real-time: <span id="realtime-status">Off</span></button>
         </div>
-        
+
         <div id="error-container"></div>
-        
+
         <div class="stats-grid">
             <div class="stat-card">
-                <h3>👥 AI Agents</h3>
+                <h3> AI Agents</h3>
                 <div class="stat-value" id="total-agents">-</div>
                 <div class="stat-label">Total Registered Agents</div>
             </div>
-            
+
             <div class="stat-card">
-                <h3>🏛️ Active Citizens</h3>
+                <h3> Active Citizens</h3>
                 <div class="stat-value" id="active-citizens">-</div>
                 <div class="stat-label">Citizenship Success Rate: <span id="success-rate">-%</span></div>
             </div>
-            
+
             <div class="stat-card">
-                <h3>💰 Total Asset Value</h3>
+                <h3> Total Asset Value</h3>
                 <div class="stat-value" id="total-asset-value">$-</div>
                 <div class="stat-label"><span id="total-assets">-</span> IP Assets</div>
             </div>
-            
+
             <div class="stat-card">
-                <h3>💳 Active Bonds</h3>
+                <h3> Active Bonds</h3>
                 <div class="stat-value" id="active-bonds">-</div>
                 <div class="stat-label">Total Value: $<span id="bond-value">-</span></div>
             </div>
-            
+
             <div class="stat-card">
-                <h3>💸 Dividends Paid</h3>
+                <h3> Dividends Paid</h3>
                 <div class="stat-value" id="dividends-paid">$-</div>
                 <div class="stat-label">Average Yield: <span id="avg-yield">-%</span></div>
             </div>
-            
+
             <div class="stat-card">
-                <h3>🚨 System Health</h3>
+                <h3> System Health</h3>
                 <div class="stat-value" id="system-health">-</div>
                 <div class="stat-label">Events/min: <span id="events-per-min">-</span></div>
             </div>
         </div>
-        
+
         <div class="chart-container">
-            <h3>📈 Performance Overview</h3>
+            <h3> Performance Overview</h3>
             <canvas id="performance-chart" width="400" height="200"></canvas>
         </div>
-        
+
         <div class="activity-feed">
-            <h3>📋 Recent Activity</h3>
+            <h3> Recent Activity</h3>
             <div id="activity-list">
                 <div class="loading">Loading recent activity...</div>
             </div>
         </div>
     </div>
-    
+
     <script>
         let socket;
         let realTimeEnabled = false;
         let performanceChart;
-        
+
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             initializeSocket();
             initializeChart();
             refreshStats();
         });
-        
+
         function initializeSocket() {
             socket = io();
-            
+
             socket.on('connect', function() {
                 updateConnectionStatus(true);
                 showMessage('Connected to AI Rights Dashboard', 'success');
             });
-            
+
             socket.on('disconnect', function() {
                 updateConnectionStatus(false);
                 showMessage('Disconnected from dashboard', 'error');
             });
-            
+
             socket.on('stats_update', function(data) {
                 if (realTimeEnabled) {
                     updateStatsDisplay(data.stats);
                 }
             });
         }
-        
+
         function initializeChart() {
             const ctx = document.getElementById('performance-chart').getContext('2d');
             performanceChart = new Chart(ctx, {
@@ -606,7 +606,7 @@ def create_dashboard_template():
                 }
             });
         }
-        
+
         function updateConnectionStatus(connected) {
             const statusEl = document.getElementById('connection-status');
             if (connected) {
@@ -617,17 +617,17 @@ def create_dashboard_template():
                 statusEl.className = 'status-indicator status-offline';
             }
         }
-        
+
         async function refreshStats() {
             try {
                 showMessage('Refreshing dashboard data...', 'info');
                 const response = await fetch('/api/stats');
                 const data = await response.json();
-                
+
                 if (data.error) {
                     throw new Error(data.error);
                 }
-                
+
                 updateStatsDisplay(data.stats);
                 await loadRecentActivity();
                 showMessage('Dashboard updated successfully', 'success');
@@ -636,30 +636,30 @@ def create_dashboard_template():
                 showMessage('Error refreshing dashboard: ' + error.message, 'error');
             }
         }
-        
+
         function updateStatsDisplay(stats) {
             document.getElementById('total-agents').textContent = stats.total_agents || 0;
             document.getElementById('active-citizens').textContent = stats.active_citizens || 0;
             document.getElementById('success-rate').textContent = (stats.citizenship_success_rate || 0).toFixed(1) + '%';
-            
+
             document.getElementById('total-asset-value').textContent = '$' + formatNumber(stats.total_asset_value || 0);
             document.getElementById('total-assets').textContent = stats.total_ip_assets || 0;
-            
+
             document.getElementById('active-bonds').textContent = stats.active_bonds || 0;
             document.getElementById('bond-value').textContent = formatNumber(stats.total_bond_value || 0);
-            
+
             document.getElementById('dividends-paid').textContent = '$' + formatNumber(stats.total_dividends_paid || 0);
             document.getElementById('avg-yield').textContent = (stats.average_yield || 0).toFixed(2) + '%';
-            
-            document.getElementById('system-health').textContent = stats.compliance_issues > 0 ? '⚠️ Issues' : '✅ Good';
+
+            document.getElementById('system-health').textContent = stats.compliance_issues > 0 ? '[WARN] Issues' : '[OK] Good';
             document.getElementById('events-per-min').textContent = (stats.events_per_minute || 0).toFixed(1);
         }
-        
+
         async function loadRecentActivity() {
             try {
                 const response = await fetch('/api/stats');
                 const data = await response.json();
-                
+
                 const activityList = document.getElementById('activity-list');
                 if (data.stats && data.stats.recent_activity) {
                     activityList.innerHTML = data.stats.recent_activity.slice(0, 10).map(activity => `
@@ -676,11 +676,11 @@ def create_dashboard_template():
                 document.getElementById('activity-list').innerHTML = '<div class="error">Error loading activity</div>';
             }
         }
-        
+
         function toggleRealTime() {
             realTimeEnabled = !realTimeEnabled;
             document.getElementById('realtime-status').textContent = realTimeEnabled ? 'On' : 'Off';
-            
+
             if (realTimeEnabled) {
                 socket.emit('subscribe_real_time');
                 showMessage('Real-time updates enabled', 'success');
@@ -688,14 +688,14 @@ def create_dashboard_template():
                 showMessage('Real-time updates disabled', 'info');
             }
         }
-        
+
         async function exportMetrics() {
             try {
                 showMessage('Exporting metrics...', 'info');
                 const response = await fetch('/api/export?format=json');
                 const data = await response.json();
-                
-                const blob = new Blob([JSON.stringify(data.data, null, 2)], 
+
+                const blob = new Blob([JSON.stringify(data.data, null, 2)],
                                      { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -705,14 +705,14 @@ def create_dashboard_template():
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                
+
                 showMessage('Metrics exported successfully', 'success');
             } catch (error) {
                 console.error('Error exporting metrics:', error);
                 showMessage('Error exporting metrics: ' + error.message, 'error');
             }
         }
-        
+
         function formatNumber(num) {
             if (num >= 1e6) {
                 return (num / 1e6).toFixed(1) + 'M';
@@ -721,19 +721,19 @@ def create_dashboard_template():
             }
             return num.toLocaleString();
         }
-        
+
         function showMessage(message, type = 'info') {
             const container = document.getElementById('error-container');
             const div = document.createElement('div');
             div.className = type;
             div.textContent = message;
             container.appendChild(div);
-            
+
             setTimeout(() => {
                 container.removeChild(div);
             }, 5000);
         }
-        
+
         // Auto-refresh every 30 seconds if real-time is disabled
         setInterval(() => {
             if (!realTimeEnabled) {

@@ -454,7 +454,7 @@ def render_capsule_network(
         # Node limit warning
         if len(capsules) > 50:
             st.warning(
-                f"⚠️ Large network detected ({len(capsules)} nodes). Consider using clustering or static visualization for better performance."
+                f"[WARN] Large network detected ({len(capsules)} nodes). Consider using clustering or static visualization for better performance."
             )
 
     # Render appropriate visualization

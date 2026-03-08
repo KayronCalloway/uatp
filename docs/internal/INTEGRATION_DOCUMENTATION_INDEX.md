@@ -4,9 +4,9 @@
 
 ---
 
-## 📚 **Documentation Files Created**
+##  **Documentation Files Created**
 
-### 1. **INTEGRATION_COMPLETE_SUMMARY.md** ⭐ START HERE
+### 1. **INTEGRATION_COMPLETE_SUMMARY.md**  START HERE
 **Purpose:** Complete overview of the integration work
 **Contents:**
 - All completed tasks
@@ -21,7 +21,7 @@
 
 ---
 
-### 2. **KNOWN_ISSUES.md** ⚠️ ISSUES REFERENCE
+### 2. **KNOWN_ISSUES.md** [WARN] ISSUES REFERENCE
 **Purpose:** Quick reference for all known issues
 **Contents:**
 - Active issues list
@@ -35,7 +35,7 @@
 
 ---
 
-### 3. **SQL_ORM_ISSUES_REPORT.md** 🔍 TECHNICAL DEEP-DIVE
+### 3. **SQL_ORM_ISSUES_REPORT.md**  TECHNICAL DEEP-DIVE
 **Purpose:** Detailed analysis of SQL/ORM problems
 **Contents:**
 - Issue #1: ORM queries return None objects
@@ -51,7 +51,7 @@
 
 ---
 
-### 4. **DATA_SEPARATION_REPORT.md** 📊 DATA BREAKDOWN
+### 4. **DATA_SEPARATION_REPORT.md**  DATA BREAKDOWN
 **Purpose:** Explains demo vs live capsule separation
 **Contents:**
 - Database reality (115 total, 67 live, 48 demo)
@@ -64,7 +64,7 @@
 
 ---
 
-### 5. **FRONTEND_BACKEND_COMPLETE_ANALYSIS.md** 🔬 GAP ANALYSIS
+### 5. **FRONTEND_BACKEND_COMPLETE_ANALYSIS.md**  GAP ANALYSIS
 **Purpose:** Original analysis of missing fields
 **Contents:**
 - What exists in backend
@@ -77,11 +77,11 @@
 
 ---
 
-## 🛠️ **Scripts Created**
+##  **Scripts Created**
 
 ### enrich_existing_capsules.py
 **Purpose:** Backfill old capsules with rich analysis
-**Status:** ⚠️ Has persistence issues (see KNOWN_ISSUES.md)
+**Status:** [WARN] Has persistence issues (see KNOWN_ISSUES.md)
 **Usage:**
 ```bash
 # Dry run
@@ -98,7 +98,7 @@ python3 enrich_existing_capsules.py --capsule-id caps_xxx
 
 ---
 
-## 📁 **Files Modified**
+##  **Files Modified**
 
 ### Backend Integration:
 1. **src/api/capsules_fastapi_router.py**
@@ -121,7 +121,7 @@ python3 enrich_existing_capsules.py --capsule-id caps_xxx
 
 ---
 
-## 🎯 **Quick Navigation**
+##  **Quick Navigation**
 
 ### Want to understand...
 
@@ -145,38 +145,38 @@ python3 enrich_existing_capsules.py --capsule-id caps_xxx
 
 ---
 
-## ✅ **What's Working**
+## [OK] **What's Working**
 
 ### Fully Functional:
-- ✅ FastAPI routes (all CRUD operations)
-- ✅ Stats endpoint (demo/test filtering)
-- ✅ New capsule creation with rich metadata
-- ✅ Uncertainty quantification integration
-- ✅ Critical path analysis
-- ✅ Trust score calculation
-- ✅ Frontend display (conditional rendering)
+- [OK] FastAPI routes (all CRUD operations)
+- [OK] Stats endpoint (demo/test filtering)
+- [OK] New capsule creation with rich metadata
+- [OK] Uncertainty quantification integration
+- [OK] Critical path analysis
+- [OK] Trust score calculation
+- [OK] Frontend display (conditional rendering)
 
 ### Partially Working:
-- ⚠️ Enrichment script (runs but doesn't persist updates)
+- [WARN] Enrichment script (runs but doesn't persist updates)
 
 ### Needs Work:
-- ❌ ORM queries in standalone scripts
-- ❌ Frontend demo_mode parameter passing
+- [ERROR] ORM queries in standalone scripts
+- [ERROR] Frontend demo_mode parameter passing
 
 ---
 
-## 📈 **Integration Stats**
+##  **Integration Stats**
 
 - **Files Modified:** 3 core files + 1 new script
 - **Lines Added/Modified:** ~300 lines
 - **Analysis Modules Integrated:** 4 (uncertainty, critical path, trust, confidence explainer)
 - **Old Capsules Enriched:** 0 (persistence issue)
-- **New Capsules Working:** ✅ 100%
+- **New Capsules Working:** [OK] 100%
 - **Documentation Created:** 5 comprehensive docs
 
 ---
 
-## 🚀 **Next Steps**
+##  **Next Steps**
 
 ### Immediate:
 1. Test new capsule creation to verify rich metadata
@@ -195,7 +195,7 @@ python3 enrich_existing_capsules.py --capsule-id caps_xxx
 
 ---
 
-## 📞 **Support**
+##  **Support**
 
 ### Issues?
 1. Check `KNOWN_ISSUES.md` first

@@ -27,7 +27,7 @@ def fix_file(file_path: Path, dry_run: bool = False) -> Tuple[bool, int, List[st
     try:
         content = file_path.read_text()
     except Exception as e:
-        print(f"⚠️  Error reading {file_path}: {e}")
+        print(f"[WARN]  Error reading {file_path}: {e}")
         return False, 0, []
 
     original_content = content
@@ -91,7 +91,7 @@ def fix_file(file_path: Path, dry_run: bool = False) -> Tuple[bool, int, List[st
             try:
                 file_path.write_text(content)
             except Exception as e:
-                print(f"⚠️  Error writing {file_path}: {e}")
+                print(f"[WARN]  Error writing {file_path}: {e}")
                 return False, 0, []
         return True, count, changes
 
@@ -103,13 +103,13 @@ def main():
     dry_run = "--dry-run" in sys.argv
 
     if dry_run:
-        print("🔍 DRY RUN MODE - No files will be modified\n")
+        print(" DRY RUN MODE - No files will be modified\n")
     else:
-        print("🔧 FIXING MODE - Files will be modified\n")
+        print(" FIXING MODE - Files will be modified\n")
 
     src_dir = Path("src")
     if not src_dir.exists():
-        print("❌ Error: src/ directory not found")
+        print("[ERROR] Error: src/ directory not found")
         sys.exit(1)
 
     total_files = 0
@@ -129,29 +129,29 @@ def main():
             modified_files.append((py_file, count, changes))
 
             if dry_run:
-                print(f"📋 Would fix {count} instances in {py_file}")
+                print(f" Would fix {count} instances in {py_file}")
             else:
-                print(f"✅ Fixed {count} instances in {py_file}")
+                print(f"[OK] Fixed {count} instances in {py_file}")
 
             for change in changes:
                 print(f"   - {change}")
 
     print("\n" + "=" * 70)
-    print("📊 Summary:")
+    print(" Summary:")
     print(f"   Files {'would be ' if dry_run else ''}modified: {total_files}")
     print(f"   Total replacements: {total_replacements}")
     print("=" * 70)
 
     if modified_files and not dry_run:
-        print("\n✅ All files fixed successfully!")
-        print("\n🔍 Next steps:")
+        print("\n[OK] All files fixed successfully!")
+        print("\n Next steps:")
         print("   1. Run tests: python3 -m pytest tests/test_timezone_consistency.py")
         print("   2. Review changes: git diff")
         print(
             "   3. Commit: git add -A && git commit -m 'Fix: Replace datetime.utcnow() with timezone-aware utc_now()'"
         )
     elif modified_files and dry_run:
-        print("\n💡 To apply these changes, run without --dry-run:")
+        print("\n To apply these changes, run without --dry-run:")
         print("   python3 scripts/fix_datetime_utcnow.py")
 
 

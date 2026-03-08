@@ -12,12 +12,13 @@ import json
 import logging
 import os
 import sys
+import threading
 import time
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
 from statistics import mean, median, stdev
+from typing import Any, Dict, List
+
 import psutil
-import threading
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -33,7 +34,7 @@ class PerformanceBenchmark:
         self.system_stats = []
         self.monitoring = False
 
-        logger.info("📊 Performance Benchmark initialized")
+        logger.info(" Performance Benchmark initialized")
 
     def monitor_system(self):
         """Monitor system resources during benchmarks."""
@@ -73,7 +74,7 @@ class PerformanceBenchmark:
     async def benchmark_capsule_creation(self, count: int = 1000) -> Dict[str, Any]:
         """Benchmark capsule creation performance."""
 
-        logger.info(f"🔥 Benchmarking capsule creation ({count} capsules)...")
+        logger.info(f" Benchmarking capsule creation ({count} capsules)...")
 
         try:
             from live_capture.real_time_capsule_generator import (
@@ -138,7 +139,7 @@ class PerformanceBenchmark:
                 "system_stats": self._analyze_system_stats(),
             }
 
-            logger.info(f"✅ Capsule creation benchmark completed")
+            logger.info("[OK] Capsule creation benchmark completed")
             logger.info(f"   Success rate: {success_rate:.1%}")
             logger.info(f"   Capsules/sec: {capsules_per_second:.1f}")
             logger.info(f"   Avg duration: {avg_duration:.3f}s")
@@ -146,14 +147,14 @@ class PerformanceBenchmark:
             return result
 
         except Exception as e:
-            logger.error(f"❌ Capsule creation benchmark failed: {e}")
+            logger.error(f"[ERROR] Capsule creation benchmark failed: {e}")
             self.stop_monitoring()
             raise
 
     async def benchmark_capsule_retrieval(self, count: int = 1000) -> Dict[str, Any]:
         """Benchmark capsule retrieval performance."""
 
-        logger.info(f"🔍 Benchmarking capsule retrieval ({count} operations)...")
+        logger.info(f" Benchmarking capsule retrieval ({count} operations)...")
 
         try:
             from config.database_config import get_database_adapter
@@ -225,7 +226,7 @@ class PerformanceBenchmark:
                 "system_stats": self._analyze_system_stats(),
             }
 
-            logger.info(f"✅ Capsule retrieval benchmark completed")
+            logger.info("[OK] Capsule retrieval benchmark completed")
             logger.info(f"   Success rate: {success_rate:.1%}")
             logger.info(f"   Retrievals/sec: {retrievals_per_second:.1f}")
             logger.info(f"   Avg duration: {avg_duration:.3f}s")
@@ -233,14 +234,14 @@ class PerformanceBenchmark:
             return result
 
         except Exception as e:
-            logger.error(f"❌ Capsule retrieval benchmark failed: {e}")
+            logger.error(f"[ERROR] Capsule retrieval benchmark failed: {e}")
             self.stop_monitoring()
             raise
 
     async def benchmark_capsule_search(self, count: int = 500) -> Dict[str, Any]:
         """Benchmark capsule search performance."""
 
-        logger.info(f"🔍 Benchmarking capsule search ({count} operations)...")
+        logger.info(f" Benchmarking capsule search ({count} operations)...")
 
         try:
             from config.database_config import get_database_adapter
@@ -315,7 +316,7 @@ class PerformanceBenchmark:
                 "system_stats": self._analyze_system_stats(),
             }
 
-            logger.info(f"✅ Capsule search benchmark completed")
+            logger.info("[OK] Capsule search benchmark completed")
             logger.info(f"   Success rate: {success_rate:.1%}")
             logger.info(f"   Searches/sec: {searches_per_second:.1f}")
             logger.info(f"   Avg duration: {avg_duration:.3f}s")
@@ -323,7 +324,7 @@ class PerformanceBenchmark:
             return result
 
         except Exception as e:
-            logger.error(f"❌ Capsule search benchmark failed: {e}")
+            logger.error(f"[ERROR] Capsule search benchmark failed: {e}")
             self.stop_monitoring()
             raise
 
@@ -333,7 +334,7 @@ class PerformanceBenchmark:
         """Benchmark concurrent operations."""
 
         logger.info(
-            f"🔄 Benchmarking concurrent operations ({concurrent_users} users, {operations_per_user} ops each)..."
+            f" Benchmarking concurrent operations ({concurrent_users} users, {operations_per_user} ops each)..."
         )
 
         try:
@@ -407,7 +408,7 @@ class PerformanceBenchmark:
                 "system_stats": self._analyze_system_stats(),
             }
 
-            logger.info(f"✅ Concurrent operations benchmark completed")
+            logger.info("[OK] Concurrent operations benchmark completed")
             logger.info(f"   Success rate: {success_rate:.1%}")
             logger.info(f"   Operations/sec: {operations_per_second:.1f}")
             logger.info(f"   Avg duration: {avg_duration:.3f}s")
@@ -415,7 +416,7 @@ class PerformanceBenchmark:
             return result
 
         except Exception as e:
-            logger.error(f"❌ Concurrent operations benchmark failed: {e}")
+            logger.error(f"[ERROR] Concurrent operations benchmark failed: {e}")
             self.stop_monitoring()
             raise
 
@@ -482,7 +483,7 @@ class PerformanceBenchmark:
     async def _create_test_capsules(self, adapter, count: int):
         """Create test capsules for benchmarking."""
 
-        logger.info(f"📦 Creating {count} test capsules...")
+        logger.info(f" Creating {count} test capsules...")
 
         for i in range(count):
             capsule_data = {
@@ -501,7 +502,7 @@ class PerformanceBenchmark:
     async def _create_searchable_test_capsules(self, adapter, count: int):
         """Create searchable test capsules for search benchmarking."""
 
-        logger.info(f"🔍 Creating {count} searchable test capsules...")
+        logger.info(f" Creating {count} searchable test capsules...")
 
         content_templates = [
             "This is a test message about performance benchmarking",
@@ -576,13 +577,13 @@ class PerformanceBenchmark:
         with open(filepath, "w") as f:
             json.dump(report, f, indent=2)
 
-        logger.info(f"📊 Performance report saved to {filepath}")
+        logger.info(f" Performance report saved to {filepath}")
 
 
 async def main():
     """Run performance benchmarks."""
 
-    print("📊 UATP Performance Benchmarks")
+    print(" UATP Performance Benchmarks")
     print("=" * 50)
 
     benchmark = PerformanceBenchmark()
@@ -590,25 +591,25 @@ async def main():
 
     try:
         # Run capsule creation benchmark
-        print("\n🔥 Running capsule creation benchmark...")
+        print("\n Running capsule creation benchmark...")
         results["capsule_creation"] = await benchmark.benchmark_capsule_creation(100)
 
         # Run capsule retrieval benchmark
-        print("\n🔍 Running capsule retrieval benchmark...")
+        print("\n Running capsule retrieval benchmark...")
         results["capsule_retrieval"] = await benchmark.benchmark_capsule_retrieval(200)
 
         # Run capsule search benchmark
-        print("\n🔍 Running capsule search benchmark...")
+        print("\n Running capsule search benchmark...")
         results["capsule_search"] = await benchmark.benchmark_capsule_search(100)
 
         # Run concurrent operations benchmark
-        print("\n🔄 Running concurrent operations benchmark...")
+        print("\n Running concurrent operations benchmark...")
         results[
             "concurrent_operations"
         ] = await benchmark.benchmark_concurrent_operations(5, 50)
 
         # Generate and save report
-        print("\n📊 Generating performance report...")
+        print("\n Generating performance report...")
         report = benchmark.generate_report(results)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -616,7 +617,7 @@ async def main():
         benchmark.save_report(report, filename)
 
         # Display summary
-        print("\n🎯 Performance Summary:")
+        print("\n Performance Summary:")
         for name, result in results.items():
             print(f"   {name}:")
             print(f"     Success rate: {result['success_rate']:.1%}")
@@ -631,11 +632,11 @@ async def main():
             print(f"     Avg duration: {result['avg_duration']:.3f}s")
             print(f"     P95 duration: {result.get('p95_duration', 0):.3f}s")
 
-        print(f"\n✅ Performance benchmarks completed!")
-        print(f"📄 Full report saved to reports/{filename}")
+        print("\n[OK] Performance benchmarks completed!")
+        print(f" Full report saved to reports/{filename}")
 
     except Exception as e:
-        print(f"❌ Benchmark failed: {e}")
+        print(f"[ERROR] Benchmark failed: {e}")
         raise
 
 

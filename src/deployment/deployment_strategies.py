@@ -625,7 +625,7 @@ if __name__ == "__main__":
 
     async def test_deployment_strategies():
         """Test deployment strategies."""
-        print("🚀 UATP Deployment Strategies Test")
+        print(" UATP Deployment Strategies Test")
         print("=" * 50)
 
         # Test with Kubernetes orchestrator
@@ -653,7 +653,7 @@ if __name__ == "__main__":
         )
 
         result = await deployment_manager.deploy(blue_green_config)
-        print(f"✅ Blue-Green deployment: {result.status.value}")
+        print(f"[OK] Blue-Green deployment: {result.status.value}")
 
         # Test canary deployment
         print("\n2. Testing Kubernetes Canary Deployment...")
@@ -666,7 +666,7 @@ if __name__ == "__main__":
         )
 
         result = await deployment_manager.deploy(canary_config)
-        print(f"✅ Canary deployment: {result.status.value}")
+        print(f"[OK] Canary deployment: {result.status.value}")
 
         # Test Docker Compose deployment
         print("\n3. Testing Docker Compose Deployment...")
@@ -681,7 +681,7 @@ if __name__ == "__main__":
         )
 
         result = await compose_manager.deploy(compose_config)
-        print(f"✅ Docker Compose deployment: {result.status.value}")
+        print(f"[OK] Docker Compose deployment: {result.status.value}")
 
         # Show deployment metrics
         print("\n4. Deployment Metrics...")
@@ -699,21 +699,21 @@ if __name__ == "__main__":
             )
 
         print("\n" + "=" * 50)
-        print("✅ DEPLOYMENT STRATEGIES TEST COMPLETED!")
+        print("[OK] DEPLOYMENT STRATEGIES TEST COMPLETED!")
         print("=" * 50)
 
-        print("\n🎯 Deployment Capabilities Demonstrated:")
-        print("   ✅ Blue-Green deployment strategy")
-        print("   ✅ Canary deployment with traffic splitting")
-        print("   ✅ Rolling update deployment")
-        print("   ✅ Recreate deployment strategy")
-        print("   ✅ Kubernetes orchestration")
-        print("   ✅ Docker Compose orchestration")
-        print("   ✅ Automatic rollback on failure")
-        print("   ✅ Health checks and monitoring")
-        print("   ✅ Deployment metrics and history")
-        print("   ✅ Traffic management and switching")
+        print("\n Deployment Capabilities Demonstrated:")
+        print("   [OK] Blue-Green deployment strategy")
+        print("   [OK] Canary deployment with traffic splitting")
+        print("   [OK] Rolling update deployment")
+        print("   [OK] Recreate deployment strategy")
+        print("   [OK] Kubernetes orchestration")
+        print("   [OK] Docker Compose orchestration")
+        print("   [OK] Automatic rollback on failure")
+        print("   [OK] Health checks and monitoring")
+        print("   [OK] Deployment metrics and history")
+        print("   [OK] Traffic management and switching")
 
-        print("\n🚀 UATP Deployment System Ready for Production!")
+        print("\n UATP Deployment System Ready for Production!")
 
     asyncio.run(test_deployment_strategies())

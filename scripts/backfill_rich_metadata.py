@@ -343,7 +343,7 @@ class LegacyCapsuleEnricher:
             return True
 
         except Exception as e:
-            print(f"  ❌ Error processing {capsule.capsule_id}: {e}")
+            print(f"  [ERROR] Error processing {capsule.capsule_id}: {e}")
             self.stats["errors"] += 1
             return False
 
@@ -354,7 +354,7 @@ class LegacyCapsuleEnricher:
         print("=" * 60)
 
         if dry_run:
-            print("🔍 DRY RUN - no changes will be made")
+            print(" DRY RUN - no changes will be made")
 
         async with self.async_session() as session:
             # Fetch all capsules
@@ -365,7 +365,7 @@ class LegacyCapsuleEnricher:
             result = await session.execute(query)
             capsules = result.scalars().all()
 
-            print(f"\n📦 Found {len(capsules)} capsules to process")
+            print(f"\n Found {len(capsules)} capsules to process")
 
             needs_enrichment = []
             for c in capsules:
@@ -373,26 +373,26 @@ class LegacyCapsuleEnricher:
                 if self._needs_enrichment(payload):
                     needs_enrichment.append(c)
 
-            print(f"🔄 {len(needs_enrichment)} need enrichment")
+            print(f" {len(needs_enrichment)} need enrichment")
             print(
-                f"✅ {len(capsules) - len(needs_enrichment)} already have rich metadata"
+                f"[OK] {len(capsules) - len(needs_enrichment)} already have rich metadata"
             )
 
             if dry_run:
-                print("\n🔍 Would process:")
+                print("\n Would process:")
                 for c in needs_enrichment[:10]:
                     print(f"   - {c.capsule_id}")
                 if len(needs_enrichment) > 10:
                     print(f"   ... and {len(needs_enrichment) - 10} more")
                 return
 
-            print("\n🚀 Starting enrichment...\n")
+            print("\n Starting enrichment...\n")
 
             for i, capsule in enumerate(needs_enrichment, 1):
                 self.stats["total_processed"] += 1
                 success = await self.process_capsule(capsule)
 
-                status = "✅" if success else "⏭️"
+                status = "[OK]" if success else "⏭️"
                 print(f"  [{i}/{len(needs_enrichment)}] {status} {capsule.capsule_id}")
 
             print("\n" + "=" * 60)

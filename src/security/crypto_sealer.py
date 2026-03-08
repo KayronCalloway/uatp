@@ -73,7 +73,7 @@ def _derive_key_password() -> bytes:
     derived = hashlib.pbkdf2_hmac("sha256", combined, b"uatp-salt", 100000)
 
     logger.warning(
-        "⚠️ Using derived key password. Set UATP_KEY_PASSWORD for production."
+        "[WARN] Using derived key password. Set UATP_KEY_PASSWORD for production."
     )
     return derived
 
@@ -85,7 +85,7 @@ class CryptoSealer:
 
     def __init__(self, key_dir: str = ".uatp_keys"):
         if not ed25519:
-            logger.warning("⚠️ 'cryptography' library not found. Signing disabled.")
+            logger.warning("[WARN] 'cryptography' library not found. Signing disabled.")
             self.enabled = False
             return
 
@@ -120,7 +120,7 @@ class CryptoSealer:
         self._pub_path = pub_path
 
         if not os.path.exists(self._priv_path) or not os.path.exists(pub_path):
-            logger.info("🔐 Generating new Ed25519 keypair with encrypted storage...")
+            logger.info(" Generating new Ed25519 keypair with encrypted storage...")
             private_key = ed25519.Ed25519PrivateKey.generate()
             public_key = private_key.public_key()
 
@@ -154,12 +154,12 @@ class CryptoSealer:
             except (OSError, AttributeError):
                 pass  # Windows or permission error
 
-            logger.info(f"✅ Encrypted keys saved to {self.key_dir}")
+            logger.info(f"[OK] Encrypted keys saved to {self.key_dir}")
 
     def _migrate_to_encrypted(self, old_path: str, new_path: str):
         """Migrate an unencrypted private key to encrypted storage."""
         try:
-            logger.info("🔄 Migrating unencrypted key to encrypted storage...")
+            logger.info(" Migrating unencrypted key to encrypted storage...")
 
             # Load unencrypted key
             with open(old_path, "rb") as f:
@@ -193,10 +193,12 @@ class CryptoSealer:
                 f.write(os.urandom(1024))  # Overwrite with random data
             os.remove(old_path)
 
-            logger.info("✅ Key migration complete. Unencrypted key securely deleted.")
+            logger.info(
+                "[OK] Key migration complete. Unencrypted key securely deleted."
+            )
 
         except Exception as e:
-            logger.error(f"❌ Key migration failed: {e}")
+            logger.error(f"[ERROR] Key migration failed: {e}")
             raise
 
     def _load_keys(self):
@@ -211,7 +213,7 @@ class CryptoSealer:
                 )
         except TypeError:
             # Key might be unencrypted if migration failed
-            logger.warning("⚠️ Attempting to load key without password...")
+            logger.warning("[WARN] Attempting to load key without password...")
             with open(self._priv_path, "rb") as f:
                 self.private_key = serialization.load_pem_private_key(
                     f.read(), password=None
@@ -220,7 +222,7 @@ class CryptoSealer:
         with open(self._pub_path, "rb") as f:
             self.public_key = serialization.load_pem_public_key(f.read())
 
-        logger.info("🔐 Cryptographic keys loaded successfully")
+        logger.info(" Cryptographic keys loaded successfully")
 
     def _canonicalize(self, data: Dict[str, Any]) -> bytes:
         """
@@ -264,7 +266,7 @@ class CryptoSealer:
                 "created": json.dumps(capsule_data.get("timestamp", "")),
             }
         except Exception as e:
-            logger.error(f"❌ Signing failed: {e}")
+            logger.error(f"[ERROR] Signing failed: {e}")
             return {}
 
     def verify_capsule(self, capsule_data: Dict[str, Any]) -> bool:
@@ -311,7 +313,7 @@ class CryptoSealer:
             # Extract signature
             signature_str = verification_data.get("signature", "")
             if not signature_str.startswith("ed25519:"):
-                logger.warning("⚠️ V7.0 signature must start with 'ed25519:'")
+                logger.warning("[WARN] V7.0 signature must start with 'ed25519:'")
                 return False
 
             signature_hex = signature_str.split(":", 1)[1]
@@ -319,7 +321,7 @@ class CryptoSealer:
                 len(signature_hex) != 128
             ):  # Ed25519 signatures are 64 bytes = 128 hex chars
                 logger.warning(
-                    f"⚠️ Invalid signature length: {len(signature_hex)} (expected 128)"
+                    f"[WARN] Invalid signature length: {len(signature_hex)} (expected 128)"
                 )
                 return False
 
@@ -333,7 +335,7 @@ class CryptoSealer:
             # Validate hash format (should be 64 hex chars = SHA256)
             if len(stored_hash) != 64:
                 logger.warning(
-                    f"⚠️ Invalid hash length: {len(stored_hash)} (expected 64)"
+                    f"[WARN] Invalid hash length: {len(stored_hash)} (expected 64)"
                 )
                 return False
 
@@ -352,14 +354,14 @@ class CryptoSealer:
             # Extract and load public key from verify_key
             verify_key_hex = verification_data.get("verify_key")
             if not verify_key_hex:
-                logger.warning("⚠️ No verify_key in V7.0 verification object")
+                logger.warning("[WARN] No verify_key in V7.0 verification object")
                 return False
 
             if (
                 len(verify_key_hex) != 64
             ):  # Ed25519 public keys are 32 bytes = 64 hex chars
                 logger.warning(
-                    f"⚠️ Invalid verify_key length: {len(verify_key_hex)} (expected 64)"
+                    f"[WARN] Invalid verify_key length: {len(verify_key_hex)} (expected 64)"
                 )
                 return False
 
@@ -370,18 +372,18 @@ class CryptoSealer:
             try:
                 public_key.verify(signature_bytes, hash_bytes)
                 logger.info(
-                    f"✅ V7.0 capsule signature verified: {capsule_data.get('capsule_id', 'unknown')}"
+                    f"[OK] V7.0 capsule signature verified: {capsule_data.get('capsule_id', 'unknown')}"
                 )
                 return True
             except Exception as sig_error:
-                logger.warning(f"⚠️ Signature verification failed: {sig_error}")
+                logger.warning(f"[WARN] Signature verification failed: {sig_error}")
                 return False
 
         except ValueError as e:
-            logger.error(f"❌ V7.0 verification failed (hex decode): {e}")
+            logger.error(f"[ERROR] V7.0 verification failed (hex decode): {e}")
             return False
         except Exception as e:
-            logger.error(f"❌ V7.0 verification failed: {e}")
+            logger.error(f"[ERROR] V7.0 verification failed: {e}")
             return False
 
     def _compute_v7_hash(self, capsule_data: Dict[str, Any]) -> str:
@@ -439,13 +441,13 @@ class CryptoSealer:
         signature_info = capsule_data.get("signature")
 
         if not signature_info:
-            logger.warning("⚠️ No signature found in capsule")
+            logger.warning("[WARN] No signature found in capsule")
             return False
 
         try:
             signature_b64 = signature_info.get("proofValue")
             if not signature_b64:
-                logger.warning("⚠️ No proofValue in legacy signature")
+                logger.warning("[WARN] No proofValue in legacy signature")
                 return False
 
             signature_bytes = base64.b64decode(signature_b64)
@@ -454,10 +456,10 @@ class CryptoSealer:
             canonical_data = self._canonicalize(capsule_data)
             self.public_key.verify(signature_bytes, canonical_data)
             logger.info(
-                f"✅ Legacy capsule signature verified: {capsule_data.get('capsule_id', 'unknown')}"
+                f"[OK] Legacy capsule signature verified: {capsule_data.get('capsule_id', 'unknown')}"
             )
             return True
 
         except Exception as e:
-            logger.error(f"❌ Legacy verification failed: {e}")
+            logger.error(f"[ERROR] Legacy verification failed: {e}")
             return False

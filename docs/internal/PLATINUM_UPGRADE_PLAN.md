@@ -6,7 +6,7 @@
 
 ---
 
-## 🚨 Phase 1: Critical Blockers (Week 1)
+##  Phase 1: Critical Blockers (Week 1)
 
 ### Priority 1.1: Fix Test Suite (Day 1)
 **Status:** BLOCKING
@@ -327,7 +327,7 @@ def test_premium_increases_with_risk(coverage, risk_score):
 
 ---
 
-## 🔒 Phase 2: Security & Performance (Week 2)
+##  Phase 2: Security & Performance (Week 2)
 
 ### Priority 2.1: Security Audit (Days 8-9)
 
@@ -466,7 +466,7 @@ locust -f performance/locustfile.py --host=https://api-test.uatp.app --users 100
 
 ---
 
-## 📊 Phase 3: Observability (Days 12-14)
+##  Phase 3: Observability (Days 12-14)
 
 ### Priority 3.1: Business Metrics
 
@@ -565,7 +565,7 @@ class RiskAssessor:
 
 ---
 
-## 🚀 Phase 4: Deployment & CI/CD (Days 15-17)
+##  Phase 4: Deployment & CI/CD (Days 15-17)
 
 ### Priority 4.1: CI/CD Pipeline
 
@@ -674,7 +674,7 @@ sed -i 's/uatp-production/uatp-staging/g' k8s/staging/*.yaml
 
 ---
 
-## ⚖️ Phase 5: Legal & Compliance (Ongoing)
+##  Phase 5: Legal & Compliance (Ongoing)
 
 ### Priority 5.1: Insurance Regulatory
 
@@ -702,7 +702,7 @@ sed -i 's/uatp-production/uatp-staging/g' k8s/staging/*.yaml
 
 ---
 
-## 📋 Final Checklist
+##  Final Checklist
 
 ### Week 1 Deliverables
 - [ ] Test suite fixed and passing (80%+ coverage)
@@ -730,7 +730,7 @@ sed -i 's/uatp-production/uatp-staging/g' k8s/staging/*.yaml
 
 ---
 
-## 🎯 Success Metrics
+##  Success Metrics
 
 **Technical Excellence:**
 - Test coverage: 80%+

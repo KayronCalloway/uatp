@@ -389,7 +389,7 @@ curl -X POST "${UATP_API_URL}/enterprise/organizations/your-org-id/plan" \
         "window_seconds": 60
       },
       {
-        "limit_type": "requests_per_hour", 
+        "limit_type": "requests_per_hour",
         "limit_value": 50000,
         "window_seconds": 3600
       }
@@ -564,16 +564,16 @@ server {
 
     ssl_certificate /etc/ssl/certs/uatp-enterprise.crt;
     ssl_certificate_key /etc/ssl/private/uatp-enterprise.key;
-    
+
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
     ssl_prefer_server_ciphers off;
-    
+
     add_header Strict-Transport-Security "max-age=63072000" always;
     add_header X-Frame-Options DENY;
     add_header X-Content-Type-Options nosniff;
     add_header X-XSS-Protection "1; mode=block";
-    
+
     location / {
         proxy_pass http://uatp-backend;
         proxy_set_header Host $host;
@@ -810,14 +810,14 @@ curl "${UATP_API_URL}/enterprise/audit/events?start_date=2024-01-01T00:00:00Z&fo
 
 ```sql
 -- Check slow queries
-SELECT query, mean_exec_time, calls 
-FROM pg_stat_statements 
-ORDER BY mean_exec_time DESC 
+SELECT query, mean_exec_time, calls
+FROM pg_stat_statements
+ORDER BY mean_exec_time DESC
 LIMIT 10;
 
 -- Check connection pool
-SELECT count(*) as active_connections 
-FROM pg_stat_activity 
+SELECT count(*) as active_connections
+FROM pg_stat_activity
 WHERE state = 'active';
 ```
 
@@ -897,7 +897,7 @@ All API endpoints return consistent error responses:
 ```json
 {
   "error": "Error type",
-  "message": "Human-readable error message", 
+  "message": "Human-readable error message",
   "code": "ERROR_CODE",
   "details": {
     "field": "Additional error details"
@@ -926,7 +926,7 @@ Common HTTP status codes:
 
 ### Support Channels
 
-- **Enterprise Support**: enterprise-support@uatp.com
+- **Enterprise Support**: enterprise-Kayron@houseofcalloway.com
 - **Technical Documentation**: docs.uatp.com
 - **Community Forum**: community.uatp.com
 - **Security Issues**: security@uatp.com
@@ -942,4 +942,4 @@ Contact your Customer Success Manager for training scheduling and certification 
 
 ---
 
-*This document is maintained by the UATP Enterprise Team. For updates and corrections, please contact enterprise-support@uatp.com.*
+*This document is maintained by the UATP Enterprise Team. For updates and corrections, please contact enterprise-Kayron@houseofcalloway.com.*

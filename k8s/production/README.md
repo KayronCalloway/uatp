@@ -2,7 +2,7 @@
 
 This directory contains production-ready Kubernetes manifests for deploying the UATP Capsule Engine to a production cluster.
 
-## 📋 Prerequisites
+##  Prerequisites
 
 ### Required Tools
 - **kubectl** (v1.25+) - Kubernetes CLI
@@ -23,7 +23,7 @@ This directory contains production-ready Kubernetes manifests for deploying the 
 - **Node Size**: 4 CPU, 8GB RAM minimum per node
 - **Storage**: Persistent volumes for database backups
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Build and Push Docker Image
 
@@ -109,7 +109,7 @@ kubectl apply -f ingress.yaml
 kubectl rollout status deployment/uatp-api -n uatp-production
 ```
 
-## 📁 File Descriptions
+##  File Descriptions
 
 ### `namespace.yaml`
 Creates the `uatp-production` namespace with resource quotas and limits.
@@ -201,7 +201,7 @@ Automated deployment script with validation and health checks.
 - Waits for deployment to be ready
 - Shows deployment status and useful commands
 
-## 🔧 Configuration
+##  Configuration
 
 ### Environment Variables (ConfigMap)
 
@@ -237,7 +237,7 @@ Automated deployment script with validation and health checks.
 - CPU usage < 40% (for 5min) → Scale down
 - Memory usage < 50% (for 5min) → Scale down
 
-## 🔒 Security
+##  Security
 
 ### Pod Security
 
@@ -271,7 +271,7 @@ securityContext:
 3. Use RBAC to restrict secret access
 4. Rotate secrets regularly
 
-## 📊 Monitoring
+##  Monitoring
 
 ### Health Checks
 
@@ -315,7 +315,7 @@ kubectl logs -f <pod-name> -n uatp-production
 kubectl logs --previous <pod-name> -n uatp-production
 ```
 
-## 🔄 Deployment Workflow
+##  Deployment Workflow
 
 ### Standard Deployment
 
@@ -355,7 +355,7 @@ The deployment is configured for rolling updates:
 - `maxUnavailable: 0` - No pods taken down until new ones are ready
 - Readiness probes ensure traffic only goes to healthy pods
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### Pods Not Starting
 
@@ -426,7 +426,7 @@ kubectl get secret uatp-api-tls -n uatp-production
 kubectl describe ingress uatp-api-ingress -n uatp-production
 ```
 
-## 🔧 Useful Commands
+##  Useful Commands
 
 ### Cluster Management
 
@@ -490,7 +490,7 @@ kubectl get secret uatp-secrets -n uatp-production -o yaml
 kubectl get secret uatp-secrets -n uatp-production -o jsonpath='{.data.database-url}' | base64 -d
 ```
 
-## 📈 Performance Tuning
+##  Performance Tuning
 
 ### Database Optimization
 
@@ -534,7 +534,7 @@ resources:
     memory: "4Gi"
 ```
 
-## 🌐 Multi-Region Deployment
+##  Multi-Region Deployment
 
 For global deployments, consider:
 
@@ -544,7 +544,7 @@ For global deployments, consider:
 4. **Shared Redis** or per-region caches
 5. **CDN** for static assets (CloudFront, Cloudflare)
 
-## 📋 Pre-Deployment Checklist
+##  Pre-Deployment Checklist
 
 - [ ] Docker image built and pushed to registry
 - [ ] Secrets created and applied
@@ -572,5 +572,5 @@ For global deployments, consider:
 - Check metrics: `curl https://api.uatp.app:9090/metrics`
 
 **Contact:**
-- GitHub Issues: [github.com/uatp/capsule-engine/issues](https://github.com/uatp/capsule-engine/issues)
-- Email: support@uatp.app
+- GitHub Issues: [github.com/KayronCalloway/capsule-engine/issues](https://github.com/KayronCalloway/capsule-engine/issues)
+- Email: Kayron@houseofcalloway.com

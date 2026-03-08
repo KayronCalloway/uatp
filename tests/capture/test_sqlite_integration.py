@@ -23,17 +23,17 @@ from live_capture import capture_live_interaction, get_real_time_generator
 async def test_sqlite_integration():
     """Test SQLite integration with real-time generator."""
 
-    print("🧪 Testing SQLite Integration with Real-Time Generator")
+    print(" Testing SQLite Integration with Real-Time Generator")
     print("=" * 60)
 
     # Initialize SQLite capsule creator
     sqlite_creator = await initialize_sqlite_capsule_creator()
 
     if not sqlite_creator._db_connected:
-        print("❌ SQLite database not connected - test failed")
+        print("[ERROR] SQLite database not connected - test failed")
         return False
 
-    print("✅ SQLite database connected successfully")
+    print("[OK] SQLite database connected successfully")
 
     # Create integration layer with SQLite creator
     integration_layer = IntegrationLayer()
@@ -195,7 +195,7 @@ Additional Redis Sentinel configuration:
 
     session_id = "sqlite-integration-test"
 
-    print("\n📝 Testing with technical conversation...")
+    print("\n Testing with technical conversation...")
     print(f"   User: {technical_conversation['user'][:60]}...")
     print(f"   Assistant: {technical_conversation['assistant'][:60]}...")
 
@@ -214,13 +214,13 @@ Additional Redis Sentinel configuration:
     )
 
     if capsule_id:
-        print(f"✅ Live capsule created: {capsule_id}")
+        print(f"[OK] Live capsule created: {capsule_id}")
     else:
-        print("❌ No capsule created")
+        print("[ERROR] No capsule created")
 
     # Get database statistics
     stats = await sqlite_creator.get_capsule_stats()
-    print("\n📊 SQLite Database Statistics:")
+    print("\n SQLite Database Statistics:")
     print(f"   Total capsules: {stats['total_capsules']}")
     print(f"   Auto-filtered capsules: {stats['auto_filtered_capsules']}")
     print(f"   Storage backend: {stats['storage_backend']}")
@@ -228,7 +228,7 @@ Additional Redis Sentinel configuration:
     # Get recent capsules
     recent = await sqlite_creator.get_recent_capsules(3)
     if recent:
-        print("\n🔄 Recent SQLite Capsules:")
+        print("\n Recent SQLite Capsules:")
         for capsule in recent:
             print(
                 f"   • {capsule['capsule_id']} ({capsule['platform']}) - {capsule['significance_score']:.2f}"
@@ -240,7 +240,7 @@ Additional Redis Sentinel configuration:
 async def main():
     """Main test function."""
 
-    print("🚀 SQLite Integration Test")
+    print(" SQLite Integration Test")
     print("Testing real-time capsule generation with SQLite storage")
     print("=" * 70)
 
@@ -248,17 +248,17 @@ async def main():
         success = await test_sqlite_integration()
 
         if success:
-            print("\n✅ SQLITE INTEGRATION TEST PASSED!")
+            print("\n[OK] SQLITE INTEGRATION TEST PASSED!")
             print("   Real-time generator is storing capsules in SQLite database")
             print("   Database integration is working correctly")
             print("   System is ready for production use")
         else:
-            print("\n❌ SQLITE INTEGRATION TEST FAILED!")
+            print("\n[ERROR] SQLITE INTEGRATION TEST FAILED!")
             print("   Capsules are not being stored in SQLite database")
             print("   Check database connection and integration layer")
 
     except Exception as e:
-        print(f"❌ Test failed: {e}")
+        print(f"[ERROR] Test failed: {e}")
         import traceback
 
         traceback.print_exc()
