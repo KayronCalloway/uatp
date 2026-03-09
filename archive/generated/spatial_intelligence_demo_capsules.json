@@ -1,0 +1,420 @@
+{
+  "demo_summary": {
+    "task": "pick_and_place",
+    "success": true,
+    "capsules_created": 4,
+    "agents_involved": 3,
+    "total_economic_value": 50.0,
+    "execution_time": 4.4,
+    "capsule_breakdown": {
+      "spatial_perception": 1,
+      "spatial_reasoning": 1,
+      "physical_action": 2
+    }
+  },
+  "capsules": [
+    {
+      "type": "spatial_perception",
+      "capsule_id": "spatial_perception_7bd39f22",
+      "timestamp": "2025-11-18T12:11:02.166396",
+      "agent_id": "robot_perception_system",
+      "spatial_scene": {
+        "timestamp": "2025-11-18T12:11:02.166355",
+        "frame_id": "world",
+        "objects": [
+          {
+            "id": "blue_cube_01",
+            "object_class": "cube",
+            "position": {
+              "x": 0.5,
+              "y": 0.3,
+              "z": 0.1,
+              "frame_id": "world",
+              "timestamp": null,
+              "uncertainty": null,
+              "covariance": null
+            },
+            "orientation": {
+              "roll": 0.0,
+              "pitch": 0.0,
+              "yaw": 0.0,
+              "frame_id": "world"
+            },
+            "dimensions": [
+              0.05,
+              0.05,
+              0.05
+            ],
+            "velocity": null,
+            "angular_velocity": null,
+            "mass": 0.1,
+            "properties": {
+              "color": "blue",
+              "material": "plastic"
+            },
+            "confidence": 0.95,
+            "timestamp": "2025-11-18T12:11:02.166339"
+          },
+          {
+            "id": "red_cylinder_01",
+            "object_class": "cylinder",
+            "position": {
+              "x": 0.4,
+              "y": 0.2,
+              "z": 0.1,
+              "frame_id": "world",
+              "timestamp": null,
+              "uncertainty": null,
+              "covariance": null
+            },
+            "orientation": {
+              "roll": 0.0,
+              "pitch": 0.0,
+              "yaw": 0.0,
+              "frame_id": "world"
+            },
+            "dimensions": [
+              0.08,
+              0.08,
+              0.15
+            ],
+            "velocity": null,
+            "angular_velocity": null,
+            "mass": 0.3,
+            "properties": {
+              "color": "red",
+              "material": "metal"
+            },
+            "confidence": 0.93,
+            "timestamp": null
+          }
+        ],
+        "terrain": {
+          "type": "flat",
+          "material": "wood_table"
+        },
+        "occupancy_grid_shape": null,
+        "semantic_map": {},
+        "free_space": {},
+        "metadata": {
+          "lighting": "good",
+          "visibility": "clear"
+        },
+        "object_count": 2
+      },
+      "perception_quality": {
+        "object_detection_confidence": 0.94,
+        "scene_completeness": 0.88,
+        "sensor_coverage": [
+          "camera_rgb",
+          "depth_sensor",
+          "lidar"
+        ]
+      },
+      "verification": {
+        "sensor_fusion_valid": true,
+        "calibration_status": "valid",
+        "multi_sensor_consensus": 0.92
+      },
+      "metadata": {
+        "processing_time_ms": 45,
+        "num_objects_detected": 2
+      }
+    },
+    {
+      "type": "spatial_reasoning",
+      "capsule_id": "spatial_reasoning_03901807",
+      "timestamp": "2025-11-18T12:11:02.166437",
+      "agent_id": "robot_motion_planner",
+      "reasoning_task": "pick_and_place_planning",
+      "reasoning_steps": [
+        {
+          "step": 1,
+          "operation": "object_identification",
+          "target": "blue_cube_01",
+          "confidence": 0.95
+        },
+        {
+          "step": 2,
+          "operation": "collision_detection",
+          "obstacles_detected": [
+            "red_cylinder_01"
+          ],
+          "clearance": 0.12
+        },
+        {
+          "step": 3,
+          "operation": "grasp_planning",
+          "grasp_type": "top_grasp",
+          "approach_angle": 90.0
+        },
+        {
+          "step": 4,
+          "operation": "path_planning",
+          "algorithm": "RRT_connect",
+          "path_length": 0.85,
+          "computation_time": 0.23
+        }
+      ],
+      "final_result": {
+        "plan_valid": true,
+        "safety_score": 0.94,
+        "constraints_satisfied": true,
+        "computation_time": 0.23
+      },
+      "verification": {
+        "reasoning_valid": true,
+        "constraints_satisfied": true,
+        "safety_verified": true
+      },
+      "attribution": {
+        "reasoning_complexity": 4,
+        "computation_time": 0.23,
+        "value_contribution": "medium"
+      }
+    },
+    {
+      "type": "physical_action",
+      "capsule_id": "physical_action_b06770df",
+      "timestamp": "2025-11-18T12:11:02.667048",
+      "agent_id": "robot_arm_01",
+      "action": {
+        "type": "pick",
+        "planning": {
+          "goal": "grasp blue_cube_01",
+          "constraints": [
+            "stable_grasp",
+            "avoid_collision"
+          ],
+          "confidence": 0.92,
+          "alternatives": 3
+        },
+        "execution_result": {
+          "success": true,
+          "execution_time": 2.3,
+          "trajectory": {
+            "waypoints": [
+              {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.5,
+                "frame_id": "robot_base",
+                "timestamp": null,
+                "uncertainty": null,
+                "covariance": null
+              },
+              {
+                "x": 0.5,
+                "y": 0.3,
+                "z": 0.2,
+                "frame_id": "world",
+                "timestamp": null,
+                "uncertainty": null,
+                "covariance": null
+              },
+              {
+                "x": 0.5,
+                "y": 0.3,
+                "z": 0.1,
+                "frame_id": "world",
+                "timestamp": null,
+                "uncertainty": null,
+                "covariance": null
+              }
+            ],
+            "orientations": [
+              {
+                "roll": 0.0,
+                "pitch": 0.0,
+                "yaw": 0.0,
+                "frame_id": "world"
+              },
+              {
+                "roll": 0.0,
+                "pitch": 1.57,
+                "yaw": 0.0,
+                "frame_id": "world"
+              },
+              {
+                "roll": 0.0,
+                "pitch": 1.57,
+                "yaw": 0.0,
+                "frame_id": "world"
+              }
+            ],
+            "timestamps": [
+              "2025-11-18T12:11:02.166461",
+              "2025-11-18T12:11:02.166462",
+              "2025-11-18T12:11:02.166463"
+            ],
+            "velocities": null,
+            "accelerations": null,
+            "total_waypoints": 3,
+            "duration": 2e-06
+          },
+          "grasp_force": 12.5,
+          "pose_error": 0.015,
+          "object_secured": true
+        }
+      },
+      "reasoning": {
+        "goal": "grasp blue_cube_01",
+        "constraints_satisfied": [
+          "stable_grasp",
+          "avoid_collision"
+        ],
+        "alternatives_considered": 3,
+        "confidence": 0.92
+      },
+      "verification": {
+        "action_verified": true,
+        "physical_outcome_confirmed": true,
+        "witness_sensors": [
+          "camera_1",
+          "camera_2",
+          "force_sensor"
+        ],
+        "execution_quality": 0.7
+      },
+      "attribution": {
+        "task_value": 10.0,
+        "execution_quality_bonus": 2.5,
+        "energy_cost": 0.15,
+        "time_cost": 1.15
+      }
+    },
+    {
+      "type": "physical_action",
+      "capsule_id": "physical_action_1902d9b9",
+      "timestamp": "2025-11-18T12:11:03.167533",
+      "agent_id": "robot_arm_01",
+      "action": {
+        "type": "place",
+        "planning": {
+          "goal": "place object at target location",
+          "constraints": [
+            "controlled_release",
+            "stable_placement"
+          ],
+          "confidence": 0.9,
+          "alternatives": 2
+        },
+        "execution_result": {
+          "success": true,
+          "execution_time": 2.1,
+          "trajectory": {
+            "waypoints": [
+              {
+                "x": 0.5,
+                "y": 0.3,
+                "z": 0.1,
+                "frame_id": "world",
+                "timestamp": null,
+                "uncertainty": null,
+                "covariance": null
+              },
+              {
+                "x": 0.7,
+                "y": 0.5,
+                "z": 0.2,
+                "frame_id": "world",
+                "timestamp": null,
+                "uncertainty": null,
+                "covariance": null
+              },
+              {
+                "x": 0.7,
+                "y": 0.5,
+                "z": 0.1,
+                "frame_id": "world",
+                "timestamp": null,
+                "uncertainty": null,
+                "covariance": null
+              }
+            ],
+            "orientations": [
+              {
+                "roll": 0.0,
+                "pitch": 0.0,
+                "yaw": 0.0,
+                "frame_id": "world"
+              },
+              {
+                "roll": 0.0,
+                "pitch": 1.57,
+                "yaw": 0.0,
+                "frame_id": "world"
+              },
+              {
+                "roll": 0.0,
+                "pitch": 1.57,
+                "yaw": 0.0,
+                "frame_id": "world"
+              }
+            ],
+            "timestamps": [
+              "2025-11-18T12:11:02.667092",
+              "2025-11-18T12:11:02.667094",
+              "2025-11-18T12:11:02.667095"
+            ],
+            "velocities": null,
+            "accelerations": null,
+            "total_waypoints": 3,
+            "duration": 3e-06
+          },
+          "release_successful": true,
+          "final_pose_error": 0.012
+        }
+      },
+      "reasoning": {
+        "goal": "place object at target location",
+        "constraints_satisfied": [
+          "controlled_release",
+          "stable_placement"
+        ],
+        "alternatives_considered": 2,
+        "confidence": 0.9
+      },
+      "verification": {
+        "action_verified": true,
+        "physical_outcome_confirmed": true,
+        "witness_sensors": [
+          "camera_1",
+          "camera_2",
+          "force_sensor"
+        ],
+        "execution_quality": 1.0
+      },
+      "attribution": {
+        "task_value": 10.0,
+        "execution_quality_bonus": 2.5,
+        "energy_cost": 0.15,
+        "time_cost": 1.05
+      }
+    }
+  ],
+  "attribution": {
+    "robot_perception_system": {
+      "contribution": "spatial_perception",
+      "value": 7.5,
+      "capsules": [
+        "spatial_perception_7bd39f22"
+      ]
+    },
+    "robot_motion_planner": {
+      "contribution": "spatial_reasoning",
+      "value": 12.5,
+      "capsules": [
+        "spatial_reasoning_03901807"
+      ]
+    },
+    "robot_arm_01": {
+      "contribution": "physical_execution",
+      "value": 30.0,
+      "capsules": [
+        "physical_action_b06770df",
+        "physical_action_1902d9b9"
+      ]
+    }
+  }
+}

@@ -1,0 +1,172 @@
+# OpenTelemetry Operator Installation
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: opentelemetry-operator-system
+  labels:
+    name: opentelemetry-operator-system
+
+---
+# OpenTelemetry Operator Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opentelemetry-operator-controller-manager
+  namespace: opentelemetry-operator-system
+  labels:
+    app.kubernetes.io/name: opentelemetry-operator
+    app.kubernetes.io/version: "0.88.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opentelemetry-operator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: opentelemetry-operator
+    spec:
+      serviceAccountName: opentelemetry-operator-controller-manager
+      containers:
+      - name: manager
+        image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.88.0
+        args:
+        - --metrics-addr=0.0.0.0:8080
+        - --enable-leader-election
+        - --health-probe-bind-address=:8081
+        - --webhook-port=9443
+        env:
+        - name: WATCH_NAMESPACE
+          value: ""
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: OPERATOR_NAME
+          value: "opentelemetry-operator"
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
+        - containerPort: 8081
+          name: health-probe
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-certs
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: opentelemetry-operator-controller-manager
+  namespace: opentelemetry-operator-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: opentelemetry-operator-manager-role
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "serviceaccounts", "services"]
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["list", "watch"]
+- apiGroups: [""]
+  resources: ["nodes", "nodes/metrics", "nodes/proxy", "nodes/stats"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["daemonsets", "deployments", "replicasets", "statefulsets"]
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: ["opentelemetry.io"]
+  resources: ["opentelemetrycollectors", "instrumentations"]
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: ["opentelemetry.io"]
+  resources: ["opentelemetrycollectors/finalizers", "instrumentations/finalizers"]
+  verbs: ["update"]
+- apiGroups: ["opentelemetry.io"]
+  resources: ["opentelemetrycollectors/status", "instrumentations/status"]
+  verbs: ["get", "patch", "update"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: opentelemetry-operator-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: opentelemetry-operator-manager-role
+subjects:
+- kind: ServiceAccount
+  name: opentelemetry-operator-controller-manager
+  namespace: opentelemetry-operator-system
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opentelemetry-operator-controller-manager-metrics-service
+  namespace: opentelemetry-operator-system
+  labels:
+    app.kubernetes.io/name: opentelemetry-operator
+spec:
+  ports:
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: https
+  selector:
+    app.kubernetes.io/name: opentelemetry-operator
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opentelemetry-operator-webhook-service
+  namespace: opentelemetry-operator-system
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 9443
+  selector:
+    app.kubernetes.io/name: opentelemetry-operator

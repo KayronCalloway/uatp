@@ -1,0 +1,123 @@
+# OpenTelemetry Auto-Instrumentation Configuration for UATP
+---
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: uatp-auto-instrumentation
+  namespace: uatp-prod
+  labels:
+    app: uatp-instrumentation
+    component: observability
+spec:
+  # Exporter configuration
+  exporter:
+    endpoint: http://uatp-otel-collector:4317
+
+  # Propagators for trace context
+  propagators:
+    - tracecontext
+    - baggage
+    - b3
+    - jaeger
+
+  # Sampler configuration
+  sampler:
+    type: parentbased_traceidratio
+    argument: "0.1"  # 10% sampling rate
+
+  # Resource attributes
+  resource:
+    addK8sUIDAttributes: true
+
+  # Python auto-instrumentation
+  python:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python:0.41b0
+    env:
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: "http://uatp-otel-collector:4317"
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: "grpc"
+      - name: OTEL_RESOURCE_ATTRIBUTES
+        value: "service.name=uatp-capsule-engine,service.version=7.0.0,deployment.environment=production"
+      - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
+        value: "true"
+      - name: OTEL_PYTHON_LOG_CORRELATION
+        value: "true"
+      - name: OTEL_PYTHON_LOG_FORMAT
+        value: "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] [trace_id=%(otelTraceID)s span_id=%(otelSpanID)s] - %(message)s"
+      # UATP-specific instrumentation settings
+      - name: OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST
+        value: "x-capsule-id,x-chain-id,x-attribution-id"
+      - name: OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE
+        value: "x-capsule-created,x-attribution-tracked"
+      - name: OTEL_INSTRUMENTATION_SQLALCHEMY_ENABLE_COMMENTER
+        value: "true"
+      - name: OTEL_INSTRUMENTATION_REDIS_CAPTURE_STATEMENT
+        value: "false"  # Disable for security
+    # Additional packages to instrument
+    packages:
+      - "opentelemetry-instrumentation-flask"
+      - "opentelemetry-instrumentation-requests"
+      - "opentelemetry-instrumentation-sqlalchemy"
+      - "opentelemetry-instrumentation-redis"
+      - "opentelemetry-instrumentation-psycopg2"
+      - "opentelemetry-instrumentation-logging"
+      - "opentelemetry-instrumentation-urllib3"
+
+  # Node.js auto-instrumentation (for any Node.js services)
+  nodejs:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.43.0
+    env:
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: "http://uatp-otel-collector:4317"
+      - name: OTEL_RESOURCE_ATTRIBUTES
+        value: "service.name=uatp-frontend,service.version=7.0.0"
+
+---
+# Webhook configuration for auto-instrumentation
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionWebhook
+metadata:
+  name: opentelemetry-operator-mutating-webhook-configuration
+webhooks:
+- name: minstrumentation.opentelemetry.io
+  clientConfig:
+    service:
+      name: opentelemetry-operator-webhook-service
+      namespace: opentelemetry-operator-system
+      path: /mutate-opentelemetry-io-v1alpha1-instrumentation
+  rules:
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: ["opentelemetry.io"]
+    apiVersions: ["v1alpha1"]
+    resources: ["instrumentations"]
+  admissionReviewVersions: ["v1", "v1beta1"]
+  sideEffects: None
+  failurePolicy: Fail
+
+---
+# Service for webhook
+apiVersion: v1
+kind: Service
+metadata:
+  name: opentelemetry-operator-webhook-service
+  namespace: opentelemetry-operator-system
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 9443
+  selector:
+    app.kubernetes.io/name: opentelemetry-operator
+
+---
+# Certificate for webhook
+apiVersion: v1
+kind: Secret
+metadata:
+  name: webhook-server-certs
+  namespace: opentelemetry-operator-system
+type: Opaque
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t... # This would be generated
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0t... # This would be generated

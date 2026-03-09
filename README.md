@@ -1,8 +1,9 @@
 # UATP: Court-Admissible AI Evidence in 3 Lines of Code
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Status: Beta](https://img.shields.io/badge/status-beta-orange.svg)]()
+[![Status: Beta](https://img.shields.io/badge/status-beta-orange.svg)](STATUS.md)
 
 Make AI decisions auditable with cryptographic proof. Ready to use today.
 
@@ -48,7 +49,7 @@ cd uatp
 ### 2. Start Backend
 
 ```bash
-./start_backend_dev.sh
+./scripts/dev/start_backend_dev.sh
 # Wait for: Server running on http://localhost:8000
 ```
 
@@ -164,33 +165,36 @@ See [TECHNICAL_READINESS.md](TECHNICAL_READINESS.md) for detailed status.
 
 ## Documentation
 
+- **Start Here:** [docs/start-here.md](docs/start-here.md) - Find what you need
 - **SDK Documentation:** [sdk/python/README.md](sdk/python/README.md)
 - **SDK Quickstart:** [sdk/python/QUICKSTART.md](sdk/python/QUICKSTART.md)
-- **API Examples:** [sdk/python/examples/](sdk/python/examples/)
-- **Technical Readiness:** [TECHNICAL_READINESS.md](TECHNICAL_READINESS.md)
-- **System Manual:** [docs/COMPREHENSIVE_SYSTEM_MANUAL.md](docs/COMPREHENSIVE_SYSTEM_MANUAL.md)
+- **Trust Model:** [TRUST_MODEL.md](TRUST_MODEL.md) - Security architecture
+- **Status:** [STATUS.md](STATUS.md) - What's ready, what's not
 
 ## Architecture
 
 ```
-uatp-capsule-engine/
-├── sdk/
-│   └── python/              # Python SDK (ready to use)
-│       ├── uatp/            # Core SDK code
-│       ├── examples/        # Integration examples
-│       ├── README.md        # SDK docs
-│       └── QUICKSTART.md    # 5-minute quickstart
-│
-├── src/
+uatp/
+├── src/                     # Core product
 │   ├── api/                 # FastAPI backend
+│   ├── crypto/              # Cryptographic signatures (Ed25519, key management)
 │   ├── engine/              # Capsule engine core
-│   ├── security/            # Cryptographic signatures
 │   └── core/                # Database & models
 │
-├── frontend/                # React dashboard (in development)
+├── sdk/python/              # Python SDK
+├── frontend/                # Next.js dashboard (beta)
 ├── tests/                   # Test suite
-└── docs/                    # Documentation
+├── examples/                # Usage examples
+├── docs/                    # Documentation
+├── infra/                   # Docker, Kubernetes, monitoring
+├── scripts/                 # Operational scripts
+└── archive/                 # Historical artifacts
 ```
+
+**Key documents:**
+- [STATUS.md](STATUS.md) - What's production-ready vs beta
+- [TRUST_MODEL.md](TRUST_MODEL.md) - Zero-trust security architecture
+- [THREAT_MODEL.md](THREAT_MODEL.md) - Attack surface and mitigations
 
 ## Pricing
 
@@ -261,7 +265,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 ```bash
 git clone https://github.com/KayronCalloway/uatp
 cd uatp
-./start_backend_dev.sh
+./scripts/dev/start_backend_dev.sh
 
 cd sdk/python
 pip install -e .

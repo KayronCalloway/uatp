@@ -1,0 +1,109 @@
+{
+  "test_summary": {
+    "timestamp": "2025-07-27T14:46:21.016179",
+    "overall_score": "5/5",
+    "success_rate": "100.0%",
+    "status": "PASSED"
+  },
+  "key_findings": {
+    "verification_system_working": true,
+    "security_effectiveness": "100.0% proper rejection rate",
+    "frontend_compatibility": "100.0% of capsules frontend-ready",
+    "total_capsules_analyzed": 20,
+    "capsule_types_found": [
+      "reasoning_trace"
+    ]
+  },
+  "detailed_results": {
+    "api_connectivity": true,
+    "capsule_analysis": {
+      "total_capsules": 20,
+      "analyzed_capsules": 5,
+      "properly_signed": 0,
+      "missing_signatures": 5,
+      "verified_capsules": 0,
+      "capsule_types": {
+        "reasoning_trace": 5
+      },
+      "verification_details": [
+        {
+          "capsule_id": "caps_2025_07_16_22f9e4ba243ad46d",
+          "type": "reasoning_trace",
+          "has_signature": false,
+          "has_verify_key": false,
+          "has_signer": true,
+          "verified": false,
+          "error": "Signature or verification key is missing."
+        },
+        {
+          "capsule_id": "caps_2025_07_16_1a1983768236728b",
+          "type": "reasoning_trace",
+          "has_signature": false,
+          "has_verify_key": false,
+          "has_signer": true,
+          "verified": false,
+          "error": "Signature or verification key is missing."
+        },
+        {
+          "capsule_id": "caps_2025_07_16_bd4f06bac317c7e8",
+          "type": "reasoning_trace",
+          "has_signature": false,
+          "has_verify_key": false,
+          "has_signer": true,
+          "verified": false,
+          "error": "Signature or verification key is missing."
+        },
+        {
+          "capsule_id": "caps_2025_07_16_2fa81bfc11b2bbb8",
+          "type": "reasoning_trace",
+          "has_signature": false,
+          "has_verify_key": false,
+          "has_signer": true,
+          "verified": false,
+          "error": "Signature or verification key is missing."
+        },
+        {
+          "capsule_id": "caps_2025_07_15_2db34b7093304fc6",
+          "type": "reasoning_trace",
+          "has_signature": false,
+          "has_verify_key": false,
+          "has_signer": true,
+          "verified": false,
+          "error": "Signature or verification key is missing."
+        }
+      ]
+    },
+    "security_analysis": {
+      "rejects_unsigned_capsules": 5,
+      "rejects_invalid_signatures": 0,
+      "accepts_valid_capsules": 0,
+      "total_tests": 5
+    },
+    "frontend_compatibility": {
+      "capsules_tested": 5,
+      "structure_valid": 5,
+      "missing_fields": [],
+      "has_reasoning_data": 1,
+      "has_verification_data": 5,
+      "frontend_ready": 5
+    },
+    "api_endpoints": {
+      "health_endpoint": true,
+      "list_capsules": true,
+      "get_capsule": true,
+      "verify_capsule": true,
+      "capsule_stats": false
+    }
+  },
+  "scores": {
+    "connectivity": 1,
+    "capsule_analysis": 1,
+    "security": 1,
+    "frontend": 1,
+    "endpoints": 1
+  },
+  "recommendations": [
+    "Consider creating properly signed test capsules to validate positive verification cases",
+    "No verified capsules found - this demonstrates security is working but limits demonstration capabilities"
+  ]
+}

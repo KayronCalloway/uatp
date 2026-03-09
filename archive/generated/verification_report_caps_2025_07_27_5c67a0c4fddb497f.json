@@ -1,0 +1,26 @@
+{
+  "capsule_id": "caps_2025_07_27_5c67a0c4fddb497f",
+  "verification_status": "VERIFIED",
+  "verification_reason": "Verified - Signature and hash are cryptographically valid",
+  "cryptographic_details": {
+    "algorithm": "Ed25519",
+    "hash_algorithm": "SHA-256",
+    "signature_length": 136,
+    "public_key_length": 64,
+    "hash_value": "11aed28b0e51ce84fe94649be18cc500c9420517782e2ee134a0be0e1ef5628a"
+  },
+  "security_features": {
+    "replay_protection": true,
+    "format_validation": true,
+    "cryptographic_audit": true,
+    "signature_verification": true
+  },
+  "compliance": {
+    "uatp_7_compliant": true,
+    "ed25519_standard": "RFC_8032",
+    "hash_standard": "FIPS_180-4",
+    "security_level": "128_bit_equivalent"
+  },
+  "timestamp": "2025-07-27T21:55:57.741912+00:00",
+  "frontend_display_status": "Verified"
+}
