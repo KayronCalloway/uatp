@@ -31,8 +31,9 @@ from uatp import (
 
 # NEW: Import expert panel fixes
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-from src.analysis.historical_accuracy import HistoricalAccuracyTracker
 from src.security.chain_of_custody import get_chain_manager
+
+from src.analysis.historical_accuracy import HistoricalAccuracyTracker
 
 
 def create_v2_loan_approval():

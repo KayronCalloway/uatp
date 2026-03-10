@@ -676,7 +676,7 @@ class MerkleAuditLog:
         root = self.root_hash()
 
         # Create message to sign
-        message = f"{tree_size}:{timestamp.isoformat()}:{root.hex()}".encode("utf-8")
+        message = f"{tree_size}:{timestamp.isoformat()}:{root.hex()}".encode()
 
         # Sign if signer available
         if self.signer and hasattr(self.signer, "_sign_ed25519"):

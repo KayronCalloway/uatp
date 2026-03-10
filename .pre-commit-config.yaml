@@ -4,14 +4,14 @@ repos:
     hooks:
       - id: ruff
         args: ["--fix"]
-        exclude: ^(archive/|infra/monitoring/dashboards/|tests/legacy/)
+        exclude: ^(archive/|infra/monitoring/dashboards/|tests/legacy/|scripts/legacy_fixes/)
       - id: ruff-format
-        exclude: ^(archive/|infra/monitoring/dashboards/|tests/legacy/)
+        exclude: ^(archive/|infra/monitoring/dashboards/|tests/legacy/|scripts/legacy_fixes/)
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.21.2
     hooks:
       - id: pyupgrade
-        exclude: ^archive/
+        exclude: ^(archive/|scripts/legacy_fixes/)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:

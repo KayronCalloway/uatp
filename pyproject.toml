@@ -103,6 +103,12 @@ ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 88
+exclude = [
+    "archive/",
+    "tests/legacy/",
+    "scripts/legacy_fixes/",
+    "infra/monitoring/dashboards/",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "B", "I", "W"]

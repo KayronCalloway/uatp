@@ -65,11 +65,11 @@ jobs:
 
     - name: Run linting with ruff
       run: |
-        ruff check src/ tests/ --exclude tests/legacy
+        ruff check src/ tests/ --exclude tests/legacy --exclude scripts/legacy_fixes
 
     - name: Check code formatting with ruff
       run: |
-        ruff format --check src/ tests/ --exclude tests/legacy
+        ruff format --check src/ tests/ --exclude tests/legacy --exclude scripts/legacy_fixes
 
   tests:
     runs-on: ubuntu-latest

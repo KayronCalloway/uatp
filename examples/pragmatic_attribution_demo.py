@@ -15,8 +15,9 @@ from datetime import datetime, timedelta
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from engine.economic_engine import UatpEconomicEngine
 from engine.specialized_engine import SpecializedCapsuleEngine
+
+from engine.economic_engine import UatpEconomicEngine
 
 
 def demo_pragmatic_attribution():
