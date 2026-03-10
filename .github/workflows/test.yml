@@ -60,7 +60,7 @@ jobs:
       run: |
         echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/uatp_test" >> $GITHUB_ENV
         echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
-        echo "ENVIRONMENT=test" >> $GITHUB_ENV
+        echo "ENVIRONMENT=testing" >> $GITHUB_ENV
         echo "UATP_SIGNING_KEY=6f4a423a4a4b4a4c4d4e4f505152535455565758595a5b5c5d5e5f6061626364" >> $GITHUB_ENV
 
     - name: Run tests
