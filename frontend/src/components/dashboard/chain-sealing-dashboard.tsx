@@ -87,7 +87,7 @@ export function ChainSealingDashboard() {
     pending_seals: 1
   } : null;
 
-  // WebSocket connection for real-time updates  
+  // WebSocket connection for real-time updates
   const wsUrl = ''; // Disabled until backend WebSocket is implemented
   const { isConnected, lastMessage } = useWebSocket({
     url: wsUrl,
@@ -130,11 +130,11 @@ export function ChainSealingDashboard() {
 
   const verifyChainSeal = async (chainId: string) => {
     try {
-      const response = await api.verifySeal(chainId, { 
+      const response = await api.verifySeal(chainId, {
         check_integrity: true,
-        verify_capsules: true 
+        verify_capsules: true
       });
-      
+
       if (response.valid) {
         setError(null);
         await fetchSeals(); // Refresh to show updated status
@@ -267,7 +267,7 @@ export function ChainSealingDashboard() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -279,7 +279,7 @@ export function ChainSealingDashboard() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -291,7 +291,7 @@ export function ChainSealingDashboard() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -344,9 +344,9 @@ export function ChainSealingDashboard() {
                       <p className="text-sm text-gray-500">
                         {new Date(seal.timestamp).toLocaleString()}
                       </p>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
+                      <Button
+                        size="sm"
+                        variant="outline"
                         className="mt-2"
                         onClick={() => verifyChainSeal(seal.chain_id)}
                       >
@@ -355,7 +355,7 @@ export function ChainSealingDashboard() {
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="font-medium text-gray-700 mb-1">Seal Hash</p>

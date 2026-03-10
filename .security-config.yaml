@@ -20,7 +20,7 @@ compliance:
         - "A08: Software and Data Integrity Failures"
         - "A09: Security Logging and Monitoring Failures"
         - "A10: Server-Side Request Forgery (SSRF)"
-    
+
     - name: "NIST Cybersecurity Framework"
       enabled: true
       requirements:
@@ -29,7 +29,7 @@ compliance:
         - "Detect: Security Monitoring"
         - "Respond: Incident Response"
         - "Recover: Recovery Planning"
-    
+
     - name: "CIS Controls"
       enabled: true
       version: "v8"
@@ -56,7 +56,7 @@ policies:
       - "bandit"
       - "semgrep"
       - "pip-audit"
-  
+
   # TLS/SSL Configuration
   tls:
     minimum_version: "TLSv1.2"
@@ -79,7 +79,7 @@ policies:
     hsts_max_age: 63072000  # 2 years
     certificate_transparency: true
     ocsp_stapling: true
-  
+
   # Container Security
   containers:
     base_images:
@@ -91,7 +91,7 @@ policies:
       forbidden:
         - "latest"  # Always pin versions
         - "ubuntu:20.04"  # EOL versions
-    
+
     security_context:
       run_as_non_root: true
       read_only_root_filesystem: true
@@ -99,18 +99,18 @@ policies:
       drop_all_capabilities: true
       run_as_user: 65534  # nobody
       run_as_group: 65534
-    
+
     resource_limits:
       cpu: "2000m"
       memory: "4Gi"
       ephemeral_storage: "2Gi"
-    
+
     vulnerabilities:
       scan_on_build: true
       fail_on_critical: true
       fail_on_high: false
       max_high_vulns: 10
-  
+
   # Kubernetes Security
   kubernetes:
     pod_security_standards: "restricted"
@@ -118,18 +118,18 @@ policies:
       default_deny: true
       egress_restrictions: true
       ingress_whitelist_only: true
-    
+
     rbac:
       principle: "least_privilege"
       no_cluster_admin: true
       service_account_per_app: true
-    
+
     secrets:
       no_hardcoded_secrets: true
       encryption_at_rest: true
       rotation_required: true
       external_secrets_manager: true
-    
+
     admission_controllers:
       - "PodSecurityPolicy"
       - "ResourceQuota"
@@ -138,7 +138,7 @@ policies:
       - "SecurityContextDenial"
       - "MutatingAdmissionWebhook"
       - "ValidatingAdmissionWebhook"
-  
+
   # Network Security
   network:
     ingress:
@@ -154,17 +154,17 @@ policies:
         - "Cross-Origin-Embedder-Policy"
         - "Cross-Origin-Opener-Policy"
         - "Cross-Origin-Resource-Policy"
-      
+
       rate_limiting:
         enabled: true
         requests_per_minute: 100
         connections_per_ip: 20
-      
+
       geo_blocking:
         enabled: false  # Configure as needed
         allowed_countries: []
         blocked_countries: []
-    
+
     egress:
       default_deny: true
       allowed_destinations:
@@ -173,14 +173,14 @@ policies:
         - "postgresql:5432"
         - "redis:6379"
       monitoring: true
-  
+
   # Application Security
   application:
     input_validation:
       enabled: true
       sanitization: true
       max_request_size: "10MB"
-    
+
     authentication:
       multi_factor: true
       session_timeout: 3600  # 1 hour
@@ -188,18 +188,18 @@ policies:
         min_length: 12
         complexity: true
         rotation_days: 90
-    
+
     authorization:
       rbac_enabled: true
       attribute_based: true
       audit_logging: true
-    
+
     session_management:
       secure_cookies: true
       httponly_cookies: true
       samesite_strict: true
       csrf_protection: true
-    
+
     error_handling:
       no_sensitive_info: true
       generic_error_messages: true
@@ -215,34 +215,34 @@ monitoring:
     - "container_security_violations"
     - "suspicious_network_activity"
     - "vulnerability_detections"
-  
+
   alerting:
     channels:
       - type: "slack"
         webhook: "${SECURITY_SLACK_WEBHOOK}"
         severity: ["critical", "high"]
-      
+
       - type: "email"
         recipients: ["security@uatp.ai"]
         severity: ["critical", "high", "medium"]
-      
+
       - type: "pagerduty"
         integration_key: "${PAGERDUTY_INTEGRATION_KEY}"
         severity: ["critical"]
-  
+
   metrics:
     - name: "vulnerability_count"
       type: "gauge"
       labels: ["severity", "component"]
-    
+
     - name: "security_scan_duration"
       type: "histogram"
       labels: ["scan_type"]
-    
+
     - name: "failed_authentication_rate"
       type: "counter"
       labels: ["source_ip", "user"]
-    
+
     - name: "network_policy_violations"
       type: "counter"
       labels: ["policy_name", "source", "destination"]
@@ -254,22 +254,22 @@ incident_response:
       response_time: "15m"
       escalation: "immediate"
       communication: "all_stakeholders"
-    
+
     high:
       response_time: "1h"
       escalation: "security_team"
       communication: "security_team"
-    
+
     medium:
       response_time: "4h"
       escalation: "on_call"
       communication: "on_call"
-    
+
     low:
       response_time: "24h"
       escalation: "next_business_day"
       communication: "ticket_system"
-  
+
   playbooks:
     - name: "container_vulnerability"
       trigger: "critical_vulnerability_detected"
@@ -278,7 +278,7 @@ incident_response:
         - "notify_security_team"
         - "initiate_patch_process"
         - "update_security_documentation"
-    
+
     - name: "network_breach"
       trigger: "unauthorized_network_access"
       actions:
@@ -286,7 +286,7 @@ incident_response:
         - "capture_network_forensics"
         - "notify_incident_response_team"
         - "assess_data_exposure"
-    
+
     - name: "authentication_bypass"
       trigger: "authentication_failure_spike"
       actions:
@@ -305,7 +305,7 @@ testing:
     - "infrastructure_scanning"
     - "secret_scanning"
     - "penetration_testing"
-  
+
   frequency:
     static_analysis: "on_commit"
     dependency_scanning: "daily"
@@ -313,29 +313,29 @@ testing:
     infrastructure_scanning: "weekly"
     secret_scanning: "on_commit"
     penetration_testing: "quarterly"
-  
+
   tools:
     static_analysis:
       - "semgrep"
       - "bandit"
       - "sonarqube"
-    
+
     dependency_scanning:
       - "safety"
       - "pip-audit"
       - "snyk"
-    
+
     container_scanning:
       - "trivy"
       - "grype"
       - "twistlock"
-    
+
     infrastructure_scanning:
       - "checkov"
       - "terrascan"
       - "kube-score"
       - "polaris"
-    
+
     secret_scanning:
       - "gitleaks"
       - "trufflehog"
@@ -348,7 +348,7 @@ audit:
     encryption: true
     integrity_protection: true
     centralized: true
-  
+
   events:
     - "user_authentication"
     - "privilege_changes"
@@ -356,14 +356,14 @@ audit:
     - "configuration_changes"
     - "security_events"
     - "system_events"
-  
+
   reports:
     frequency: "monthly"
     recipients:
       - "security_team"
       - "compliance_officer"
       - "ciso"
-    
+
     content:
       - "vulnerability_summary"
       - "compliance_status"
@@ -374,18 +374,18 @@ audit:
 # Risk Management
 risk_management:
   assessment_frequency: "quarterly"
-  
+
   risk_categories:
     - "technical_vulnerabilities"
     - "operational_risks"
     - "compliance_gaps"
     - "third_party_risks"
     - "insider_threats"
-  
+
   risk_matrix:
     impact_levels: ["low", "medium", "high", "critical"]
     probability_levels: ["rare", "unlikely", "possible", "likely", "certain"]
-  
+
   acceptance_criteria:
     low: "acceptable"
     medium: "mitigation_required"

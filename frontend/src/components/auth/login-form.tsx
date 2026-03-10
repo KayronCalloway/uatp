@@ -17,7 +17,7 @@ export function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     if (!apiKey.trim()) {
       setError('Please enter your API key');
       return;
@@ -29,7 +29,7 @@ export function LoginForm() {
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const success = await login(apiKey);
       if (!success) {
@@ -64,7 +64,7 @@ export function LoginForm() {
             Enter your API key to access the dashboard
           </CardDescription>
         </CardHeader>
-        
+
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -84,12 +84,12 @@ export function LoginForm() {
                 </div>
               )}
             </div>
-            
+
             <div className="text-sm text-gray-600">
               <p>Don&apos;t have an API key? Contact your administrator or check the documentation.</p>
             </div>
           </CardContent>
-          
+
           <CardFooter>
             <Button
               type="submit"

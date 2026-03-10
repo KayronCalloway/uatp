@@ -172,7 +172,7 @@ def require_permissions(required_permissions: List[PermissionScope]):
         current_user: TokenPayload = Depends(get_current_user),
     ) -> TokenPayload:
         user_permissions = set(current_user.permissions)
-        required_perms = set(p.value for p in required_permissions)
+        required_perms = {p.value for p in required_permissions}
 
         if not required_perms.issubset(user_permissions):
             missing_perms = required_perms - user_permissions
@@ -192,7 +192,7 @@ def require_any_permission(required_permissions: List[PermissionScope]):
         current_user: TokenPayload = Depends(get_current_user),
     ) -> TokenPayload:
         user_permissions = set(current_user.permissions)
-        required_perms = set(p.value for p in required_permissions)
+        required_perms = {p.value for p in required_permissions}
 
         if not required_perms.intersection(user_permissions):
             raise HTTPException(

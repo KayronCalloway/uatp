@@ -203,10 +203,10 @@ export function GovernanceDashboard() {
 
   const handleCreateProposal = () => {
     if (!newProposal.title || !newProposal.description) return;
-    
+
     // TODO: Implement proposal creation via API
     // api.createProposal(newProposal);
-    
+
     setNewProposal({ title: '', description: '', category: 'governance' });
     setShowCreateProposal(false);
   };
@@ -331,7 +331,7 @@ export function GovernanceDashboard() {
               <Scale className="h-5 w-5 mr-2" />
               Governance Proposals
             </CardTitle>
-            <Button 
+            <Button
               onClick={() => setShowCreateProposal(!showCreateProposal)}
               className="flex items-center"
             >
@@ -356,7 +356,7 @@ export function GovernanceDashboard() {
                   onChange={(e) => setNewProposal({...newProposal, description: e.target.value})}
                   rows={4}
                 />
-                <select 
+                <select
                   className="w-full p-2 border rounded-md"
                   value={newProposal.category}
                   onChange={(e) => setNewProposal({...newProposal, category: e.target.value as any})}
@@ -409,7 +409,7 @@ export function GovernanceDashboard() {
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
+                          <div
                             className="bg-green-500 h-2 rounded-full"
                             style={{ width: `${getVotePercentage(proposal.votes.for, getTotalVotes(proposal))}%` }}
                           />
@@ -418,7 +418,7 @@ export function GovernanceDashboard() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
+                          <div
                             className="bg-red-500 h-2 rounded-full"
                             style={{ width: `${getVotePercentage(proposal.votes.against, getTotalVotes(proposal))}%` }}
                           />
@@ -460,22 +460,22 @@ export function GovernanceDashboard() {
                         Voting ends: {new Date(proposal.votingEnds).toLocaleDateString()}
                       </span>
                       <div className="flex space-x-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => handleVote(proposal.id, 'for')}
                           className="bg-green-600 hover:bg-green-700"
                         >
                           Vote For
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleVote(proposal.id, 'against')}
                         >
                           Vote Against
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleVote(proposal.id, 'abstain')}
                         >

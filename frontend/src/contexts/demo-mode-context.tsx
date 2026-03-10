@@ -29,7 +29,7 @@ export function DemoModeProvider({ children }: { children: React.ReactNode }) {
     const newDemoMode = !isDemoMode;
     setIsDemoMode(newDemoMode);
     localStorage.setItem('uatp-demo-mode', newDemoMode.toString());
-    
+
     if (newDemoMode) {
       setDemoMessage('Demo Mode: Using mock data for presentation');
     } else {

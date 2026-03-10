@@ -51,7 +51,7 @@ export function HallucinationDetector() {
 
   const handleDetect = () => {
     if (!inputText.trim()) return;
-    
+
     detectMutation.mutate({
       text: inputText,
       context: context.trim() || undefined,
@@ -80,7 +80,7 @@ export function HallucinationDetector() {
         const end = detection.location.end + offset;
         const originalText = result.substring(start, end);
         const highlightedText = `<span class="bg-red-200 px-1 rounded" title="${detection.description}">${originalText}</span>`;
-        
+
         result = result.substring(0, start) + highlightedText + result.substring(end);
         offset += highlightedText.length - originalText.length;
       });
@@ -136,7 +136,7 @@ export function HallucinationDetector() {
               rows={6}
             />
           </div>
-          
+
           <div>
             <label htmlFor="context-input" className="block text-sm font-medium text-gray-700">
               Context (Optional)
@@ -180,7 +180,7 @@ export function HallucinationDetector() {
             {/* Highlighted Text */}
             <div className="border rounded-lg p-4 bg-gray-50">
               <h4 className="font-medium mb-2">Analyzed Text:</h4>
-              <div 
+              <div
                 className="text-sm leading-relaxed"
                 dangerouslySetInnerHTML={{
                   __html: highlightText(lastResult.text, lastResult.detections)
@@ -218,8 +218,8 @@ export function HallucinationDetector() {
 
             {/* Metadata */}
             <div className="text-xs text-gray-500 pt-4 border-t">
-              Analysis completed in {lastResult.analysis_time}ms • 
-              Model: {lastResult.metadata.model_version} • 
+              Analysis completed in {lastResult.analysis_time}ms •
+              Model: {lastResult.metadata.model_version} •
               Threshold: {(lastResult.metadata.confidence_threshold * 100)}%
             </div>
           </div>

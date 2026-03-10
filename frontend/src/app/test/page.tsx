@@ -14,7 +14,7 @@ export default function TestPage() {
           <CardContent>
             <div className="space-y-4">
               <p>If you can see this page, the React/Next.js frontend is running successfully.</p>
-              
+
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h3 className="font-semibold text-green-800">System Status:</h3>
                 <ul className="text-sm text-green-700 mt-2 space-y-1">

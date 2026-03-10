@@ -221,7 +221,7 @@ export function RightsEvolutionDashboard() {
         requested_level: 'senior',
         justification: 'Demonstrated consistent ethical behavior and advanced reasoning capabilities'
       };
-      
+
       await api.createCitizenshipApplication(newApp);
       await fetchApplications();
       setError(null);
@@ -304,8 +304,8 @@ export function RightsEvolutionDashboard() {
                   {isConnected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
-              <select 
-                value={selectedModel} 
+              <select
+                value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
@@ -373,7 +373,7 @@ export function RightsEvolutionDashboard() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -387,7 +387,7 @@ export function RightsEvolutionDashboard() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -401,7 +401,7 @@ export function RightsEvolutionDashboard() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -459,8 +459,8 @@ export function RightsEvolutionDashboard() {
                         <p className="font-medium text-gray-700 mb-1">Autonomy Score</p>
                         <div className="flex items-center space-x-2">
                           <div className="w-24 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-blue-600 h-2 rounded-full" 
+                            <div
+                              className="bg-blue-600 h-2 rounded-full"
                               style={{ width: `${event.autonomy_score * 100}%` }}
                             />
                           </div>
@@ -560,7 +560,7 @@ export function RightsEvolutionDashboard() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                     <div className="text-sm">
                       <p className="font-medium text-gray-700">Current Level</p>
@@ -582,7 +582,7 @@ export function RightsEvolutionDashboard() {
                       <p className="text-gray-600">{app.reviewer.replace('_', ' ')}</p>
                     </div>
                   </div>
-                  
+
                   <div className="text-sm">
                     <p className="font-medium text-gray-700 mb-1">Justification</p>
                     <p className="text-gray-600 text-sm">{app.justification}</p>

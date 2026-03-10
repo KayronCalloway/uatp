@@ -179,10 +179,10 @@ export function OrganizationDashboard() {
 
   const handleInviteMember = () => {
     if (!newMemberEmail) return;
-    
+
     // TODO: Implement member invitation via API
     // api.inviteOrganizationMember(newMemberEmail);
-    
+
     setNewMemberEmail('');
     setShowInviteModal(false);
   };
@@ -340,7 +340,7 @@ export function OrganizationDashboard() {
           <h3 className="text-lg font-medium">Team Members</h3>
           <p className="text-sm text-gray-500">{members.length} active members</p>
         </div>
-        <Button 
+        <Button
           onClick={() => setShowInviteModal(true)}
           className="flex items-center"
         >
@@ -452,33 +452,33 @@ export function OrganizationDashboard() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Trust Threshold</label>
-              <Input 
-                type="number" 
-                min="0" 
-                max="1" 
+              <Input
+                type="number"
+                min="0"
+                max="1"
                 step="0.01"
                 defaultValue={organization.settings.trustThreshold}
               />
             </div>
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 id="publicProfile"
                 defaultChecked={organization.settings.publicProfile}
               />
               <label htmlFor="publicProfile" className="text-sm">Public Profile</label>
             </div>
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 id="allowInvites"
                 defaultChecked={organization.settings.allowInvites}
               />
               <label htmlFor="allowInvites" className="text-sm">Allow Member Invites</label>
             </div>
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 id="requireApproval"
                 defaultChecked={organization.settings.requireApproval}
               />

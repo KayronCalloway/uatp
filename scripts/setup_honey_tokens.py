@@ -36,7 +36,7 @@ def setup_honey_tokens():
     for i in range(5):
         key = manager.generate_honey_api_key(
             owner="security_team",
-            description=f"Fake API key #{i+1} for intrusion detection",
+            description=f"Fake API key #{i + 1} for intrusion detection",
         )
         honey_keys.append(key)
         logger.info(f"   Created: {key[:30]}...")

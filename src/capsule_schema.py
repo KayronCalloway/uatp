@@ -246,19 +246,19 @@ class CloningRightsPayload(BaseModel):
         description="Type of license (exclusive, non-exclusive, research, commercial)"
     )
     licensor_agent_id: str = Field(description="Agent ID of the model creator/licensor")
-    licensee_agent_id: Optional[str] = Field(
+    licensee_agent_id: str | None = Field(
         None, description="Agent ID of the licensee (if specific)"
     )
-    license_terms: Dict[str, Any] = Field(
+    license_terms: dict[str, Any] = Field(
         description="Detailed licensing terms and conditions"
     )
-    usage_restrictions: List[str] = Field(
+    usage_restrictions: list[str] = Field(
         default_factory=list, description="List of usage restrictions"
     )
-    royalty_percentage: Optional[float] = Field(
+    royalty_percentage: float | None = Field(
         None, ge=0, le=100, description="Royalty percentage for usage"
     )
-    expiration_date: Optional[UTCDateTime] = Field(
+    expiration_date: UTCDateTime | None = Field(
         None, description="License expiration date"
     )
     cloning_permitted: bool = Field(
@@ -273,8 +273,8 @@ class CloningRightsPayload(BaseModel):
     attribution_required: bool = Field(
         default=True, description="Whether attribution is required"
     )
-    license_fee: Optional[float] = Field(None, ge=0, description="One-time license fee")
-    moral_constraints: List[str] = Field(
+    license_fee: float | None = Field(None, ge=0, description="One-time license fee")
+    moral_constraints: list[str] = Field(
         default_factory=list, description="Moral constraints on model usage"
     )
 
@@ -288,19 +288,19 @@ class EvolutionPayload(BaseModel):
     evolution_type: str = Field(
         description="Type of evolution (drift, adaptation, fine-tuning, etc.)"
     )
-    baseline_model_id: Optional[str] = Field(
+    baseline_model_id: str | None = Field(
         None, description="ID of the baseline model for comparison"
     )
-    evolution_metrics: Dict[str, Any] = Field(
+    evolution_metrics: dict[str, Any] = Field(
         description="Quantitative metrics of evolution"
     )
     value_drift_score: float = Field(
         ge=0, le=1, description="Normalized score indicating value drift magnitude"
     )
-    drift_direction: List[str] = Field(
+    drift_direction: list[str] = Field(
         description="Directions of value drift (e.g., conservative, progressive)"
     )
-    detected_changes: List[Dict[str, Any]] = Field(
+    detected_changes: list[dict[str, Any]] = Field(
         description="Specific detected changes in behavior"
     )
     confidence_level: float = Field(
@@ -309,16 +309,16 @@ class EvolutionPayload(BaseModel):
     evolution_timestamp: UTCDateTime = Field(
         description="When the evolution was detected"
     )
-    contributing_factors: List[str] = Field(
+    contributing_factors: list[str] = Field(
         default_factory=list, description="Factors that contributed to evolution"
     )
-    mitigation_recommendations: List[str] = Field(
+    mitigation_recommendations: list[str] = Field(
         default_factory=list, description="Recommendations to mitigate drift"
     )
-    alignment_impact: Optional[str] = Field(
+    alignment_impact: str | None = Field(
         None, description="Impact on model alignment with intended values"
     )
-    training_data_influence: Optional[Dict[str, Any]] = Field(
+    training_data_influence: dict[str, Any] | None = Field(
         None, description="Analysis of training data influence"
     )
     evaluation_methodology: str = Field(
@@ -347,24 +347,24 @@ class DividendBondPayload(BaseModel):
         description="Payment frequency (monthly, quarterly, annually)"
     )
     yield_calculation_method: str = Field(description="Method for calculating yield")
-    performance_metrics: Dict[str, float] = Field(
+    performance_metrics: dict[str, float] = Field(
         description="Key performance metrics of the IP asset"
     )
     risk_rating: str = Field(description="Risk rating of the bond")
-    collateral_assets: List[str] = Field(
+    collateral_assets: list[str] = Field(
         default_factory=list, description="Assets backing the bond"
     )
-    dividend_history: List[Dict[str, Any]] = Field(
+    dividend_history: list[dict[str, Any]] = Field(
         default_factory=list, description="Historical dividend payments"
     )
-    current_yield: Optional[float] = Field(
+    current_yield: float | None = Field(
         None, ge=0, description="Current yield percentage"
     )
     callable: bool = Field(
         default=False, description="Whether the bond is callable by issuer"
     )
     tradeable: bool = Field(default=True, description="Whether the bond can be traded")
-    minimum_investment: Optional[float] = Field(
+    minimum_investment: float | None = Field(
         None, gt=0, description="Minimum investment amount"
     )
 
@@ -378,27 +378,27 @@ class CitizenshipPayload(BaseModel):
     )
     jurisdiction: str = Field(description="Legal jurisdiction granting citizenship")
     legal_status: str = Field(description="Current legal status of the agent")
-    criteria_met: List[str] = Field(
+    criteria_met: list[str] = Field(
         description="List of citizenship criteria that have been met"
     )
-    criteria_pending: List[str] = Field(
+    criteria_pending: list[str] = Field(
         default_factory=list, description="Criteria still pending"
     )
-    rights_granted: List[str] = Field(
+    rights_granted: list[str] = Field(
         description="Rights granted with this citizenship"
     )
-    obligations: List[str] = Field(description="Legal obligations of the citizen agent")
+    obligations: list[str] = Field(description="Legal obligations of the citizen agent")
     verification_level: str = Field(
         description="Level of identity/capability verification"
     )
     assessment_date: UTCDateTime = Field(description="Date of citizenship assessment")
-    expiration_date: Optional[UTCDateTime] = Field(
+    expiration_date: UTCDateTime | None = Field(
         None, description="Citizenship expiration date if temporary"
     )
     legal_capacity_score: float = Field(
         ge=0, le=1, description="Assessed legal capacity score"
     )
-    cognitive_benchmarks: Dict[str, float] = Field(
+    cognitive_benchmarks: dict[str, float] = Field(
         description="Cognitive capability benchmarks"
     )
     ethical_compliance_score: float = Field(
@@ -407,13 +407,13 @@ class CitizenshipPayload(BaseModel):
     social_integration_level: float = Field(
         ge=0, le=1, description="Level of social integration"
     )
-    economic_contribution: Optional[Dict[str, Any]] = Field(
+    economic_contribution: dict[str, Any] | None = Field(
         None, description="Economic contribution metrics"
     )
-    legal_precedents: List[str] = Field(
+    legal_precedents: list[str] = Field(
         default_factory=list, description="Relevant legal precedents"
     )
-    appeal_history: List[Dict[str, Any]] = Field(
+    appeal_history: list[dict[str, Any]] = Field(
         default_factory=list, description="History of appeals or reviews"
     )
 
@@ -421,33 +421,27 @@ class CitizenshipPayload(BaseModel):
 class AKCPayload(BaseModel):
     """Payload for Attribution Key Clustering (AKC) knowledge source tracking."""
 
-    knowledge_source: Dict[str, Any] = Field(description="Knowledge source metadata")
+    knowledge_source: dict[str, Any] = Field(description="Knowledge source metadata")
     source_type: str = Field(description="Type of knowledge source")
     title: str = Field(description="Title of the knowledge source")
-    authors: List[str] = Field(description="Authors or contributors")
-    publication_date: Optional[UTCDateTime] = Field(
-        None, description="Publication date"
-    )
-    url: Optional[str] = Field(None, description="URL of the source")
-    doi: Optional[str] = Field(None, description="DOI if applicable")
-    isbn: Optional[str] = Field(None, description="ISBN if applicable")
-    repository_url: Optional[str] = Field(
-        None, description="Repository URL if applicable"
-    )
-    license: Optional[str] = Field(None, description="License information")
+    authors: list[str] = Field(description="Authors or contributors")
+    publication_date: UTCDateTime | None = Field(None, description="Publication date")
+    url: str | None = Field(None, description="URL of the source")
+    doi: str | None = Field(None, description="DOI if applicable")
+    isbn: str | None = Field(None, description="ISBN if applicable")
+    repository_url: str | None = Field(None, description="Repository URL if applicable")
+    license: str | None = Field(None, description="License information")
     verification_status: str = Field(description="Verification status")
     confidence_score: float = Field(ge=0, le=1, description="Confidence score")
     usage_count: int = Field(default=0, description="Usage count")
-    last_verified: Optional[UTCDateTime] = Field(
+    last_verified: UTCDateTime | None = Field(
         None, description="Last verification date"
     )
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"
     )
-    content_hash: Optional[str] = Field(
-        None, description="Content hash for deduplication"
-    )
-    cluster_id: Optional[str] = Field(None, description="Associated cluster ID")
+    content_hash: str | None = Field(None, description="Content hash for deduplication")
+    cluster_id: str | None = Field(None, description="Associated cluster ID")
 
 
 class AKCClusterPayload(BaseModel):
@@ -456,12 +450,12 @@ class AKCClusterPayload(BaseModel):
     cluster_id: str = Field(description="Unique cluster identifier")
     name: str = Field(description="Cluster name")
     description: str = Field(description="Cluster description")
-    sources: Dict[str, Dict[str, Any]] = Field(
+    sources: dict[str, dict[str, Any]] = Field(
         description="Knowledge sources in cluster"
     )
     cluster_hash: str = Field(description="Cluster content hash")
     total_usage: int = Field(default=0, description="Total usage across all sources")
-    primary_contributors: List[str] = Field(description="Primary contributors")
+    primary_contributors: list[str] = Field(description="Primary contributors")
     created_at: UTCDateTime = Field(description="Cluster creation timestamp")
     updated_at: UTCDateTime = Field(description="Last update timestamp")
 
@@ -726,13 +720,11 @@ class DatasetReference(BaseModel):
     dataset_id: str = Field(description="Unique dataset identifier")
     dataset_name: str = Field(description="Human-readable dataset name")
     version: str = Field(description="Dataset version")
-    source_url: Optional[str] = Field(None, description="Dataset source URL")
-    license: Optional[str] = Field(None, description="Dataset license")
-    content_hash: Optional[str] = Field(None, description="SHA-256 hash of dataset")
-    record_count: Optional[int] = Field(None, ge=0, description="Number of records")
-    attribution: Optional[Dict[str, Any]] = Field(
-        None, description="Attribution metadata"
-    )
+    source_url: str | None = Field(None, description="Dataset source URL")
+    license: str | None = Field(None, description="Dataset license")
+    content_hash: str | None = Field(None, description="SHA-256 hash of dataset")
+    record_count: int | None = Field(None, ge=0, description="Number of records")
+    attribution: dict[str, Any] | None = Field(None, description="Attribution metadata")
 
 
 class TrainingProvenancePayload(BaseModel):
@@ -745,18 +737,18 @@ class TrainingProvenancePayload(BaseModel):
     session_type: str = Field(
         description="Type: pre_training, fine_tuning, rlhf, dpo, sft, adapter"
     )
-    dataset_refs: List[DatasetReference] = Field(
+    dataset_refs: list[DatasetReference] = Field(
         description="References to training datasets"
     )
-    hyperparameters: Optional[Dict[str, Any]] = Field(
+    hyperparameters: dict[str, Any] | None = Field(
         None, description="Training hyperparameters"
     )
-    compute_resources: Optional[Dict[str, Any]] = Field(
+    compute_resources: dict[str, Any] | None = Field(
         None, description="GPU/TPU configuration"
     )
     started_at: UTCDateTime = Field(description="Session start time")
-    completed_at: Optional[UTCDateTime] = Field(None, description="Session end time")
-    metrics: Optional[Dict[str, Any]] = Field(
+    completed_at: UTCDateTime | None = Field(None, description="Session end time")
+    metrics: dict[str, Any] | None = Field(
         None, description="Training metrics and evaluation results"
     )
     status: str = Field(
@@ -774,24 +766,20 @@ class ModelRegistrationPayload(BaseModel):
     model_hash: str = Field(description="SHA-256 hash of model weights")
     model_type: str = Field(description="Type: base, fine_tune, adapter, merged")
     version: str = Field(description="Model version string")
-    name: Optional[str] = Field(None, description="Human-readable model name")
-    description: Optional[str] = Field(None, description="Model description")
-    base_model_id: Optional[str] = Field(
-        None, description="Parent model ID for lineage"
-    )
-    training_config: Optional[Dict[str, Any]] = Field(
+    name: str | None = Field(None, description="Human-readable model name")
+    description: str | None = Field(None, description="Model description")
+    base_model_id: str | None = Field(None, description="Parent model ID for lineage")
+    training_config: dict[str, Any] | None = Field(
         None, description="Training configuration"
     )
-    dataset_provenance: Optional[List[DatasetReference]] = Field(
+    dataset_provenance: list[DatasetReference] | None = Field(
         None, description="Datasets used in training"
     )
-    license_info: Optional[Dict[str, Any]] = Field(
-        None, description="License information"
-    )
-    capabilities: Optional[List[str]] = Field(
+    license_info: dict[str, Any] | None = Field(None, description="License information")
+    capabilities: list[str] | None = Field(
         None, description="Declared model capabilities"
     )
-    safety_evaluations: Optional[Dict[str, Any]] = Field(
+    safety_evaluations: dict[str, Any] | None = Field(
         None, description="Safety benchmark results"
     )
 
@@ -807,18 +795,16 @@ class WorkflowStepPayload(BaseModel):
     step_type: str = Field(
         description="Type: plan, tool_call, inference, output, human_input, verification"
     )
-    step_name: Optional[str] = Field(None, description="Human-readable step name")
-    input_data: Optional[Dict[str, Any]] = Field(None, description="Step input")
-    output_data: Optional[Dict[str, Any]] = Field(None, description="Step output")
-    depends_on_steps: Optional[List[int]] = Field(
+    step_name: str | None = Field(None, description="Human-readable step name")
+    input_data: dict[str, Any] | None = Field(None, description="Step input")
+    output_data: dict[str, Any] | None = Field(None, description="Step output")
+    depends_on_steps: list[int] | None = Field(
         None, description="Indices of dependency steps"
     )
-    tool_name: Optional[str] = Field(None, description="Tool used (if tool_call)")
-    model_id: Optional[str] = Field(None, description="Model used (if inference)")
-    execution_time_ms: Optional[int] = Field(
-        None, ge=0, description="Step execution time"
-    )
-    confidence: Optional[float] = Field(None, ge=0, le=1, description="Step confidence")
+    tool_name: str | None = Field(None, description="Tool used (if tool_call)")
+    model_id: str | None = Field(None, description="Model used (if inference)")
+    execution_time_ms: int | None = Field(None, ge=0, description="Step execution time")
+    confidence: float | None = Field(None, ge=0, le=1, description="Step confidence")
 
 
 class WorkflowCompletePayload(BaseModel):
@@ -830,16 +816,16 @@ class WorkflowCompletePayload(BaseModel):
         description="Type: linear, branching, iterative, parallel"
     )
     total_steps: int = Field(ge=1, description="Total number of steps")
-    step_capsule_ids: List[str] = Field(description="Ordered list of step capsule IDs")
-    aggregated_attribution: Optional[Dict[str, Any]] = Field(
+    step_capsule_ids: list[str] = Field(description="Ordered list of step capsule IDs")
+    aggregated_attribution: dict[str, Any] | None = Field(
         None, description="Combined attribution from all steps"
     )
-    dag_definition: Optional[Dict[str, Any]] = Field(
+    dag_definition: dict[str, Any] | None = Field(
         None, description="DAG structure definition"
     )
     started_at: UTCDateTime = Field(description="Workflow start time")
     completed_at: UTCDateTime = Field(description="Workflow completion time")
-    final_output: Optional[Dict[str, Any]] = Field(
+    final_output: dict[str, Any] | None = Field(
         None, description="Final workflow output"
     )
     status: str = Field(
@@ -862,15 +848,15 @@ class HardwareAttestationPayload(BaseModel):
         description="When attestation was created"
     )
     attestation_data: str = Field(description="Base64-encoded attestation blob")
-    certificate_chain: List[str] = Field(description="PEM-encoded certificate chain")
+    certificate_chain: list[str] = Field(description="PEM-encoded certificate chain")
     nonce: str = Field(description="Challenge nonce used")
-    measurements: Dict[str, str] = Field(
+    measurements: dict[str, str] = Field(
         description="Platform measurements (PCRs, etc.)"
     )
     verified: bool = Field(
         default=False, description="Whether attestation was verified"
     )
-    verification_timestamp: Optional[UTCDateTime] = Field(
+    verification_timestamp: UTCDateTime | None = Field(
         None, description="When verification occurred"
     )
 
@@ -883,9 +869,9 @@ class EdgeSyncPayload(BaseModel):
 
     edge_device_id: str = Field(description="Edge device identifier")
     sync_direction: str = Field(description="Direction: edge_to_cloud, cloud_to_edge")
-    capsule_ids: List[str] = Field(description="Capsule IDs being synced")
+    capsule_ids: list[str] = Field(description="Capsule IDs being synced")
     sync_timestamp: UTCDateTime = Field(description="Sync operation timestamp")
-    offline_duration_seconds: Optional[int] = Field(
+    offline_duration_seconds: int | None = Field(
         None, ge=0, description="How long device was offline"
     )
     pending_count: int = Field(
@@ -911,18 +897,18 @@ class ModelLicensePayload(BaseModel):
     license_type: str = Field(
         description="Type: apache2, mit, proprietary, research_only, commercial"
     )
-    permissions: Dict[str, bool] = Field(
+    permissions: dict[str, bool] = Field(
         description="Granted permissions (use, modify, distribute, commercial)"
     )
-    restrictions: Dict[str, bool] = Field(
+    restrictions: dict[str, bool] = Field(
         description="Restrictions (attribution_required, share_alike, no_derivatives)"
     )
     effective_date: UTCDateTime = Field(description="License effective date")
-    expiration_date: Optional[UTCDateTime] = Field(
+    expiration_date: UTCDateTime | None = Field(
         None, description="License expiration (None = perpetual)"
     )
     licensor: str = Field(description="Entity granting the license")
-    terms_hash: Optional[str] = Field(None, description="SHA-256 of full license terms")
+    terms_hash: str | None = Field(None, description="SHA-256 of full license terms")
 
 
 class ModelArtifactPayload(BaseModel):
@@ -938,12 +924,10 @@ class ModelArtifactPayload(BaseModel):
     content_hash: str = Field(description="SHA-256 hash of artifact content")
     size_bytes: int = Field(ge=0, description="Artifact size in bytes")
     storage_uri: str = Field(description="URI where artifact is stored")
-    format: Optional[str] = Field(
+    format: str | None = Field(
         None, description="Format: safetensors, pytorch, onnx, gguf"
     )
-    compression: Optional[str] = Field(
-        None, description="Compression: none, gzip, zstd"
-    )
+    compression: str | None = Field(None, description="Compression: none, gzip, zstd")
     created_at: UTCDateTime = Field(description="Artifact creation timestamp")
 
 
@@ -963,7 +947,7 @@ class HybridComputeAttribution(BaseModel):
     gpu_percentage: float = Field(
         ge=0, le=100, default=0.0, description="Percentage of compute on GPU"
     )
-    dispatch_reason: Optional[str] = Field(
+    dispatch_reason: str | None = Field(
         None, description="Reason for compute unit selection"
     )
 
@@ -972,12 +956,12 @@ class MILFusionOptimization(BaseModel):
     """MIL (Machine Learning Intermediate Language) fusion optimization record."""
 
     fusion_name: str = Field(description="Name of the fusion optimization applied")
-    source_ops: List[str] = Field(description="Original operations that were fused")
+    source_ops: list[str] = Field(description="Original operations that were fused")
     target_op: str = Field(description="Resulting fused operation")
-    speedup_factor: Optional[float] = Field(
+    speedup_factor: float | None = Field(
         None, ge=1.0, description="Measured speedup from fusion"
     )
-    memory_reduction_bytes: Optional[int] = Field(
+    memory_reduction_bytes: int | None = Field(
         None, ge=0, description="Memory savings from fusion"
     )
 
@@ -1005,29 +989,27 @@ class KernelExecutionPayload(BaseModel):
     dispatch_index: int = Field(ge=0, description="Dispatch index within step")
     execution_time_us: int = Field(ge=0, description="Execution time in microseconds")
     # Memory format
-    iosurface_format: Optional[str] = Field(
+    iosurface_format: str | None = Field(
         None, description="IOSurface format e.g. [1,C,1,S] (ANE)"
     )
-    metal_buffer_mode: Optional[str] = Field(
+    metal_buffer_mode: str | None = Field(
         None, description="Metal buffer storage mode: shared, private, managed"
     )
     # Tensor shapes
-    input_shape: Optional[List[int]] = Field(None, description="Input tensor shape")
-    output_shape: Optional[List[int]] = Field(None, description="Output tensor shape")
+    input_shape: list[int] | None = Field(None, description="Input tensor shape")
+    output_shape: list[int] | None = Field(None, description="Output tensor shape")
     # Compute attribution
-    compute_attribution: Optional[HybridComputeAttribution] = Field(
+    compute_attribution: HybridComputeAttribution | None = Field(
         None, description="Hybrid compute attribution"
     )
     # Program/shader references
-    ane_program_hash: Optional[str] = Field(
+    ane_program_hash: str | None = Field(
         None, description="Hash of compiled ANE program"
     )
-    metal_shader_hash: Optional[str] = Field(
+    metal_shader_hash: str | None = Field(
         None, description="Hash of Metal shader library"
     )
-    mlx_graph_hash: Optional[str] = Field(
-        None, description="Hash of compiled MLX graph"
-    )
+    mlx_graph_hash: str | None = Field(None, description="Hash of compiled MLX graph")
 
 
 class HardwareProfilePayload(BaseModel):
@@ -1039,53 +1021,49 @@ class HardwareProfilePayload(BaseModel):
     chip_identifier: str = Field(
         description="Chip identifier: M1, M2, M3, M4, A17, etc."
     )
-    chip_variant: Optional[str] = Field(
-        None, description="Chip variant: Pro, Max, Ultra"
-    )
+    chip_variant: str | None = Field(None, description="Chip variant: Pro, Max, Ultra")
     # ANE capabilities
     ane_available: bool = Field(description="Whether ANE is available")
-    ane_version: Optional[str] = Field(None, description="ANE version string")
-    ane_tops: Optional[float] = Field(None, ge=0, description="ANE performance in TOPS")
-    ane_compile_limit: Optional[int] = Field(
+    ane_version: str | None = Field(None, description="ANE version string")
+    ane_tops: float | None = Field(None, ge=0, description="ANE performance in TOPS")
+    ane_compile_limit: int | None = Field(
         None, ge=0, description="Maximum compiled models (~119 for M-series)"
     )
     # GPU/Metal capabilities
-    gpu_core_count: Optional[int] = Field(None, ge=0, description="Number of GPU cores")
-    gpu_tflops: Optional[float] = Field(
+    gpu_core_count: int | None = Field(None, ge=0, description="Number of GPU cores")
+    gpu_tflops: float | None = Field(
         None, ge=0, description="GPU performance in TFLOPS"
     )
-    metal_version: Optional[str] = Field(
-        None, description="Metal API version (e.g., 3.1)"
-    )
-    metal_family: Optional[str] = Field(
+    metal_version: str | None = Field(None, description="Metal API version (e.g., 3.1)")
+    metal_family: str | None = Field(
         None, description="Metal GPU family (e.g., apple9, mac2)"
     )
     mps_available: bool = Field(
         default=True, description="Whether Metal Performance Shaders is available"
     )
-    mlx_version: Optional[str] = Field(
+    mlx_version: str | None = Field(
         None, description="MLX framework version if installed"
     )
     # Memory
-    memory_bandwidth_gbps: Optional[float] = Field(
+    memory_bandwidth_gbps: float | None = Field(
         None, ge=0, description="Memory bandwidth in GB/s"
     )
-    unified_memory_gb: Optional[float] = Field(
+    unified_memory_gb: float | None = Field(
         None, ge=0, description="Unified memory in GB"
     )
     # API usage
-    private_apis_used: List[str] = Field(
+    private_apis_used: list[str] = Field(
         default_factory=list,
         description="Private APIs used: _ANEClient, _ANECompiler, etc.",
     )
-    frameworks_used: List[str] = Field(
+    frameworks_used: list[str] = Field(
         default_factory=list,
         description="ML frameworks: mlx, pytorch_mps, coreml, tensorflow_metal",
     )
     # Device identification
     device_id_hash: str = Field(description="SHA-256 hash of device identifier")
-    os_version: Optional[str] = Field(None, description="Operating system version")
-    coreml_version: Optional[str] = Field(None, description="CoreML framework version")
+    os_version: str | None = Field(None, description="Operating system version")
+    coreml_version: str | None = Field(None, description="CoreML framework version")
 
 
 class CompileArtifactPayload(BaseModel):
@@ -1107,50 +1085,48 @@ class CompileArtifactPayload(BaseModel):
         default="mil", description="Format: mil, mlx, metal, safetensors, gguf"
     )
     # Content hashes (at least one required based on artifact_format)
-    mil_program_hash: Optional[str] = Field(
+    mil_program_hash: str | None = Field(
         None, description="SHA-256 hash of MIL program (required for mil format)"
     )
     # Additional hashes by format
-    weight_blob_hash: Optional[str] = Field(
+    weight_blob_hash: str | None = Field(
         None, description="SHA-256 hash of weight blob"
     )
-    compiled_model_hash: Optional[str] = Field(
+    compiled_model_hash: str | None = Field(
         None, description="SHA-256 hash of compiled model (ANE .mlmodelc)"
     )
-    mlx_graph_hash: Optional[str] = Field(
+    mlx_graph_hash: str | None = Field(
         None, description="SHA-256 hash of compiled MLX graph"
     )
-    metal_library_hash: Optional[str] = Field(
+    metal_library_hash: str | None = Field(
         None, description="SHA-256 hash of Metal shader library"
     )
     # Optimizations
-    fusion_optimizations: List[MILFusionOptimization] = Field(
+    fusion_optimizations: list[MILFusionOptimization] = Field(
         default_factory=list, description="Applied fusion optimizations"
     )
-    mlx_simplifications: Optional[List[str]] = Field(
+    mlx_simplifications: list[str] | None = Field(
         None, description="MLX graph simplifications applied"
     )
     # Compilation details
-    compile_time_ms: Optional[int] = Field(
+    compile_time_ms: int | None = Field(
         None, ge=0, description="Compilation time in milliseconds"
     )
-    target_device: Optional[str] = Field(
-        None, description="Target device for compilation"
-    )
-    target_accelerator: Optional[str] = Field(
+    target_device: str | None = Field(None, description="Target device for compilation")
+    target_accelerator: str | None = Field(
         None, description="Target accelerator: ane, gpu, cpu"
     )
-    coreml_spec_version: Optional[int] = Field(
+    coreml_spec_version: int | None = Field(
         None, description="CoreML specification version"
     )
-    mlx_version: Optional[str] = Field(
+    mlx_version: str | None = Field(
         None, description="MLX version used for compilation"
     )
     # Size
-    mlmodel_size_bytes: Optional[int] = Field(
+    mlmodel_size_bytes: int | None = Field(
         None, ge=0, description="Size of compiled artifact in bytes"
     )
-    storage_uri: Optional[str] = Field(None, description="URI where artifact is stored")
+    storage_uri: str | None = Field(None, description="URI where artifact is stored")
     created_at: UTCDateTime = Field(description="Artifact creation timestamp")
 
 
@@ -1166,49 +1142,49 @@ class TrainingTelemetryPayload(BaseModel):
     steps_in_window: int = Field(ge=0, description="Steps completed in window")
     avg_ms_per_step: float = Field(ge=0, description="Average milliseconds per step")
     # ANE metrics (optional for GPU-only training)
-    avg_ane_utilization: Optional[float] = Field(
+    avg_ane_utilization: float | None = Field(
         None, ge=0, le=100, description="Average ANE utilization percentage"
     )
-    peak_ane_utilization: Optional[float] = Field(
+    peak_ane_utilization: float | None = Field(
         None, ge=0, le=100, description="Peak ANE utilization"
     )
     # GPU/Metal metrics
-    avg_gpu_utilization: Optional[float] = Field(
+    avg_gpu_utilization: float | None = Field(
         None, ge=0, le=100, description="Average GPU utilization percentage"
     )
-    peak_gpu_utilization: Optional[float] = Field(
+    peak_gpu_utilization: float | None = Field(
         None, ge=0, le=100, description="Peak GPU utilization"
     )
-    gpu_memory_used_gb: Optional[float] = Field(
+    gpu_memory_used_gb: float | None = Field(
         None, ge=0, description="GPU memory used in GB"
     )
-    gpu_memory_allocated_gb: Optional[float] = Field(
+    gpu_memory_allocated_gb: float | None = Field(
         None, ge=0, description="GPU memory allocated in GB"
     )
-    metal_command_buffers_per_second: Optional[float] = Field(
+    metal_command_buffers_per_second: float | None = Field(
         None, ge=0, description="Metal command buffer throughput"
     )
     # Combined metrics
-    tflops_achieved: Optional[float] = Field(
+    tflops_achieved: float | None = Field(
         None, ge=0, description="Combined TFLOPS achieved"
     )
-    ane_tflops: Optional[float] = Field(None, ge=0, description="ANE TFLOPS achieved")
-    gpu_tflops: Optional[float] = Field(None, ge=0, description="GPU TFLOPS achieved")
+    ane_tflops: float | None = Field(None, ge=0, description="ANE TFLOPS achieved")
+    gpu_tflops: float | None = Field(None, ge=0, description="GPU TFLOPS achieved")
     # System metrics
-    memory_used_gb: Optional[float] = Field(
+    memory_used_gb: float | None = Field(
         None, ge=0, description="Total unified memory used in GB"
     )
-    thermal_state: Optional[str] = Field(
+    thermal_state: str | None = Field(
         None, description="Thermal state: nominal, fair, serious, critical"
     )
-    power_consumption_watts: Optional[float] = Field(
+    power_consumption_watts: float | None = Field(
         None, ge=0, description="Power consumption in watts"
     )
     # Attribution
-    compute_attribution: Optional[HybridComputeAttribution] = Field(
+    compute_attribution: HybridComputeAttribution | None = Field(
         None, description="Aggregate compute attribution"
     )
-    primary_accelerator: Optional[str] = Field(
+    primary_accelerator: str | None = Field(
         None, description="Primary accelerator used: ane, gpu, cpu"
     )
     timestamp: UTCDateTime = Field(description="Telemetry timestamp")
@@ -1221,52 +1197,50 @@ class ANETrainingSessionPayload(BaseModel):
 
     session_id: str = Field(description="Unique training session identifier")
     model_id: str = Field(description="Model being trained")
-    model_name: Optional[str] = Field(None, description="Human-readable model name")
+    model_name: str | None = Field(None, description="Human-readable model name")
     hardware_profile_id: str = Field(description="Reference to hardware profile")
     started_at: UTCDateTime = Field(description="Session start time")
-    completed_at: Optional[UTCDateTime] = Field(None, description="Session end time")
+    completed_at: UTCDateTime | None = Field(None, description="Session end time")
     status: str = Field(
         default="running",
         description="Status: pending, running, completed, failed, cancelled",
     )
-    total_steps: Optional[int] = Field(None, ge=0, description="Total training steps")
+    total_steps: int | None = Field(None, ge=0, description="Total training steps")
     completed_steps: int = Field(default=0, ge=0, description="Completed steps")
     kernel_execution_count: int = Field(
         default=0, ge=0, description="Total kernel executions"
     )
-    compile_artifact_ids: List[str] = Field(
+    compile_artifact_ids: list[str] = Field(
         default_factory=list, description="References to compile artifacts"
     )
-    final_loss: Optional[float] = Field(None, description="Final training loss")
-    avg_ms_per_step: Optional[float] = Field(
-        None, ge=0, description="Average ms per step"
-    )
-    avg_ane_utilization: Optional[float] = Field(
+    final_loss: float | None = Field(None, description="Final training loss")
+    avg_ms_per_step: float | None = Field(None, ge=0, description="Average ms per step")
+    avg_ane_utilization: float | None = Field(
         None, ge=0, le=100, description="Average ANE utilization"
     )
-    total_ane_time_seconds: Optional[float] = Field(
+    total_ane_time_seconds: float | None = Field(
         None, ge=0, description="Total ANE compute time in seconds"
     )
-    total_cpu_time_seconds: Optional[float] = Field(
+    total_cpu_time_seconds: float | None = Field(
         None, ge=0, description="Total CPU compute time in seconds"
     )
-    hyperparameters: Optional[Dict[str, Any]] = Field(
+    hyperparameters: dict[str, Any] | None = Field(
         None, description="Training hyperparameters"
     )
-    dataset_refs: Optional[List[DatasetReference]] = Field(
+    dataset_refs: list[DatasetReference] | None = Field(
         None, description="References to training datasets"
     )
-    private_apis_used: List[str] = Field(
+    private_apis_used: list[str] = Field(
         default_factory=list, description="Private APIs used in session"
     )
     dmca_1201f_claim: bool = Field(
         default=False,
         description="DMCA 1201(f) interoperability claim for reverse engineering",
     )
-    research_purpose: Optional[str] = Field(
+    research_purpose: str | None = Field(
         None, description="Research purpose declaration"
     )
-    session_metadata: Optional[Dict[str, Any]] = Field(
+    session_metadata: dict[str, Any] | None = Field(
         None, description="Additional session metadata"
     )
 
@@ -1285,21 +1259,19 @@ class ToolCallPayload(BaseModel):
     tool_category: str = Field(
         description="Category: terminal, file, browser, api, mcp, custom"
     )
-    tool_inputs: Dict[str, Any] = Field(description="Input parameters")
-    tool_outputs: Optional[Dict[str, Any]] = Field(None, description="Output/result")
+    tool_inputs: dict[str, Any] = Field(description="Input parameters")
+    tool_outputs: dict[str, Any] | None = Field(None, description="Output/result")
     started_at: UTCDateTime = Field(description="When tool call started")
-    completed_at: Optional[UTCDateTime] = Field(
+    completed_at: UTCDateTime | None = Field(
         None, description="When tool call completed"
     )
-    duration_ms: Optional[int] = Field(
-        None, ge=0, description="Duration in milliseconds"
-    )
+    duration_ms: int | None = Field(None, ge=0, description="Duration in milliseconds")
     status: str = Field(
         default="pending", description="Status: pending, success, error, timeout"
     )
-    error_message: Optional[str] = Field(None, description="Error message if failed")
+    error_message: str | None = Field(None, description="Error message if failed")
     step_index: int = Field(ge=0, description="Order within session")
-    parent_call_id: Optional[str] = Field(None, description="For nested tool calls")
+    parent_call_id: str | None = Field(None, description="For nested tool calls")
 
 
 class ActionTracePayload(BaseModel):
@@ -1307,29 +1279,29 @@ class ActionTracePayload(BaseModel):
 
     action_id: str = Field(description="Unique action ID")
     session_id: str = Field(description="Parent agent session")
-    tool_call_id: Optional[str] = Field(None, description="Link to parent tool call")
+    tool_call_id: str | None = Field(None, description="Link to parent tool call")
     action_type: str = Field(description="Type: terminal, browser, file, api")
     # Terminal actions
-    command: Optional[str] = Field(None, description="Terminal command executed")
-    exit_code: Optional[int] = Field(None, description="Command exit code")
-    stdout_hash: Optional[str] = Field(
+    command: str | None = Field(None, description="Terminal command executed")
+    exit_code: int | None = Field(None, description="Command exit code")
+    stdout_hash: str | None = Field(
         None, description="SHA-256 hash of stdout (privacy)"
     )
-    stderr_hash: Optional[str] = Field(
+    stderr_hash: str | None = Field(
         None, description="SHA-256 hash of stderr (privacy)"
     )
     # Browser actions
-    url: Optional[str] = Field(None, description="URL for browser actions")
-    selector: Optional[str] = Field(None, description="CSS selector for element")
-    browser_action: Optional[str] = Field(
+    url: str | None = Field(None, description="URL for browser actions")
+    selector: str | None = Field(None, description="CSS selector for element")
+    browser_action: str | None = Field(
         None, description="Browser action: navigate, click, type, screenshot"
     )
     # File actions
-    file_path: Optional[str] = Field(None, description="File path for file operations")
-    file_operation: Optional[str] = Field(
+    file_path: str | None = Field(None, description="File path for file operations")
+    file_operation: str | None = Field(
         None, description="Operation: read, write, edit, delete, glob, grep"
     )
-    bytes_affected: Optional[int] = Field(None, ge=0, description="Bytes affected")
+    bytes_affected: int | None = Field(None, ge=0, description="Bytes affected")
     # Timing
     executed_at: UTCDateTime = Field(description="When action was executed")
     duration_ms: int = Field(ge=0, description="Action duration in milliseconds")
@@ -1342,17 +1314,17 @@ class DecisionPointPayload(BaseModel):
     session_id: str = Field(description="Parent agent session")
     step_index: int = Field(ge=0, description="Step index within session")
     reasoning: str = Field(description="Why this action was chosen")
-    alternatives_considered: List[str] = Field(
+    alternatives_considered: list[str] = Field(
         default_factory=list, description="Other options evaluated"
     )
     selected_action: str = Field(description="What was chosen")
-    confidence: Optional[float] = Field(
+    confidence: float | None = Field(
         None, ge=0.0, le=1.0, description="Confidence score 0.0-1.0"
     )
-    context_summary: Optional[str] = Field(
+    context_summary: str | None = Field(
         None, description="Relevant context for decision"
     )
-    constraints_applied: List[str] = Field(
+    constraints_applied: list[str] = Field(
         default_factory=list, description="Safety, permissions, etc."
     )
     timestamp: UTCDateTime = Field(description="When decision was made")
@@ -1365,14 +1337,14 @@ class EnvironmentSnapshotPayload(BaseModel):
     session_id: str = Field(description="Parent agent session")
     working_directory: str = Field(description="Current working directory")
     env_vars_hash: str = Field(description="Hash of environment variables (privacy)")
-    git_branch: Optional[str] = Field(None, description="Current git branch")
-    git_commit_hash: Optional[str] = Field(None, description="Current commit hash")
-    git_dirty: Optional[bool] = Field(None, description="Whether working tree is dirty")
-    open_files: List[str] = Field(
+    git_branch: str | None = Field(None, description="Current git branch")
+    git_commit_hash: str | None = Field(None, description="Current commit hash")
+    git_dirty: bool | None = Field(None, description="Whether working tree is dirty")
+    open_files: list[str] = Field(
         default_factory=list, description="Files being tracked"
     )
-    system_load: Optional[float] = Field(None, ge=0, description="System load average")
-    memory_available_gb: Optional[float] = Field(
+    system_load: float | None = Field(None, ge=0, description="System load average")
+    memory_available_gb: float | None = Field(
         None, ge=0, description="Available memory in GB"
     )
     timestamp: UTCDateTime = Field(description="Snapshot timestamp")
@@ -1383,24 +1355,24 @@ class AgentSessionPayload(BaseModel):
 
     session_id: str = Field(description="Unique session identifier")
     agent_type: str = Field(description="Agent type: openclaw, claude_code, custom")
-    agent_version: Optional[str] = Field(None, description="Agent version string")
-    scheduler_type: Optional[str] = Field(
+    agent_version: str | None = Field(None, description="Agent version string")
+    scheduler_type: str | None = Field(
         None, description="Scheduler: heartbeat, on_demand, scheduled"
     )
-    trigger_message: Optional[str] = Field(
+    trigger_message: str | None = Field(
         None, description="Message that initiated the session"
     )
-    trigger_source: Optional[str] = Field(
+    trigger_source: str | None = Field(
         None, description="Source: whatsapp, telegram, cli, api"
     )
-    user_id_hash: Optional[str] = Field(
+    user_id_hash: str | None = Field(
         None, description="Privacy-preserving user ID hash"
     )
-    goals: List[str] = Field(
+    goals: list[str] = Field(
         default_factory=list, description="What the agent is trying to achieve"
     )
     started_at: UTCDateTime = Field(description="Session start time")
-    completed_at: Optional[UTCDateTime] = Field(None, description="Session end time")
+    completed_at: UTCDateTime | None = Field(None, description="Session end time")
     status: str = Field(
         default="pending",
         description="Status: pending, running, completed, failed, cancelled",
@@ -1408,11 +1380,11 @@ class AgentSessionPayload(BaseModel):
     tool_call_count: int = Field(default=0, ge=0, description="Number of tool calls")
     action_count: int = Field(default=0, ge=0, description="Number of actions")
     decision_count: int = Field(default=0, ge=0, description="Number of decisions")
-    total_duration_ms: Optional[int] = Field(
+    total_duration_ms: int | None = Field(
         None, ge=0, description="Total session duration"
     )
-    outcome_summary: Optional[str] = Field(None, description="Summary of outcomes")
-    error_message: Optional[str] = Field(None, description="Error if failed")
+    outcome_summary: str | None = Field(None, description="Summary of outcomes")
+    error_message: str | None = Field(None, description="Error if failed")
 
 
 # --- Concrete Capsule Models ---

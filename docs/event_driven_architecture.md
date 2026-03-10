@@ -90,7 +90,7 @@ sequenceDiagram
     participant C as Citizenship Service
     participant E as Event Bus
     participant B as Bonds Service
-    
+
     A->>C: Apply for citizenship
     C->>E: Publish CITIZENSHIP_APPLICATION_SUBMITTED
     C->>C: Conduct assessments
@@ -108,7 +108,7 @@ sequenceDiagram
     participant E as Event Bus
     participant C as Citizenship Service
     participant R as Risk Assessment
-    
+
     B->>E: Publish DIVIDEND_PAYMENT_PROCESSED
     E->>C: Handler receives event
     C->>C: Update financial profile
@@ -125,7 +125,7 @@ sequenceDiagram
     participant E as Event Bus
     participant S as System Handler
     participant B as Bonds Service
-    
+
     C->>E: Publish CITIZENSHIP_REVOKED
     E->>S: Handler receives event
     S->>B: Check active bonds
@@ -238,7 +238,7 @@ recent_events = event_bus.event_store.get_recent_events(100)
 
 # Get events by type
 citizenship_events = event_bus.event_store.get_events_by_type(
-    EventType.CITIZENSHIP_GRANTED, 
+    EventType.CITIZENSHIP_GRANTED,
     limit=50
 )
 

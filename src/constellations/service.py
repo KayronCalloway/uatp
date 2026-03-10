@@ -20,7 +20,7 @@ __all__ = ["ConstellationsService", "service"]
 class ConstellationsService:
     """Business-logic wrapper for Constellations graph operations."""
 
-    def __init__(self, store: Optional[GraphStoreProtocol] = None) -> None:
+    def __init__(self, store: GraphStoreProtocol | None = None) -> None:
         self._store = store or get_graph_store()
 
     # ---------------------------------------------------------------------
@@ -33,13 +33,13 @@ class ConstellationsService:
     # ---------------------------------------------------------------------
     # Lineage queries
     # ---------------------------------------------------------------------
-    def ancestors(self, capsule_id: str, depth: int | None = None) -> List[str]:
+    def ancestors(self, capsule_id: str, depth: int | None = None) -> list[str]:
         return self._store.ancestors(capsule_id, depth)
 
-    def descendants(self, capsule_id: str, depth: int | None = None) -> List[str]:
+    def descendants(self, capsule_id: str, depth: int | None = None) -> list[str]:
         return self._store.descendants(capsule_id, depth)
 
-    def lineage(self, capsule_id: str) -> List[str]:
+    def lineage(self, capsule_id: str) -> list[str]:
         return self._store.lineage(capsule_id)
 
     def export(self) -> dict[str, Any]:

@@ -26,13 +26,13 @@ echo "Starting database backup at $(date)"
 if pg_dump -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
    --no-password --verbose --format=custom --compress=9 \
    --file="$BACKUP_FILE"; then
-   
+
    echo "Database dump completed successfully"
-   
+
    # Compress the backup
    gzip "$BACKUP_FILE"
    echo "Backup compressed: $COMPRESSED_BACKUP"
-   
+
    # Verify backup integrity
    if gunzip -t "$COMPRESSED_BACKUP"; then
        echo "Backup integrity verified"
@@ -40,21 +40,21 @@ if pg_dump -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
        echo "ERROR: Backup integrity check failed!"
        exit 1
    fi
-   
+
    # Calculate backup size
    BACKUP_SIZE=$(du -h "$COMPRESSED_BACKUP" | cut -f1)
    echo "Backup size: $BACKUP_SIZE"
-   
+
    # Clean up old backups
    echo "Cleaning up backups older than $RETENTION_DAYS days..."
    find "$BACKUP_DIR" -name "uatp_backup_*.sql.gz" -type f -mtime +$RETENTION_DAYS -delete
-   
+
    # List remaining backups
    echo "Current backups:"
    ls -lah "$BACKUP_DIR"/uatp_backup_*.sql.gz || echo "No backups found"
-   
+
    echo "Backup completed successfully at $(date)"
-   
+
 else
    echo "ERROR: Database backup failed!"
    exit 1

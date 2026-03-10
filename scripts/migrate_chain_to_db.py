@@ -12,9 +12,10 @@ if project_root not in sys.path:
 
 # Now we can import our application modules
 # Now we can import our application modules
+from crud import capsule as capsule_crud
+
 from capsule_schema import Capsule as CapsuleSchema
 from core.database import Base, SessionLocal, engine
-from crud import capsule as capsule_crud
 from crypto_utils import hash_capsule_dict
 
 # Configure logging

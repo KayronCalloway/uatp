@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Brain, 
-  Search, 
-  Target, 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  Brain,
+  Search,
+  Target,
+  CheckCircle,
+  AlertCircle,
   Clock,
   RefreshCw,
   Eye,
@@ -386,7 +386,7 @@ export function ReasoningDashboard() {
                     {getComplexityBadge(chain.complexity_level)}
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
                     <span className="text-gray-500">Steps:</span>
@@ -405,7 +405,7 @@ export function ReasoningDashboard() {
                     <span className="font-bold ml-1">{chain.memory_usage}MB</span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between mt-4">
                   <div className="flex space-x-1">
                     {chain.tags.map((tag, idx) => (
@@ -456,7 +456,7 @@ export function ReasoningDashboard() {
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         className={`h-2 rounded-full ${item.color}`}
                         style={{ width: `${(item.count / 45) * 100}%` }}
                       />
@@ -486,7 +486,7 @@ export function ReasoningDashboard() {
                 </div>
                 <span className="text-xs text-gray-500">2h ago</span>
               </div>
-              
+
               <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
                 <Brain className="h-4 w-4 text-blue-600" />
                 <div className="flex-1">
@@ -495,7 +495,7 @@ export function ReasoningDashboard() {
                 </div>
                 <span className="text-xs text-gray-500">1h ago</span>
               </div>
-              
+
               <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
                 <Pause className="h-4 w-4 text-yellow-600" />
                 <div className="flex-1">
@@ -565,14 +565,14 @@ export function ReasoningDashboard() {
                   <p className="text-xs text-gray-500">Created</p>
                 </div>
               </div>
-              
+
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Progress</span>
                   <span className="text-sm text-gray-500">{chain.status === 'completed' ? '100%' : '75%'}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
+                  <div
                     className={`h-2 rounded-full ${
                       chain.status === 'completed' ? 'bg-green-500' :
                       chain.status === 'active' ? 'bg-blue-500' :
@@ -582,7 +582,7 @@ export function ReasoningDashboard() {
                   />
                 </div>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <div className="flex space-x-1">
                   {chain.tags.map((tag, idx) => (

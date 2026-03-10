@@ -16,7 +16,7 @@ router = APIRouter(tags=["Constellations"])
 
 
 @router.get("/constellations/{capsule_id}/ancestors")
-async def get_ancestors(capsule_id: str, depth: Optional[int] = Query(None, ge=1)):
+async def get_ancestors(capsule_id: str, depth: int | None = Query(None, ge=1)):
     """Return ancestor capsule IDs up to the optional *depth*."""
     try:
         ancestors = constellations_service.ancestors(capsule_id, depth)
@@ -26,7 +26,7 @@ async def get_ancestors(capsule_id: str, depth: Optional[int] = Query(None, ge=1
 
 
 @router.get("/constellations/{capsule_id}/descendants")
-async def get_descendants(capsule_id: str, depth: Optional[int] = Query(None, ge=1)):
+async def get_descendants(capsule_id: str, depth: int | None = Query(None, ge=1)):
     """Return descendant capsule IDs up to the optional *depth*."""
     try:
         descendants = constellations_service.descendants(capsule_id, depth)

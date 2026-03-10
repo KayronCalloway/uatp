@@ -41,7 +41,7 @@ export function TrustDashboard() {
 
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'violations' | 'agents'>('overview');
   const [timeRange, setTimeRange] = useState('24h');
-  
+
   const { data: trustMetrics, isLoading: metricsLoading, refetch: refetchMetrics, error: metricsError } = useQuery({
     queryKey: ['trust-metrics', isDemoMode],
     queryFn: async () => {
@@ -156,47 +156,47 @@ export function TrustDashboard() {
         activeAgents: trustMetrics.total_agents || 0
       };
     }
-    
+
     // Handle array structure (if it changes in future)
     if (Array.isArray(trustMetrics)) {
       const now = new Date();
       const cutoff = new Date(now.getTime() - (timeRange === '24h' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000));
-      
+
       // Filter metrics by time range
-      const filteredMetrics = trustMetrics.filter(metric => 
+      const filteredMetrics = trustMetrics.filter(metric =>
         new Date(metric.timestamp) >= cutoff
       );
-      
+
       // Calculate trust score distribution
       const trustDistribution = {
         high: filteredMetrics.filter(m => m.trust_score >= 0.8).length,
         medium: filteredMetrics.filter(m => m.trust_score >= 0.5 && m.trust_score < 0.8).length,
         low: filteredMetrics.filter(m => m.trust_score < 0.5).length
       };
-      
+
       // Calculate average trust over time
-      const avgTrust = filteredMetrics.length > 0 
-        ? filteredMetrics.reduce((sum, m) => sum + m.trust_score, 0) / filteredMetrics.length 
+      const avgTrust = filteredMetrics.length > 0
+        ? filteredMetrics.reduce((sum, m) => sum + m.trust_score, 0) / filteredMetrics.length
         : 0;
-      
+
       // Calculate trust trend
-      const recent = filteredMetrics.filter(m => 
+      const recent = filteredMetrics.filter(m =>
         new Date(m.timestamp) >= new Date(now.getTime() - 60 * 60 * 1000)
       );
-      const older = filteredMetrics.filter(m => 
+      const older = filteredMetrics.filter(m =>
         new Date(m.timestamp) < new Date(now.getTime() - 60 * 60 * 1000)
       );
-      
+
       const recentAvg = recent.length > 0 ? recent.reduce((sum, m) => sum + m.trust_score, 0) / recent.length : 0;
       const olderAvg = older.length > 0 ? older.reduce((sum, m) => sum + m.trust_score, 0) / older.length : 0;
       const trustTrend = recentAvg - olderAvg;
-      
+
       return {
         trustDistribution,
         avgTrust,
         trustTrend,
         totalAgents: filteredMetrics.length,
-        activeAgents: filteredMetrics.filter(m => 
+        activeAgents: filteredMetrics.filter(m =>
           new Date(m.timestamp) >= new Date(now.getTime() - 60 * 60 * 1000)
         ).length
       };
@@ -208,23 +208,23 @@ export function TrustDashboard() {
   // Violation analytics
   const violationAnalytics = useMemo(() => {
     if (!recentViolations || !Array.isArray(recentViolations)) return null;
-    
+
     const now = new Date();
     const cutoff = new Date(now.getTime() - (timeRange === '24h' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000));
-    
-    const filteredViolations = recentViolations.filter(violation => 
+
+    const filteredViolations = recentViolations.filter(violation =>
       new Date(violation.timestamp) >= cutoff
     );
-    
+
     // Group violations by type
     const violationTypes = filteredViolations.reduce((acc, violation) => {
       acc[violation.type] = (acc[violation.type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    
+
     // Calculate violation rate
     const violationRate = filteredViolations.length / (timeRange === '24h' ? 24 : 168); // per hour
-    
+
     return {
       totalViolations: filteredViolations.length,
       violationTypes,
@@ -438,8 +438,8 @@ export function TrustDashboard() {
             <div className="text-center py-8 text-gray-500">
               <div className="mb-2">No individual agent trust metrics available</div>
               <div className="text-sm">
-                {trustMetrics?.system_health === 'healthy' 
-                  ? 'System is healthy with no agents being tracked yet' 
+                {trustMetrics?.system_health === 'healthy'
+                  ? 'System is healthy with no agents being tracked yet'
                   : 'System status shows aggregated trust metrics only'}
               </div>
             </div>
@@ -472,9 +472,9 @@ export function TrustDashboard() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full ${metric.trust_score >= 80 ? 'bg-green-600' : 
-                          metric.trust_score >= 60 ? 'bg-yellow-600' : 
+                      <div
+                        className={`h-2 rounded-full ${metric.trust_score >= 80 ? 'bg-green-600' :
+                          metric.trust_score >= 60 ? 'bg-yellow-600' :
                           metric.trust_score >= 40 ? 'bg-orange-600' : 'bg-red-600'}`}
                         style={{ width: `${metric.trust_score}%` }}
                       />

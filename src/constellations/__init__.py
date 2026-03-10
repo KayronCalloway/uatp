@@ -30,17 +30,17 @@ class GraphStoreProtocol(Protocol):
         """Insert a directed edge parent→child with optional metadata."""
 
     # ---------------------------- Queries ----------------------------------
-    def ancestors(self, capsule_id: str, depth: int | None = None) -> List[str]:
+    def ancestors(self, capsule_id: str, depth: int | None = None) -> list[str]:
         """Return ancestor ids up to *depth* generations (unlimited if None)."""
 
-    def descendants(self, capsule_id: str, depth: int | None = None) -> List[str]:
+    def descendants(self, capsule_id: str, depth: int | None = None) -> list[str]:
         """Return descendants ids up to *depth* generations (unlimited if None)."""
 
-    def lineage(self, capsule_id: str) -> List[str]:
+    def lineage(self, capsule_id: str) -> list[str]:
         """Return ordered path from *capsule_id* to genesis (root ancestor)."""
 
     # --------------------------- Utilities ---------------------------------
-    def export(self) -> Dict[str, Any]:
+    def export(self) -> dict[str, Any]:
         """Return serialisable representation (nodes + edges)."""
 
 
@@ -58,7 +58,7 @@ class InMemoryGraphStore(GraphStoreProtocol):
         self._graph.add_edge(parent_id, child_id, **metadata)
 
     # ---------------------------- Queries ----------------------------------
-    def ancestors(self, capsule_id: str, depth: int | None = None) -> List[str]:
+    def ancestors(self, capsule_id: str, depth: int | None = None) -> list[str]:
         ancestors = nx.ancestors(self._graph, capsule_id)
         if depth is None:
             return list(ancestors)
@@ -75,7 +75,7 @@ class InMemoryGraphStore(GraphStoreProtocol):
                 break
         return list(result)
 
-    def descendants(self, capsule_id: str, depth: int | None = None) -> List[str]:
+    def descendants(self, capsule_id: str, depth: int | None = None) -> list[str]:
         descendants = nx.descendants(self._graph, capsule_id)
         if depth is None:
             return list(descendants)
@@ -91,7 +91,7 @@ class InMemoryGraphStore(GraphStoreProtocol):
                 break
         return list(result)
 
-    def lineage(self, capsule_id: str) -> List[str]:
+    def lineage(self, capsule_id: str) -> list[str]:
         # Trace back along any parent until root (node with no predecessors)
         path = [capsule_id]
         current = capsule_id
@@ -101,7 +101,7 @@ class InMemoryGraphStore(GraphStoreProtocol):
         return path[::-1]  # genesis → capsule_id
 
     # --------------------------- Utilities ---------------------------------
-    def export(self) -> Dict[str, Any]:
+    def export(self) -> dict[str, Any]:
         return {
             "nodes": list(self._graph.nodes),
             "edges": [

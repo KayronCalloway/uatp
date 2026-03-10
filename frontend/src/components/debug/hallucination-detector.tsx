@@ -6,10 +6,10 @@ import { api } from '@/lib/api-client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  AlertTriangle, 
-  CheckCircle, 
-  XCircle, 
+import {
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
   RefreshCw,
   Brain,
   Shield,
@@ -70,12 +70,12 @@ export function HallucinationDetector() {
 
   const analyzeCapsulesForHallucinations = (capsules: any[], trust?: any[]): HallucinationAlert[] => {
     const alerts: HallucinationAlert[] = [];
-    
+
     capsules.forEach((capsule, index) => {
       // Check for factual inconsistencies
       if (capsule.content?.content && typeof capsule.content.content === 'string') {
         const content = capsule.content.content.toLowerCase();
-        
+
         // Simple heuristic checks (in production, this would use more sophisticated NLP)
         const suspiciousPatterns = [
           { pattern: /i remember|i recall|i know for certain/i, type: 'source_fabrication' as const },
@@ -88,7 +88,7 @@ export function HallucinationDetector() {
           if (pattern.pattern.test(content)) {
             const trustScore = trust?.find(t => t.agent_id === capsule.agent_id)?.trust_score || 0.8;
             const severity = trustScore < 0.7 ? 'high' : trustScore < 0.85 ? 'medium' : 'low';
-            
+
             alerts.push({
               id: `alert-${capsule.id}-${patternIndex}`,
               capsule_id: capsule.id,
@@ -155,7 +155,7 @@ export function HallucinationDetector() {
       stats.by_severity[alert.severity]++;
       stats.by_type[alert.type] = (stats.by_type[alert.type] || 0) + 1;
       stats.by_agent[alert.agent_id] = (stats.by_agent[alert.agent_id] || 0) + 1;
-      
+
       const alertAge = Date.now() - new Date(alert.detected_at).getTime();
       if (alertAge < 3600000) stats.trend.last_hour++; // 1 hour
       if (alertAge < 86400000) stats.trend.last_day++; // 24 hours
@@ -256,7 +256,7 @@ export function HallucinationDetector() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {capsulesData?.capsules ? 
+                {capsulesData?.capsules ?
                   ((stats.total_alerts / capsulesData.capsules.length) * 100).toFixed(1) : '0'
                 }%
               </div>
@@ -351,7 +351,7 @@ export function HallucinationDetector() {
                   <p className="mt-1">{new Date(selectedAlert.detected_at).toLocaleString()}</p>
                 </div>
               </div>
-              
+
               <div>
                 <label className="text-sm font-medium text-gray-500">Description</label>
                 <p className="mt-1">{selectedAlert.description}</p>

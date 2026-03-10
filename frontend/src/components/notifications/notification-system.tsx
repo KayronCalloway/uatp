@@ -45,7 +45,7 @@ export function NotificationSystem() {
         timestamp: message.timestamp,
         category: getNotificationCategory(message.type)
       };
-      
+
       addNotification(notification);
     },
     onError: (error) => {
@@ -116,7 +116,7 @@ export function NotificationSystem() {
     if (type === 'success') return <CheckCircle className="h-4 w-4 text-green-600" />;
     if (type === 'error') return <AlertTriangle className="h-4 w-4 text-red-600" />;
     if (type === 'warning') return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
-    
+
     switch (category) {
       case 'capsule': return <Database className="h-4 w-4 text-blue-600" />;
       case 'trust': return <Shield className="h-4 w-4 text-purple-600" />;

@@ -4,15 +4,15 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Activity, 
-  Home, 
-  Video, 
-  Link, 
-  Bot, 
-  Globe, 
-  Building2, 
-  DollarSign, 
+import {
+  Activity,
+  Home,
+  Video,
+  Link,
+  Bot,
+  Globe,
+  Building2,
+  DollarSign,
   Shield,
   CheckCircle,
   Server,
@@ -28,14 +28,14 @@ import { GovernanceDashboard } from '@/components/governance/governance-dashboar
 import { EconomicDashboard } from '@/components/economics/economic-dashboard';
 import { TrustDashboard } from '@/components/trust/trust-dashboard';
 
-type DashboardView = 
-  | 'overview' 
-  | 'live-capture' 
-  | 'chain-sealing' 
-  | 'rights-evolution' 
-  | 'federation' 
-  | 'governance' 
-  | 'economics' 
+type DashboardView =
+  | 'overview'
+  | 'live-capture'
+  | 'chain-sealing'
+  | 'rights-evolution'
+  | 'federation'
+  | 'governance'
+  | 'economics'
   | 'trust';
 
 export function SystemOverviewDashboard() {
@@ -100,7 +100,7 @@ export function SystemOverviewDashboard() {
                   </div>
                 </div>
               </Card>
-              
+
               <Card className="border-l-4 border-l-blue-500 bg-blue-50/50">
                 <div className="p-6">
                   <div className="flex items-center justify-between">
@@ -117,7 +117,7 @@ export function SystemOverviewDashboard() {
                   </div>
                 </div>
               </Card>
-              
+
               <Card className="border-l-4 border-l-purple-500 bg-purple-50/50">
                 <div className="p-6">
                   <div className="flex items-center justify-between">
@@ -134,7 +134,7 @@ export function SystemOverviewDashboard() {
                   </div>
                 </div>
               </Card>
-              
+
               <Card className="border-l-4 border-l-amber-500 bg-amber-50/50">
                 <div className="p-6">
                   <div className="flex items-center justify-between">
@@ -165,8 +165,8 @@ export function SystemOverviewDashboard() {
                 <p className="text-sm text-slate-600 mb-4">
                   Real-time conversation capture from Claude Code, Cursor, and Windsurf
                 </p>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => setActiveView('live-capture')}
                   className="w-full flex items-center justify-center space-x-2"
@@ -186,8 +186,8 @@ export function SystemOverviewDashboard() {
                 <p className="text-sm text-slate-600 mb-4">
                   Cryptographic sealing and verification of capsule chains
                 </p>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => setActiveView('chain-sealing')}
                   className="w-full flex items-center justify-center space-x-2"
@@ -207,8 +207,8 @@ export function SystemOverviewDashboard() {
                 <p className="text-sm text-slate-600 mb-4">
                   Dynamic rights management based on AI behavior and trust
                 </p>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => setActiveView('rights-evolution')}
                   className="w-full flex items-center justify-center space-x-2"
@@ -228,8 +228,8 @@ export function SystemOverviewDashboard() {
                 <p className="text-sm text-slate-600 mb-4">
                   Multi-node federation for distributed UATP deployment
                 </p>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => setActiveView('federation')}
                   className="w-full flex items-center justify-center space-x-2"
@@ -249,8 +249,8 @@ export function SystemOverviewDashboard() {
                 <p className="text-sm text-slate-600 mb-4">
                   Democratic governance with proposals and voting mechanisms
                 </p>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => setActiveView('governance')}
                   className="w-full flex items-center justify-center space-x-2"
@@ -270,8 +270,8 @@ export function SystemOverviewDashboard() {
                 <p className="text-sm text-slate-600 mb-4">
                   Attribution economics and compensation mechanisms
                 </p>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => setActiveView('economics')}
                   className="w-full flex items-center justify-center space-x-2"

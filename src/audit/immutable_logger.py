@@ -105,7 +105,7 @@ class ImmutableAuditLogger:
         if not chain_file.exists():
             return
 
-        with open(chain_file, "r") as f:
+        with open(chain_file) as f:
             lines = f.readlines()
 
         if not lines:
@@ -244,7 +244,7 @@ class ImmutableAuditLogger:
         if not chain_file.exists():
             return (True, None)  # Empty chain is valid
 
-        with open(chain_file, "r") as f:
+        with open(chain_file) as f:
             lines = f.readlines()
 
         previous_entry: Optional[AuditLogEntry] = None
@@ -356,7 +356,7 @@ class ImmutableAuditLogger:
         if not chain_file.exists():
             return []
 
-        with open(chain_file, "r") as f:
+        with open(chain_file) as f:
             lines = f.readlines()
 
         recent_lines = lines[-count:]
@@ -392,7 +392,7 @@ class ImmutableAuditLogger:
 
         matches = []
 
-        with open(chain_file, "r") as f:
+        with open(chain_file) as f:
             for line in f:
                 entry = AuditLogEntry(**json.loads(line))
 

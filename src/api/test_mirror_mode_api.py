@@ -76,7 +76,7 @@ def test_server_imports_mirror_mode_api():
     server_path = os.path.join(os.path.dirname(__file__), "server.py")
 
     try:
-        with open(server_path, "r") as f:
+        with open(server_path) as f:
             source = f.read()
     except FileNotFoundError:
         pytest.skip("server.py not found - skipping import verification test")

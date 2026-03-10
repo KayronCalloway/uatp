@@ -377,8 +377,8 @@ export function MirrorModeDashboard() {
                   <Button size="sm" variant="outline">
                     <Settings className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant={config.enabled ? "destructive" : "default"}
                   >
                     {config.enabled ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
@@ -388,7 +388,7 @@ export function MirrorModeDashboard() {
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 mb-4">{config.description}</p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                   <p className="font-medium text-sm mb-2">Target Systems</p>
@@ -400,7 +400,7 @@ export function MirrorModeDashboard() {
                     ))}
                   </div>
                 </div>
-                
+
                 <div>
                   <p className="font-medium text-sm mb-2">Audit Rules</p>
                   <div className="space-y-1">
@@ -411,7 +411,7 @@ export function MirrorModeDashboard() {
                     ))}
                   </div>
                 </div>
-                
+
                 <div>
                   <p className="font-medium text-sm mb-2">Performance</p>
                   <div className="space-y-2">
@@ -432,10 +432,10 @@ export function MirrorModeDashboard() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full" 
+                <div
+                  className="bg-blue-500 h-2 rounded-full"
                   style={{ width: `${config.compliance_score * 100}%` }}
                 />
               </div>

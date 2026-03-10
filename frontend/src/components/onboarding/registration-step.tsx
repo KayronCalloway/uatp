@@ -36,15 +36,15 @@ export function RegistrationStep({ onComplete, onSkip }: RegistrationStepProps) 
     if (!formData.password) return 'Password is required';
     if (formData.password !== formData.confirmPassword) return 'Passwords do not match';
     if (formData.password.length < 8) return 'Password must be at least 8 characters';
-    
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) return 'Invalid email format';
-    
+
     // Username validation
     if (formData.username.length < 3) return 'Username must be at least 3 characters';
     if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) return 'Username can only contain letters, numbers, and underscores';
-    
+
     return null;
   };
 

@@ -124,10 +124,10 @@ export function LiveCaptureDashboard() {
     onSuccess: (response, sessionId) => {
       // Add to created capsules set
       setCreatedCapsuleIds(prev => new Set(prev).add(sessionId));
-      
+
       // Refresh capsules list
       queryClient.invalidateQueries({ queryKey: ['capsules'] });
-      
+
       // Optionally refresh conversations
       fetchConversations();
     },
@@ -248,7 +248,7 @@ export function LiveCaptureDashboard() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -260,7 +260,7 @@ export function LiveCaptureDashboard() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -272,7 +272,7 @@ export function LiveCaptureDashboard() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -306,8 +306,8 @@ export function LiveCaptureDashboard() {
                 <div key={conv.session_id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-3">
-                      {conv.should_create_capsule ? 
-                        <CheckCircle className="h-4 w-4 text-green-500" /> : 
+                      {conv.should_create_capsule ?
+                        <CheckCircle className="h-4 w-4 text-green-500" /> :
                         <AlertCircle className="h-4 w-4 text-yellow-500" />
                       }
                       <div>

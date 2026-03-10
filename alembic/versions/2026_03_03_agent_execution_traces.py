@@ -39,9 +39,7 @@ def upgrade() -> None:
     op.create_table(
         "agent_sessions",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column(
-            "session_id", sa.String(64), unique=True, nullable=False, index=True
-        ),
+        sa.Column("session_id", sa.String(64), unique=True, nullable=False, index=True),
         # Agent information
         sa.Column(
             "agent_type",
@@ -97,9 +95,7 @@ def upgrade() -> None:
         sa.Column("action_count", sa.Integer(), default=0),
         sa.Column("decision_count", sa.Integer(), default=0),
         # Timing
-        sa.Column(
-            "started_at", sa.DateTime(timezone=True), nullable=False, index=True
-        ),
+        sa.Column("started_at", sa.DateTime(timezone=True), nullable=False, index=True),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "total_duration_ms",
@@ -134,9 +130,7 @@ def upgrade() -> None:
     op.create_table(
         "tool_calls",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column(
-            "call_id", sa.String(64), unique=True, nullable=False, index=True
-        ),
+        sa.Column("call_id", sa.String(64), unique=True, nullable=False, index=True),
         # Session link
         sa.Column(
             "session_id",
@@ -226,9 +220,7 @@ def upgrade() -> None:
     op.create_table(
         "action_traces",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column(
-            "action_id", sa.String(64), unique=True, nullable=False, index=True
-        ),
+        sa.Column("action_id", sa.String(64), unique=True, nullable=False, index=True),
         # Session link
         sa.Column(
             "session_id",

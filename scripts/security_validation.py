@@ -677,8 +677,8 @@ class SecurityValidator:
 
         report = f"""# UATP Capsule Engine Security Validation Report
 
-**Validation Date**: {self.validation_results['timestamp']}
-**Overall Status**: {status_emoji.get(self.validation_results['overall_status'], '')} {self.validation_results['overall_status'].upper()}
+**Validation Date**: {self.validation_results["timestamp"]}
+**Overall Status**: {status_emoji.get(self.validation_results["overall_status"], "")} {self.validation_results["overall_status"].upper()}
 
 ## Security Categories
 

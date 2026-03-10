@@ -400,7 +400,7 @@ export function PlatformDashboard() {
                     </div>
                     {getStatusBadge(platform.status)}
                   </div>
-                  
+
                   {usage && (
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
@@ -415,14 +415,14 @@ export function PlatformDashboard() {
                         <span>Cost This Month</span>
                         <span className="font-bold">${usage.cost_this_month}</span>
                       </div>
-                      
+
                       <div className="mt-3">
                         <div className="flex justify-between text-xs text-gray-500 mb-1">
                           <span>Quota Usage</span>
                           <span>{usage.quota_used}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
+                          <div
                             className={`h-2 rounded-full ${
                               usage.quota_used >= 80 ? 'bg-red-500' :
                               usage.quota_used >= 60 ? 'bg-yellow-500' : 'bg-green-500'
@@ -508,7 +508,7 @@ export function PlatformDashboard() {
         {mockPlatforms.map((platform) => {
           const usage = mockUsage.find(u => u.platform_id === platform.id);
           const keyCount = mockAPIKeys.filter(k => k.platform_id === platform.id).length;
-          
+
           return (
             <Card key={platform.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -545,7 +545,7 @@ export function PlatformDashboard() {
                       )}
                     </div>
                   </div>
-                  
+
                   <div>
                     <p className="font-medium text-sm mb-2">API Keys</p>
                     <div className="space-y-2">
@@ -555,7 +555,7 @@ export function PlatformDashboard() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <p className="font-medium text-sm mb-2">Usage Today</p>
                     <div className="space-y-2">
@@ -567,7 +567,7 @@ export function PlatformDashboard() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <p className="font-medium text-sm mb-2">Cost This Month</p>
                     <div className="space-y-2">
@@ -580,7 +580,7 @@ export function PlatformDashboard() {
                     </div>
                   </div>
                 </div>
-                
+
                 {usage && (
                   <div className="mb-4">
                     <div className="flex justify-between items-center mb-2">
@@ -588,7 +588,7 @@ export function PlatformDashboard() {
                       <span className="text-sm text-gray-500">{usage.quota_used}% used</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         className={`h-2 rounded-full ${
                           usage.quota_used >= 80 ? 'bg-red-500' :
                           usage.quota_used >= 60 ? 'bg-yellow-500' : 'bg-green-500'
@@ -598,14 +598,14 @@ export function PlatformDashboard() {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
                     <span>Avg Response: {usage?.avg_response_time}ms</span>
                     {platform.documentation_url && (
-                      <a 
-                        href={platform.documentation_url} 
-                        target="_blank" 
+                      <a
+                        href={platform.documentation_url}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center space-x-1 text-blue-600 hover:underline"
                       >

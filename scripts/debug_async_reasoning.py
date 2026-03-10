@@ -83,8 +83,8 @@ def sequential_test(num_requests=5):
     results = []
 
     for i in range(num_requests):
-        print(f"\nRequest {i+1}/{num_requests}")
-        result = make_request(session, f"Tell me about UATP (request {i+1})")
+        print(f"\nRequest {i + 1}/{num_requests}")
+        result = make_request(session, f"Tell me about UATP (request {i + 1})")
         results.append(result)
         time.sleep(1)  # Small delay between requests
 
@@ -106,7 +106,7 @@ def concurrent_test(num_requests=5, max_workers=3):
                 executor.submit(
                     make_request,
                     session,
-                    f"Tell me about UATP (concurrent request {i+1})",
+                    f"Tell me about UATP (concurrent request {i + 1})",
                 )
             )
 

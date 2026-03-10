@@ -33,7 +33,7 @@ export function useWebSocket({
     if (!url || url === '') {
       return;
     }
-    
+
     try {
       wsRef.current = new WebSocket(url);
 
@@ -47,7 +47,7 @@ export function useWebSocket({
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
           setLastMessage(message);
-          
+
           // Handle real-time updates by invalidating relevant queries
           switch (message.type) {
             case 'capsule_created':
@@ -67,7 +67,7 @@ export function useWebSocket({
             default:
               break;
           }
-          
+
           if (onMessage) {
             onMessage(message);
           }
@@ -86,7 +86,7 @@ export function useWebSocket({
       wsRef.current.onclose = () => {
         setIsConnected(false);
         // WebSocket disconnected
-        
+
         // Attempt to reconnect
         if (reconnectAttempts < maxReconnectAttempts) {
           setTimeout(() => {
@@ -116,7 +116,7 @@ export function useWebSocket({
 
   useEffect(() => {
     connect();
-    
+
     return () => {
       disconnect();
     };

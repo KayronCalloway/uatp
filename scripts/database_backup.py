@@ -23,8 +23,9 @@ from typing import Any, Dict, List
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from core.database import db
 from sqlalchemy import text
+
+from core.database import db
 
 # Configure logging
 logging.basicConfig(

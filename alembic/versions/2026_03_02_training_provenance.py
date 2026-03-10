@@ -111,9 +111,7 @@ def upgrade() -> None:
     op.create_table(
         "training_sessions",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column(
-            "session_id", sa.String(64), unique=True, nullable=False, index=True
-        ),
+        sa.Column("session_id", sa.String(64), unique=True, nullable=False, index=True),
         sa.Column(
             "model_id",
             sa.String(64),
@@ -164,9 +162,7 @@ def upgrade() -> None:
             nullable=True,
             comment="References to saved checkpoints",
         ),
-        sa.Column(
-            "started_at", sa.DateTime(timezone=True), nullable=False, index=True
-        ),
+        sa.Column("started_at", sa.DateTime(timezone=True), nullable=False, index=True),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "verification",

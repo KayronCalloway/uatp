@@ -5,10 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Globe, 
-  RotateCcw, 
-  Play, 
+import {
+  Globe,
+  RotateCcw,
+  Play,
   Pause,
   ZoomIn,
   ZoomOut,
@@ -87,7 +87,7 @@ export function Universe3D() {
         const phi = Math.acos(-1 + (2 * index) / capsulesData.capsules.length);
         const theta = Math.sqrt(capsulesData.capsules.length * Math.PI) * phi;
         const radius = 200 + (Math.random() - 0.5) * 100;
-        
+
         return {
           id: capsule.id,
           x: radius * Math.cos(theta) * Math.sin(phi),
@@ -227,7 +227,7 @@ export function Universe3D() {
   const handleWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
     event.preventDefault();
     const zoomFactor = event.deltaY > 0 ? 1.1 : 0.9;
-    
+
     setUniverse(prev => ({
       ...prev,
       camera: {
@@ -419,7 +419,7 @@ function project3D(node: CapsuleNode3D, camera: any, width: number, height: numb
   // Rotate around Y axis
   const x1 = node.x * cosY - node.z * sinY;
   const z1 = node.x * sinY + node.z * cosY;
-  
+
   // Rotate around X axis
   const y2 = node.y * cosX - z1 * sinX;
   const z2 = node.y * sinX + z1 * cosX;
@@ -475,7 +475,7 @@ function drawStarField3D(ctx: CanvasRenderingContext2D, width: number, height: n
     const y = Math.random() * height;
     const size = Math.random() * 1.5;
     const alpha = Math.random() * 0.8 + 0.2;
-    
+
     ctx.globalAlpha = alpha;
     ctx.beginPath();
     ctx.arc(x, y, size, 0, Math.PI * 2);
@@ -492,38 +492,38 @@ function drawCapsuleNode3D(ctx: CanvasRenderingContext2D, node: any) {
   );
   gradient.addColorStop(0, node.color + '80');
   gradient.addColorStop(1, node.color + '00');
-  
+
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.arc(node.screenX, node.screenY, node.screenSize * 2, 0, Math.PI * 2);
   ctx.fill();
-  
+
   // Draw main node
   ctx.fillStyle = node.color;
   ctx.globalAlpha = node.brightness;
   ctx.beginPath();
   ctx.arc(node.screenX, node.screenY, node.screenSize, 0, Math.PI * 2);
   ctx.fill();
-  
+
   // Draw bright center
   ctx.fillStyle = '#FFFFFF';
   ctx.globalAlpha = 0.8;
   ctx.beginPath();
   ctx.arc(node.screenX, node.screenY, node.screenSize * 0.3, 0, Math.PI * 2);
   ctx.fill();
-  
+
   ctx.globalAlpha = 1;
 }
 
 function drawConnections3D(ctx: CanvasRenderingContext2D, nodes: any[]) {
   ctx.strokeStyle = '#FFFFFF20';
   ctx.lineWidth = 1;
-  
+
   nodes.forEach((node, index) => {
     if (index > 0 && Math.random() > 0.85) {
       const targetIndex = Math.floor(Math.random() * index);
       const target = nodes[targetIndex];
-      
+
       ctx.beginPath();
       ctx.moveTo(node.screenX, node.screenY);
       ctx.lineTo(target.screenX, target.screenY);
@@ -544,11 +544,11 @@ function drawNodeInfo3D(ctx: CanvasRenderingContext2D, node: any, width: number,
   const infoY = 10;
   const infoWidth = 200;
   const infoHeight = 80;
-  
+
   // Draw info background
   ctx.fillStyle = '#00000080';
   ctx.fillRect(infoX, infoY, infoWidth, infoHeight);
-  
+
   // Draw info text
   ctx.fillStyle = '#FFFFFF';
   ctx.font = '12px Arial';

@@ -2,7 +2,7 @@
 
 export enum OnboardingStage {
   WELCOME = "welcome",
-  ENVIRONMENT_DETECTION = "environment_detection", 
+  ENVIRONMENT_DETECTION = "environment_detection",
   QUICK_SETUP = "quick_setup",
   AI_INTEGRATION = "ai_integration",
   FIRST_CAPSULE = "first_capsule",
@@ -13,7 +13,7 @@ export enum OnboardingStage {
 
 export enum UserType {
   DEVELOPER = "developer",
-  BUSINESS_USER = "business_user", 
+  BUSINESS_USER = "business_user",
   RESEARCHER = "researcher",
   CASUAL_USER = "casual_user",
   ENTERPRISE = "enterprise"

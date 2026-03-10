@@ -37,9 +37,7 @@ def upgrade() -> None:
     op.create_table(
         "hardware_profiles",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column(
-            "profile_id", sa.String(64), unique=True, nullable=False, index=True
-        ),
+        sa.Column("profile_id", sa.String(64), unique=True, nullable=False, index=True),
         # Device identification
         sa.Column(
             "device_class",
@@ -159,9 +157,7 @@ def upgrade() -> None:
     op.create_table(
         "ane_training_sessions",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column(
-            "session_id", sa.String(64), unique=True, nullable=False, index=True
-        ),
+        sa.Column("session_id", sa.String(64), unique=True, nullable=False, index=True),
         # Model information
         sa.Column("model_id", sa.String(64), nullable=False, index=True),
         sa.Column("model_name", sa.String(255), nullable=True),
@@ -243,9 +239,7 @@ def upgrade() -> None:
         # Additional metadata
         sa.Column("session_metadata", sa.JSON(), nullable=True),
         # Timing
-        sa.Column(
-            "started_at", sa.DateTime(timezone=True), nullable=False, index=True
-        ),
+        sa.Column("started_at", sa.DateTime(timezone=True), nullable=False, index=True),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         # Verification
         sa.Column("verification", sa.JSON(), nullable=True),
@@ -452,7 +446,9 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Remove Apple Silicon training provenance tables."""
     op.drop_table("compile_artifacts")
-    op.drop_index("ix_kernel_executions_session_accelerator", table_name="kernel_executions")
+    op.drop_index(
+        "ix_kernel_executions_session_accelerator", table_name="kernel_executions"
+    )
     op.drop_index("ix_kernel_executions_session_step", table_name="kernel_executions")
     op.drop_table("kernel_executions")
     op.drop_table("ane_training_sessions")

@@ -84,9 +84,9 @@ class RBACManager:
 
         for role in system_roles:
             self._roles[role.role_id] = role
-            self._role_permissions_cache[role.role_id] = set(
+            self._role_permissions_cache[role.role_id] = {
                 p.value for p in role.permissions
-            )
+            }
 
         logger.info(f"Initialized {len(system_roles)} system roles")
 
@@ -136,9 +136,9 @@ class RBACManager:
         """Add a role to the system."""
         try:
             self._roles[role.role_id] = role
-            self._role_permissions_cache[role.role_id] = set(
+            self._role_permissions_cache[role.role_id] = {
                 p.value for p in role.permissions
-            )
+            }
             logger.info(f"Added role {role.name} ({role.role_id})")
             return True
         except Exception as e:
@@ -165,9 +165,9 @@ class RBACManager:
 
             role.updated_at = datetime.now(timezone.utc)
             self._roles[role.role_id] = role
-            self._role_permissions_cache[role.role_id] = set(
+            self._role_permissions_cache[role.role_id] = {
                 p.value for p in role.permissions
-            )
+            }
 
             # Clear user caches for all users with this role
             self._clear_role_cache(role.role_id)
@@ -289,7 +289,7 @@ class RBACManager:
     ) -> bool:
         """Check if user has any of the specified permissions."""
         user_permissions = self.get_user_permissions(user_id)
-        required_permissions = set(p.value for p in permissions)
+        required_permissions = {p.value for p in permissions}
         return bool(user_permissions.intersection(required_permissions))
 
     def has_all_permissions(
@@ -297,7 +297,7 @@ class RBACManager:
     ) -> bool:
         """Check if user has all of the specified permissions."""
         user_permissions = self.get_user_permissions(user_id)
-        required_permissions = set(p.value for p in permissions)
+        required_permissions = {p.value for p in permissions}
         return required_permissions.issubset(user_permissions)
 
     # Access Control

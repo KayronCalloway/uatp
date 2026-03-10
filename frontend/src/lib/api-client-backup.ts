@@ -50,7 +50,7 @@ export class UATCapsuleEngineClient {
       (response) => response,
       (error) => {
         console.error('API request failed:', error.config?.url, error.response?.status || error.code);
-        
+
         if (error.response?.data?.error) {
           throw new Error(error.response.data.error);
         }
@@ -318,7 +318,7 @@ export class UATCapsuleEngineClient {
   async getLiveCaptureStats(): Promise<any> {
     const response = await this.client.get('/api/v1/live/monitor/status');
     const backendData = response.data;
-    
+
     // Transform backend response to frontend expected format
     if (backendData.success && backendData.status) {
       return {
@@ -327,15 +327,15 @@ export class UATCapsuleEngineClient {
         total_captured: 0, // Backend doesn't track this yet
         capture_rate: 0.0, // Backend doesn't track this yet
         sources: {
-          'live-monitor': { 
-            active: true, 
-            captures: 0 
+          'live-monitor': {
+            active: true,
+            captures: 0
           }
         },
         last_capture: new Date().toISOString()
       };
     }
-    
+
     return response.data;
   }
 
@@ -354,11 +354,11 @@ export class UATCapsuleEngineClient {
     return response.data;
   }
 
-  // Chain sealing endpoints  
+  // Chain sealing endpoints
   async getChainSealsList(): Promise<any> {
     const response = await this.client.get('/chain/seals');
     const backendData = response.data;
-    
+
     // Transform backend response to frontend expected format
     if (backendData.success && backendData.seals) {
       const seals = backendData.seals;
@@ -369,7 +369,7 @@ export class UATCapsuleEngineClient {
         pending_seals: seals.filter((seal: any) => seal.status === 'pending').length
       };
     }
-    
+
     return response.data;
   }
 
@@ -601,7 +601,7 @@ export class UATCapsuleEngineClient {
 
   private getMockUniverseData(): any {
     const capsules = this.getMockCapsules().capsules;
-    
+
     return {
       nodes: capsules.map((capsule, index) => ({
         id: capsule.id,
@@ -617,7 +617,7 @@ export class UATCapsuleEngineClient {
         metadata: {
           timestamp: capsule.timestamp,
           verified: capsule.verification.verified,
-          content_preview: typeof capsule.content.content === 'string' 
+          content_preview: typeof capsule.content.content === 'string'
             ? capsule.content.content.substring(0, 50) + '...'
             : 'Complex content'
         }
@@ -679,7 +679,7 @@ export class UATCapsuleEngineClient {
           should_create_capsule: true
         },
         {
-          session_id: 'mock-technical-discussion-002', 
+          session_id: 'mock-technical-discussion-002',
           user_id: 'developer',
           platform: 'cursor',
           last_activity: new Date(Date.now() - 300000).toISOString(),
@@ -1031,7 +1031,7 @@ export class UATCapsuleEngineClient {
             details: 'API server responding normally'
           },
           'database': {
-            status: 'healthy', 
+            status: 'healthy',
             score: 0.92,
             details: 'Database connections stable'
           },
@@ -1390,81 +1390,81 @@ export const api = {
   createCapsule: (capsule: Partial<AnyCapsule>) => apiClient.createCapsule(capsule),
   verifyCapsule: (id: string) => apiClient.verifyCapsule(id),
   getCapsuleStats: () => apiClient.getCapsuleStats(),
-  
+
   // Chain
   getChainSeals: () => apiClient.getChainSeals(),
   sealChain: (request: SealChainRequest) => apiClient.sealChain(request),
   verifySeal: (chainId: string, query: VerifySealQuery) => apiClient.verifySeal(chainId, query),
-  
+
   // AI
   generateAI: (request: AIGenerateRequest) => apiClient.generateAI(request),
-  
+
   // Trust
   getTrustStatus: (agentId: string) => apiClient.getTrustStatus(agentId),
   getTrustMetrics: () => apiClient.getTrustMetrics(),
   getTrustPolicies: () => apiClient.getTrustPolicies(),
   getRecentViolations: () => apiClient.getRecentViolations(),
   getQuarantinedAgents: () => apiClient.getQuarantinedAgents(),
-  
+
   // Reasoning
   validateReasoning: (request: ReasoningAnalysisRequest) => apiClient.validateReasoning(request),
   analyzeReasoning: (request: ReasoningAnalysisRequest) => apiClient.analyzeReasoning(request),
   compareReasoning: (request: { traces: any[] }) => apiClient.compareReasoning(request),
-  
+
   // Federation
   getFederationNodes: () => apiClient.getFederationNodes(),
   addFederationNode: (nodeData: { name: string; url: string; region: string }) => apiClient.addFederationNode(nodeData),
   getFederationStats: () => apiClient.getFederationStats(),
   syncFederationNode: (nodeId: string) => apiClient.syncFederationNode(nodeId),
-  
+
   // Governance
   getProposals: () => apiClient.getProposals(),
   getProposal: (proposalId: string) => apiClient.getProposal(proposalId),
   createProposal: (proposalData: { title: string; description: string; category: string }) => apiClient.createProposal(proposalData),
   voteOnProposal: (proposalId: string, vote: 'for' | 'against' | 'abstain') => apiClient.voteOnProposal(proposalId, vote),
   getGovernanceStats: () => apiClient.getGovernanceStats(),
-  
+
   // Analytics
   getAnalytics: () => apiClient.getAnalytics(),
   getEconomicMetrics: () => apiClient.getEconomicMetrics(),
-  
+
   // Organization
   getOrganization: () => apiClient.getOrganization(),
   getOrganizationMembers: () => apiClient.getOrganizationMembers(),
   inviteOrganizationMember: (email: string) => apiClient.inviteOrganizationMember(email),
-  
+
   // Advanced attribution
   getAttributionModels: () => apiClient.getAttributionModels(),
   getAttributionAnalysis: () => apiClient.getAttributionAnalysis(),
   computeAttribution: (config: any) => apiClient.computeAttribution(config),
-  
+
   // Hallucination detection
   detectHallucinations: (request: { text: string; context?: string }) => apiClient.detectHallucinations(request),
   getHallucinationStats: () => apiClient.getHallucinationStats(),
-  
+
   // Universe visualization
   getUniverseVisualizationData: () => apiClient.getUniverseVisualizationData(),
-  
+
   // Live capture
   getLiveCaptureStats: () => apiClient.getLiveCaptureStats(),
   getLiveCaptureConversations: () => apiClient.getLiveCaptureConversations(),
   startLiveCaptureMonitor: (config: any) => apiClient.startLiveCaptureMonitor(config),
   captureLiveMessage: (message: any) => apiClient.captureLiveMessage(message),
-  
+
   // Chain sealing
   getChainSealsList: () => apiClient.getChainSealsList(),
-  
+
   // Rights evolution
   getRightsEvolutionHistory: (modelId: string) => apiClient.getRightsEvolutionHistory(modelId),
   getRightsEvolutionAlerts: () => apiClient.getRightsEvolutionAlerts(),
   createCitizenshipApplication: (data: any) => apiClient.createCitizenshipApplication(data),
   getCitizenshipApplications: () => apiClient.getCitizenshipApplications(),
-  
+
   // System
   healthCheck: () => apiClient.healthCheck(),
   getMetrics: () => apiClient.getMetrics(),
   ping: () => apiClient.ping(),
-  
+
   // Onboarding
   startOnboarding: (userId: string, preferences: UserPreferences) => apiClient.startOnboarding(userId, preferences),
   continueOnboarding: (userId: string, stepData?: Record<string, any>) => apiClient.continueOnboarding(userId, stepData),
@@ -1472,12 +1472,12 @@ export const api = {
   getOnboardingSystemHealth: () => apiClient.getOnboardingSystemHealth(),
   getOnboardingSupport: (userId?: string, issueType?: string, message?: string) => apiClient.getOnboardingSupport(userId, issueType, message),
   getAvailablePlatforms: () => apiClient.getAvailablePlatforms(),
-  
+
   // Advanced Reasoning
   getReasoningChains: () => apiClient.getReasoningChains(),
   getReasoningStats: () => apiClient.getReasoningStats(),
   getReasoningSteps: (chainId: string) => apiClient.getReasoningSteps(chainId),
-  
+
   // Capsule Creation
   createReasoningCapsule: (request: any) => apiClient.createReasoningCapsule(request),
   createGenericCapsule: (capsuleData: any) => apiClient.createGenericCapsule(capsuleData),

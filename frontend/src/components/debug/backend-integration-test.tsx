@@ -30,7 +30,7 @@ export function BackendIntegrationTest() {
   const runTests = async () => {
     setIsRunning(true);
     setResults([]);
-    
+
     for (const endpoint of testEndpoints) {
       setResults(prev => [...prev, {
         endpoint: endpoint.name,
@@ -40,18 +40,18 @@ export function BackendIntegrationTest() {
 
       try {
         const data = await endpoint.test();
-        setResults(prev => prev.map(r => 
-          r.endpoint === endpoint.name 
+        setResults(prev => prev.map(r =>
+          r.endpoint === endpoint.name
             ? { ...r, status: 'success', message: 'Success!', data }
             : r
         ));
       } catch (error: any) {
         const isUnauthorized = error.message?.includes('API key required') || error.response?.status === 401;
-        setResults(prev => prev.map(r => 
-          r.endpoint === endpoint.name 
-            ? { 
-                ...r, 
-                status: isUnauthorized ? 'unauthorized' : 'error', 
+        setResults(prev => prev.map(r =>
+          r.endpoint === endpoint.name
+            ? {
+                ...r,
+                status: isUnauthorized ? 'unauthorized' : 'error',
                 message: error.message || 'Unknown error',
                 data: error.response?.data
               }
@@ -59,7 +59,7 @@ export function BackendIntegrationTest() {
         ));
       }
     }
-    
+
     setIsRunning(false);
   };
 
@@ -103,7 +103,7 @@ export function BackendIntegrationTest() {
                 {result.status.toUpperCase()}
               </span>
             </div>
-            
+
             <p className={`text-sm ${getStatusColor(result.status)}`}>
               {result.message}
             </p>

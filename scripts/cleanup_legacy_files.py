@@ -173,17 +173,17 @@ def generate_cleanup_report(analysis: Dict, plan: Dict):
 
 ## Current State Analysis
 
-- **Total Python files**: {analysis['total_python_files']}
-- **Files in src/**: {analysis['src_files']}
-- **Root directory clutter**: {analysis['root_clutter']} files
-- **Organization ratio**: {analysis['src_files'] / analysis['total_python_files'] * 100:.1f}% properly organized
+- **Total Python files**: {analysis["total_python_files"]}
+- **Files in src/**: {analysis["src_files"]}
+- **Root directory clutter**: {analysis["root_clutter"]} files
+- **Organization ratio**: {analysis["src_files"] / analysis["total_python_files"] * 100:.1f}% properly organized
 
 ## Issues Identified
 
 ### 1. Module Sprawl
-- **{len(analysis['legacy_files'])} legacy fix scripts** in root directory
-- **{len(analysis['demo_files'])} demo files** scattered in root
-- **{len(analysis['test_files'])} test files** outside tests/ directory
+- **{len(analysis["legacy_files"])} legacy fix scripts** in root directory
+- **{len(analysis["demo_files"])} demo files** scattered in root
+- **{len(analysis["test_files"])} test files** outside tests/ directory
 
 ### 2. Root Directory Pollution
 Files that should be organized:
@@ -208,9 +208,9 @@ Files that should be organized:
 
 ## Cleanup Plan
 
-1. **Remove** {len(plan['remove'])} legacy/temporary files
-2. **Organize** {len(plan['move_to_examples'])} demo files into examples/
-3. **Consolidate** {len(plan['move_to_tests'])} test files into tests/
+1. **Remove** {len(plan["remove"])} legacy/temporary files
+2. **Organize** {len(plan["move_to_examples"])} demo files into examples/
+3. **Consolidate** {len(plan["move_to_tests"])} test files into tests/
 
 ## Expected Outcome
 

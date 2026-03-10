@@ -140,7 +140,7 @@ class AgentAuthManager:
         if not agents_file.exists():
             return
 
-        with open(agents_file, "r") as f:
+        with open(agents_file) as f:
             for line in f:
                 agent_dict = json.loads(line)
                 agent = AgentIdentity(**agent_dict)
@@ -153,7 +153,7 @@ class AgentAuthManager:
         if not creds_file.exists():
             return
 
-        with open(creds_file, "r") as f:
+        with open(creds_file) as f:
             for line in f:
                 cred_dict = json.loads(line)
                 cred = AgentCredential(**cred_dict)

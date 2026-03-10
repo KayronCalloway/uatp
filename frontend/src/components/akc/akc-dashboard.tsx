@@ -250,14 +250,14 @@ export function AKCDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button 
+            <Button
               onClick={() => setActiveView('sources')}
               className="flex items-center justify-center space-x-2 h-16"
             >
               <Database className="h-5 w-5" />
               <span>Manage Sources</span>
             </Button>
-            <Button 
+            <Button
               onClick={() => setActiveView('clusters')}
               variant="outline"
               className="flex items-center justify-center space-x-2 h-16"
@@ -265,7 +265,7 @@ export function AKCDashboard() {
               <Network className="h-5 w-5" />
               <span>View Clusters</span>
             </Button>
-            <Button 
+            <Button
               onClick={() => setActiveView('search')}
               variant="outline"
               className="flex items-center justify-center space-x-2 h-16"
@@ -395,7 +395,7 @@ export function AKCDashboard() {
                       <span>Quality: {(source.quality_score * 100).toFixed(0)}%</span>
                     </div>
                     {source.url && (
-                      <a href={source.url} target="_blank" rel="noopener noreferrer" 
+                      <a href={source.url} target="_blank" rel="noopener noreferrer"
                          className="text-blue-600 hover:underline text-sm">
                         {source.url}
                       </a>
@@ -407,8 +407,8 @@ export function AKCDashboard() {
                     </Button>
                     <div className="text-right">
                       <div className="w-16 bg-gray-200 rounded-full h-2 mb-1">
-                        <div 
-                          className="bg-blue-500 h-2 rounded-full" 
+                        <div
+                          className="bg-blue-500 h-2 rounded-full"
                           style={{ width: `${source.confidence_score * 100}%` }}
                         />
                       </div>
@@ -454,8 +454,8 @@ export function AKCDashboard() {
                   <span className="font-bold">{(cluster.quality_score * 100).toFixed(0)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-green-500 h-2 rounded-full" 
+                  <div
+                    className="bg-green-500 h-2 rounded-full"
                     style={{ width: `${cluster.quality_score * 100}%` }}
                   />
                 </div>

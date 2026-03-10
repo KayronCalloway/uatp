@@ -44,7 +44,7 @@ export function getCapsuleTypeColor(type: string): string {
     'governance': 'bg-orange-100 text-orange-800',
     'default': 'bg-gray-100 text-gray-800',
   };
-  
+
   return colors[type] || colors.default;
 }
 
@@ -65,7 +65,7 @@ export function isValidApiKey(apiKey: string): boolean {
 }
 
 export function generateId(): string {
-  return Math.random().toString(36).substring(2, 15) + 
+  return Math.random().toString(36).substring(2, 15) +
          Math.random().toString(36).substring(2, 15);
 }
 

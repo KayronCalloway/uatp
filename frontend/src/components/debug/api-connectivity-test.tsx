@@ -81,7 +81,7 @@ export function APIConnectivityTest() {
             {testEndpoints && (
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="font-semibold">Endpoint Tests:</h3>
-                
+
                 {/* Health Test */}
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center space-x-3">

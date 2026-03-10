@@ -46,7 +46,7 @@ const CREATOR_KEYS = [
 
 const CREATOR_IDS = [
   'kay',
-  'kay-user', 
+  'kay-user',
   'kay-live-agent',
   'system-creator'
 ];
@@ -59,22 +59,22 @@ export function CreatorProvider({ children }: { children: React.ReactNode }) {
       // Check for creator key in localStorage first
       const creatorKey = localStorage.getItem('uatp_creator_key');
       const creatorId = localStorage.getItem('uatp_creator_id');
-      
+
       // Auto-detect Kay as creator based on existing data patterns
       const isKayCreator = creatorId === 'kay' || creatorKey === 'kay-creator-key';
-      
+
       // Check backend for creator status via the API client
       let backendCreatorCheck = false;
       try {
         // Import API client dynamically to avoid circular deps
         const { apiClient } = await import('@/lib/api-client');
         const response = await apiClient.healthCheck();
-        
+
         // For now, we'll consider anyone who can reach the backend as a creator
         // In production, this would be a proper creator-check endpoint
         if (response) {
           backendCreatorCheck = true;
-          
+
           // If backend confirms creator status, auto-enable creator mode
           if (backendCreatorCheck && !isKayCreator) {
             localStorage.setItem('uatp_creator_key', 'kay-creator-key');
@@ -84,7 +84,7 @@ export function CreatorProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.log('Could not check creator status from backend - API not available');
       }
-      
+
       // Enable creator mode if local keys OR backend confirms creator status
       if ((creatorKey && CREATOR_KEYS.includes(creatorKey)) || isKayCreator || backendCreatorCheck) {
         setState({
@@ -106,10 +106,10 @@ export function CreatorProvider({ children }: { children: React.ReactNode }) {
 
   const enableCreatorMode = (creatorId: string = 'kay') => {
     const creatorKey = 'kay-creator-key';
-    
+
     localStorage.setItem('uatp_creator_key', creatorKey);
     localStorage.setItem('uatp_creator_id', creatorId);
-    
+
     setState({
       isCreator: true,
       creatorId,
@@ -126,7 +126,7 @@ export function CreatorProvider({ children }: { children: React.ReactNode }) {
   const disableCreatorMode = () => {
     localStorage.removeItem('uatp_creator_key');
     localStorage.removeItem('uatp_creator_id');
-    
+
     setState(initialState);
   };
 

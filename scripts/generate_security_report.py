@@ -371,7 +371,7 @@ def generate_markdown_summary(summary: Dict[str, Any]) -> str:
 |  Low | {summary["low_issues"]} |
 | **Total** | **{summary["total_issues"]}** |
 
-{'[WARN] **Action Required:** Please address critical and high severity issues before merging.' if summary["critical_issues"] + summary["high_issues"] > 0 else '[OK] **All Clear:** No critical security issues detected.'}
+{"[WARN] **Action Required:** Please address critical and high severity issues before merging." if summary["critical_issues"] + summary["high_issues"] > 0 else "[OK] **All Clear:** No critical security issues detected."}
 
  View the [full security report](../security-report.html) for detailed findings.
     """

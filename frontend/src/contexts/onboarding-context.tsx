@@ -1,11 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { 
-  OnboardingState, 
-  OnboardingActions, 
-  OnboardingProgress, 
-  UserType, 
+import {
+  OnboardingState,
+  OnboardingActions,
+  OnboardingProgress,
+  UserType,
   OnboardingStage,
   UserPreferences,
   PlatformInfo,
@@ -26,7 +26,7 @@ const initialState: OnboardingState = {
 };
 
 // Action types
-type OnboardingAction = 
+type OnboardingAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_PROGRESS'; payload: OnboardingProgress }
@@ -43,12 +43,12 @@ function onboardingReducer(state: OnboardingState, action: OnboardingAction): On
     case 'SET_ERROR':
       return { ...state, error: action.payload, isLoading: false };
     case 'SET_PROGRESS':
-      return { 
-        ...state, 
-        progress: action.payload, 
+      return {
+        ...state,
+        progress: action.payload,
         isActive: action.payload.current_stage !== OnboardingStage.COMPLETE,
         error: null,
-        isLoading: false 
+        isLoading: false
       };
     case 'SET_PLATFORMS':
       return { ...state, availablePlatforms: action.payload };
@@ -80,7 +80,7 @@ const generateUserId = (): string => {
 // Get or create user ID
 const getUserId = (): string => {
   if (typeof window === 'undefined') return generateUserId();
-  
+
   let userId = localStorage.getItem('uatp_onboarding_user_id');
   if (!userId) {
     userId = generateUserId();
@@ -106,7 +106,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         if (response.success && response.progress) {
           console.log('Setting onboarding progress:', response.progress);
           dispatch({ type: 'SET_PROGRESS', payload: response.progress });
-          
+
           // Store onboarding state in localStorage
           localStorage.setItem('uatp_onboarding_progress', JSON.stringify(response.progress));
         } else {
@@ -129,7 +129,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
         if (response.success && response.progress) {
           dispatch({ type: 'SET_PROGRESS', payload: response.progress });
-          
+
           // Update stored progress
           localStorage.setItem('uatp_onboarding_progress', JSON.stringify(response.progress));
         } else {
@@ -156,7 +156,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       try {
         const userId = getUserId();
         const response = await api.getOnboardingSupport(userId, issueType, message);
-        
+
         if (response.success && response.data) {
           return response.data;
         } else {

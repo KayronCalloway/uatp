@@ -459,7 +459,7 @@ def load_environment_config(environment: Environment) -> Dict[str, Any]:
 
     if config_file.exists():
         try:
-            with open(config_file, "r") as f:
+            with open(config_file) as f:
                 config = json.load(f)
             logger.info(f"Loaded configuration from {config_file}")
             return config

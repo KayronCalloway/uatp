@@ -130,7 +130,7 @@ class MirrorAgent:
 # Singleton accessor
 # ---------------------------------------------------------------------------
 
-_agent: Optional[MirrorAgent] = None
+_agent: MirrorAgent | None = None
 
 
 def get_mirror_agent(*, policy_engine=None, capsule_engine=None) -> MirrorAgent:  # noqa: D401

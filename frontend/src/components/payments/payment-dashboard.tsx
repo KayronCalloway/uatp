@@ -306,9 +306,9 @@ export function PaymentDashboard() {
                   </div>
                 </div>
               ))}
-              <Button 
+              <Button
                 onClick={() => setShowAddMethod(true)}
-                variant="outline" 
+                variant="outline"
                 className="w-full flex items-center justify-center space-x-2"
               >
                 <Plus className="h-4 w-4" />

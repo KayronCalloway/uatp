@@ -100,7 +100,7 @@ def demo_pragmatic_attribution():
 
     print(" Attribution Analysis Results:")
     for i, result in enumerate(attribution_results[:3]):  # Show top 3
-        print(f"  {i+1}. {result.source_id}: {result.confidence:.3f} confidence")
+        print(f"  {i + 1}. {result.source_id}: {result.confidence:.3f} confidence")
         print(
             f"     Semantic: {result.semantic_similarity:.3f}, Temporal: {result.temporal_relevance:.3f}"
         )

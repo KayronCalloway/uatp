@@ -21,7 +21,7 @@ export function useOnboardingFlow() {
       // Check if user has actually created a persistent account (not just completed wizard)
       const userId = localStorage.getItem('uatp_onboarding_user_id');
       const isDismissedThisSession = sessionStorage.getItem('uatp_onboarding_dismissed_session');
-      
+
       // Always show banner unless dismissed this session
       if (isDismissedThisSession) {
         setShouldShowOnboarding(false);
@@ -34,7 +34,7 @@ export function useOnboardingFlow() {
           // Import API client dynamically to avoid circular deps
           const { apiClient } = await import('@/lib/api-client');
           const userData = await apiClient.getOnboardingStatus(userId);
-          
+
           // Only hide banner if user has persistent account with verified status
           if (userData.success && userData.progress?.user_type) {
             setShouldShowOnboarding(false);
@@ -74,14 +74,14 @@ export function useOnboardingFlow() {
         console.error('No user ID found for onboarding completion');
         return;
       }
-      
+
       // Complete onboarding via API client
       const { apiClient } = await import('@/lib/api-client');
       const result = await apiClient.continueOnboarding(userId, {
         registration_data: registrationData,
         completion_step: true
       });
-      
+
       if (result.success) {
         localStorage.setItem('uatp_user_id', userId);
         localStorage.removeItem('uatp_onboarding_progress');

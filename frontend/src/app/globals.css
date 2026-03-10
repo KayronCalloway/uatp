@@ -107,11 +107,11 @@ body {
     transform: translateX(-100%);
     z-index: 50;
   }
-  
+
   .dashboard-sidebar.open {
     transform: translateX(0);
   }
-  
+
   .dashboard-main {
     margin-left: 0;
   }
