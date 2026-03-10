@@ -109,14 +109,18 @@ select = ["E", "F", "B", "I", "W"]
 ignore = [
     "E501",   # Line too long
     "E402",   # Module level import not at top (often intentional)
+    "E712",   # Avoid comparison to True/False (common in test assertions)
     "E721",   # Type comparison (use isinstance)
+    "E722",   # Bare except (to be fixed incrementally)
     "B008",   # Function call in default argument (FastAPI Depends pattern)
+    "B017",   # pytest.raises(Exception) - blind exception assertion
     "B904",   # Exception chaining (raise from)
     "B018",   # Useless expression
     "F401",   # Imported but unused (often re-exports)
     "F403",   # Star imports
     "F811",   # Redefinition (to fix later)
     "F821",   # Undefined name (to fix later)
+    "F841",   # Local variable assigned but never used (common in tests)
     "B007",   # Unused loop variable
     "B027",   # Empty method in abstract class
 ]

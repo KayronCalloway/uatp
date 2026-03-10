@@ -21,6 +21,9 @@ from httpx import ASGITransport, AsyncClient
 # Ensure src is in path
 sys.path.insert(0, ".")
 
+# Import JWT manager for test token generation
+from src.auth.jwt_manager import create_access_token
+
 
 @pytest_asyncio.fixture(scope="function")
 async def client():
@@ -37,6 +40,20 @@ async def client():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://localhost") as ac:
         yield ac
+
+
+@pytest.fixture
+def auth_headers():
+    """Generate valid JWT auth headers for authenticated endpoints."""
+    # Use a valid UUID format for user_id (required by owner_id column in DB)
+    test_user = {
+        "user_id": "12345678-1234-5678-1234-567812345678",
+        "email": "test@example.com",
+        "username": "testuser",
+        "scopes": ["read", "write"],
+    }
+    token = create_access_token(test_user)
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
@@ -140,9 +157,13 @@ class TestCapsuleCreate:
     """Test POST /capsules endpoint."""
 
     @pytest.mark.asyncio
-    async def test_create_capsule_success(self, client, sample_capsule_payload):
+    async def test_create_capsule_success(
+        self, client, sample_capsule_payload, auth_headers
+    ):
         """Test creating a capsule succeeds."""
-        response = await client.post("/capsules", json=sample_capsule_payload)
+        response = await client.post(
+            "/capsules", json=sample_capsule_payload, headers=auth_headers
+        )
 
         # Should return 200 (or 201)
         assert response.status_code in (200, 201)
@@ -152,9 +173,13 @@ class TestCapsuleCreate:
         assert "capsule_id" in data
 
     @pytest.mark.asyncio
-    async def test_create_returns_capsule_id(self, client, sample_capsule_payload):
+    async def test_create_returns_capsule_id(
+        self, client, sample_capsule_payload, auth_headers
+    ):
         """Test that create returns a valid capsule_id."""
-        create_response = await client.post("/capsules", json=sample_capsule_payload)
+        create_response = await client.post(
+            "/capsules", json=sample_capsule_payload, headers=auth_headers
+        )
         assert create_response.status_code in (200, 201)
 
         data = create_response.json()
@@ -163,7 +188,7 @@ class TestCapsuleCreate:
         assert len(data["capsule_id"]) > 0
 
     @pytest.mark.asyncio
-    async def test_create_with_minimal_data(self, client):
+    async def test_create_with_minimal_data(self, client, auth_headers):
         """Test creating capsule with minimal required data."""
         unique_id = str(uuid.uuid4())[:8]
         minimal_data = {
@@ -172,12 +197,21 @@ class TestCapsuleCreate:
             "payload": {"test": True},
         }
 
-        response = await client.post("/capsules", json=minimal_data)
+        response = await client.post(
+            "/capsules", json=minimal_data, headers=auth_headers
+        )
         assert response.status_code in (200, 201)
 
         data = response.json()
         assert data.get("success") is True
         assert "capsule_id" in data
+
+    @pytest.mark.asyncio
+    async def test_create_requires_auth(self, client, sample_capsule_payload):
+        """Test that creating a capsule without auth returns 401/403."""
+        response = await client.post("/capsules", json=sample_capsule_payload)
+        # Should fail without authentication
+        assert response.status_code in (401, 403)
 
 
 class TestCapsuleGet:

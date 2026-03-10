@@ -8,31 +8,34 @@ Tests:
 - License compatibility
 """
 
-import pytest
 import hashlib
-import tempfile
 import os
-from datetime import datetime, timezone, timedelta
+import tempfile
+from datetime import datetime, timedelta, timezone
 
-from src.services.content_addressed_storage import (
-    ContentAddressedStorage,
-    StorageBackend,
-    LocalStorageProvider,
-)
-from src.services.license_verifier import (
-    LicenseVerifier,
-    UsageType,
-    ComplianceStatus,
-)
+import pytest
+
 from src.models.model_artifact import (
     ArtifactType,
-    StorageBackend as ArtifactStorageBackend,
     UploadStatus,
+)
+from src.models.model_artifact import (
+    StorageBackend as ArtifactStorageBackend,
 )
 from src.models.model_license import (
     LicenseType,
     Permission,
     Restriction,
+)
+from src.services.content_addressed_storage import (
+    ContentAddressedStorage,
+    LocalStorageProvider,
+    StorageBackend,
+)
+from src.services.license_verifier import (
+    ComplianceStatus,
+    LicenseVerifier,
+    UsageType,
 )
 
 
@@ -237,8 +240,10 @@ class TestLicenseVerifier:
 
         assert result.compliant
         # Should warn about copyleft requirements
-        assert any("copyleft" in w.lower() or "same license" in w.lower()
-                   for w in result.warnings + result.required_actions)
+        assert any(
+            "copyleft" in w.lower() or "same license" in w.lower()
+            for w in result.warnings + result.required_actions
+        )
 
     def test_check_mit_to_apache_compatibility(self, verifier):
         """Test MIT is compatible with Apache-2.0."""

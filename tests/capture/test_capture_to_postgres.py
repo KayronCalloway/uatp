@@ -33,7 +33,7 @@ async def test_capture_flow():
     print(f"   Engine: {db_url[:80]}")
 
     # Create test capsule
-    test_id = f'test_capture_{datetime.now().strftime("%Y%m%d_%H%M%S")}_{uuid.uuid4().hex[:8]}'
+    test_id = f"test_capture_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
     capsule_data = {
         "capsule_id": test_id,
@@ -89,7 +89,7 @@ async def test_capture_flow():
         )
 
         if result:
-            print(f'    Found in PostgreSQL: {result["capsule_id"]}')
+            print(f"    Found in PostgreSQL: {result['capsule_id']}")
         else:
             print("    NOT FOUND in PostgreSQL - WRONG DATABASE!")
             await conn.close()
@@ -109,7 +109,7 @@ async def test_capture_flow():
         response = requests.get(f"http://localhost:8000/capsules/{test_id}")
         if response.status_code == 200:
             data = response.json()
-            print(f'    Accessible via API: {data["capsule"]["capsule_id"]}')
+            print(f"    Accessible via API: {data['capsule']['capsule_id']}")
         else:
             print(f"    API returned: {response.status_code}")
             return False
@@ -118,9 +118,9 @@ async def test_capture_flow():
         return False
 
     # Step 4: Summary
-    print(f'\n{"="*80}')
+    print(f"\n{'=' * 80}")
     print("  [OK] END-TO-END TEST PASSED")
-    print(f'{"="*80}')
+    print(f"{'=' * 80}")
     print("\n Test Results:")
     print("    Capsule created via ORM")
     print("    Stored in PostgreSQL (not SQLite)")

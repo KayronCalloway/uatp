@@ -8,30 +8,30 @@ This module tests the essential fixes that were implemented:
 4. Capsule deserialization - Factory methods work
 """
 
-import pytest
+import os
+import sys
 import uuid
 from datetime import datetime, timezone
 from unittest.mock import Mock
 
-import sys
-import os
+import pytest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from src.capsule_schema import (
     CAPSULE_TYPE_MAP,
+    Capsule,
+    CapsuleStatus,
     CapsuleType,
-    CloningRightsCapsule,
-    CloningRightsPayload,
-    EvolutionCapsule,
-    EvolutionPayload,
-    DividendBondCapsule,
-    DividendBondPayload,
     CitizenshipCapsule,
     CitizenshipPayload,
-    CapsuleStatus,
+    CloningRightsCapsule,
+    CloningRightsPayload,
+    DividendBondCapsule,
+    DividendBondPayload,
+    EvolutionCapsule,
+    EvolutionPayload,
     Verification,
-    Capsule,
 )
 
 
@@ -73,10 +73,10 @@ class TestDatabaseModelCore:
         """Test that all database models exist and can be imported."""
         from src.models.capsule import (
             CapsuleModel,
-            CloningRightsCapsuleModel,
-            EvolutionCapsuleModel,
-            DividendBondCapsuleModel,
             CitizenshipCapsuleModel,
+            CloningRightsCapsuleModel,
+            DividendBondCapsuleModel,
+            EvolutionCapsuleModel,
         )
 
         # Verify all models exist
@@ -150,8 +150,8 @@ class TestBlueprintCore:
 
     def test_blueprint_creation_works(self):
         """Test that blueprints can be created with mock dependencies."""
-        from src.api.rights_evolution_api import create_rights_evolution_api_blueprint
         from src.api.bonds_citizenship_api import create_bonds_citizenship_api_blueprint
+        from src.api.rights_evolution_api import create_rights_evolution_api_blueprint
 
         # Mock dependencies
         mock_engine_getter = Mock()
@@ -253,10 +253,10 @@ class TestEngineHelperCore:
         assert hasattr(CapsuleEngine, "create_citizenship_capsule")
 
         # Test that they are callable
-        assert callable(getattr(CapsuleEngine, "create_cloning_rights_capsule"))
-        assert callable(getattr(CapsuleEngine, "create_evolution_capsule"))
-        assert callable(getattr(CapsuleEngine, "create_dividend_bond_capsule"))
-        assert callable(getattr(CapsuleEngine, "create_citizenship_capsule"))
+        assert callable(CapsuleEngine.create_cloning_rights_capsule)
+        assert callable(CapsuleEngine.create_evolution_capsule)
+        assert callable(CapsuleEngine.create_dividend_bond_capsule)
+        assert callable(CapsuleEngine.create_citizenship_capsule)
 
 
 class TestFederationCore:
@@ -273,7 +273,7 @@ class TestFederationCore:
         from src.integrations.federated_registry import FederatedModelRegistry
 
         assert hasattr(FederatedModelRegistry, "_query_federated_traces")
-        assert callable(getattr(FederatedModelRegistry, "_query_federated_traces"))
+        assert callable(FederatedModelRegistry._query_federated_traces)
 
     def test_federation_demo_importable(self):
         """Test that federation demo can be imported."""
@@ -303,10 +303,10 @@ class TestServiceCore:
 
     def test_service_objects_exist(self):
         """Test that service objects exist and can be accessed."""
-        from src.services.cloning_rights_service import cloning_rights_service
-        from src.services.evolution_tracking_service import evolution_tracking_service
-        from src.services.dividend_bonds_service import dividend_bonds_service
         from src.services.citizenship_service import citizenship_service
+        from src.services.cloning_rights_service import cloning_rights_service
+        from src.services.dividend_bonds_service import dividend_bonds_service
+        from src.services.evolution_tracking_service import evolution_tracking_service
 
         assert cloning_rights_service is not None
         assert evolution_tracking_service is not None

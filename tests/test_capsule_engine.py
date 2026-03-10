@@ -99,7 +99,7 @@ async def test_signature_verification(engine, sample_payloads):
         timestamp=datetime.now(timezone.utc),
         status=CapsuleStatus.DRAFT,
         verification=Verification(
-            signature=f"ed25519:{'0'*128}", merkle_root=f"sha256:{'0'*64}"
+            signature=f"ed25519:{'0' * 128}", merkle_root=f"sha256:{'0' * 64}"
         ),
         economic_transaction=payload,
     )
@@ -163,7 +163,7 @@ async def test_all_capsule_types_e2e(engine, sample_payloads, capsule_type_enum)
         timestamp=datetime.now(timezone.utc),
         status=CapsuleStatus.DRAFT,
         verification=Verification(
-            signature=f"ed25519:{'0'*128}", merkle_root=f"sha256:{'0'*64}"
+            signature=f"ed25519:{'0' * 128}", merkle_root=f"sha256:{'0' * 64}"
         ),
         **{capsule_type_enum.value: payload},
     )

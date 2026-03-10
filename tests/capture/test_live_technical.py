@@ -352,7 +352,7 @@ Key features:
     print(f"Total interactions processed: {stats['total_interactions']}")
     print(f"Total capsules created: {len(created_capsules)}")
     print(
-        f"Live capsule generation rate: {len(created_capsules)/len(technical_exchanges)*100:.1f}%"
+        f"Live capsule generation rate: {len(created_capsules) / len(technical_exchanges) * 100:.1f}%"
     )
 
     if created_capsules:

@@ -2,16 +2,18 @@
 Tests for Evolution Tracking Service
 """
 
-import pytest
-import numpy as np
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
+
+import numpy as np
+import pytest
+
+from src.capsule_schema import EvolutionCapsule
 from src.services.evolution_tracking_service import (
+    DriftAlert,
     EvolutionTrackingService,
     ModelSnapshot,
-    DriftAlert,
 )
-from src.capsule_schema import EvolutionCapsule
 
 
 class TestEvolutionTrackingService:

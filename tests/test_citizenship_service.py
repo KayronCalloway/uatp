@@ -2,16 +2,18 @@
 Tests for Citizenship Service
 """
 
-import pytest
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
+
+import pytest
+
+from src.capsule_schema import CitizenshipCapsule
 from src.services.citizenship_service import (
-    CitizenshipService,
-    LegalJurisdiction,
     AssessmentResult,
     CitizenshipRegistry,
+    CitizenshipService,
+    LegalJurisdiction,
 )
-from src.capsule_schema import CitizenshipCapsule
 
 
 class TestCitizenshipService:
@@ -601,6 +603,6 @@ class TestCitizenshipService:
             "legal_proceedings": [],
         }
 
-        self.service.citizenship_registry.active_citizenships[
-            agent_id
-        ] = citizenship_record
+        self.service.citizenship_registry.active_citizenships[agent_id] = (
+            citizenship_record
+        )

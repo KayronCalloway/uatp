@@ -17,6 +17,7 @@ Design Decision:
 import hashlib
 import json
 import logging
+import uuid as uuid_module
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Union
@@ -176,10 +177,19 @@ class CapsuleLifecycleService:
             if merkle_root and "chain_context" in payload:
                 payload["chain_context"]["merkle_root"] = merkle_root
 
+        # Convert owner_id string to UUID object if provided
+        owner_uuid = None
+        if owner_id:
+            try:
+                owner_uuid = uuid_module.UUID(owner_id)
+            except (ValueError, TypeError):
+                logger.warning(f"Invalid owner_id format: {owner_id}, setting to None")
+                owner_uuid = None
+
         # Create CapsuleModel
         capsule = CapsuleModel(
             capsule_id=capsule_id,
-            owner_id=owner_id,
+            owner_id=owner_uuid,
             capsule_type=capsule_type,
             version=capsule_dict.get("version", "7.2"),
             timestamp=timestamp,

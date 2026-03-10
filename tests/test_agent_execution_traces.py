@@ -39,7 +39,6 @@ from src.utils.uatp_envelope import (
     wrap_in_uatp_envelope,
 )
 
-
 # --- Test Fixtures ---
 
 
@@ -149,14 +148,17 @@ class TestAgentSessionPayload:
 class TestToolCallPayload:
     """Test ToolCallPayload for all tool categories."""
 
-    @pytest.mark.parametrize("tool_category", [
-        "terminal",
-        "file",
-        "browser",
-        "api",
-        "mcp",
-        "custom",
-    ])
+    @pytest.mark.parametrize(
+        "tool_category",
+        [
+            "terminal",
+            "file",
+            "browser",
+            "api",
+            "mcp",
+            "custom",
+        ],
+    )
     def test_all_tool_categories(self, tool_category):
         """Test all tool categories."""
         payload = ToolCallPayload(
@@ -381,7 +383,10 @@ class TestDecisionPointPayload:
             selected_action="Update the calling code to pass correct type",
             confidence=0.85,
             context_summary="Working on bug fix for authentication module",
-            constraints_applied=["No breaking changes", "Maintain backward compatibility"],
+            constraints_applied=[
+                "No breaking changes",
+                "Maintain backward compatibility",
+            ],
             timestamp=now(),
         )
         assert payload.confidence == 0.85
@@ -700,7 +705,11 @@ class TestAgentExecutionIntegration:
                 session_id="agent_20260303_full01",
                 tool_name="Edit",
                 tool_category="file",
-                tool_inputs={"file_path": "/src/auth.py", "old_string": "bug", "new_string": "fix"},
+                tool_inputs={
+                    "file_path": "/src/auth.py",
+                    "old_string": "bug",
+                    "new_string": "fix",
+                },
                 started_at=now(),
                 status="success",
                 step_index=1,

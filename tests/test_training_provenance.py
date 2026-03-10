@@ -8,29 +8,29 @@ Tests:
 - Capsule schema validation
 """
 
-import pytest
 from datetime import datetime, timezone
-from typing import Dict, Any
+from typing import Any, Dict
 
+import pytest
 from pydantic import ValidationError
 
 from src.capsule_schema import (
-    CapsuleType,
     CapsuleStatus,
+    CapsuleType,
     DatasetReference,
-    TrainingProvenancePayload,
+    ModelRegistrationCapsule,
     ModelRegistrationPayload,
     TrainingProvenanceCapsule,
-    ModelRegistrationCapsule,
+    TrainingProvenancePayload,
     Verification,
 )
-from src.utils.uatp_envelope import (
-    wrap_in_uatp_envelope,
-    detect_capsule_version,
-    create_training_context,
-    is_envelope_format,
-)
 from src.services.model_registry_service import ModelRegistryService
+from src.utils.uatp_envelope import (
+    create_training_context,
+    detect_capsule_version,
+    is_envelope_format,
+    wrap_in_uatp_envelope,
+)
 
 
 class TestCapsuleSchemaUATP72:
@@ -272,9 +272,7 @@ class TestUATPEnvelope72:
             session_id="train_001",
             base_model_id="base_model_001",
             training_type="rlhf",
-            dataset_refs=[
-                {"dataset_id": "ds_001", "version": "1.0"}
-            ],
+            dataset_refs=[{"dataset_id": "ds_001", "version": "1.0"}],
             hyperparameters={"lr": 1e-5},
         )
         assert ctx["model_id"] == "model_001"

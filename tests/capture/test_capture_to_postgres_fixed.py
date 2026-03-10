@@ -48,7 +48,7 @@ async def test_capture_flow():
         return False
 
     # Create test capsule
-    test_id = f'test_e2e_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}_{uuid.uuid4().hex[:8]}'
+    test_id = f"test_e2e_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
     capsule_data = {
         "capsule_id": test_id,
@@ -130,9 +130,9 @@ async def test_capture_flow():
         print(f"    API returned: {response.status_code}")
         return False
 
-    print(f'\n{"="*80}')
+    print(f"\n{'=' * 80}")
     print("  [OK] END-TO-END TEST PASSED")
-    print(f'{"="*80}')
+    print(f"{'=' * 80}")
     print("\n Complete Flow Verified:")
     print("    .env file loaded correctly")
     print("    ORM using PostgreSQL (not SQLite)")

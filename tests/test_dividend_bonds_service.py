@@ -2,16 +2,18 @@
 Tests for Dividend Bonds Service
 """
 
-import pytest
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
-from src.services.dividend_bonds_service import (
-    DividendBondsService,
-    IPAsset,
-    DividendPayment,
-    BondRegistry,
-)
+
+import pytest
+
 from src.capsule_schema import DividendBondCapsule
+from src.services.dividend_bonds_service import (
+    BondRegistry,
+    DividendBondsService,
+    DividendPayment,
+    IPAsset,
+)
 
 
 class TestDividendBondsService:

@@ -13,7 +13,7 @@ Tests:
 """
 
 from datetime import datetime, timezone
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pytest
 from pydantic import ValidationError
@@ -36,14 +36,13 @@ from src.capsule_schema import (
     TrainingTelemetryPayload,
     Verification,
 )
+from src.security.attestation import AttestationType
 from src.utils.uatp_envelope import (
     create_ane_context,
     create_kernel_trace_context,
     detect_capsule_version,
     wrap_in_uatp_envelope,
 )
-from src.security.attestation import AttestationType
-
 
 # --- Test Fixtures ---
 
@@ -154,14 +153,17 @@ class TestMILFusionOptimization:
 class TestKernelExecutionPayload:
     """Test KernelExecutionPayload for all 6 kernel types."""
 
-    @pytest.mark.parametrize("kernel_type", [
-        "kFwdAttn",   # Forward attention
-        "kFwdFFN",    # Forward feed-forward network
-        "kFFNBwd",    # Backward FFN
-        "kSdpaBwd1",  # SDPA backward pass 1
-        "kSdpaBwd2",  # SDPA backward pass 2
-        "kQKVb",      # QKV backward
-    ])
+    @pytest.mark.parametrize(
+        "kernel_type",
+        [
+            "kFwdAttn",  # Forward attention
+            "kFwdFFN",  # Forward feed-forward network
+            "kFFNBwd",  # Backward FFN
+            "kSdpaBwd1",  # SDPA backward pass 1
+            "kSdpaBwd2",  # SDPA backward pass 2
+            "kQKVb",  # QKV backward
+        ],
+    )
     def test_all_kernel_types(self, kernel_type):
         """Test all 6 ANE kernel types."""
         payload = KernelExecutionPayload(
@@ -212,12 +214,15 @@ class TestKernelExecutionPayload:
 class TestMetalMLXKernelExecution:
     """Test kernel execution for Metal GPU and MLX accelerators."""
 
-    @pytest.mark.parametrize("kernel_type,accelerator", [
-        ("metal_gemm", "metal"),
-        ("metal_attention", "metal"),
-        ("mps_conv2d", "mps"),
-        ("mps_matmul", "mps"),
-    ])
+    @pytest.mark.parametrize(
+        "kernel_type,accelerator",
+        [
+            ("metal_gemm", "metal"),
+            ("metal_attention", "metal"),
+            ("mps_conv2d", "mps"),
+            ("mps_matmul", "mps"),
+        ],
+    )
     def test_metal_kernel_types(self, kernel_type, accelerator):
         """Test Metal and MPS kernel types."""
         payload = KernelExecutionPayload(
@@ -236,13 +241,16 @@ class TestMetalMLXKernelExecution:
         assert payload.kernel_type == kernel_type
         assert payload.metal_buffer_mode == "private"
 
-    @pytest.mark.parametrize("kernel_type", [
-        "mlx_matmul",
-        "mlx_softmax",
-        "mlx_rope",
-        "mlx_rms_norm",
-        "mlx_attention",
-    ])
+    @pytest.mark.parametrize(
+        "kernel_type",
+        [
+            "mlx_matmul",
+            "mlx_softmax",
+            "mlx_rope",
+            "mlx_rms_norm",
+            "mlx_attention",
+        ],
+    )
     def test_mlx_kernel_types(self, kernel_type):
         """Test MLX kernel types."""
         payload = KernelExecutionPayload(
@@ -509,7 +517,11 @@ class TestMLXMetalArtifacts:
             artifact_format="mlx",
             mlx_graph_hash="sha256:" + "l" * 56,
             mlx_version="0.20.0",
-            mlx_simplifications=["fuse_matmul_bias", "constant_folding", "dead_code_elimination"],
+            mlx_simplifications=[
+                "fuse_matmul_bias",
+                "constant_folding",
+                "dead_code_elimination",
+            ],
             target_accelerator="gpu",
             compile_time_ms=1200,
             created_at=datetime.now(timezone.utc),
@@ -1026,7 +1038,14 @@ class TestANEProvanceIntegration:
         )
 
         # 3. Create kernel executions for one step (6 kernels)
-        kernel_types = ["kFwdAttn", "kFwdFFN", "kFFNBwd", "kSdpaBwd1", "kSdpaBwd2", "kQKVb"]
+        kernel_types = [
+            "kFwdAttn",
+            "kFwdFFN",
+            "kFFNBwd",
+            "kSdpaBwd1",
+            "kSdpaBwd2",
+            "kQKVb",
+        ]
         kernels = []
         for i, kt in enumerate(kernel_types):
             kernel = KernelExecutionPayload(

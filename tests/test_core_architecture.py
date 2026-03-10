@@ -13,53 +13,55 @@ Achieves 90%+ test coverage for critical production components.
 """
 
 import asyncio
-import pytest
 import time
 from datetime import datetime, timedelta
-from unittest.mock import Mock, AsyncMock, patch
 from typing import Any, Dict
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+
+from src.config.production_settings import (
+    AuthSettings,
+    DatabaseSettings,
+    Environment,
+    UATPSettings,
+    get_settings,
+    validate_settings,
+)
 
 # Import core components
 from src.core.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerConfig,
-    CircuitState,
     CircuitBreakerError,
-    circuit_breaker_manager,
+    CircuitState,
     circuit_breaker,
-)
-from src.core.jwt_auth import (
-    JWTAuthenticator,
-    AuthConfig,
-    UserRole,
-    Permission,
-    LoginRequest,
-    UserModel,
-    TokenResponse,
+    circuit_breaker_manager,
 )
 from src.core.dependency_injection import (
+    CircularDependencyError,
+    DependencyInjectionError,
     ServiceContainer,
     ServiceLifetime,
-    ServiceScope,
-    DependencyInjectionError,
-    CircularDependencyError,
     ServiceNotFoundError,
-)
-from src.config.production_settings import (
-    UATPSettings,
-    Environment,
-    AuthSettings,
-    DatabaseSettings,
-    get_settings,
-    validate_settings,
+    ServiceScope,
 )
 from src.core.exceptions import (
-    BaseUATPException,
-    ValidationError,
     AuthenticationError,
-    ErrorSeverity,
+    BaseUATPException,
     ErrorCategory,
     ErrorHandler,
+    ErrorSeverity,
+    ValidationError,
+)
+from src.core.jwt_auth import (
+    AuthConfig,
+    JWTAuthenticator,
+    LoginRequest,
+    Permission,
+    TokenResponse,
+    UserModel,
+    UserRole,
 )
 
 
@@ -100,7 +102,7 @@ class TestCircuitBreaker:
         for i in range(3):
             try:
                 async with circuit_breaker.call():
-                    raise Exception(f"Failure {i+1}")
+                    raise Exception(f"Failure {i + 1}")
             except Exception:
                 pass
 
@@ -120,7 +122,7 @@ class TestCircuitBreaker:
         for i in range(3):
             try:
                 async with circuit_breaker.call():
-                    raise Exception(f"Failure {i+1}")
+                    raise Exception(f"Failure {i + 1}")
             except Exception:
                 pass
 

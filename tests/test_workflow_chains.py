@@ -9,30 +9,31 @@ Tests:
 - Workflow completion
 """
 
-import pytest
 from datetime import datetime, timezone
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import pytest
 
 from src.capsule_schema import (
-    CapsuleType,
     CapsuleStatus,
-    WorkflowStepPayload,
+    CapsuleType,
+    Verification,
+    WorkflowCompleteCapsule,
     WorkflowCompletePayload,
     WorkflowStepCapsule,
-    WorkflowCompleteCapsule,
-    Verification,
-)
-from src.utils.uatp_envelope import (
-    wrap_in_uatp_envelope,
-    detect_capsule_version,
-    create_workflow_context,
-)
-from src.utils.attribution_aggregator import (
-    aggregate_attributions,
-    merge_dag_definitions,
-    calculate_step_contribution,
+    WorkflowStepPayload,
 )
 from src.services.workflow_chain_service import WorkflowChainService
+from src.utils.attribution_aggregator import (
+    aggregate_attributions,
+    calculate_step_contribution,
+    merge_dag_definitions,
+)
+from src.utils.uatp_envelope import (
+    create_workflow_context,
+    detect_capsule_version,
+    wrap_in_uatp_envelope,
+)
 
 
 class TestWorkflowStepPayload:
@@ -244,9 +245,24 @@ class TestDAGMerging:
     def test_merge_linear_dag(self):
         """Test merging linear workflow steps."""
         steps = [
-            {"step_index": 0, "step_type": "plan", "capsule_id": "c0", "depends_on_steps": []},
-            {"step_index": 1, "step_type": "tool_call", "capsule_id": "c1", "depends_on_steps": [0]},
-            {"step_index": 2, "step_type": "output", "capsule_id": "c2", "depends_on_steps": [1]},
+            {
+                "step_index": 0,
+                "step_type": "plan",
+                "capsule_id": "c0",
+                "depends_on_steps": [],
+            },
+            {
+                "step_index": 1,
+                "step_type": "tool_call",
+                "capsule_id": "c1",
+                "depends_on_steps": [0],
+            },
+            {
+                "step_index": 2,
+                "step_type": "output",
+                "capsule_id": "c2",
+                "depends_on_steps": [1],
+            },
         ]
         dag = merge_dag_definitions(steps)
         assert dag["total_steps"] == 3
@@ -257,10 +273,30 @@ class TestDAGMerging:
     def test_merge_parallel_dag(self):
         """Test merging parallel workflow steps."""
         steps = [
-            {"step_index": 0, "step_type": "plan", "capsule_id": "c0", "depends_on_steps": []},
-            {"step_index": 1, "step_type": "tool_call", "capsule_id": "c1", "depends_on_steps": []},
-            {"step_index": 2, "step_type": "tool_call", "capsule_id": "c2", "depends_on_steps": []},
-            {"step_index": 3, "step_type": "aggregation", "capsule_id": "c3", "depends_on_steps": [0, 1, 2]},
+            {
+                "step_index": 0,
+                "step_type": "plan",
+                "capsule_id": "c0",
+                "depends_on_steps": [],
+            },
+            {
+                "step_index": 1,
+                "step_type": "tool_call",
+                "capsule_id": "c1",
+                "depends_on_steps": [],
+            },
+            {
+                "step_index": 2,
+                "step_type": "tool_call",
+                "capsule_id": "c2",
+                "depends_on_steps": [],
+            },
+            {
+                "step_index": 3,
+                "step_type": "aggregation",
+                "capsule_id": "c3",
+                "depends_on_steps": [0, 1, 2],
+            },
         ]
         dag = merge_dag_definitions(steps)
         assert dag["total_steps"] == 4

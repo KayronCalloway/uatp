@@ -8,37 +8,38 @@ Tests:
 - CBOR serialization
 """
 
-import pytest
 import struct
 import time
 from datetime import datetime, timezone
+
+import pytest
 
 # Skip if cbor2 or pynacl not available
 pytest.importorskip("cbor2")
 nacl = pytest.importorskip("nacl")
 
 from src.edge.compact_capsule import (
-    CompactCapsule,
-    CompactCapsuleEncoder,
-    CompactCapsuleDecoder,
-    CompactCapsuleFlags,
     COMPACT_CAPSULE_MAGIC,
     COMPACT_CAPSULE_VERSION,
     FIXED_OVERHEAD,
+    CompactCapsule,
+    CompactCapsuleDecoder,
+    CompactCapsuleEncoder,
+    CompactCapsuleFlags,
     estimate_capsule_size,
-)
-from src.edge.sync_protocol import (
-    EdgeSyncService,
-    SyncDirection,
-    SyncStatus,
-    SyncCheckpoint,
-    SyncBatch,
-    ConflictResolution,
 )
 from src.edge.offline_signer import (
     OfflineSigner,
     OfflineSignerRegistry,
     SignatureStatus,
+)
+from src.edge.sync_protocol import (
+    ConflictResolution,
+    EdgeSyncService,
+    SyncBatch,
+    SyncCheckpoint,
+    SyncDirection,
+    SyncStatus,
 )
 
 
@@ -201,7 +202,8 @@ class TestCompactCapsuleDecoder:
             model_hash=bytes.fromhex("02" * 32),
             payload={"test": True},
             signature=bytes(64),
-            flags=CompactCapsuleFlags.OFFLINE_SIGNED | CompactCapsuleFlags.WORKFLOW_STEP,
+            flags=CompactCapsuleFlags.OFFLINE_SIGNED
+            | CompactCapsuleFlags.WORKFLOW_STEP,
         )
 
         binary = encoder.encode(original)

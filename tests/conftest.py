@@ -525,7 +525,7 @@ async def engine_with_signed_capsules():
             timestamp=datetime.now(timezone.utc),
             status=CapsuleStatus.DRAFT,
             verification=Verification(
-                signature=f"ed25519:{'0'*128}", merkle_root=f"sha256:{'0'*64}"
+                signature=f"ed25519:{'0' * 128}", merkle_root=f"sha256:{'0' * 64}"
             ),
             reasoning_trace=ReasoningTracePayload(
                 reasoning_steps=[

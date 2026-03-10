@@ -2,14 +2,16 @@
 Tests for Cloning Rights Service
 """
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, timezone, timedelta
+
+from src.capsule_schema import CloningRightsCapsule
 from src.services.cloning_rights_service import (
     CloningRightsService,
-    ModelRights,
     LicenseRegistry,
+    ModelRights,
 )
-from src.capsule_schema import CloningRightsCapsule
 
 
 class TestCloningRightsService:
