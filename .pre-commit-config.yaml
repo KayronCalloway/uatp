@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.0
+    rev: v0.15.5
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -8,12 +8,12 @@ repos:
       - id: ruff-format
         exclude: ^(archive/|infra/monitoring/dashboards/|tests/legacy/)
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.14.0
+    rev: v3.21.2
     hooks:
       - id: pyupgrade
         exclude: ^archive/
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
