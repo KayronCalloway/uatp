@@ -40,7 +40,7 @@ jobs:
           - 6379:6379
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -83,7 +83,7 @@ jobs:
         locust -f locustfile.py --host=http://localhost:8000 --headless --users=20 --spawn-rate=2 --run-time=2m --csv=performance_results
 
     - name: Upload performance reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: performance-reports

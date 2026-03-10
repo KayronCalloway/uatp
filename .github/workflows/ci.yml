@@ -22,7 +22,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Cache pip packages
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.in', 'pyproject.toml') }}
@@ -31,7 +31,7 @@ jobs:
           ${{ runner.os }}-pip-
 
     - name: Cache mypy cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: .mypy_cache
         key: ${{ runner.os }}-mypy-${{ matrix.python-version }}-${{ hashFiles('src/**/*.py') }}
@@ -40,7 +40,7 @@ jobs:
           ${{ runner.os }}-mypy-
 
     - name: Cache pre-commit
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pre-commit
         key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -102,7 +102,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Cache pip packages
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.in', 'pyproject.toml') }}
@@ -132,7 +132,7 @@ jobs:
         pytest tests/ -v --ignore=tests/legacy --cov=src --cov-report=xml --cov-report=term-missing
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       if: matrix.python-version == '3.11' && matrix.database == 'postgresql'
       with:
         file: ./coverage.xml
@@ -151,7 +151,7 @@ jobs:
         python-version: "3.11"
 
     - name: Cache pip packages
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-3.11-security-${{ hashFiles('requirements*.txt', 'requirements*.in', 'pyproject.toml') }}
@@ -160,7 +160,7 @@ jobs:
           ${{ runner.os }}-pip-
 
     - name: Cache safety DB
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/safety-db
         key: ${{ runner.os }}-safety-db-${{ github.run_id }}
@@ -182,7 +182,7 @@ jobs:
         safety check --json --output safety-report.json --db ~/.cache/safety-db || true
 
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-reports
@@ -203,7 +203,7 @@ jobs:
         python-version: "3.11"
 
     - name: Cache pip packages
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-3.11-build-${{ hashFiles('requirements*.txt', 'requirements*.in', 'pyproject.toml') }}
@@ -225,7 +225,7 @@ jobs:
         twine check dist/*
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist
         path: dist/
