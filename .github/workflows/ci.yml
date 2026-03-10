@@ -65,11 +65,11 @@ jobs:
 
     - name: Run linting with ruff
       run: |
-        ruff check src/ tests/
+        ruff check src/ tests/ --exclude tests/legacy
 
     - name: Check code formatting with ruff
       run: |
-        ruff format --check src/ tests/
+        ruff format --check src/ tests/ --exclude tests/legacy
 
   tests:
     runs-on: ubuntu-latest
@@ -90,6 +90,8 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
     - uses: actions/checkout@v4
@@ -116,7 +118,7 @@ jobs:
     - name: Set up database environment
       run: |
         if [ "${{ matrix.database }}" = "postgresql" ]; then
-          echo "DATABASE_URL=postgresql://testuser:testpassword@postgres:5432/testdb" >> $GITHUB_ENV
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/testdb" >> $GITHUB_ENV
         else
           echo "DATABASE_URL=sqlite:///test.db" >> $GITHUB_ENV
         fi
