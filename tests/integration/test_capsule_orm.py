@@ -63,15 +63,15 @@ class TestCapsuleORM:
             # (None result is the symptom of the polymorphism bug)
             if capsule is not None:
                 # Verify it's actually a CapsuleModel instance
-                assert isinstance(
-                    capsule, CapsuleModel
-                ), f"Expected CapsuleModel, got {type(capsule)}"
+                assert isinstance(capsule, CapsuleModel), (
+                    f"Expected CapsuleModel, got {type(capsule)}"
+                )
 
                 # Verify we can access attributes
                 assert capsule.capsule_id is not None, "capsule_id should not be None"
-                assert (
-                    capsule.capsule_type is not None
-                ), "capsule_type should not be None"
+                assert capsule.capsule_type is not None, (
+                    "capsule_type should not be None"
+                )
                 assert capsule.payload is not None, "payload should not be None"
 
     @pytest.mark.asyncio
@@ -86,12 +86,12 @@ class TestCapsuleORM:
 
             # Every item in the list should be a CapsuleModel, not None
             for i, capsule in enumerate(capsules):
-                assert (
-                    capsule is not None
-                ), f"Capsule at index {i} is None - this indicates ORM polymorphism bug"
-                assert isinstance(
-                    capsule, CapsuleModel
-                ), f"Expected CapsuleModel at index {i}, got {type(capsule)}"
+                assert capsule is not None, (
+                    f"Capsule at index {i} is None - this indicates ORM polymorphism bug"
+                )
+                assert isinstance(capsule, CapsuleModel), (
+                    f"Expected CapsuleModel at index {i}, got {type(capsule)}"
+                )
 
     @pytest.mark.asyncio
     @pytest.mark.skip(reason="Test database isolation - not a polymorphism test")
@@ -125,12 +125,12 @@ class TestCapsuleORM:
             retrieved = result.scalars().first()
 
             # Verify retrieval worked
-            assert (
-                retrieved is not None
-            ), "Retrieved capsule is None - ORM polymorphism bug detected"
-            assert isinstance(
-                retrieved, CapsuleModel
-            ), f"Expected CapsuleModel, got {type(retrieved)}"
+            assert retrieved is not None, (
+                "Retrieved capsule is None - ORM polymorphism bug detected"
+            )
+            assert isinstance(retrieved, CapsuleModel), (
+                f"Expected CapsuleModel, got {type(retrieved)}"
+            )
             assert retrieved.capsule_id == self.test_capsule_id
             assert retrieved.capsule_type == "reasoning_trace"
 
@@ -159,9 +159,9 @@ class TestCapsuleORM:
             # All returned capsules should have matching type
             for capsule in capsules:
                 assert capsule is not None, "Capsule is None"
-                assert (
-                    capsule.capsule_type == "reasoning_trace"
-                ), f"Expected reasoning_trace, got {capsule.capsule_type}"
+                assert capsule.capsule_type == "reasoning_trace", (
+                    f"Expected reasoning_trace, got {capsule.capsule_type}"
+                )
 
 
 class TestCapsuleModelMethods:

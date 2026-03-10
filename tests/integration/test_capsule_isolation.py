@@ -73,12 +73,12 @@ class TestCapsuleOwnership:
     @pytest.mark.asyncio
     async def test_capsule_has_encryption_columns(self):
         """Verify encryption columns exist on CapsuleModel."""
-        assert hasattr(
-            CapsuleModel, "encrypted_payload"
-        ), "CapsuleModel missing encrypted_payload column"
-        assert hasattr(
-            CapsuleModel, "encryption_metadata"
-        ), "CapsuleModel missing encryption_metadata column"
+        assert hasattr(CapsuleModel, "encrypted_payload"), (
+            "CapsuleModel missing encrypted_payload column"
+        )
+        assert hasattr(CapsuleModel, "encryption_metadata"), (
+            "CapsuleModel missing encryption_metadata column"
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.skip(
@@ -161,9 +161,9 @@ class TestCapsuleOwnership:
             user_a_capsules = result.scalars().all()
 
             # Should only get user A's capsule
-            assert (
-                len(user_a_capsules) == 1
-            ), f"Expected 1 capsule, got {len(user_a_capsules)}"
+            assert len(user_a_capsules) == 1, (
+                f"Expected 1 capsule, got {len(user_a_capsules)}"
+            )
             assert user_a_capsules[0].capsule_id == capsule_id_a
 
             # Query for user B's capsules only
@@ -174,9 +174,9 @@ class TestCapsuleOwnership:
             result = await session.execute(query)
             user_b_capsules = result.scalars().all()
 
-            assert (
-                len(user_b_capsules) == 1
-            ), f"Expected 1 capsule, got {len(user_b_capsules)}"
+            assert len(user_b_capsules) == 1, (
+                f"Expected 1 capsule, got {len(user_b_capsules)}"
+            )
             assert user_b_capsules[0].capsule_id == capsule_id_b
 
             # Cleanup
@@ -225,9 +225,9 @@ class TestCapsuleOwnership:
             retrieved = result.scalars().first()
 
             assert retrieved is not None
-            assert (
-                retrieved.owner_id is None
-            ), "Legacy capsule should have NULL owner_id"
+            assert retrieved.owner_id is None, (
+                "Legacy capsule should have NULL owner_id"
+            )
 
             # Cleanup
             await session.delete(retrieved)

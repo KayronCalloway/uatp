@@ -28,9 +28,9 @@ class TestEd25519Direct:
         signing_key_hex = signing_key.encode(encoder=HexEncoder).decode("utf-8")
         verify_key_hex = verify_key.encode(encoder=HexEncoder).decode("utf-8")
 
-        assert (
-            len(signing_key_hex) == 64
-        ), "Signing key should be 64 hex chars (32 bytes)"
+        assert len(signing_key_hex) == 64, (
+            "Signing key should be 64 hex chars (32 bytes)"
+        )
         assert len(verify_key_hex) == 64, "Verify key should be 64 hex chars (32 bytes)"
 
     def test_sign_and_verify_roundtrip(self):

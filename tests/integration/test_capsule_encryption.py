@@ -151,9 +151,9 @@ class TestEncryptionUtilities:
         ciphertext1 = aesgcm.encrypt(nonce1, plaintext, None)
         ciphertext2 = aesgcm.encrypt(nonce2, plaintext, None)
 
-        assert (
-            ciphertext1 != ciphertext2
-        ), "Different nonces should produce different ciphertext"
+        assert ciphertext1 != ciphertext2, (
+            "Different nonces should produce different ciphertext"
+        )
 
     def test_wrong_key_fails_decryption(self):
         """Test that decryption with wrong key fails."""
