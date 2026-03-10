@@ -429,7 +429,7 @@ class TestCloningRightsService:
 
         # Revoke the license
         result = self.service.revoke_license(license_id, "Terms violation")
-        assert result is True
+        assert result["success"] is True
 
         # Check that license is no longer active
         assert license_id not in self.service.license_registry.active_licenses
@@ -442,7 +442,7 @@ class TestCloningRightsService:
     def test_revoke_nonexistent_license(self):
         """Test revoking a non-existent license."""
         result = self.service.revoke_license("non-existent-license", "Test reason")
-        assert result is False
+        assert result["success"] is False
 
     def test_license_with_custom_terms(self):
         """Test creating license with custom terms."""

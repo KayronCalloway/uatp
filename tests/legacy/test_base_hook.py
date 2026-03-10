@@ -41,9 +41,10 @@ class TestBaseHookInitialization:
         """Test basic hook initialization."""
         hook = TestHook(user_id="test_user")
 
-        assert hook.platform == "test_platform"
+        # Note: "test_platform" is not in VALID_PLATFORMS, so it falls back to "custom"
+        assert hook.platform == "custom"
         assert hook.user_id == "test_user"
-        assert hook.session_id.startswith("test_platform_session_")
+        assert hook.session_id.startswith("custom_session_")
 
     def test_custom_session_id(self):
         """Test initialization with custom session ID."""
@@ -96,13 +97,13 @@ class TestBaseHookCapture:
             assert call_args.kwargs["user_message"] == "Test user input"
             assert call_args.kwargs["ai_response"] == "Test AI response"
             assert call_args.kwargs["model"] == "test-model"
-            assert call_args.kwargs["platform"] == "test_platform"
+            assert call_args.kwargs["platform"] == "custom"
 
             # Check metadata
             metadata = call_args.kwargs["metadata"]
             assert metadata["interaction_type"] == "general"
             assert metadata["model"] == "test-model"
-            assert metadata["platform"] == "test_platform"
+            assert metadata["platform"] == "custom"
             assert metadata["test_version"] == "1.0"
             assert metadata["test_param"] == "test_value"
 
@@ -171,7 +172,7 @@ class TestBaseHookSessionManagement:
 
         stats = hook.get_session_stats()
 
-        assert stats["platform"] == "test_platform"
+        assert stats["platform"] == "custom"
         assert stats["user_id"] == "stats_user"
         assert stats["session_id"] == "stats_session_123"
 
