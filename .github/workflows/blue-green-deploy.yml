@@ -1,10 +1,12 @@
 name: Blue-Green Deployment
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  # Disabled: deployment infrastructure not yet configured
+  # push:
+  #   branches: [ main ]
+  # pull_request:
+  #   branches: [ main ]
+  workflow_dispatch:  # Manual trigger only
 
 env:
   REGISTRY: ghcr.io
