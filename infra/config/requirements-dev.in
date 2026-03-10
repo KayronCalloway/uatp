@@ -1,0 +1,30 @@
+# Development dependencies from pyproject.toml
+-r requirements.in
+
+# Test dependencies
+pytest>=7.0.0
+hypothesis>=6.0.0
+pytest-cov>=4.0.0
+
+# Dev dependencies
+black>=22.0.0
+mypy>=0.910
+isort>=5.10.0
+flake8>=4.0.0
+ruff>=0.4.0
+pre-commit>=3.3.3
+pip-tools>=7.0.0
+
+# Security tools
+bandit
+safety
+
+# Additional FastAPI dependencies for testing
+fastapi
+sqlalchemy[asyncio]
+aiosqlite
+asyncpg
+redis
+prometheus-client
+slowapi
+structlog

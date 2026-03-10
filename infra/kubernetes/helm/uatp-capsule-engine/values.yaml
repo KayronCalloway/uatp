@@ -1,0 +1,166 @@
+# Default values for uatp-capsule-engine
+# This is a YAML-formatted file
+
+# Image configuration
+image:
+  repository: ghcr.io/anthropics/uatp-capsule-engine
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 5006
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: uatp-capsule-engine.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+# Auto-scaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Pod security context
+podSecurityContext:
+  fsGroup: 2000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Environment variables
+env:
+  - name: UATP_AGENT_ID
+    valueFrom:
+      secretKeyRef:
+        name: uatp-secrets
+        key: agent-id
+  - name: UATP_SIGNING_KEY
+    valueFrom:
+      secretKeyRef:
+        name: uatp-secrets
+        key: signing-key
+  - name: OPENAI_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: uatp-secrets
+        key: openai-api-key
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: uatp-secrets
+        key: database-url
+  - name: UATP_ETHICS_STRICT_MODE
+    value: "true"
+
+# Persistent volume configuration
+persistence:
+  enabled: true
+  storageClass: "gp2"
+  accessMode: ReadWriteOnce
+  size: 10Gi
+
+# Database configuration
+database:
+  enabled: true
+  type: postgresql
+  host: "postgresql"
+  port: 5432
+  name: "uatp"
+  username: "uatp"
+  # Password should be set via secret
+
+# Monitoring and observability
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    port: 9090
+    path: /metrics
+  jaeger:
+    enabled: true
+    endpoint: "http://jaeger-collector:14268/api/traces"
+
+# Health checks
+healthChecks:
+  liveness:
+    enabled: true
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    path: /health/ready
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Blue-green deployment configuration
+blueGreen:
+  enabled: true
+  activeColor: "blue"
+  inactiveColor: "green"
+  trafficSwitchStrategy: "immediate"
+  rollbackOnFailure: true
+  healthCheckTimeout: 300
+
+# Network policies
+networkPolicy:
+  enabled: false
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-system
+      ports:
+        - protocol: TCP
+          port: 5006
+
+# Service account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Node selector and tolerations
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

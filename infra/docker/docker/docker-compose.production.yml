@@ -1,0 +1,362 @@
+version: '3.8'
+
+services:
+  # Primary PostgreSQL Database
+  postgresql-primary:
+    image: postgres:15-alpine
+    container_name: uatp-postgres-primary
+    environment:
+      POSTGRES_DB: uatp_production
+      POSTGRES_USER: uatp_user
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_REPLICATION_USER: replicator
+      POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgresql_primary_data:/var/lib/postgresql/data
+      - ./postgresql/primary.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgresql/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - uatp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uatp_user -d uatp_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # PostgreSQL Read Replica
+  postgresql-replica:
+    image: postgres:15-alpine
+    container_name: uatp-postgres-replica
+    environment:
+      POSTGRES_DB: uatp_production
+      POSTGRES_USER: uatp_user
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_MASTER_SERVICE: postgresql-primary
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgresql_replica_data:/var/lib/postgresql/data
+      - ./postgresql/replica.conf:/etc/postgresql/postgresql.conf:ro
+    ports:
+      - "5433:5432"
+    networks:
+      - uatp-network
+    depends_on:
+      postgresql-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uatp_user -d uatp_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+          cpus: '0.75'
+        reservations:
+          memory: 750M
+          cpus: '0.25'
+
+  # Redis Cluster
+  redis-primary:
+    image: redis:7-alpine
+    container_name: uatp-redis-primary
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD}
+      --bind 0.0.0.0
+      --protected-mode no
+    volumes:
+      - redis_primary_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - uatp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2.5G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.1'
+
+  # UATP Application (Multiple instances for HA)
+  uatp-app-1:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.production
+      args:
+        BUILD_DATE: ${BUILD_DATE:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}
+        VERSION: ${VERSION:-latest}
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    container_name: uatp-app-1
+    environment:
+      # Load from production environment file
+      - ENVIRONMENT=production
+      - INSTANCE_ID=app-1
+    env_file:
+      - ../environments/prod.env
+    ports:
+      - "8001:8000"
+      - "9091:9090"
+    networks:
+      - uatp-network
+    depends_on:
+      postgresql-primary:
+        condition: service_healthy
+      redis-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    volumes:
+      - app_logs_1:/app/logs
+      - app_tmp_1:/app/tmp:rw
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+
+  uatp-app-2:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.production
+      args:
+        BUILD_DATE: ${BUILD_DATE:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}
+        VERSION: ${VERSION:-latest}
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    container_name: uatp-app-2
+    environment:
+      - ENVIRONMENT=production
+      - INSTANCE_ID=app-2
+    env_file:
+      - ../environments/prod.env
+    ports:
+      - "8002:8000"
+      - "9092:9090"
+    networks:
+      - uatp-network
+    depends_on:
+      postgresql-primary:
+        condition: service_healthy
+      redis-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    volumes:
+      - app_logs_2:/app/logs
+      - app_tmp_2:/app/tmp:rw
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+
+  # Load Balancer (HAProxy)
+  load-balancer:
+    image: haproxy:2.8-alpine
+    container_name: uatp-load-balancer
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8404:8404"  # HAProxy stats
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./ssl:/etc/ssl/certs:ro
+    networks:
+      - uatp-network
+    depends_on:
+      - uatp-app-1
+      - uatp-app-2
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # Prometheus for Metrics
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: uatp-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=90d'
+      - '--web.enable-admin-api'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    networks:
+      - uatp-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # Grafana for Dashboards
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: uatp-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SECURITY_DISABLE_GRAVATAR: "true"
+      GF_SECURITY_COOKIE_SECURE: "true"
+      GF_SECURITY_COOKIE_SAMESITE: "strict"
+      GF_SERVER_ROOT_URL: "https://monitoring.uatp.com"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - uatp-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+
+  # Alertmanager for Alert Handling
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    container_name: uatp-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    networks:
+      - uatp-network
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=https://alerts.uatp.com'
+
+  # Backup Service
+  backup-service:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.backup
+    container_name: uatp-backup-service
+    environment:
+      - POSTGRES_HOST=postgresql-primary
+      - POSTGRES_DB=uatp_production
+      - POSTGRES_USER=uatp_user
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_BUCKET=${AWS_S3_BUCKET}
+      - BACKUP_SCHEDULE=0 0 * * *
+    volumes:
+      - backup_data:/backups
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - uatp-network
+    depends_on:
+      - postgresql-primary
+    restart: unless-stopped
+
+volumes:
+  postgresql_primary_data:
+    driver: local
+  postgresql_replica_data:
+    driver: local
+  redis_primary_data:
+    driver: local
+  app_logs_1:
+    driver: local
+  app_logs_2:
+    driver: local
+  app_tmp_1:
+    driver: local
+  app_tmp_2:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  alertmanager_data:
+    driver: local
+  backup_data:
+    driver: local
+
+networks:
+  uatp-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

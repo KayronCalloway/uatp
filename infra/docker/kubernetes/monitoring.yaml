@@ -1,0 +1,128 @@
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: uatp-app-metrics
+  namespace: uatp-production
+  labels:
+    app: uatp-app
+    component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: uatp-app
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: uatp-production
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    rule_files:
+      - "/etc/prometheus/rules/*.yml"
+
+    scrape_configs:
+      - job_name: 'uatp-app'
+        static_configs:
+          - targets: ['uatp-app-service:8000']
+        metrics_path: /metrics
+        scrape_interval: 30s
+
+      - job_name: 'postgresql'
+        static_configs:
+          - targets: ['postgresql-service:5432']
+        metrics_path: /metrics
+        scrape_interval: 30s
+
+      - job_name: 'redis'
+        static_configs:
+          - targets: ['redis-service:6379']
+        metrics_path: /metrics
+        scrape_interval: 30s
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+              - alertmanager:9093
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alerting-rules
+  namespace: uatp-production
+data:
+  uatp-alerts.yml: |
+    groups:
+    - name: uatp-app
+      rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} per second"
+
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}%"
+
+      - alert: DatabaseConnectionFailure
+        expr: up{job="postgresql"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection failed"
+          description: "PostgreSQL is down"
+
+      - alert: RedisConnectionFailure
+        expr: up{job="redis"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis connection failed"
+          description: "Redis is down"
+
+      - alert: HighAttributionProcessingTime
+        expr: histogram_quantile(0.95, rate(attribution_processing_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High attribution processing time"
+          description: "95th percentile processing time is {{ $value }}s"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uatp-app-metrics
+  namespace: uatp-production
+  labels:
+    app: uatp-app
+    component: monitoring
+spec:
+  selector:
+    app: uatp-app
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP

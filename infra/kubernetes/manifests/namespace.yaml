@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: uatp-dev
+  labels:
+    name: uatp-dev
+    environment: development
+    project: uatp-capsule-engine
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: uatp-staging
+  labels:
+    name: uatp-staging
+    environment: staging
+    project: uatp-capsule-engine
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: uatp-prod
+  labels:
+    name: uatp-prod
+    environment: production
+    project: uatp-capsule-engine

@@ -1,0 +1,77 @@
+# GitLeaks configuration for UATP Capsule Engine
+# Detects secrets, API keys, and sensitive information
+
+title = "UATP Capsule Engine GitLeaks Config"
+
+[extend]
+# Use default GitLeaks rules as base
+useDefault = true
+
+[[rules]]
+id = "uatp-signing-key"
+description = "UATP Signing Key"
+regex = '''UATP_SIGNING_KEY\s*=\s*['""]?([a-f0-9]{64})['""]?'''
+keywords = ["UATP_SIGNING_KEY"]
+
+[[rules]]
+id = "openai-api-key"
+description = "OpenAI API Key"
+regex = '''sk-[a-zA-Z0-9]{48}'''
+keywords = ["sk-"]
+
+[[rules]]
+id = "anthropic-api-key"
+description = "Anthropic API Key"
+regex = '''sk-ant-[a-zA-Z0-9\-]{95}'''
+keywords = ["sk-ant-"]
+
+[[rules]]
+id = "database-url"
+description = "Database Connection String"
+regex = '''(postgresql|mysql|mongodb)://[^\s'"]+'''
+keywords = ["postgresql://", "mysql://", "mongodb://"]
+
+[[rules]]
+id = "redis-url"
+description = "Redis Connection String"
+regex = '''redis://[^\s'"]+'''
+keywords = ["redis://"]
+
+[[rules]]
+id = "jwt-secret"
+description = "JWT Secret Key"
+regex = '''JWT_SECRET\s*=\s*['""]?([a-zA-Z0-9+/]{32,})['""]?'''
+keywords = ["JWT_SECRET"]
+
+[[rules]]
+id = "stripe-key"
+description = "Stripe API Key"
+regex = '''sk_live_[a-zA-Z0-9]{24}'''
+keywords = ["sk_live_"]
+
+[[rules]]
+id = "paypal-key"
+description = "PayPal API Key"
+regex = '''paypal_[a-zA-Z0-9_]{20,}'''
+keywords = ["paypal_"]
+
+[allowlist]
+description = "Allowlist for known safe patterns"
+paths = [
+    '''.*test.*''',
+    '''.*example.*''',
+    '''.*\.md$''',
+    '''.*\.txt$''',
+    '''docs/.*'''
+]
+
+# Allow test keys and example values
+regexes = [
+    '''sk-[0]+''',  # Allow test keys with all zeros
+    '''test_api_key''',
+    '''example_key''',
+    '''your-api-key-here''',
+    '''placeholder_key''',
+    '''demo_secret''',
+    '''6f4a423a4a4b4a4c4d4e4f505152535455565758595a5b5c5d5e5f6061626364''' # Test signing key from tests
+]

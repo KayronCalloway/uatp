@@ -1,0 +1,20 @@
+repos:
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.4.0
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+        exclude: ^(archive/|infra/monitoring/dashboards/)
+      - id: ruff-format
+        exclude: ^(archive/|infra/monitoring/dashboards/)
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.14.0
+    hooks:
+      - id: pyupgrade
+        exclude: ^archive/
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files

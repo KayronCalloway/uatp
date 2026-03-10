@@ -1,0 +1,148 @@
+# Environments
+.venv/
+venv/
+env/
+
+# IDE / Editor
+.idea/
+.vscode/
+
+# System files
+.DS_Store
+**/.DS_Store
+*.bak
+*.db.bak
+*.db.empty.bak
+
+# Internal development (not for public repo)
+archive/
+.claude/
+data/
+autoresearch/
+compliance/
+migrations/
+storage/
+
+# Internal docs (keep locally, not for public)
+docs/internal/
+docs/evolution_timeline/
+docs/pdf/
+docs/incidents/
+
+# Specific internal docs
+docs/TECHNICAL_QA_*.md
+docs/TECHNICAL_QA_*.txt
+docs/BEFORE_AFTER_*.md
+docs/CAPSULE_ENHANCEMENT_*.md
+docs/CODEBASE_CLEANUP_*.md
+docs/CYBERNETIC_*.md
+docs/DATA_MARKETPLACE_*.md
+docs/COMPLETE_USER_*.md
+docs/COMPREHENSIVE_*.md
+docs/ENTERPRISE_*.md
+docs/CAPTURE_SYSTEM_*.md
+docs/PDF_CONVERSION_*.md
+docs/PREMIUM_*.md
+docs/PRIORITY_*.md
+docs/ROUTER_*.md
+docs/UATP_Capsule_Engine_Manual.*
+docs/ios_app_*.md
+docs/capsule_milestone*.md
+docs/capsule_risk*.md
+docs/uatp_6.0_*.md
+docs/uatp_7_*.md
+docs/uatp7_*.md
+docs/spec_*.md
+docs/start-here.md
+docs/deployment-guide.md
+docs/*_PROPOSAL.md
+docs/*_ROADMAP.md
+docs/*_VISION.md
+docs/*_ANALYSIS.md
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database files
+*.sqlite3
+*.db
+file:memdb_*
+:memory:*
+
+# Docker
+docker-compose.override.yml
+
+# Backup files
+backups/
+
+# Log files
+*.log
+auto-capture-*.log
+claude_capture.log
+
+# Large documentation files (can be regenerated)
+docs/**/*.pdf
+
+# UATP Runtime
+*.pid
+api_server.log
+frontend.log
+frontend/.next/
+frontend/node_modules/
+
+# System Status
+SYSTEM_STATUS.md
+
+# Claude Code context (internal development only)
+CLAUDE.md
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.pre-commit-cache/
+.hypothesis/
+
+# Test/runtime data
+chain_seals/
+federation_data/
+
+# ============================================
+# SENSITIVE - NEVER COMMIT
+# ============================================
+
+# User private keys (CRITICAL - never commit)
+.uatp_keys/
+~/.uatp/
+*.key
+*.pem
+!*.pem.example
+
+# Deployment secrets
+deployment/environments/*.env
+!deployment/environments/*.env.example
+
+# Any encrypted keys
+*.enc
+*.encrypted
+
+# Backup files that might contain keys
+*.key.bak
+*.pem.bak
+
+# ============================================
+# END SENSITIVE
+# ============================================
