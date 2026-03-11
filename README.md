@@ -18,8 +18,8 @@ UATP creates verifiable capsules for AI reasoning: cryptographically signed reco
 
 - **Ed25519 signatures** — tamper-evident, user-controlled keys
 - **RFC 3161 timestamps** — external time authority (DigiCert)
-- **Zero-trust architecture** — private keys stay on your device
-- **Standalone verification** — verify without trusting UATP
+- **Zero-trust architecture** — designed so private keys remain on your device ([how this works](TRUST_MODEL.md))
+- **Standalone verification** — verify independently without relying on UATP servers ([verification details](TRUST_MODEL.md#verification))
 
 ---
 
@@ -98,16 +98,17 @@ uatp/
 ┌─────────────────────────────┐
 │  YOUR DEVICE                │
 │  - Private key (encrypted)  │
-│  - Signing happens here     │
-│  - Content stays here       │
+│  - Signing happens locally  │
+│  - Content remains local    │
+│    by default               │
 └──────────────┬──────────────┘
-               │ Only hash sent
+               │ Only hash transmitted
                ▼
 ┌─────────────────────────────┐
 │  UATP SERVER                │
 │  - Receives hash only       │
-│  - Cannot see content       │
-│  - Cannot sign for you      │
+│  - Designed to never see    │
+│    content or private keys  │
 └──────────────┬──────────────┘
                │ Hash for timestamp
                ▼
@@ -118,7 +119,7 @@ uatp/
 └─────────────────────────────┘
 ```
 
-UATP is designed so operators cannot sign on behalf of users—private keys remain local. Capsule integrity is independently verifiable. Timestamping uses an external RFC 3161 authority.
+UATP is designed so operators cannot sign on behalf of users—the SDK generates and stores private keys locally and never transmits them. Capsule integrity is independently verifiable without trusting UATP infrastructure. Timestamping uses an external RFC 3161 authority. See [TRUST_MODEL.md](TRUST_MODEL.md) for assumptions and [THREAT_MODEL.md](THREAT_MODEL.md) for limitations.
 
 ---
 
@@ -160,6 +161,14 @@ Full breakdown: [STATUS.md](STATUS.md)
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: [SECURITY.md](SECURITY.md).
+
+---
+
+## Vision
+
+UATP begins as a cryptographic audit trail for AI decisions. Over time, that same proof infrastructure can support broader accountability: provenance, attribution, consent, auditability, and eventually fairer economic participation in AI systems. The core idea is simple: systems that shape the world should leave verifiable memory behind.
+
+Read the full vision → [docs/vision.md](docs/vision.md)
 
 ---
 
