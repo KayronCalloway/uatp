@@ -111,3 +111,12 @@ psutil==6.1.0
 cryptography-vectors==44.0.0
 pyopenssl==24.3.0
 trustme==1.2.0
+
+# Analysis & ML
+numpy==1.26.4
+
+# Integrations
+openai==1.58.1
+
+# Graph processing
+networkx==3.4.2
