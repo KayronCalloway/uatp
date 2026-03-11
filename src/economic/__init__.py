@@ -1,3 +1,7 @@
-# Stub module - re-exports from archived code for backward compatibility
-# The economic module was archived but some code still imports from it
-from archive.src.economic import *
+# Economic module - stub implementations for archived code
+# The full economic module was archived to archive/src/economic/
+# These stubs maintain backward compatibility for existing imports
+
+from .fcde_engine import fcde_engine
+
+__all__ = ["fcde_engine"]

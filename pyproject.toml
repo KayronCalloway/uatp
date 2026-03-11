@@ -58,6 +58,8 @@ dependencies = [
     "openai>=1.0.0",
     # Graph processing
     "networkx>=3.0",
+    # Resilience patterns
+    "tenacity>=8.0.0",
 ]
 
 [project.optional-dependencies]
