@@ -1,10 +1,9 @@
 name: Test Suite
 
+# Disabled automatic triggers - redundant with ci.yml tests job
+# Kept for manual runs with full postgres+redis services
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+  workflow_dispatch:  # Manual trigger only
 
 jobs:
   test:
@@ -39,7 +38,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
