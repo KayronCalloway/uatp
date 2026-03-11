@@ -70,6 +70,8 @@ Full setup: [SDK Quickstart](sdk/python/QUICKSTART.md)
 | **Try it locally** | [Quick Start](#quick-start) → [Examples](examples/) |
 | **Inspect the crypto** | [Trust Model](TRUST_MODEL.md) → [src/crypto/](src/crypto/) |
 | **Integrate the SDK** | [SDK Docs](sdk/python/README.md) → [API Reference](docs/api-documentation.md) |
+| **Understand the vision** | [Vision](docs/vision.md) → [Complete Vision](docs/UATP_COMPLETE_VISION.md) |
+| **Navigate the codebase** | [Repository Map](docs/repository-map.md) |
 
 ---
 
@@ -84,6 +86,8 @@ uatp/
 ├── tests/              # Test suite
 └── infra/              # Docker, Kubernetes configs
 ```
+
+Full structure with audit priorities: [Repository Map](docs/repository-map.md)
 
 **Security documentation:**
 - [TRUST_MODEL.md](TRUST_MODEL.md) — What UATP can and cannot do
@@ -146,7 +150,7 @@ UATP is designed so operators cannot sign on behalf of users—the SDK generates
 | Next.js frontend | Beta |
 | Hosted SaaS | Planned Q3 2026 |
 
-Full breakdown: [STATUS.md](STATUS.md)
+Full breakdown: [STATUS.md](STATUS.md) | Recent changes: [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
