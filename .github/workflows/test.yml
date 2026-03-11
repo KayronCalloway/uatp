@@ -1,16 +1,10 @@
-# Test Suite - DISABLED (merged into ci.yml)
-# To re-enable, uncomment the 'on:' triggers below
 name: Test Suite
 
-# DISABLED - Using minimal ci.yml instead
-# on:
-#   push:
-#     branches: [ main, develop ]
-#   pull_request:
-#     branches: [ main, develop ]
-
 on:
-  workflow_dispatch:  # Manual trigger only
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
 
 jobs:
   test:
@@ -45,7 +39,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
         python-version: '3.11'
 
@@ -60,8 +54,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-asyncio pytest-cov
+        pip install -e ".[dev,test]"
 
     - name: Set up test environment
       run: |
