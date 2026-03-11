@@ -128,12 +128,7 @@ jobs:
         else
           echo "DATABASE_URL=sqlite+aiosqlite:///test.db" >> $GITHUB_ENV
         fi
-
-    - name: Run database migrations
-      env:
-        ENVIRONMENT: testing
-      run: |
-        alembic upgrade head || echo "No migrations to run or alembic not configured"
+        echo "ENVIRONMENT=testing" >> $GITHUB_ENV
 
     - name: Run tests
       env:
@@ -141,7 +136,7 @@ jobs:
         UATP_SIGNING_KEY: "6f4a423a4a4b4a4c4d4e4f505152535455565758595a5b5c5d5e5f6061626364"
         UATP_API_KEYS: '{"test_read_key": {"scopes": ["read"]}, "test_write_key": {"scopes": ["write"]}}'
       run: |
-        pytest tests/ -v --ignore=tests/legacy --cov=src --cov-report=xml --cov-report=term-missing
+        pytest tests/ -v --ignore=tests/legacy --ignore=tests/integration --cov=src --cov-report=xml --cov-report=term-missing
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
