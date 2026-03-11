@@ -74,6 +74,7 @@ dependencies = [
     "numpy>=1.24.0",
     # Integrations
     "openai>=1.0.0",
+    "stripe>=5.0.0",
     # Graph processing
     "networkx>=3.0",
     # Resilience patterns
@@ -189,10 +190,12 @@ ignore = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 log_cli = true
 log_cli_level = "INFO"
 log_cli_format = "%(levelname)s:%(name)s:%(message)s"
 markers = [
+    "asyncio: marks tests as async",
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
     "performance: marks tests as performance tests",
     "stress: marks tests as stress tests",

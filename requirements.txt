@@ -119,6 +119,7 @@ numpy==1.26.4
 
 # Integrations
 openai==1.58.1
+stripe==5.5.0
 
 # Graph processing
 networkx==3.4.2

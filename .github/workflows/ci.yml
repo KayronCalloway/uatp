@@ -129,6 +129,12 @@ jobs:
           echo "DATABASE_URL=sqlite+aiosqlite:///test.db" >> $GITHUB_ENV
         fi
 
+    - name: Run database migrations
+      env:
+        ENVIRONMENT: testing
+      run: |
+        alembic upgrade head || echo "No migrations to run or alembic not configured"
+
     - name: Run tests
       env:
         PRE_COMMIT_HOME: ${{ github.workspace }}/.pre-commit-cache
