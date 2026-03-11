@@ -21,6 +21,9 @@ UATP creates verifiable capsules for AI reasoning: cryptographically signed reco
 - **Zero-trust architecture** — designed so private keys remain on your device ([how this works](TRUST_MODEL.md))
 - **Standalone verification** — verify independently without relying on UATP servers ([verification details](TRUST_MODEL.md#verification))
 
+![UATP Capsule Dashboard](docs/images/capsule-verified.png)
+*A verified capsule showing reasoning process, confidence metrics, and cryptographic verification status.*
+
 ---
 
 ## Quick Start
