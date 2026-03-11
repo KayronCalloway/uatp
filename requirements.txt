@@ -7,6 +7,7 @@ starlette==0.41.3
 
 # Database - Latest secure versions
 asyncpg==0.30.0
+psycopg2-binary==2.9.9
 SQLAlchemy==2.0.36
 alembic==1.14.0
 
@@ -121,3 +122,6 @@ openai==1.58.1
 
 # Graph processing
 networkx==3.4.2
+
+# Async web framework (for tests)
+quart==0.19.9
