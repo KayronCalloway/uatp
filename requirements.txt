@@ -30,7 +30,7 @@ aiohttp==3.11.10
 requests==2.32.3
 
 # Validation & Serialization - Updated
-pydantic==2.10.4
+pydantic==2.12.5
 pydantic-settings==2.7.0
 validators==0.34.0
 
