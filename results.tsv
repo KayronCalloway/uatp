@@ -4,3 +4,4 @@ ae6fcb2	100.0	0.10	494	keep	lazy-load nacl module in verification.py
 e42c7b5	100.0	0.10	496	keep	add verify_links batch method + 2 tests
 d7a19a0	100.0	0.10	500	keep	add 4 PAE edge case tests
 4c91352	100.0	0.10	500	keep	pre-compile regex + remove unused ABC
+dbad04b	100.0	0.10	508	keep	add 8 FacetRegistry + deletion tests
