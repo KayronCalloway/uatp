@@ -13,6 +13,7 @@ import pytest
 from src.attestation import (
     PERMISSIVE_POLICY,
     STRICT_POLICY,
+    AttestationValidity,
     AttestationVerifier,
     LinkAttestation,
     PolicyResult,
@@ -585,3 +586,73 @@ class TestRealWorldScenario:
         assert len(result.chain_result.breaks) == 1
         assert "inference" in result.chain_result.breaks[0]["fromStep"]
         assert "review" in result.chain_result.breaks[0]["toStep"]
+
+
+class TestAttestationValidity:
+    """Tests for AttestationValidity time-bounded trust."""
+
+    def test_create_validity(self):
+        validity = AttestationValidity()
+        assert validity.issued_at is not None
+        assert validity.not_before is None
+        assert validity.not_after is None
+
+    def test_create_with_ttl(self):
+        validity = AttestationValidity.create_with_ttl(3600)  # 1 hour
+        assert validity.not_before is not None
+        assert validity.not_after is not None
+        assert validity.is_valid_at() == True
+
+    def test_is_valid_at_current_time(self):
+        validity = AttestationValidity.create_with_ttl(3600)
+        assert validity.is_valid_at() == True
+
+    def test_not_yet_valid(self):
+        from datetime import timedelta
+
+        now = datetime.now(timezone.utc)
+        future = now + timedelta(hours=1)
+
+        validity = AttestationValidity(
+            issued_at=now,
+            not_before=future,
+        )
+        assert validity.is_valid_at(now) == False
+        assert validity.is_valid_at(future + timedelta(seconds=1)) == True
+
+    def test_expired(self):
+        from datetime import timedelta
+
+        now = datetime.now(timezone.utc)
+        past = now - timedelta(hours=1)
+
+        validity = AttestationValidity(
+            issued_at=past,
+            not_before=past,
+            not_after=past + timedelta(minutes=30),  # Expired 30 min ago
+        )
+        assert validity.is_expired() == True
+        assert validity.is_valid_at() == False
+
+    def test_remaining_validity_seconds(self):
+        validity = AttestationValidity.create_with_ttl(3600)
+        remaining = validity.remaining_validity_seconds()
+        assert remaining is not None
+        assert 3500 < remaining <= 3600
+
+    def test_remaining_validity_no_expiry(self):
+        validity = AttestationValidity()
+        assert validity.remaining_validity_seconds() is None
+
+    def test_to_dict_from_dict(self):
+        original = AttestationValidity.create_with_ttl(3600)
+        d = original.to_dict()
+
+        assert "issuedAt" in d
+        assert "notBefore" in d
+        assert "notAfter" in d
+
+        restored = AttestationValidity.from_dict(d)
+        assert restored.issued_at == original.issued_at
+        assert restored.not_before == original.not_before
+        assert restored.not_after == original.not_after
