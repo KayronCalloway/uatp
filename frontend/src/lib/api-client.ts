@@ -25,6 +25,8 @@ import {
   ErrorResponse,
   FullTextSearchResponse,
   FullTextSearchQuery,
+  VerifiedContextResponse,
+  VerifiedContextQuery,
 } from '@/types/api';
 import {
   OnboardingProgress,
@@ -161,6 +163,17 @@ export class UATCapsuleEngineClient {
    */
   async searchCapsules(query: FullTextSearchQuery): Promise<FullTextSearchResponse> {
     const response = await this.client.get('/capsules/search', { params: query });
+    return response.data;
+  }
+
+  /**
+   * Verified Context Retrieval - Trusted RAG for LLM applications
+   *
+   * Returns search results with cryptographic verification status.
+   * Use verified_only=true to only retrieve capsules with valid signatures.
+   */
+  async getVerifiedContext(query: VerifiedContextQuery): Promise<VerifiedContextResponse> {
+    const response = await this.client.get('/capsules/context', { params: query });
     return response.data;
   }
 

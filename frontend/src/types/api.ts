@@ -132,6 +132,56 @@ export interface FullTextSearchQuery {
   type?: string;
 }
 
+// Verified Context Retrieval - Trusted RAG for LLM applications
+export interface VerificationStatus {
+  signature_valid: boolean;
+  signature_present: boolean;
+  timestamp_valid: boolean;
+  timestamp_present: boolean;
+  verification_method: string;
+  fully_verified: boolean;
+  error?: string;
+}
+
+export interface VerifiedContextHit {
+  capsule_id: string;
+  capsule_type: string;
+  timestamp: string;
+  snippet: string;
+  relevance_score: number;
+  verification: VerificationStatus;
+  reasoning_summary?: string;
+  confidence?: number;
+  metadata?: Record<string, any>;
+}
+
+export interface TrustSummary {
+  total_results: number;
+  fully_verified: number;
+  signature_only: number;
+  unverified: number;
+}
+
+export interface VerifiedContextResponse {
+  query: string;
+  total_count: number;
+  verified_count: number;
+  results: VerifiedContextHit[];
+  page: number;
+  per_page: number;
+  verified_only: boolean;
+  trust_summary: TrustSummary;
+}
+
+export interface VerifiedContextQuery {
+  q: string;
+  page?: number;
+  per_page?: number;
+  verified_only?: boolean;
+  type?: string;
+  min_confidence?: number;
+}
+
 export interface GetCapsuleQuery {
   include_raw?: boolean;
 }
