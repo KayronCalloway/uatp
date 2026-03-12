@@ -14,6 +14,7 @@
 | DSSE Bundle Export | **Shipped** | Sigstore-compatible |
 | CLI Tools | **Shipped** | `uatp verify`, `uatp export`, `uatp inspect` |
 | Full-Text Search | **Shipped** | FTS5 (SQLite) / ts_vector (PostgreSQL) |
+| Verified Context Retrieval | **Shipped** | Trusted RAG - search with verification status |
 | SQLite Storage | **Shipped** | Development/single-node ready |
 
 ## Beta

@@ -165,6 +165,7 @@ UATP is designed so operators cannot sign on behalf of users—the SDK generates
 | CLI tools (`uatp verify/export/inspect`) | Shipped |
 | DSSE bundle export | Shipped |
 | Full-text search API | Shipped |
+| Verified context retrieval | Shipped |
 | ML-DSA-65 (post-quantum) | Beta |
 | RFC 3161 timestamps | Beta |
 | Capsule chaining | Beta |
