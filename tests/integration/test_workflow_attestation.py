@@ -201,6 +201,92 @@ class TestLinkAttestation:
         assert len(restored.products) == 1
         assert restored.command == original.command
 
+    def test_products_contain_matching_digest(self):
+        """Test products_contain finds matching digest."""
+        link = LinkAttestation(name="step")
+        link.add_product("out1", digest={"sha256": "abc123"})
+        link.add_product("out2", digest={"sha256": "def456"})
+
+        desc = ResourceDescriptor(uri="different", digest={"sha256": "abc123"})
+        assert link.products_contain(desc) == True
+
+    def test_products_contain_no_match(self):
+        """Test products_contain returns False when no match."""
+        link = LinkAttestation(name="step")
+        link.add_product("out", digest={"sha256": "abc123"})
+
+        desc = ResourceDescriptor(uri="x", digest={"sha256": "no_match"})
+        assert link.products_contain(desc) == False
+
+    def test_products_contain_empty_products(self):
+        """Test products_contain with no products."""
+        link = LinkAttestation(name="empty_step")
+
+        desc = ResourceDescriptor(uri="x", digest={"sha256": "abc"})
+        assert link.products_contain(desc) == False
+
+    def test_canonical_bytes_includes_optional_fields(self):
+        """Test canonical_bytes includes command, env, byproducts when set."""
+        link = LinkAttestation(
+            name="with_context",
+            step_id="fixed_id",
+            command=["python", "script.py"],
+            environment={"PATH": "/usr/bin"},
+            byproducts={"exit_code": 0},
+        )
+
+        canonical = link.canonical_bytes()
+        assert b"command" in canonical
+        assert b"python" in canonical
+        assert b"environment" in canonical
+        assert b"PATH" in canonical
+        assert b"byproducts" in canonical
+        assert b"exit_code" in canonical
+
+    def test_canonical_bytes_excludes_empty_optional_fields(self):
+        """Test canonical_bytes excludes None/empty optional fields."""
+        link = LinkAttestation(name="minimal", step_id="fixed_id")
+
+        canonical = link.canonical_bytes()
+        assert b"command" not in canonical
+        assert b"environment" not in canonical
+        assert b"byproducts" not in canonical
+
+    def test_materials_match_products_empty_materials(self):
+        """Test that empty materials always match."""
+        prev_link = LinkAttestation(name="prev")
+        prev_link.add_product("out", digest={"sha256": "abc"})
+
+        # Link with no materials should match (no materials to verify)
+        next_link = LinkAttestation(name="next")
+
+        assert next_link.materials_match_products(prev_link) == True
+
+    def test_to_dict_from_dict_with_all_timestamps(self):
+        """Test serialization with all timestamp fields."""
+        now = datetime.now(timezone.utc)
+        original = LinkAttestation(name="full", step_id="s1")
+        original.signed_by = "key1"
+        original.signature = "sig_base64"
+        original.signed_at = now
+        original.started_at = now
+        original.completed_at = now
+
+        d = original.to_dict()
+
+        assert "signedAt" in d
+        assert "startedAt" in d
+        assert "completedAt" in d
+        assert d["signedBy"] == "key1"
+        assert d["signature"] == "sig_base64"
+
+        restored = LinkAttestation.from_dict(d)
+
+        assert restored.signed_at is not None
+        assert restored.started_at is not None
+        assert restored.completed_at is not None
+        assert restored.signed_by == "key1"
+
 
 class TestSimplePolicy:
     """Tests for SimplePolicy."""
