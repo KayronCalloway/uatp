@@ -15,6 +15,7 @@ from src.attestation import (
     STRICT_POLICY,
     AttestationValidity,
     AttestationVerifier,
+    ChainVerificationResult,
     LinkAttestation,
     PolicyResult,
     ResourceDescriptor,
@@ -649,6 +650,185 @@ class TestWorkflowAttestation:
         assert restored.name == original.name
         assert restored.status == "completed"
         assert len(restored.steps) == 1
+
+
+class TestWorkflowAccessorMethods:
+    """Tests for WorkflowAttestation accessor methods."""
+
+    def test_get_step_by_name(self):
+        """Test get_step finds step by name."""
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+        workflow.add_step(LinkAttestation(name="step_a"))
+        workflow.add_step(LinkAttestation(name="step_b"))
+
+        step = workflow.get_step("step_b")
+        assert step is not None
+        assert step.name == "step_b"
+
+    def test_get_step_not_found(self):
+        """Test get_step returns None for missing step."""
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+        workflow.add_step(LinkAttestation(name="step_a"))
+
+        assert workflow.get_step("nonexistent") is None
+
+    def test_get_step_by_id(self):
+        """Test get_step_by_id finds step by ID."""
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+        step_a = LinkAttestation(name="step_a", step_id="id_123")
+        workflow.add_step(step_a)
+
+        found = workflow.get_step_by_id("id_123")
+        assert found is not None
+        assert found.name == "step_a"
+
+    def test_get_step_by_id_not_found(self):
+        """Test get_step_by_id returns None for missing ID."""
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+        workflow.add_step(LinkAttestation(name="step_a", step_id="id_123"))
+
+        assert workflow.get_step_by_id("wrong_id") is None
+
+    def test_get_all_materials(self):
+        """Test get_all_materials returns unique materials."""
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+
+        step1 = LinkAttestation(name="step1")
+        step1.add_material("m1", digest={"sha256": "h1"})
+
+        step2 = LinkAttestation(name="step2")
+        step2.add_material("m1", digest={"sha256": "h1"})  # Duplicate
+        step2.add_material("m2", digest={"sha256": "h2"})
+
+        workflow.add_step(step1)
+        workflow.add_step(step2)
+
+        materials = workflow.get_all_materials()
+        assert len(materials) == 2  # Deduplicated
+
+    def test_get_all_products(self):
+        """Test get_all_products returns unique products."""
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+
+        step1 = LinkAttestation(name="step1")
+        step1.add_product("p1", digest={"sha256": "h1"})
+
+        step2 = LinkAttestation(name="step2")
+        step2.add_product("p1", digest={"sha256": "h1"})  # Duplicate
+        step2.add_product("p2", digest={"sha256": "h2"})
+
+        workflow.add_step(step1)
+        workflow.add_step(step2)
+
+        products = workflow.get_all_products()
+        assert len(products) == 2  # Deduplicated
+
+    def test_get_final_products(self):
+        """Test get_final_products returns last step's products."""
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+
+        step1 = LinkAttestation(name="step1")
+        step1.add_product("intermediate", digest={"sha256": "h1"})
+        workflow.add_step(step1)
+
+        step2 = LinkAttestation(name="step2")
+        step2.add_product("final_output", digest={"sha256": "h2"})
+        workflow.add_step(step2)
+
+        final = workflow.get_final_products()
+        assert len(final) == 1
+        assert final[0].name == "final_output"
+
+    def test_get_final_products_empty_workflow(self):
+        """Test get_final_products on empty workflow."""
+        workflow = WorkflowAttestation(workflow_id="wf_empty")
+
+        assert workflow.get_final_products() == []
+
+    def test_workflow_fail(self):
+        """Test fail() method sets status and completed_at."""
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+        workflow.add_step(LinkAttestation(name="step"))
+
+        workflow.fail(reason="Test failure")
+
+        assert workflow.status == "failed"
+        assert workflow.completed_at is not None
+        assert workflow.is_complete == True
+
+
+class TestChainVerificationResult:
+    """Tests for ChainVerificationResult."""
+
+    def test_to_dict_valid_chain(self):
+        """Test to_dict for valid chain result."""
+        result = ChainVerificationResult(
+            is_valid=True,
+            verified_handoffs=3,
+            total_handoffs=3,
+        )
+        d = result.to_dict()
+
+        assert d["isValid"] == True
+        assert d["verifiedHandoffs"] == 3
+        assert d["totalHandoffs"] == 3
+        assert d["breaks"] == []
+
+    def test_add_break_sets_invalid(self):
+        """Test add_break sets is_valid to False."""
+        result = ChainVerificationResult(
+            is_valid=True,
+            verified_handoffs=0,
+            total_handoffs=2,
+        )
+
+        result.add_break(
+            from_step="step1",
+            to_step="step2",
+            missing_material="data.txt",
+            message="Material not found in products",
+        )
+
+        assert result.is_valid == False
+        assert len(result.breaks) == 1
+        assert result.breaks[0]["fromStep"] == "step1"
+        assert result.breaks[0]["toStep"] == "step2"
+        assert result.breaks[0]["missingMaterial"] == "data.txt"
+
+
+class TestWorkflowVerificationResult:
+    """Tests for WorkflowVerificationResult."""
+
+    def test_to_dict(self):
+        """Test WorkflowVerificationResult.to_dict()."""
+        from src.attestation.workflow import (
+            ChainVerificationResult,
+            WorkflowVerificationResult,
+        )
+
+        chain_result = ChainVerificationResult(
+            is_valid=True,
+            verified_handoffs=2,
+            total_handoffs=2,
+        )
+        policy_result = PolicyResult(passed=True)
+
+        wf_result = WorkflowVerificationResult(
+            workflow_id="wf_test",
+            is_valid=True,
+            chain_result=chain_result,
+            policy_result=policy_result,
+            step_count=3,
+        )
+
+        d = wf_result.to_dict()
+
+        assert d["workflowId"] == "wf_test"
+        assert d["isValid"] == True
+        assert d["stepCount"] == 3
+        assert "verifiedAt" in d
+        assert d["chain"]["verifiedHandoffs"] == 2
+        assert d["policy"]["passed"] == True
 
 
 class TestAttestationVerifier:
