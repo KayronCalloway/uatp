@@ -1,86 +1,81 @@
 # UATP Development Roadmap
 
-## Current Status: Beta
+## Current Status: Beta (v7.3.0)
 
-Core cryptographic proof infrastructure is complete. Economic and governance features are experimental/archived. **Status: Beta - suitable for development and testing.**
+Core cryptographic proof infrastructure is complete. See [STATUS.md](STATUS.md) for detailed component status.
 
 ---
 
 ## Phase 1: Core Infrastructure - COMPLETE
 
-**Status:** Complete
 **Completion Date:** July 2024
 
-### Shipped
-- **Test Suite** - Core tests passing
-- **Code Quality Pipeline** - Pre-commit hooks, linting, type checking
-- **Application Architecture** - App factory pattern, proper separation
-- **CI/CD** - GitHub Actions pipeline
-- **Database Foundation** - SQLAlchemy, migrations, health checks
+- Test suite foundation
+- Code quality pipeline (pre-commit, linting, type checking)
+- Application architecture (app factory pattern)
+- CI/CD (GitHub Actions)
+- Database foundation (SQLAlchemy, migrations)
 
 ---
 
 ## Phase 2: Cryptographic Core - COMPLETE
 
-**Status:** Complete
 **Completion Date:** March 2026
 
 ### Shipped
 - **Ed25519 Signatures** - FIPS 186-5 compliant signing
-- **RFC 3161 Timestamps** - External TSA integration (DigiCert)
-- **Python SDK** - `pip install uatp`
-- **FastAPI Backend** - Capsule creation and verification API
-- **Claude Code Integration** - Hook-based capture (beta)
+- **ML-DSA-65 Signatures** - Post-quantum (FIPS 204), beta
+- **RFC 3161 Timestamps** - DigiCert TSA integration, beta
+- **Python SDK** - `pip install uatp` (v0.2.1 on PyPI)
+- **FastAPI Backend** - Capsule creation, verification, search
+- **DSSE Bundle Export** - Sigstore-compatible portable proofs
+- **Workflow Attestation** - in-toto style chain-of-custody
+- **CLI Tools** - `uatp verify`, `uatp export`, `uatp inspect`
+- **Full-Text Search** - FTS5/ts_vector with relevance scoring
+- **Capsule Chaining** - Cryptographic prev_hash/content_hash linking
 - **Next.js Dashboard** - Capsule viewer (beta)
-
-### Experimental (in `archive/`)
-- Economic attribution engine
-- Governance/refusal mechanisms
-- Advanced analytics dashboards
-
-*Note: Experimental features were archived during codebase cleanup. See `archive/` for code.*
+- **Claude Code Integration** - Hook-based capture (beta)
 
 ---
 
-## Phase 3: Production & Distribution - PLANNED
+## Phase 3: Production & Distribution - IN PROGRESS
 
-**Status:** Planning
 **Target:** Q2-Q3 2026
 
 ### Goals
-1. **PyPI Publication** - `pip install uatp` from PyPI
-2. **Hosted API** - Optional managed service
-3. **JavaScript SDK** - Browser and Node.js support
-4. **Security Audit** - External cryptographic review
+1. **Hosted API** - Optional managed service
+2. **JavaScript SDK** - Browser and Node.js support
+3. **External Security Audit** - Cryptographic review by third party
+4. **Frontend Polish** - Production-ready dashboard
 
 ---
 
 ## Phase 4: Ecosystem - FUTURE
 
-**Status:** Future
 **Target:** 2027+
 
 ### Vision
 - Enterprise integrations
-- Compliance certifications
+- Compliance certifications (SOC 2, etc.)
 - Multi-language SDKs
+- Attribution and provenance features (see [vision.md](docs/vision.md))
 
 ---
 
 ## Current Project Health
 
 ### What's Verified
-- Ed25519 signature generation and verification
-- Capsule creation and retrieval API
+- Ed25519 + ML-DSA-65 signature generation and verification
+- Capsule creation, retrieval, and search API
 - RFC 3161 timestamp integration
+- DSSE bundle export and verification
 - Database persistence (SQLite/PostgreSQL)
-- Python SDK functional
+- 1400+ tests passing
 
 ### What Needs Work
-- External security audit (not yet performed)
-- PyPI publication
-- Performance benchmarks
-- Expanded test coverage
+- External security audit
+- Frontend polish
+- Performance benchmarks at scale
 
 ---
 

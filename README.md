@@ -158,20 +158,35 @@ UATP is designed so operators cannot sign on behalf of users—the SDK generates
 
 | Component | Status |
 |-----------|--------|
-| Ed25519 + ML-DSA-65 signatures | Shipped |
+| Ed25519 signatures | Shipped |
 | Python SDK (`pip install uatp`) | Shipped |
 | Local key management | Shipped |
 | Capsule verification | Shipped |
-| RFC 3161 timestamps | Shipped |
 | CLI tools (`uatp verify/export/inspect`) | Shipped |
 | DSSE bundle export | Shipped |
-| Workflow attestation | Shipped |
 | Full-text search API | Shipped |
-| Capsule chaining | Shipped |
+| ML-DSA-65 (post-quantum) | Beta |
+| RFC 3161 timestamps | Beta |
+| Capsule chaining | Beta |
+| Workflow attestation | Beta |
 | Next.js frontend | Beta |
 | Hosted SaaS | Planned Q3 2026 |
 
 Full breakdown: [STATUS.md](STATUS.md) | Recent changes: [CHANGELOG.md](CHANGELOG.md)
+
+---
+
+## How UATP Compares
+
+| System | Primary Purpose | What UATP Adds |
+|--------|-----------------|----------------|
+| **MLflow** | Experiment tracking | Cryptographic proof, user-sovereign keys |
+| **Weights & Biases** | ML observability | Independent verification, zero-trust |
+| **Sigstore / DSSE** | Artifact signing | AI decision-specific capsules, reasoning traces |
+| **in-toto** | Supply chain attestation | Decision memory, not just build steps |
+| **OpenTelemetry** | Distributed tracing | Tamper-evident, legally defensible records |
+
+UATP is not a replacement for these tools—it adds a cryptographic proof layer for AI decisions that can integrate with existing infrastructure.
 
 ---
 
