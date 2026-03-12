@@ -156,6 +156,26 @@ class AttestationVerifier:
 
         return result
 
+    def verify_links(
+        self,
+        links: List[LinkAttestation],
+        expected_hashes: Optional[Dict[str, str]] = None,
+    ) -> List[LinkVerificationResult]:
+        """
+        Verify multiple links in batch.
+
+        Args:
+            links: Links to verify
+            expected_hashes: Optional dict of step_id -> expected_hash
+
+        Returns:
+            List of verification results (same order as input)
+        """
+        expected_hashes = expected_hashes or {}
+        return [
+            self.verify_link(link, expected_hashes.get(link.step_id)) for link in links
+        ]
+
     def verify_chain(
         self,
         links: List[LinkAttestation],
