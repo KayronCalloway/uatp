@@ -100,6 +100,7 @@ const DEFAULT_PRESETS: SearchPreset[] = [
 interface CapsuleSearchProps {
   onSearch: (params: CapsuleSearchParams) => void;
   onFullTextResults?: (results: FullTextSearchHit[], total: number) => void;  // Server-side search results
+  onSelectCapsule?: (capsuleId: string) => void;  // Callback when user clicks a search result
   capsules?: AnyCapsule[];  // For computing facets
   initialParams?: CapsuleSearchParams;
   showPresets?: boolean;
@@ -132,6 +133,7 @@ const gradeColors: Record<string, string> = {
 export function CapsuleSearch({
   onSearch,
   onFullTextResults,
+  onSelectCapsule,
   capsules = [],
   initialParams = {},
   showPresets = true,
@@ -458,7 +460,7 @@ export function CapsuleSearch({
                   <div
                     key={hit.capsule_id}
                     className="bg-white rounded p-2 text-sm border border-blue-100 hover:border-blue-300 cursor-pointer transition-colors"
-                    onClick={() => window.location.href = `/capsules/${hit.capsule_id}`}
+                    onClick={() => onSelectCapsule?.(hit.capsule_id)}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs text-gray-600 truncate max-w-[200px]">

@@ -53,6 +53,19 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
     setCurrentPage(1); // Reset to first page on search change
   }, []);
 
+  // Handle selecting a capsule from search results (by ID)
+  const handleSearchResultSelect = useCallback(async (capsuleId: string) => {
+    if (!onCapsuleSelect) return;
+    try {
+      const response = await api.getCapsule(capsuleId);
+      if (response.capsule) {
+        onCapsuleSelect(response.capsule);
+      }
+    } catch (err) {
+      console.error('Failed to fetch capsule:', err);
+    }
+  }, [onCapsuleSelect]);
+
   const queryParams: ListCapsulesQuery = {
     page: currentPage,
     per_page: pageSize,
@@ -325,6 +338,7 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
       {/* World-Class Search Component */}
       <CapsuleSearch
         onSearch={handleSearch}
+        onSelectCapsule={handleSearchResultSelect}
         capsules={capsules}
         initialParams={searchParams}
         showPresets={true}
