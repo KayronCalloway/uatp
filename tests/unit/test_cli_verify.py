@@ -151,3 +151,113 @@ class TestCLICommands:
             except json.JSONDecodeError:
                 # Allow for error messages that aren't JSON
                 pass
+
+
+class TestResultToDictEdgeCases:
+    """Edge case tests for result_to_dict."""
+
+    def test_result_with_all_checks(self):
+        """Test result_to_dict with all check types."""
+        result = VerificationResult(
+            is_valid=True,
+            signature_valid=True,
+            timestamp_valid=True,
+            pq_signature_valid=True,
+            errors=["error1"],
+            warnings=["warn1"],
+            verified_at=datetime(2026, 3, 12, 10, 0, 0, tzinfo=timezone.utc),
+        )
+
+        d = result_to_dict(result)
+
+        assert len(d["checks"]) == 3
+        check_names = [c["name"] for c in d["checks"]]
+        assert "signature" in check_names
+        assert "timestamp" in check_names
+        assert "pq_signature" in check_names
+        assert d["errors"] == ["error1"]
+        assert d["warnings"] == ["warn1"]
+
+    def test_result_with_bundle_no_verification(self):
+        """Test result_to_dict with bundle but no verification data."""
+        result = VerificationResult(is_valid=True)
+        bundle = MagicMock()
+        bundle.capsule_id = "caps_456"
+        bundle.created_at = None
+        bundle.verification = None
+
+        d = result_to_dict(result, bundle)
+
+        assert d["bundle"]["capsule_id"] == "caps_456"
+        assert d["bundle"]["created_at"] is None
+        assert "key_algorithm" not in d["bundle"]
+
+
+class TestFormatResultEdgeCases:
+    """Edge case tests for format_result."""
+
+    def test_format_result_verbose_no_timestamp(self):
+        """Test verbose output when timestamp not present."""
+        result = VerificationResult(
+            is_valid=True,
+            signature_valid=True,
+            timestamp_valid=None,  # Not present
+        )
+        output = format_result(result, verbose=True, no_color=True)
+
+        assert "Timestamp: not present" in output
+
+    def test_format_result_with_pq_signature(self):
+        """Test output includes PQ signature status."""
+        result = VerificationResult(
+            is_valid=True,
+            signature_valid=True,
+            pq_signature_valid=True,
+        )
+        output = format_result(result, no_color=True)
+
+        assert "PQ Signature:" in output
+        assert "valid" in output
+
+    def test_format_result_pq_signature_invalid(self):
+        """Test output shows PQ signature invalid."""
+        result = VerificationResult(
+            is_valid=False,
+            signature_valid=True,
+            pq_signature_valid=False,
+        )
+        output = format_result(result, no_color=True)
+
+        assert "PQ Signature:" in output
+        assert "invalid" in output
+
+    def test_format_result_multiple_errors(self):
+        """Test output shows multiple errors."""
+        result = VerificationResult(
+            is_valid=False,
+            errors=["Error 1", "Error 2", "Error 3"],
+        )
+        output = format_result(result, no_color=True)
+
+        assert "Error 1" in output
+        assert "Error 2" in output
+        assert "Error 3" in output
+
+
+class TestDetermineExitCodeEdgeCases:
+    """Edge case tests for determine_exit_code."""
+
+    def test_failed_with_warnings_still_failed(self):
+        """Warnings should be ignored when verification failed."""
+        result = VerificationResult(
+            is_valid=False,
+            warnings=["Warning that doesn't matter"],
+        )
+        assert determine_exit_code(result) == ExitCode.FAILED
+
+    def test_exit_code_order(self):
+        """Test that exit codes have expected ordering."""
+        assert ExitCode.SUCCESS < ExitCode.FAILED
+        assert ExitCode.FAILED < ExitCode.WARNINGS
+        assert ExitCode.WARNINGS < ExitCode.CONFIG_ERROR
+        assert ExitCode.CONFIG_ERROR < ExitCode.NETWORK_ERROR
