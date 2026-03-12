@@ -19,6 +19,7 @@ UATP creates verifiable capsules for AI reasoning: cryptographically signed reco
 - **Ed25519 + ML-DSA-65 signatures** — tamper-evident, quantum-resistant, user-controlled keys
 - **RFC 3161 timestamps** — external time authority (DigiCert)
 - **DSSE bundles** — Sigstore-compatible portable verification
+- **Verified context retrieval** — search capsules with verification status for trusted RAG applications
 - **Zero-trust architecture** — designed so private keys remain on your device ([how this works](TRUST_MODEL.md))
 - **Standalone verification** — verify independently without relying on UATP servers ([verification details](TRUST_MODEL.md#verification))
 

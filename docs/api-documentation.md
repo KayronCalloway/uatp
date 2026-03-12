@@ -200,9 +200,105 @@ Create multiple capsules in a single request.
 }
 ```
 
+### Search
+
+#### GET /capsules/search
+
+Full-text search across capsule content. Uses FTS5 for SQLite and ts_vector for PostgreSQL.
+
+**Query Parameters:**
+- `q` (string, required): Search query (min 2 characters)
+- `page` (int, default: 1): Page number
+- `per_page` (int, default: 10, max: 100): Results per page
+- `type` (string, optional): Filter by capsule type
+
+**Response:**
+```json
+{
+  "query": "loan decision",
+  "total_count": 42,
+  "results": [
+    {
+      "capsule_id": "caps_2026_03_10_183645",
+      "capsule_type": "reasoning_trace",
+      "timestamp": "2026-03-10T18:36:45Z",
+      "snippet": "Credit score 720 (excellent)...",
+      "relevance_score": 0.92,
+      "payload_preview": {
+        "platform": "claude-code",
+        "topics": ["Finance", "Risk Assessment"]
+      }
+    }
+  ],
+  "page": 1,
+  "per_page": 10,
+  "has_more": true,
+  "total_pages": 5
+}
+```
+
+#### GET /capsules/context
+
+Verified Context Retrieval - search with cryptographic verification status. Designed for trusted RAG (Retrieval-Augmented Generation) applications where LLMs should only use verified context.
+
+**Query Parameters:**
+- `q` (string, required): Search query (min 2 characters)
+- `page` (int, default: 1): Page number
+- `per_page` (int, default: 10, max: 50): Results per page
+- `verified_only` (bool, default: false): Only return capsules with valid signatures
+- `type` (string, optional): Filter by capsule type
+- `min_confidence` (float, optional): Minimum confidence score (0.0-1.0)
+
+**Response:**
+```json
+{
+  "query": "loan decision",
+  "total_count": 15,
+  "verified_count": 12,
+  "results": [
+    {
+      "capsule_id": "caps_2026_03_10_183645",
+      "capsule_type": "reasoning_trace",
+      "timestamp": "2026-03-10T18:36:45Z",
+      "snippet": "Credit score 720 (excellent)...",
+      "relevance_score": 0.92,
+      "verification": {
+        "signature_valid": true,
+        "signature_present": true,
+        "timestamp_valid": true,
+        "timestamp_present": true,
+        "verification_method": "Ed25519Signature2020",
+        "fully_verified": true,
+        "error": null
+      },
+      "reasoning_summary": "Approved based on credit score and DTI ratio",
+      "confidence": 0.95,
+      "metadata": {
+        "platform": "claude-code",
+        "topics": ["Finance", "Risk Assessment"]
+      }
+    }
+  ],
+  "page": 1,
+  "per_page": 10,
+  "verified_only": false,
+  "trust_summary": {
+    "total_results": 10,
+    "fully_verified": 8,
+    "signature_only": 2,
+    "unverified": 0
+  }
+}
+```
+
+**Use Cases:**
+- **Trusted RAG**: Only feed verified capsules to LLMs as context
+- **Audit queries**: Find decisions with specific verification status
+- **Quality filtering**: Combine with `min_confidence` for high-quality context
+
 ### Verification
 
-#### GET /capsules/verify/{capsule_id}
+#### GET /capsules/{capsule_id}/verify
 
 Verify the cryptographic signature of a capsule.
 
@@ -211,9 +307,17 @@ Verify the cryptographic signature of a capsule.
 {
   "capsule_id": "550e8400-e29b-41d4-a716-446655440000",
   "verified": true,
-  "reason": "Signature valid",
-  "from_cache": false,
-  "metadata_has_verify_key": true
+  "verification_method": "Ed25519Signature2020",
+  "verification_error": null,
+  "signature_present": true,
+  "signature_metadata": {
+    "signature": "abc123...",
+    "signer": "local_engine",
+    "verify_key": "def456..."
+  },
+  "message": "Capsule signature VERIFIED",
+  "status": "sealed",
+  "timestamp": "2024-01-15T10:30:00Z"
 }
 ```
 
