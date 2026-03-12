@@ -518,3 +518,165 @@ class TestIntegration:
 
         assert restored_payload["capsule_id"] == capsule["capsule_id"]
         assert restored_payload["type"] == "reasoning_trace"
+
+
+class TestVerificationResult:
+    """Tests for VerificationResult."""
+
+    def test_to_dict_basic(self):
+        """Test basic to_dict output."""
+        from src.export.bundle import VerificationResult
+
+        result = VerificationResult(is_valid=True)
+        d = result.to_dict()
+
+        assert d["isValid"] == True
+        assert d["errors"] == []
+        assert d["warnings"] == []
+        assert "verifiedAt" in d
+        assert "signatureValid" not in d  # None values omitted
+
+    def test_to_dict_with_signature_status(self):
+        """Test to_dict with signature validation info."""
+        from src.export.bundle import VerificationResult
+
+        result = VerificationResult(
+            is_valid=True,
+            signature_valid=True,
+            timestamp_valid=False,
+        )
+        d = result.to_dict()
+
+        assert d["signatureValid"] == True
+        assert d["timestampValid"] == False
+
+    def test_to_dict_with_hybrid_signature(self):
+        """Test to_dict with PQ signature validation."""
+        from src.export.bundle import VerificationResult
+
+        result = VerificationResult(
+            is_valid=True,
+            signature_valid=True,
+            pq_signature_valid=True,
+        )
+        d = result.to_dict()
+
+        assert d["pqSignatureValid"] == True
+
+    def test_to_dict_with_errors(self):
+        """Test to_dict with errors and warnings."""
+        from src.export.bundle import VerificationResult
+
+        result = VerificationResult(
+            is_valid=False,
+            errors=["Signature mismatch", "Key not found"],
+            warnings=["Timestamp near expiry"],
+        )
+        d = result.to_dict()
+
+        assert d["isValid"] == False
+        assert len(d["errors"]) == 2
+        assert len(d["warnings"]) == 1
+
+
+class TestBundleIsHybrid:
+    """Tests for UATPBundle.is_hybrid property."""
+
+    def test_bundle_is_hybrid_true(self):
+        """Test is_hybrid returns True for hybrid bundle."""
+        envelope = DSSEEnvelope.create(b'{"test": true}')
+        bundle = UATPBundle.create(
+            envelope=envelope,
+            public_key=b"x" * 32,
+            key_id="test",
+            pq_public_key=b"y" * 64,
+            pq_algorithm="ml-dsa-65",
+        )
+
+        assert bundle.is_hybrid == True
+
+    def test_bundle_is_hybrid_false(self):
+        """Test is_hybrid returns False for non-hybrid bundle."""
+        envelope = DSSEEnvelope.create(b'{"test": true}')
+        bundle = UATPBundle.create(
+            envelope=envelope,
+            public_key=b"x" * 32,
+            key_id="test",
+        )
+
+        assert bundle.is_hybrid == False
+
+    def test_bundle_is_hybrid_no_verification(self):
+        """Test is_hybrid returns False when no verification material."""
+        bundle = UATPBundle(dsse=DSSEEnvelope.create(b'{"test": true}'))
+
+        assert bundle.is_hybrid == False
+
+
+class TestTimestampEvidenceToDict:
+    """Tests for TimestampEvidence.to_dict()."""
+
+    def test_to_dict_with_all_fields(self):
+        """Test to_dict includes all fields when set."""
+        now = datetime.now(timezone.utc)
+        ts = TimestampEvidence(
+            rfc3161_token="base64token",
+            authority="https://freetsa.org",
+            timestamp=now,
+        )
+        d = ts.to_dict()
+
+        assert d["rfc3161Token"] == "base64token"
+        assert d["authority"] == "https://freetsa.org"
+        assert "timestamp" in d
+
+    def test_to_dict_empty(self):
+        """Test to_dict with no fields set."""
+        ts = TimestampEvidence()
+        d = ts.to_dict()
+
+        assert d == {}
+
+
+class TestBundleVerifyCustomFunc:
+    """Tests for UATPBundle.verify with custom function."""
+
+    def test_verify_with_custom_func_success(self):
+        """Test verify with custom verification function that succeeds."""
+        envelope = DSSEEnvelope.create(b'{"test": true}')
+        envelope.sign(keyid="test-key", sign_func=lambda d: b"valid_sig")
+
+        bundle = UATPBundle.create(
+            envelope=envelope,
+            public_key=b"x" * 32,
+            key_id="test-key",
+        )
+
+        # Custom verify function that always returns True for our signature
+        def custom_verify(message: bytes, sig: bytes) -> bool:
+            return sig == b"valid_sig"
+
+        result = bundle.verify(verify_func=custom_verify)
+
+        assert result.is_valid == True
+        assert result.signature_valid == True
+
+    def test_verify_with_custom_func_failure(self):
+        """Test verify with custom verification function that fails."""
+        envelope = DSSEEnvelope.create(b'{"test": true}')
+        envelope.sign(keyid="test-key", sign_func=lambda d: b"some_sig")
+
+        bundle = UATPBundle.create(
+            envelope=envelope,
+            public_key=b"x" * 32,
+            key_id="test-key",
+        )
+
+        # Custom verify function that always returns False
+        def custom_verify(message: bytes, sig: bytes) -> bool:
+            return False
+
+        result = bundle.verify(verify_func=custom_verify)
+
+        assert result.is_valid == False
+        assert result.signature_valid == False
