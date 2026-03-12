@@ -32,10 +32,12 @@ requests==2.32.3
 # Validation & Serialization - Updated
 pydantic==2.10.4
 pydantic-settings==2.7.0
+validators==0.34.0
 
 # Monitoring & Observability - Security updates
 prometheus-client==0.21.1
 structlog==25.4.0
+sentry-sdk==2.19.2
 
 # Task Queue - Security patches
 celery==5.4.0
@@ -49,6 +51,7 @@ pytz==2023.3
 click==8.1.7
 python-dotenv==1.0.0
 python-multipart==0.0.6
+cbor2==5.6.5
 
 # Production Server - Security hardened
 gunicorn==23.0.0
