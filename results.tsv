@@ -7,3 +7,4 @@ d7a19a0	100.0	0.10	500	keep	add 4 PAE edge case tests
 dbad04b	100.0	0.10	508	keep	add 8 FacetRegistry + deletion tests
 8b1d7fd	100.0	0.10	516	keep	add 8 AttestationValidity tests
 81bec4c	100.0	0.10	529	keep	add 13 CLI verify tests
+64fc91b	100.0	0.10	534	keep	add is_complete step_count duration_seconds + 5 tests

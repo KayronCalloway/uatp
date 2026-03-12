@@ -254,6 +254,43 @@ class TestWorkflowAttestation:
         assert len(workflow.steps) == 1
         assert workflow.status == "running"
 
+    def test_is_complete_property(self):
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+        assert workflow.is_complete == False
+
+        workflow.complete()
+        assert workflow.is_complete == True
+
+    def test_is_complete_on_failure(self):
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+        workflow.fail()
+        assert workflow.is_complete == True
+
+    def test_step_count_property(self):
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+        assert workflow.step_count == 0
+
+        workflow.add_step(LinkAttestation(name="s1"))
+        assert workflow.step_count == 1
+
+        workflow.add_step(LinkAttestation(name="s2"))
+        assert workflow.step_count == 2
+
+    def test_duration_seconds_not_complete(self):
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+        assert workflow.duration_seconds is None
+
+    def test_duration_seconds_complete(self):
+        from datetime import timedelta
+
+        workflow = WorkflowAttestation(workflow_id="wf_001")
+        workflow.created_at = datetime.now(timezone.utc) - timedelta(seconds=30)
+        workflow.complete()
+
+        duration = workflow.duration_seconds
+        assert duration is not None
+        assert duration >= 30
+
     def test_verify_chain_single_step(self):
         workflow = WorkflowAttestation(workflow_id="wf_001")
         workflow.add_step(LinkAttestation(name="only"))
