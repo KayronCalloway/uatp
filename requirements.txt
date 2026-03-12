@@ -1,9 +1,9 @@
 # UATP Capsule Engine Dependencies - Security Hardened 2025
 
 # Web Framework - Updated for security patches
-fastapi==0.115.6
+fastapi==0.135.1
 uvicorn[standard]==0.34.0
-starlette==0.41.3
+starlette==0.52.1
 
 # Database - Latest secure versions
 asyncpg==0.30.0
