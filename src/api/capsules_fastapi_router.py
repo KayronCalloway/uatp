@@ -13,6 +13,7 @@ Features:
 import json
 import logging
 import uuid
+import zlib
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -29,6 +30,7 @@ from ..core.config import DATABASE_URL
 from ..core.database import db
 from ..models.capsule import CapsuleModel
 from ..services.capsule_lifecycle_service import capsule_lifecycle_service
+from ..services.capsule_search_service import get_search_service
 from ..utils.timezone_utils import utc_now
 from ..utils.uatp_envelope import is_envelope_format, wrap_in_uatp_envelope
 
@@ -50,6 +52,48 @@ async def get_db_session():
     """Dependency to get database session"""
     async with db.get_session() as session:
         yield session
+
+
+@router.get("/search")
+async def search_capsules(
+    request: Request,
+    q: str = Query(..., min_length=2, description="Search query"),
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(10, ge=1, le=100, description="Results per page"),
+    type: Optional[str] = Query(None, description="Filter by capsule type"),
+    session: AsyncSession = Depends(get_db_session),
+):
+    """
+    Full-text search across capsule content.
+
+    Uses FTS5 for SQLite and ts_vector for PostgreSQL.
+    Returns results with snippets and relevance scores.
+    """
+    # Optional auth - search is public but we can filter by owner if authenticated
+    current_user = get_current_user_optional(request)
+    user_is_admin = is_admin_user(current_user) if current_user else False
+    user_id = current_user.get("user_id") if current_user else None
+
+    # Non-admin authenticated users only see their own capsules
+    owner_filter = None
+    if current_user and not user_is_admin and user_id:
+        owner_filter = user_id
+
+    try:
+        search_service = get_search_service()
+        results = await search_service.search(
+            session=session,
+            query=q,
+            page=page,
+            per_page=per_page,
+            capsule_type=type,
+            owner_id=owner_filter,
+        )
+        return results.to_dict()
+
+    except Exception as e:
+        logger.error(f"Search error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Search error: {str(e)}")
 
 
 @router.get("/stats")
@@ -466,6 +510,31 @@ async def get_capsule(
             except Exception:
                 payload = {}
 
+        # Decompress payload if compressed
+        compression_info = None
+        if capsule.is_compressed and payload:
+            try:
+                compressed_data = payload.get("compressed_payload")
+                if compressed_data:
+                    import base64
+
+                    compressed_bytes = base64.b64decode(compressed_data)
+                    decompressed_bytes = zlib.decompress(compressed_bytes)
+                    payload = json.loads(decompressed_bytes.decode("utf-8"))
+                    compression_info = {
+                        "was_compressed": True,
+                        "method": capsule.compression_method,
+                        "original_size": capsule.original_size,
+                        "compressed_size": capsule.compressed_size,
+                        "ratio": round(
+                            capsule.compressed_size / capsule.original_size, 3
+                        )
+                        if capsule.original_size
+                        else None,
+                    }
+            except Exception as e:
+                logger.warning(f"Failed to decompress payload for {capsule_id}: {e}")
+
         # Wrap in UATP 7.0 envelope if not already wrapped
         if payload and not is_envelope_format(payload):
             agent_id = (
@@ -492,7 +561,13 @@ async def get_capsule(
             "status": capsule.status,
             "verification": verification,
             "payload": payload,
+            "content_hash": capsule.content_hash,
+            "prev_hash": capsule.prev_hash,
         }
+
+        # Add compression info if payload was compressed
+        if compression_info:
+            capsule_data["compression"] = compression_info
 
         return {
             "capsule": capsule_data,
@@ -751,6 +826,103 @@ async def verify_capsule(
     except Exception as e:
         logger.error(f"Verification endpoint error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Verification error: {str(e)}")
+
+
+@router.get("/{capsule_id}/verify-chain")
+async def verify_capsule_chain(
+    capsule_id: str,
+    request: Request,
+    depth: int = Query(10, ge=1, le=100, description="Max chain depth to verify"),
+    session: AsyncSession = Depends(get_db_session),
+):
+    """
+    Verify the cryptographic hash chain integrity for a capsule.
+
+    Walks backward through prev_hash links and verifies each content_hash matches.
+    If any capsule's content_hash doesn't match its computed hash, the chain is broken.
+    """
+    import hashlib
+
+    try:
+        # Start with the target capsule
+        query = select(CapsuleModel).where(CapsuleModel.capsule_id == capsule_id)
+        result = await session.execute(query)
+        capsule = result.scalars().first()
+
+        if not capsule:
+            raise HTTPException(status_code=404, detail="Capsule not found")
+
+        chain_verification = []
+        current_capsule = capsule
+        verified_count = 0
+        broken_at = None
+
+        for i in range(depth):
+            # Compute content hash for current capsule
+            payload_json = json.dumps(current_capsule.payload, sort_keys=True)
+            computed_hash = hashlib.sha256(payload_json.encode()).hexdigest()
+
+            # Check if stored content_hash matches
+            stored_hash = current_capsule.content_hash
+            hash_valid = stored_hash == computed_hash if stored_hash else None
+
+            chain_verification.append(
+                {
+                    "capsule_id": current_capsule.capsule_id,
+                    "position": i,
+                    "content_hash": stored_hash,
+                    "computed_hash": computed_hash,
+                    "hash_valid": hash_valid,
+                    "prev_hash": current_capsule.prev_hash,
+                }
+            )
+
+            if hash_valid is False and broken_at is None:
+                broken_at = current_capsule.capsule_id
+
+            if hash_valid:
+                verified_count += 1
+
+            # Move to previous capsule in chain
+            if not current_capsule.prev_hash:
+                break  # Genesis capsule or end of chain
+
+            # Find capsule with matching content_hash
+            prev_query = select(CapsuleModel).where(
+                CapsuleModel.content_hash == current_capsule.prev_hash
+            )
+            prev_result = await session.execute(prev_query)
+            prev_capsule = prev_result.scalars().first()
+
+            if not prev_capsule:
+                chain_verification[-1]["chain_end_reason"] = "prev_capsule_not_found"
+                break
+
+            current_capsule = prev_capsule
+
+        chain_intact = broken_at is None and all(
+            c.get("hash_valid") in (True, None) for c in chain_verification
+        )
+
+        return {
+            "capsule_id": capsule_id,
+            "chain_intact": chain_intact,
+            "verified_count": verified_count,
+            "chain_length": len(chain_verification),
+            "broken_at": broken_at,
+            "chain": chain_verification,
+            "message": "Chain integrity verified"
+            if chain_intact
+            else f"Chain broken at {broken_at}",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Chain verification error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Chain verification error: {str(e)}"
+        )
 
 
 # ============================================================================
