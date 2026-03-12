@@ -274,6 +274,65 @@ class TestSimplePolicy:
         assert result.passed == False
         assert any("extra" in v.message for v in result.violations)
 
+    def test_missing_signature_warning(self):
+        """Test that missing signature generates a warning, not failure."""
+        policy = SimplePolicy(
+            allowed_signers={"sign_step": ["key_1"]},
+        )
+
+        link = LinkAttestation(name="sign_step")
+        # No signature set
+        result = policy.evaluate([link])
+
+        assert result.passed == True  # Warnings don't fail
+        assert len(result.warnings) == 1
+        assert "no signature" in result.warnings[0].message.lower()
+
+    def test_require_material_digests(self):
+        """Test that missing material digests fail strict policy."""
+        policy = SimplePolicy(require_material_digests=True)
+
+        link = LinkAttestation(name="step")
+        link.add_material("file://test", digest=None)  # No digest
+
+        result = policy.evaluate([link])
+
+        assert result.passed == False
+        assert any("digest" in v.message.lower() for v in result.violations)
+
+    def test_require_product_digests(self):
+        """Test that missing product digests fail strict policy."""
+        policy = SimplePolicy(require_product_digests=True)
+
+        link = LinkAttestation(name="step")
+        link.add_product("file://out", digest=None)  # No digest
+
+        result = policy.evaluate([link])
+
+        assert result.passed == False
+        assert any("digest" in v.message.lower() for v in result.violations)
+
+    def test_policy_to_dict_from_dict(self):
+        """Test policy serialization roundtrip."""
+        original = SimplePolicy(
+            name="test_policy",
+            description="Test description",
+            required_steps=["a", "b"],
+            allowed_signers={"a": ["key1"]},
+            step_order=["a", "b"],
+            allow_extra_steps=False,
+        )
+
+        d = original.to_dict()
+        restored = SimplePolicy.from_dict(d)
+
+        assert restored.name == original.name
+        assert restored.description == original.description
+        assert restored.required_steps == original.required_steps
+        assert restored.allowed_signers == original.allowed_signers
+        assert restored.step_order == original.step_order
+        assert restored.allow_extra_steps == original.allow_extra_steps
+
 
 class TestWorkflowAttestation:
     """Tests for WorkflowAttestation."""
