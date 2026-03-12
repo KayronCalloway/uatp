@@ -72,6 +72,30 @@ class TestResourceDescriptor:
         )
         assert desc.canonical_digest() == "sha256:abc123"
 
+    def test_hash_allows_set_membership(self):
+        desc1 = ResourceDescriptor(uri="a", digest={"sha256": "abc"})
+        desc2 = ResourceDescriptor(uri="b", digest={"sha256": "def"})
+        desc3 = ResourceDescriptor(uri="a", digest={"sha256": "abc"})  # Same as desc1
+
+        # Should be usable in a set
+        s = {desc1, desc2}
+        assert len(s) == 2
+
+        # desc3 should be considered equal to desc1
+        assert desc1 == desc3
+        s.add(desc3)
+        assert len(s) == 2  # No new element added
+
+    def test_repr(self):
+        desc = ResourceDescriptor(
+            uri="capsule://caps_123",
+            digest={"sha256": "abcdef1234567890"},
+            name="caps_123",
+        )
+        repr_str = repr(desc)
+        assert "caps_123" in repr_str
+        assert "sha256:abcdef" in repr_str
+
     def test_to_dict_from_dict(self):
         original = ResourceDescriptor(
             uri="capsule://caps_123",

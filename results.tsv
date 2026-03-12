@@ -9,3 +9,4 @@ dbad04b	100.0	0.10	508	keep	add 8 FacetRegistry + deletion tests
 81bec4c	100.0	0.10	529	keep	add 13 CLI verify tests
 64fc91b	100.0	0.10	534	keep	add is_complete step_count duration_seconds + 5 tests
 5b8fab4	100.0	0.10	537	keep	add __repr__ to Link/WorkflowAttestation + 3 tests
+2470079	100.0	0.10	539	keep	add __hash__ __repr__ to ResourceDescriptor + 2 tests
