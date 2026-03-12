@@ -805,3 +805,155 @@ class TestAttestationValidity:
         assert restored.issued_at == original.issued_at
         assert restored.not_before == original.not_before
         assert restored.not_after == original.not_after
+
+
+class TestLinkVerificationResult:
+    """Tests for LinkVerificationResult serialization."""
+
+    def test_to_dict_basic(self):
+        from src.attestation.verification import LinkVerificationResult
+
+        result = LinkVerificationResult(
+            link_name="test_step",
+            step_id="s1",
+            is_valid=True,
+        )
+        d = result.to_dict()
+
+        assert d["linkName"] == "test_step"
+        assert d["stepId"] == "s1"
+        assert d["isValid"] == True
+        assert d["errors"] == []
+        assert d["warnings"] == []
+        # signature_valid and content_hash_valid should be omitted when None
+        assert "signatureValid" not in d
+        assert "contentHashValid" not in d
+
+    def test_to_dict_with_signature_info(self):
+        from src.attestation.verification import LinkVerificationResult
+
+        result = LinkVerificationResult(
+            link_name="signed_step",
+            step_id="s2",
+            is_valid=True,
+            signature_valid=True,
+            content_hash_valid=True,
+        )
+        d = result.to_dict()
+
+        assert d["signatureValid"] == True
+        assert d["contentHashValid"] == True
+
+    def test_to_dict_with_errors(self):
+        from src.attestation.verification import LinkVerificationResult
+
+        result = LinkVerificationResult(
+            link_name="failed_step",
+            step_id="s3",
+            is_valid=False,
+            signature_valid=False,
+            errors=["Signature verification failed"],
+            warnings=["Missing digest for material 'input.txt'"],
+        )
+        d = result.to_dict()
+
+        assert d["isValid"] == False
+        assert "Signature verification failed" in d["errors"]
+        assert len(d["warnings"]) == 1
+
+
+class TestVerifierEdgeCases:
+    """Edge case tests for AttestationVerifier."""
+
+    def test_verify_chain_empty_list(self):
+        verifier = AttestationVerifier()
+        result = verifier.verify_chain([])
+
+        assert result.is_valid == True
+        assert result.verified_handoffs == 0
+        assert result.total_handoffs == 0
+
+    def test_verify_chain_single_link(self):
+        verifier = AttestationVerifier()
+
+        link = LinkAttestation(name="only_step")
+        link.add_product("output", digest={"sha256": "abc123"})
+
+        result = verifier.verify_chain([link])
+
+        assert result.is_valid == True
+        assert result.verified_handoffs == 0
+        assert result.total_handoffs == 0
+
+    def test_verify_workflow_combines_chain_and_policy(self):
+        verifier = AttestationVerifier()
+
+        workflow = WorkflowAttestation(
+            workflow_id="wf_verify_test",
+            policy=PERMISSIVE_POLICY,
+        )
+
+        link1 = LinkAttestation(name="capture")
+        link1.add_product("data", digest={"sha256": "h1"})
+
+        link2 = LinkAttestation(name="process")
+        link2.add_material("input", digest={"sha256": "h1"})
+        link2.add_product("result", digest={"sha256": "h2"})
+
+        workflow.add_step(link1)
+        workflow.add_step(link2)
+
+        result = verifier.verify_workflow(workflow)
+
+        assert result.workflow_id == "wf_verify_test"
+        assert result.is_valid == True
+        assert result.step_count == 2
+        assert result.chain_result.is_valid == True
+        assert result.policy_result.passed == True
+
+
+class TestHelperFunctionEdgeCases:
+    """Edge case tests for helper functions."""
+
+    def test_create_link_from_capsules_empty_inputs(self):
+        link = create_link_from_capsules(
+            step_name="no_inputs",
+            input_capsules=[],
+            output_capsules=[("caps_out", "sha256:def")],
+        )
+
+        assert len(link.materials) == 0
+        assert len(link.products) == 1
+
+    def test_create_link_from_capsules_with_byproducts(self):
+        link = create_link_from_capsules(
+            step_name="with_byproducts",
+            input_capsules=[("caps_in", "sha256:abc")],
+            output_capsules=[("caps_out", "sha256:def")],
+            byproducts={"log": "processing took 100ms", "exit_code": 0},
+        )
+
+        assert link.byproducts["log"] == "processing took 100ms"
+        assert link.byproducts["exit_code"] == 0
+
+    def test_build_workflow_default_step_names(self):
+        chain = [
+            {"capsule_id": "caps_1", "content_hash": "sha256:h1"},
+            {"capsule_id": "caps_2", "content_hash": "sha256:h2"},
+        ]
+
+        workflow = build_workflow_from_capsule_chain("wf_default", chain)
+
+        assert workflow.steps[0].name == "step_0"
+        assert workflow.steps[1].name == "step_1"
+
+    def test_build_workflow_with_custom_policy(self):
+        chain = [{"capsule_id": "caps_1", "content_hash": "sha256:h1"}]
+
+        workflow = build_workflow_from_capsule_chain(
+            "wf_strict",
+            chain,
+            policy=STRICT_POLICY,
+        )
+
+        assert workflow.policy == STRICT_POLICY
