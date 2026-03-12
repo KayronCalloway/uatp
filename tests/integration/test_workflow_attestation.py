@@ -420,6 +420,63 @@ class TestSimplePolicy:
         assert restored.allow_extra_steps == original.allow_extra_steps
 
 
+class TestPolicyResult:
+    """Tests for PolicyResult serialization and methods."""
+
+    def test_policy_result_to_dict_passing(self):
+        """Test to_dict for a passing result."""
+        result = PolicyResult(passed=True)
+        d = result.to_dict()
+
+        assert d["passed"] == True
+        assert d["violations"] == []
+        assert d["warnings"] == []
+
+    def test_policy_result_to_dict_with_violations(self):
+        """Test to_dict with violations and warnings."""
+        result = PolicyResult(passed=True)
+        result.add_violation("test_rule", "Test violation message", step="step1")
+        result.add_warning("warn_rule", "Test warning message", step="step2")
+
+        d = result.to_dict()
+
+        assert d["passed"] == False
+        assert len(d["violations"]) == 1
+        assert d["violations"][0]["rule"] == "test_rule"
+        assert d["violations"][0]["message"] == "Test violation message"
+        assert d["violations"][0]["step"] == "step1"
+
+        assert len(d["warnings"]) == 1
+        assert d["warnings"][0]["rule"] == "warn_rule"
+
+    def test_policy_result_add_violation_sets_passed_false(self):
+        """Test that add_violation sets passed to False."""
+        result = PolicyResult(passed=True)
+        assert result.passed == True
+
+        result.add_violation("rule", "message")
+        assert result.passed == False
+
+    def test_policy_result_add_warning_keeps_passed_true(self):
+        """Test that add_warning doesn't change passed status."""
+        result = PolicyResult(passed=True)
+
+        result.add_warning("rule", "warning message")
+
+        assert result.passed == True
+        assert len(result.warnings) == 1
+
+    def test_policy_result_multiple_violations(self):
+        """Test accumulating multiple violations."""
+        result = PolicyResult(passed=True)
+        result.add_violation("rule1", "msg1", step="s1")
+        result.add_violation("rule2", "msg2", step="s2")
+        result.add_violation("rule3", "msg3")
+
+        assert len(result.violations) == 3
+        assert result.violations[2].step is None
+
+
 class TestWorkflowAttestation:
     """Tests for WorkflowAttestation."""
 
