@@ -446,7 +446,7 @@ class PatternMiner:
             if pattern.pattern_type == "sequence":
                 # Check if pattern sequence is a subsequence of capsule sequence
                 pattern_seq = pattern.pattern_structure.get("sequence", [])
-                if cls._is_subsequence(pattern_seq, sequence):
+                if PatternMiner._is_subsequence(pattern_seq, sequence):
                     match_score = 1.0
 
             elif pattern.pattern_type == "decision_tree":
