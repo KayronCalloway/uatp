@@ -115,7 +115,7 @@ all = ["uatp-capsule-engine[test,dev,docs]"]
 "Documentation" = "https://github.com/KayronCalloway/uatp#readme"
 
 [project.scripts]
-uatp-capsule = "cli:main"
+uatp = "src.cli.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
