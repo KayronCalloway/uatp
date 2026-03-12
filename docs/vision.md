@@ -29,7 +29,7 @@ UATP builds the infrastructure to change that.
 
 **Problem:** AI systems are trained on humanity's collective knowledge—Reddit posts, Wikipedia edits, Stack Overflow answers, photos, conversations—but the people who created that knowledge have no visibility, no control, and no compensation.
 
-**Solution:** The same cryptographic infrastructure that proves AI decisions can prove AI influences. Capsules can track which training data contributed to which outputs, creating verifiable provenance chains.
+**Solution:** The same cryptographic infrastructure that proves AI decisions can prove AI influences. Capsules can track which training data contributed to which outputs, creating verifiable provenance chains. Precisely attributing influence across model training remains an open research problem; UATP's position is not that this is solved, but that verifiable memory is a prerequisite for any serious solution.
 
 **What this enables:**
 
@@ -38,7 +38,7 @@ UATP builds the infrastructure to change that.
 - **Consent:** Let people choose whether and how their contributions are used
 - **Compensation:** Route value back to the humans who made AI possible
 
-This isn't theoretical. Thomson Reuters v. Ross Intelligence (2025) established that training data must be licensed. The infrastructure for attribution is becoming a legal requirement.
+This isn't theoretical. Thomson Reuters v. Ross Intelligence (2025) signals that training-data licensing is becoming legally enforceable. The infrastructure for attribution is becoming a legal requirement.
 
 ---
 
@@ -51,7 +51,7 @@ This isn't theoretical. Thomson Reuters v. Ross Intelligence (2025) established 
 If AI learned from all of us, all of us should benefit. UATP's provenance infrastructure can power economic flows that recognize humanity's collective contribution to AI capability:
 
 ```
-AI writes a bestselling novel:
+AI writes a bestselling novel (illustrative):
 ├─ Novel earns $10 million
 ├─ Attribution capsule traces influences:
 │  ├─ 40% influenced by public domain literature → Global Commons Fund
