@@ -196,6 +196,42 @@ class TestDSSEEnvelope:
         payload = envelope.payload_json()
         assert payload["capsule_id"] == "caps_123"
 
+    def test_create_workflow_envelope(self):
+        workflow = {
+            "workflowId": "wf_123",
+            "name": "Test Workflow",
+            "steps": [],
+        }
+
+        envelope = create_workflow_envelope(workflow)
+
+        assert "workflow" in envelope.payload_type.lower()
+        payload = envelope.payload_json()
+        assert payload["workflowId"] == "wf_123"
+
+    def test_envelope_multiple_signatures(self):
+        """Test envelope with multiple signatures."""
+        envelope = DSSEEnvelope.create(b'{"test": true}')
+
+        def sign1(data: bytes) -> bytes:
+            return b"sig1"
+
+        def sign2(data: bytes) -> bytes:
+            return b"sig2"
+
+        envelope.sign(keyid="key1", sign_func=sign1)
+        envelope.sign(keyid="key2", sign_func=sign2)
+
+        assert envelope.is_signed == True
+        assert len(envelope.signatures) == 2
+        assert envelope.signatures[0].keyid == "key1"
+        assert envelope.signatures[1].keyid == "key2"
+
+    def test_dsse_signature_bytes(self):
+        """Test DSSESignature.signature_bytes()."""
+        sig = DSSESignature(keyid="test", sig=base64.b64encode(b"hello").decode())
+        assert sig.signature_bytes() == b"hello"
+
 
 class TestVerificationMaterial:
     """Tests for verification material."""
