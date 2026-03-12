@@ -967,6 +967,51 @@ class TestHelperFunctions:
         assert digest == compute_digest(data)
         assert len(digest) == 64  # SHA256 hex
 
+    def test_compute_digest_bytes_input(self):
+        """Test compute_digest with bytes input."""
+        data = b"raw bytes content"
+        digest = compute_digest(data)
+
+        assert len(digest) == 64
+        assert digest == compute_digest(data)  # Deterministic
+
+    def test_compute_digest_string_input(self):
+        """Test compute_digest with string input."""
+        data = "plain string"
+        digest = compute_digest(data)
+
+        assert len(digest) == 64
+        # String should be UTF-8 encoded
+        assert digest == compute_digest(data.encode("utf-8"))
+
+    def test_compute_digest_sha384(self):
+        """Test compute_digest with SHA384 algorithm."""
+        data = {"test": "data"}
+        digest = compute_digest(data, algorithm="sha384")
+
+        assert len(digest) == 96  # SHA384 is 96 hex chars
+
+    def test_compute_digest_sha512(self):
+        """Test compute_digest with SHA512 algorithm."""
+        data = {"test": "data"}
+        digest = compute_digest(data, algorithm="sha512")
+
+        assert len(digest) == 128  # SHA512 is 128 hex chars
+
+    def test_compute_digest_unsupported_algorithm(self):
+        """Test compute_digest raises for unsupported algorithm."""
+        data = {"test": "data"}
+        with pytest.raises(ValueError, match="Unsupported algorithm"):
+            compute_digest(data, algorithm="md5")
+
+    def test_compute_digest_canonical_json(self):
+        """Test that dict keys are sorted for deterministic output."""
+        # Different key order should produce same digest
+        data1 = {"z": 1, "a": 2, "m": 3}
+        data2 = {"a": 2, "m": 3, "z": 1}
+
+        assert compute_digest(data1) == compute_digest(data2)
+
 
 class TestRealWorldScenario:
     """Test realistic workflow scenarios."""
