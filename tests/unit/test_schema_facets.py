@@ -301,3 +301,72 @@ class TestFacetDeletion:
         assert d["_deleted"] == True
         assert "_deletedAt" in d
         assert d["_deletionReason"] == "Test deletion"
+
+
+class TestFacetsToDict:
+    """Tests for facets_to_dict helper function."""
+
+    def test_basic_conversion(self):
+        from src.schema.base import facets_to_dict
+
+        facets = {
+            "sig": UATPSignatureRunFacet(signature="abc"),
+            "conf": UATPConfidenceRunFacet(confidence=0.9),
+        }
+        d = facets_to_dict(facets)
+
+        assert "sig" in d
+        assert "conf" in d
+        assert d["sig"]["signature"] == "abc"
+        assert d["conf"]["confidence"] == 0.9
+
+    def test_empty_dict(self):
+        from src.schema.base import facets_to_dict
+
+        d = facets_to_dict({})
+        assert d == {}
+
+
+class TestLineageEventEdgeCases:
+    """Edge case tests for LineageEvent."""
+
+    def test_event_with_inputs(self):
+        """Test LineageEvent with input datasets."""
+        from src.schema.entities import Dataset, Job, LineageEvent, Run
+
+        event = LineageEvent(
+            event_type="START",
+            run=Run(run_id="r1"),
+            job=Job(namespace="ns", name="job1"),
+        )
+
+        input_ds = Dataset(namespace="uatp://inputs", name="source_data")
+        event.inputs.append(input_ds)
+
+        d = event.to_dict()
+
+        assert d["eventType"] == "START"
+        assert len(d["inputs"]) == 1
+        assert d["inputs"][0]["name"] == "source_data"
+
+    def test_event_minimal(self):
+        """Test LineageEvent with minimal fields."""
+        from src.schema.entities import LineageEvent
+
+        event = LineageEvent(event_type="FAIL")
+        d = event.to_dict()
+
+        assert d["eventType"] == "FAIL"
+        assert "run" not in d
+        assert "job" not in d
+        assert "inputs" not in d
+        assert "outputs" not in d
+
+    def test_event_all_event_types(self):
+        """Test all standard event types."""
+        from src.schema.entities import LineageEvent
+
+        for event_type in ["START", "RUNNING", "COMPLETE", "FAIL", "ABORT"]:
+            event = LineageEvent(event_type=event_type)
+            d = event.to_dict()
+            assert d["eventType"] == event_type
