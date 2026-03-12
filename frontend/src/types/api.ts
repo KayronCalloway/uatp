@@ -105,6 +105,33 @@ export interface CapsuleSearchResponse {
   applied_filters: string[];
 }
 
+// Full-text search API response (matches backend SearchResults)
+export interface FullTextSearchHit {
+  capsule_id: string;
+  capsule_type: string;
+  timestamp: string;
+  snippet: string;
+  relevance_score: number;
+  payload_preview?: Record<string, any>;
+}
+
+export interface FullTextSearchResponse {
+  query: string;
+  total_count: number;
+  results: FullTextSearchHit[];
+  page: number;
+  per_page: number;
+  has_more: boolean;
+  total_pages: number;
+}
+
+export interface FullTextSearchQuery {
+  q: string;
+  page?: number;
+  per_page?: number;
+  type?: string;
+}
+
 export interface GetCapsuleQuery {
   include_raw?: boolean;
 }
