@@ -93,6 +93,8 @@ UATP capsules are valuable training data. They contain:
 
 The training data market is projected to grow from $2.68B to $11.16B by 2030 (23.4% CAGR). UATP-structured data is more valuable than web scraping because it shows the *process*, not just the result.
 
+Capsule creators control their data. Participation is opt-in: you choose whether to list your capsules, set your terms, and receive compensation when your data is licensed for AI training.
+
 This creates immediate economic value for capsule creators while building the infrastructure for broader attribution systems.
 
 ---
