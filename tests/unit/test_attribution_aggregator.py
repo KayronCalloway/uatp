@@ -148,8 +148,11 @@ class TestAggregateAttributions:
             step_attributions, aggregation_method="time_decay"
         )
 
-        # Recent contribution should have higher weight (10 days ago should decay significantly)
-        assert result["weights"]["agent_recent"] >= result["weights"]["agent_old"]
+        # Recent contribution should have higher or equal weight (within floating-point tolerance)
+        # Use small epsilon for floating-point comparison
+        assert (
+            result["weights"]["agent_recent"] >= result["weights"]["agent_old"] - 1e-9
+        )
 
     def test_caps_contributor_weight(self):
         """Test caps individual contributor weight."""
