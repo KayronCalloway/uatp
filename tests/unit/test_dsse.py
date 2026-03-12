@@ -680,3 +680,79 @@ class TestBundleVerifyCustomFunc:
 
         assert result.is_valid == False
         assert result.signature_valid == False
+
+
+class TestSignPAE:
+    """Tests for sign_pae helper function."""
+
+    def test_sign_pae_basic(self):
+        """Test sign_pae creates signature over PAE encoding."""
+        payload_type = "application/json"
+        payload = b'{"test": true}'
+
+        # Mock sign function that returns the message it received
+        def mock_sign(message: bytes) -> bytes:
+            return b"sig:" + message[:20]  # Return truncated message as "signature"
+
+        signature = sign_pae(payload_type, payload, mock_sign)
+
+        # Verify the signature contains the PAE prefix
+        assert signature.startswith(b"sig:DSSEv1")
+
+    def test_sign_pae_deterministic(self):
+        """Test sign_pae produces same result for same input."""
+        payload_type = "text/plain"
+        payload = b"hello world"
+
+        def mock_sign(message: bytes) -> bytes:
+            return message
+
+        sig1 = sign_pae(payload_type, payload, mock_sign)
+        sig2 = sign_pae(payload_type, payload, mock_sign)
+
+        assert sig1 == sig2
+
+
+class TestVerifyPAE:
+    """Tests for verify_pae helper function."""
+
+    def test_verify_pae_success(self):
+        """Test verify_pae returns True for valid signature."""
+        payload_type = "application/json"
+        payload = b'{"test": true}'
+
+        # Sign with mock function
+        expected_pae = pae_encode(payload_type, payload)
+
+        def mock_verify(message: bytes, sig: bytes) -> bool:
+            return message == expected_pae and sig == b"valid_sig"
+
+        result = verify_pae(payload_type, payload, b"valid_sig", mock_verify)
+        assert result == True
+
+    def test_verify_pae_failure(self):
+        """Test verify_pae returns False for invalid signature."""
+        payload_type = "application/json"
+        payload = b'{"test": true}'
+
+        def mock_verify(message: bytes, sig: bytes) -> bool:
+            return False  # Always fail
+
+        result = verify_pae(payload_type, payload, b"any_sig", mock_verify)
+        assert result == False
+
+    def test_verify_pae_different_payload_fails(self):
+        """Test verify_pae fails when payload differs."""
+        payload_type = "application/json"
+        original_payload = b'{"original": true}'
+        tampered_payload = b'{"tampered": true}'
+
+        # Sign the original
+        original_pae = pae_encode(payload_type, original_payload)
+
+        def mock_verify(message: bytes, sig: bytes) -> bool:
+            return message == original_pae  # Only passes for original PAE
+
+        # Verification with tampered payload should fail
+        result = verify_pae(payload_type, tampered_payload, b"sig", mock_verify)
+        assert result == False
