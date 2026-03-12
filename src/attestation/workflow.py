@@ -109,6 +109,10 @@ class WorkflowAttestation:
     # Optional: associate with a capsule
     capsule_id: Optional[str] = None
 
+    def __repr__(self) -> str:
+        """Concise string representation for debugging."""
+        return f"WorkflowAttestation(id={self.workflow_id!r}, steps={len(self.steps)}, status={self.status!r})"
+
     def add_step(self, link: LinkAttestation) -> None:
         """Add a step to the workflow."""
         self.steps.append(link)

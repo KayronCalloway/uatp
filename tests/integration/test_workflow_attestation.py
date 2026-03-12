@@ -100,6 +100,25 @@ class TestLinkAttestation:
         assert len(link.materials) == 0
         assert len(link.products) == 0
 
+    def test_repr(self):
+        link = LinkAttestation(name="inference")
+        link.add_material("in", digest={"sha256": "abc"})
+        link.add_product("out1", digest={"sha256": "def"})
+        link.add_product("out2", digest={"sha256": "ghi"})
+
+        repr_str = repr(link)
+        assert "inference" in repr_str
+        assert "materials=1" in repr_str
+        assert "products=2" in repr_str
+        assert "unsigned" in repr_str
+
+    def test_repr_signed(self):
+        link = LinkAttestation(name="signed_step")
+        link.signature = "abc123"
+
+        repr_str = repr(link)
+        assert "signed" in repr_str
+
     def test_add_materials_and_products(self):
         link = LinkAttestation(name="inference")
         link.add_material("file://input.txt", digest={"sha256": "abc"})
@@ -290,6 +309,16 @@ class TestWorkflowAttestation:
         duration = workflow.duration_seconds
         assert duration is not None
         assert duration >= 30
+
+    def test_repr(self):
+        workflow = WorkflowAttestation(workflow_id="wf_123", name="Test")
+        workflow.add_step(LinkAttestation(name="s1"))
+        workflow.add_step(LinkAttestation(name="s2"))
+
+        repr_str = repr(workflow)
+        assert "wf_123" in repr_str
+        assert "steps=2" in repr_str
+        assert "running" in repr_str
 
     def test_verify_chain_single_step(self):
         workflow = WorkflowAttestation(workflow_id="wf_001")
