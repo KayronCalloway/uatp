@@ -591,6 +591,28 @@ def setup_health_routes(app: FastAPI):
             crypto = UATPCryptoV7(enable_pq=PQ_AVAILABLE)
             status = crypto.get_security_status()
 
+            # Check for actual module implementations
+            try:
+                from src.security.rfc3161_timestamps import RFC3161Timestamper
+
+                rfc3161_available = True
+            except ImportError:
+                rfc3161_available = False
+
+            try:
+                from src.security.key_rotation import KeyRotationManager
+
+                key_rotation_available = True
+            except ImportError:
+                key_rotation_available = False
+
+            try:
+                from src.security.merkle_audit_log import MerkleAuditLog
+
+                merkle_available = True
+            except ImportError:
+                merkle_available = False
+
             # Build feature list
             features = {
                 "ed25519": {
@@ -616,24 +638,18 @@ def setup_health_routes(app: FastAPI):
                 },
                 "rfc3161_timestamps": {
                     "name": "RFC 3161 Timestamps",
-                    "available": hasattr(crypto, "add_timestamp"),
-                    "status": "active"
-                    if hasattr(crypto, "add_timestamp")
-                    else "unavailable",
+                    "available": rfc3161_available,
+                    "status": "active" if rfc3161_available else "unavailable",
                 },
                 "key_rotation": {
                     "name": "Key Rotation",
-                    "available": hasattr(crypto, "rotate_keys"),
-                    "status": "active"
-                    if hasattr(crypto, "rotate_keys")
-                    else "unavailable",
+                    "available": key_rotation_available,
+                    "status": "active" if key_rotation_available else "unavailable",
                 },
                 "merkle_audit_log": {
                     "name": "Merkle Audit Logs",
-                    "available": hasattr(crypto, "get_audit_log"),
-                    "status": "active"
-                    if hasattr(crypto, "get_audit_log")
-                    else "unavailable",
+                    "available": merkle_available,
+                    "status": "active" if merkle_available else "unavailable",
                 },
                 "key_encryption": {
                     "name": "Key Encryption (AES-256-GCM)",
