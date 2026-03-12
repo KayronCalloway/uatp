@@ -16,8 +16,9 @@
 
 UATP creates verifiable capsules for AI reasoning: cryptographically signed records that prove what decision was made, with what reasoning, at what time.
 
-- **Ed25519 signatures** — tamper-evident, user-controlled keys
+- **Ed25519 + ML-DSA-65 signatures** — tamper-evident, quantum-resistant, user-controlled keys
 - **RFC 3161 timestamps** — external time authority (DigiCert)
+- **DSSE bundles** — Sigstore-compatible portable verification
 - **Zero-trust architecture** — designed so private keys remain on your device ([how this works](TRUST_MODEL.md))
 - **Standalone verification** — verify independently without relying on UATP servers ([verification details](TRUST_MODEL.md#verification))
 
@@ -82,11 +83,18 @@ Full setup: [SDK Quickstart](sdk/python/QUICKSTART.md)
 
 ```
 uatp/
-├── src/crypto/         # Ed25519 signatures, key management
-├── src/api/            # FastAPI backend
+├── src/
+│   ├── api/            # FastAPI backend
+│   ├── attestation/    # Workflow attestation (in-toto style)
+│   ├── cli/            # CLI tools (verify, export, inspect)
+│   ├── crypto/         # Key management
+│   ├── export/         # DSSE bundle export (Sigstore style)
+│   ├── schema/         # Schema definitions and facets
+│   ├── security/       # Ed25519/ML-DSA signatures, RFC 3161
+│   └── services/       # Search, lifecycle services
 ├── sdk/python/         # Python SDK
 ├── frontend/           # Next.js dashboard (beta)
-├── tests/              # Test suite
+├── tests/              # 1400+ tests
 └── infra/              # Docker, Kubernetes configs
 ```
 
@@ -134,10 +142,15 @@ UATP is designed so operators cannot sign on behalf of users—the SDK generates
 
 | Workflow | Purpose |
 |----------|---------|
-| `ci.yml` | Tests and lint on push/PR |
-| `security-scan.yml` | Security analysis on push |
-| `release.yml` | Versioned builds |
+| `ci.yml` | Tests, lint, type checking on push/PR |
+| `security-scan.yml` | Comprehensive security analysis |
+| `security.yml` | Gitleaks, Trivy scans |
+| `release.yml` | Versioned releases |
 | `build.yml` | Docker image builds |
+| `code-quality.yml` | Pre-commit, ruff, mypy |
+| `test.yml` | Test matrix (Python 3.10/3.11, SQLite/PostgreSQL) |
+| `performance.yml` | Performance benchmarks |
+| `blue-green-deploy.yml` | Production deployments |
 
 ---
 
@@ -145,11 +158,16 @@ UATP is designed so operators cannot sign on behalf of users—the SDK generates
 
 | Component | Status |
 |-----------|--------|
-| Ed25519 signatures | Shipped |
+| Ed25519 + ML-DSA-65 signatures | Shipped |
 | Python SDK (`pip install uatp`) | Shipped |
 | Local key management | Shipped |
 | Capsule verification | Shipped |
-| RFC 3161 timestamps | Beta |
+| RFC 3161 timestamps | Shipped |
+| CLI tools (`uatp verify/export/inspect`) | Shipped |
+| DSSE bundle export | Shipped |
+| Workflow attestation | Shipped |
+| Full-text search API | Shipped |
+| Capsule chaining | Shipped |
 | Next.js frontend | Beta |
 | Hosted SaaS | Planned Q3 2026 |
 
