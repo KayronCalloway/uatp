@@ -26,11 +26,9 @@ from src.core.jwt_auth import AuthConfig, JWTAuthenticator
 
 
 @pytest.fixture(scope="session")
-def event_loop():
-    """Create an event loop for the test session"""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+def event_loop_policy():
+    """Return the default event loop policy for async tests."""
+    return asyncio.DefaultEventLoopPolicy()
 
 
 @pytest.fixture
