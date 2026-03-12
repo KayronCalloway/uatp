@@ -756,3 +756,113 @@ class TestVerifyPAE:
         # Verification with tampered payload should fail
         result = verify_pae(payload_type, tampered_payload, b"sig", mock_verify)
         assert result == False
+
+
+class TestDSSESignatureSerialization:
+    """Tests for DSSESignature serialization."""
+
+    def test_from_dict(self):
+        """Test DSSESignature.from_dict()."""
+        data = {"keyid": "key-123", "sig": "YWJjZGVm"}
+        sig = DSSESignature.from_dict(data)
+
+        assert sig.keyid == "key-123"
+        assert sig.sig == "YWJjZGVm"
+
+    def test_to_dict(self):
+        """Test DSSESignature.to_dict()."""
+        sig = DSSESignature(keyid="key-456", sig="eHl6MTIz")
+        d = sig.to_dict()
+
+        assert d["keyid"] == "key-456"
+        assert d["sig"] == "eHl6MTIz"
+
+    def test_roundtrip(self):
+        """Test from_dict/to_dict roundtrip."""
+        original = DSSESignature(keyid="test-key", sig="dGVzdHNpZw==")
+        d = original.to_dict()
+        restored = DSSESignature.from_dict(d)
+
+        assert restored.keyid == original.keyid
+        assert restored.sig == original.sig
+
+
+class TestDSSEEnvelopeFromJson:
+    """Tests for DSSEEnvelope.from_json with different inputs."""
+
+    def test_from_json_string(self):
+        """Test from_json with JSON string input."""
+        json_str = (
+            '{"payload": "dGVzdA==", "payloadType": "text/plain", "signatures": []}'
+        )
+        envelope = DSSEEnvelope.from_json(json_str)
+
+        assert envelope.payload == "dGVzdA=="
+        assert envelope.payload_type == "text/plain"
+        assert envelope.payload_bytes() == b"test"
+
+    def test_from_json_dict(self):
+        """Test from_json with dict input."""
+        data = {
+            "payload": "aGVsbG8=",
+            "payloadType": "application/json",
+            "signatures": [{"keyid": "k1", "sig": "c2ln"}],
+        }
+        envelope = DSSEEnvelope.from_json(data)
+
+        assert envelope.payload_bytes() == b"hello"
+        assert len(envelope.signatures) == 1
+        assert envelope.signatures[0].keyid == "k1"
+
+
+class TestDSSEEnvelopeVerifyAny:
+    """Tests for DSSEEnvelope.verify_any()."""
+
+    def test_verify_any_success(self):
+        """Test verify_any finds valid signature."""
+        envelope = DSSEEnvelope.create(b'{"test": true}')
+
+        # Add signatures for different keys
+        envelope.sign(keyid="key-1", sign_func=lambda d: b"sig1")
+        envelope.sign(keyid="key-2", sign_func=lambda d: b"sig2")
+
+        # Verify functions - only key-2 verifies
+        expected_pae = envelope.pae_bytes()
+        verify_funcs = {
+            "key-1": lambda m, s: False,  # Always fails
+            "key-2": lambda m, s: m == expected_pae and s == b"sig2",  # Passes
+        }
+
+        is_valid, keyid = envelope.verify_any(verify_funcs)
+
+        assert is_valid == True
+        assert keyid == "key-2"
+
+    def test_verify_any_no_match(self):
+        """Test verify_any returns False when no signatures match."""
+        envelope = DSSEEnvelope.create(b'{"test": true}')
+        envelope.sign(keyid="unknown-key", sign_func=lambda d: b"sig")
+
+        # No verify functions for unknown-key
+        verify_funcs = {
+            "key-1": lambda m, s: True,
+            "key-2": lambda m, s: True,
+        }
+
+        is_valid, keyid = envelope.verify_any(verify_funcs)
+
+        assert is_valid == False
+        assert keyid is None
+
+    def test_verify_any_all_fail(self):
+        """Test verify_any when all verifications fail."""
+        envelope = DSSEEnvelope.create(b'{"test": true}')
+        envelope.sign(keyid="key-1", sign_func=lambda d: b"wrong_sig")
+
+        # Verify function that always fails
+        verify_funcs = {"key-1": lambda m, s: False}
+
+        is_valid, keyid = envelope.verify_any(verify_funcs)
+
+        assert is_valid == False
+        assert keyid is None
