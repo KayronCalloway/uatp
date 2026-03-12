@@ -1,22 +1,5 @@
-"""
-Privacy module for UATP Capsule Engine.
-Provides zero-knowledge proofs and privacy-preserving capsule operations.
-"""
+"""Privacy module for UATP Capsule Engine."""
 
-from .capsule_privacy import (
-    DEFAULT_PRIVACY_POLICIES,
-    CapsulePrivacyEngine,
-    PrivacyLevel,
-    PrivacyPolicy,
-    PrivateCapsule,
-    privacy_engine,
-)
+from src.privacy.pii_detector import PIIDetector, PIIMatch, PIIType
 
-__all__ = [
-    "CapsulePrivacyEngine",
-    "PrivacyPolicy",
-    "PrivacyLevel",
-    "PrivateCapsule",
-    "privacy_engine",
-    "DEFAULT_PRIVACY_POLICIES",
-]
+__all__ = ["PIIDetector", "PIIMatch", "PIIType"]

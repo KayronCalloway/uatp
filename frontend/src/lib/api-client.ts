@@ -23,6 +23,8 @@ import {
   ReasoningAnalysisResponse,
   ValidationResponse,
   ErrorResponse,
+  FullTextSearchResponse,
+  FullTextSearchQuery,
 } from '@/types/api';
 import {
   OnboardingProgress,
@@ -152,6 +154,14 @@ export class UATCapsuleEngineClient {
   async listCapsules(query?: ListCapsulesQuery): Promise<CapsuleListResponse | CompressedCapsuleListResponse> {
     const response = await this.client.get('/capsules', { params: query });
     return this.normalizeCapsuleResponse(response.data);
+  }
+
+  /**
+   * Full-text search across capsule content using FTS5/ts_vector
+   */
+  async searchCapsules(query: FullTextSearchQuery): Promise<FullTextSearchResponse> {
+    const response = await this.client.get('/capsules/search', { params: query });
+    return response.data;
   }
 
   async getCapsule(id: string, query?: GetCapsuleQuery): Promise<CapsuleDetailResponse> {
@@ -802,6 +812,7 @@ export const api = {
   createCapsule: (capsule: Partial<AnyCapsule>) => apiClient.createCapsule(capsule),
   verifyCapsule: (id: string) => apiClient.verifyCapsule(id),
   getCapsuleStats: (demoMode?: boolean) => apiClient.getCapsuleStats(demoMode),
+  searchCapsules: (query: FullTextSearchQuery) => apiClient.searchCapsules(query),
 
   // Chain
   getChainSeals: () => apiClient.getChainSeals(),

@@ -125,6 +125,22 @@ class CapsuleModel(db.Base):
         JSON, nullable=True
     )  # List of step indices this depends on
 
+    # --- Cryptographic Chaining ---
+    # Creates tamper-evident chain where each capsule stores hash of previous
+    prev_hash = Column(
+        String(64), nullable=True, index=True
+    )  # SHA256 of previous capsule
+    content_hash = Column(
+        String(64), nullable=True, index=True
+    )  # SHA256 of this capsule's content
+
+    # --- Compression ---
+    # Auto-compress large capsules above threshold (default 10KB)
+    is_compressed = Column(Boolean, nullable=True, default=False)
+    compression_method = Column(String(20), nullable=True)  # zlib, lzma
+    original_size = Column(Integer, nullable=True)
+    compressed_size = Column(Integer, nullable=True)
+
     # No polymorphism - all capsule types use this single model
     __mapper_args__ = {}
 

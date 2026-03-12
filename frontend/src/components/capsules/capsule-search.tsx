@@ -18,13 +18,16 @@ import {
   BookOpen,
   BarChart3,
   Target,
-  Layers
+  Layers,
+  Loader2,
+  Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { CapsuleSearchParams, SearchPreset, AnyCapsule } from '@/types/api';
+import { CapsuleSearchParams, SearchPreset, AnyCapsule, FullTextSearchHit, FullTextSearchResponse } from '@/types/api';
+import { api } from '@/lib/api-client';
 
 // Default search presets for common queries
 const DEFAULT_PRESETS: SearchPreset[] = [
@@ -96,10 +99,13 @@ const DEFAULT_PRESETS: SearchPreset[] = [
 
 interface CapsuleSearchProps {
   onSearch: (params: CapsuleSearchParams) => void;
+  onFullTextResults?: (results: FullTextSearchHit[], total: number) => void;  // Server-side search results
+  onSelectCapsule?: (capsuleId: string) => void;  // Callback when user clicks a search result
   capsules?: AnyCapsule[];  // For computing facets
   initialParams?: CapsuleSearchParams;
   showPresets?: boolean;
   compact?: boolean;
+  enableServerSearch?: boolean;  // Enable FTS backend search
 }
 
 // Helper to get icon component
@@ -126,15 +132,23 @@ const gradeColors: Record<string, string> = {
 
 export function CapsuleSearch({
   onSearch,
+  onFullTextResults,
+  onSelectCapsule,
   capsules = [],
   initialParams = {},
   showPresets = true,
-  compact = false
+  compact = false,
+  enableServerSearch = true
 }: CapsuleSearchProps) {
   const [searchParams, setSearchParams] = useState<CapsuleSearchParams>(initialParams);
   const [query, setQuery] = useState(initialParams.query || '');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [activePresets, setActivePresets] = useState<string[]>([]);
+
+  // Server-side search state
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [lastSearchResponse, setLastSearchResponse] = useState<FullTextSearchResponse | null>(null);
 
   // Compute facets from capsules for filter counts
   const facets = useMemo(() => {
@@ -191,11 +205,38 @@ export function CapsuleSearch({
 
   // Update search when params change
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
+      // Always call onSearch for filter-based searching
       onSearch({ ...searchParams, query: query || undefined });
+
+      // If server search is enabled and we have a text query, use FTS
+      if (enableServerSearch && query && query.length >= 2) {
+        setIsSearching(true);
+        setSearchError(null);
+        try {
+          const response = await api.searchCapsules({
+            q: query,
+            page: searchParams.page || 1,
+            per_page: searchParams.per_page || 20,
+            type: searchParams.type,
+          });
+          setLastSearchResponse(response);
+          if (onFullTextResults) {
+            onFullTextResults(response.results, response.total_count);
+          }
+        } catch (err) {
+          console.error('Search error:', err);
+          setSearchError(err instanceof Error ? err.message : 'Search failed');
+          setLastSearchResponse(null);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setLastSearchResponse(null);
+      }
     }, 300); // Debounce
     return () => clearTimeout(timer);
-  }, [searchParams, query, onSearch]);
+  }, [searchParams, query, onSearch, onFullTextResults, enableServerSearch]);
 
   // Toggle a preset
   const togglePreset = useCallback((preset: SearchPreset) => {
@@ -251,13 +292,25 @@ export function CapsuleSearch({
         <div className="flex flex-col gap-3">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              {isSearching ? (
+                <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-500 animate-spin" />
+              ) : (
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              )}
               <Input
-                placeholder="Search capsules... (try: quality:A risk:high)"
+                placeholder="Search capsules... (full-text search enabled)"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="pl-10 pr-4"
               />
+              {enableServerSearch && query && query.length >= 2 && lastSearchResponse && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                    <Database className="h-3 w-3 mr-1" />
+                    {lastSearchResponse.total_count} found
+                  </Badge>
+                </div>
+              )}
             </div>
             <Button
               variant="outline"
@@ -387,6 +440,62 @@ export function CapsuleSearch({
                   </button>
                 </Badge>
               )}
+            </div>
+          )}
+
+          {/* Server Search Results Preview */}
+          {enableServerSearch && lastSearchResponse && lastSearchResponse.results.length > 0 && (
+            <div className="border rounded-md p-3 bg-blue-50/50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-blue-800 flex items-center gap-1">
+                  <Database className="h-4 w-4" />
+                  Full-text search results
+                </span>
+                <span className="text-xs text-blue-600">
+                  Page {lastSearchResponse.page} of {lastSearchResponse.total_pages}
+                </span>
+              </div>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {lastSearchResponse.results.slice(0, 5).map((hit) => (
+                  <div
+                    key={hit.capsule_id}
+                    className="bg-white rounded p-2 text-sm border border-blue-100 hover:border-blue-300 cursor-pointer transition-colors"
+                    onClick={() => onSelectCapsule?.(hit.capsule_id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs text-gray-600 truncate max-w-[200px]">
+                        {hit.capsule_id}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {hit.capsule_type}
+                        </Badge>
+                        <span className="text-xs text-gray-400">
+                          {Math.round(hit.relevance_score * 100)}% match
+                        </span>
+                      </div>
+                    </div>
+                    {hit.snippet && (
+                      <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                        {hit.snippet}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {lastSearchResponse.has_more && (
+                <p className="text-xs text-blue-600 mt-2 text-center">
+                  + {lastSearchResponse.total_count - 5} more results
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Search Error */}
+          {searchError && (
+            <div className="border border-red-200 rounded-md p-3 bg-red-50 text-red-700 text-sm flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              {searchError}
             </div>
           )}
 
