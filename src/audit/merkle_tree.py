@@ -29,7 +29,7 @@ Usage:
 
 import hashlib
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
