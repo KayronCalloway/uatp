@@ -48,6 +48,13 @@ class ConversationMessage:
     token_count: Optional[int] = None
     model_info: Optional[str] = None
 
+    # RL signal fields - capture implicit feedback about response quality
+    signal_type: str = (
+        "neutral"  # correction|requery|refinement|acceptance|abandonment|neutral
+    )
+    references_previous: bool = False  # Whether message references previous context
+    sentiment_delta: float = 0.0  # -1.0 to 1.0 change from previous message
+
 
 @dataclass
 class ConversationSession:

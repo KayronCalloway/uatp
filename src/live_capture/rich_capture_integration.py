@@ -22,6 +22,12 @@ from src.live_capture.court_admissible_enrichment import CourtAdmissibleEnricher
 from src.live_capture.enhanced_context import EnhancedContextExtractor
 from src.live_capture.environment_capture import capture_environment_context
 from src.live_capture.outcome_integration import register_capsule_for_tracking
+from src.live_capture.signal_detector import (
+    SessionSignals,
+    Signal,
+    SignalDetector,
+    aggregate_signals,
+)
 from src.live_capture.tool_calls_capture import capture_tool_calls
 
 logger = logging.getLogger(__name__)
@@ -301,6 +307,12 @@ class RichCaptureEnhancer:
             uncertainty_estimate.total_uncertainty, 3
         )
 
+        # Add RL signal data to measurements (capture implicit feedback)
+        if hasattr(message, "signal_type"):
+            measurements["signal_type"] = message.signal_type
+            measurements["references_previous"] = message.references_previous
+            measurements["sentiment_delta"] = round(message.sentiment_delta, 3)
+
         # Detect alternatives
         alternatives = cls.detect_alternatives_considered(content)
 
@@ -422,6 +434,21 @@ class RichCaptureEnhancer:
             )
         )
 
+        # Aggregate feedback signals from conversation
+        signals_list = []
+        for msg in session.messages:
+            if hasattr(msg, "signal_type") and msg.role == "user":
+                signal = Signal(
+                    signal_type=msg.signal_type,
+                    confidence=0.7,  # Default confidence for loaded signals
+                    references_previous=msg.references_previous,
+                    sentiment_delta=msg.sentiment_delta,
+                    matched_phrases=[],
+                )
+                signals_list.append(signal)
+
+        session_signals = aggregate_signals(signals_list)
+
         # Determine confidence methodology (enhanced)
         if len(rich_steps) > 5 and critical_path_analysis.critical_steps:
             methodology = {
@@ -466,6 +493,8 @@ class RichCaptureEnhancer:
                 "total_tokens": session.total_tokens,
                 "topics": session.topics,
                 "significance_score": session.significance_score,
+                # Feedback signals - implicit feedback from conversation
+                "feedback_signals": session_signals.to_dict(),
                 # NEW: Enhanced context
                 **enhanced_context.to_dict(),
             },

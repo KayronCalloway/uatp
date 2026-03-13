@@ -25,6 +25,7 @@ load_dotenv()
 sys.path.append(str(Path(__file__).parent.parent))
 
 from src.live_capture.rich_capture_integration import RichCaptureEnhancer
+from src.live_capture.signal_detector import SignalDetector, detect_signal
 
 # Configure logging
 logging.basicConfig(
@@ -51,6 +52,13 @@ class ConversationMessage:
     session_id: str
     token_count: Optional[int] = None
     model_info: Optional[str] = None
+
+    # RL signal fields - capture implicit feedback about response quality
+    signal_type: str = (
+        "neutral"  # correction|requery|refinement|acceptance|abandonment|neutral
+    )
+    references_previous: bool = False  # Whether message references previous context
+    sentiment_delta: float = 0.0  # -1.0 to 1.0 change from previous message
 
 
 @dataclass
@@ -84,6 +92,7 @@ class ClaudeCodeCapture:
         self.db_path = os.path.join(
             os.path.dirname(__file__), "..", "..", "live_capture.db"
         )
+        self.signal_detector = SignalDetector()
         self.init_database()
         logger.info(" Claude Code Capture System initialized")
 
@@ -123,11 +132,36 @@ class ClaudeCodeCapture:
                     timestamp TEXT NOT NULL,
                     token_count INTEGER,
                     model_info TEXT,
+                    signal_type TEXT DEFAULT 'neutral',
+                    references_previous BOOLEAN DEFAULT FALSE,
+                    sentiment_delta REAL DEFAULT 0.0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (session_id) REFERENCES capture_sessions (session_id)
                 )
             """
             )
+
+            # Add columns if they don't exist (for existing databases)
+            try:
+                cursor.execute(
+                    "ALTER TABLE capture_messages ADD COLUMN signal_type TEXT DEFAULT 'neutral'"
+                )
+            except sqlite3.OperationalError:
+                pass  # Column already exists
+
+            try:
+                cursor.execute(
+                    "ALTER TABLE capture_messages ADD COLUMN references_previous BOOLEAN DEFAULT FALSE"
+                )
+            except sqlite3.OperationalError:
+                pass  # Column already exists
+
+            try:
+                cursor.execute(
+                    "ALTER TABLE capture_messages ADD COLUMN sentiment_delta REAL DEFAULT 0.0"
+                )
+            except sqlite3.OperationalError:
+                pass  # Column already exists
 
             conn.commit()
             conn.close()
@@ -289,10 +323,11 @@ class ClaudeCodeCapture:
                 capsule_created=bool(row[7]),
             )
 
-            # Load messages
+            # Load messages with signal fields
             cursor.execute(
                 """
-                SELECT message_id, role, content, timestamp, token_count, model_info
+                SELECT message_id, role, content, timestamp, token_count, model_info,
+                       signal_type, references_previous, sentiment_delta
                 FROM capture_messages
                 WHERE session_id = ?
                 ORDER BY timestamp ASC
@@ -311,6 +346,11 @@ class ClaudeCodeCapture:
                     else datetime.now(timezone.utc),
                     token_count=msg_row[4],
                     model_info=msg_row[5],
+                    signal_type=msg_row[6] or "neutral",
+                    references_previous=bool(msg_row[7])
+                    if msg_row[7] is not None
+                    else False,
+                    sentiment_delta=msg_row[8] or 0.0,
                 )
                 session.messages.append(message)
 
@@ -352,6 +392,28 @@ class ClaudeCodeCapture:
             f"msg_{datetime.now(timezone.utc).timestamp()}_{len(session.messages)}"
         )
 
+        # Detect RL signals from user messages
+        signal_type = "neutral"
+        references_previous = False
+        sentiment_delta = 0.0
+
+        if role == "user":
+            # Get previous user messages for context
+            previous_user_msgs = [
+                m.content for m in session.messages if m.role == "user"
+            ]
+            signal = self.signal_detector.detect_signal(
+                content, previous_user_msgs, role
+            )
+            signal_type = signal.signal_type
+            references_previous = signal.references_previous
+            sentiment_delta = signal.sentiment_delta
+
+            if signal_type != "neutral":
+                logger.info(
+                    f" Signal detected: {signal_type} (confidence: {signal.confidence:.2f})"
+                )
+
         message = ConversationMessage(
             role=role,
             content=content,
@@ -360,21 +422,25 @@ class ClaudeCodeCapture:
             session_id=session_id,
             token_count=token_count,
             model_info=model_info,
+            signal_type=signal_type,
+            references_previous=references_previous,
+            sentiment_delta=sentiment_delta,
         )
 
         session.messages.append(message)
         if token_count:
             session.total_tokens += token_count
 
-        # Save message to database
+        # Save message to database with signal data
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             cursor.execute(
                 """
                 INSERT INTO capture_messages
-                (message_id, session_id, role, content, timestamp, token_count, model_info)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                (message_id, session_id, role, content, timestamp, token_count, model_info,
+                 signal_type, references_previous, sentiment_delta)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     message_id,
@@ -384,6 +450,9 @@ class ClaudeCodeCapture:
                     message.timestamp.isoformat(),
                     token_count,
                     model_info,
+                    signal_type,
+                    references_previous,
+                    sentiment_delta,
                 ),
             )
             conn.commit()

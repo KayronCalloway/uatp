@@ -39,6 +39,7 @@ import { AttributionCard } from '@/components/capsules/AttributionCard';
 import { LineageCard } from '@/components/capsules/LineageCard';
 import { ChainContextCard } from '@/components/capsules/ChainContextCard';
 import { ConversationCard } from '@/components/capsules/ConversationCard';
+import { FeedbackSignalsCard } from '@/components/capsules/FeedbackSignalsCard';
 
 interface CapsuleDetailProps {
   capsuleId: string;
@@ -536,6 +537,11 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
         <ConversationCard payload={capsule.payload} />
       )}
 
+      {/* Feedback Signals - Implicit user feedback from conversation */}
+      {capsule.payload?.session_metadata?.feedback_signals && (
+        <FeedbackSignalsCard feedbackSignals={capsule.payload.session_metadata.feedback_signals} />
+      )}
+
       {/* Verification Status */}
       <Card>
         <CardHeader>
@@ -857,6 +863,20 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                             {isDecisionPoint && (
                               <span className="px-2 py-1 bg-purple-200 text-purple-800 rounded text-xs font-semibold">
                                  Decision Point
+                              </span>
+                            )}
+                            {/* Signal Type Badge */}
+                            {step.measurements?.signal_type && step.measurements.signal_type !== 'neutral' && (
+                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                step.measurements.signal_type === 'acceptance' ? 'bg-green-200 text-green-800' :
+                                step.measurements.signal_type === 'refinement' ? 'bg-blue-200 text-blue-800' :
+                                step.measurements.signal_type === 'correction' ? 'bg-orange-200 text-orange-800' :
+                                step.measurements.signal_type === 'requery' ? 'bg-purple-200 text-purple-800' :
+                                step.measurements.signal_type === 'abandonment' ? 'bg-red-200 text-red-800' :
+                                step.measurements.signal_type === 'code_execution' ? 'bg-teal-200 text-teal-800' :
+                                'bg-gray-200 text-gray-800'
+                              }`}>
+                                {step.measurements.signal_type.replace('_', ' ')}
                               </span>
                             )}
                             {hasConfidence && (
