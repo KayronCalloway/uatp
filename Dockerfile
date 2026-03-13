@@ -18,7 +18,6 @@ WORKDIR /app
 
 # Copy requirements first for better caching
 COPY requirements.txt .
-COPY requirements-dev.txt .
 
 # Create virtual environment and install dependencies
 RUN python -m venv /opt/venv

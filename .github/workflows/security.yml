@@ -37,8 +37,8 @@ jobs:
 
     - name: Run Safety check
       run: |
-        safety check --json --output safety-report.json || true
-        safety check || true
+        safety scan --output json > safety-report.json 2>&1 || true
+        safety scan --output text || true
       continue-on-error: true
 
     - name: Upload security reports
@@ -78,6 +78,6 @@ jobs:
         output: 'trivy-results.sarif'
 
     - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: 'trivy-results.sarif'

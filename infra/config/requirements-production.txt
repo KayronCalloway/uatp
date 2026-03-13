@@ -17,8 +17,8 @@ redis>=4.6.0
 hiredis>=2.2.3  # Faster Redis protocol parsing
 
 # Security Enhancements
-cryptography>=41.0.4
-bcrypt>=4.0.1
+cryptography>=44.0.1
+bcrypt>=4.2.0
 
 # Production Logging
 structlog>=23.1.0
@@ -42,10 +42,10 @@ boto3>=1.28.25
 botocore>=1.31.25
 
 # HTTP Client with better performance
-httpx[http2]>=0.24.1
+httpx[http2]>=0.28.0
 
 # Advanced JSON handling
-orjson>=3.9.5
+orjson>=3.11.5
 
 # Memory profiling (development/debugging in production)
 memory-profiler>=0.60.0

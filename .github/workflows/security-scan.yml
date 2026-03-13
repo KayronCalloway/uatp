@@ -30,6 +30,7 @@ permissions:
   contents: read
   security-events: write
   packages: read
+  issues: write  # Required for security-notification job to create issues
 
 env:
   PYTHON_VERSION: '3.11'
@@ -70,8 +71,8 @@ jobs:
 
     - name: Run Safety (PyPI vulnerability database)
       run: |
-        safety check --json --output safety-report.json || true
-        safety check --short-report
+        safety scan --output json > safety-report.json 2>&1 || true
+        safety scan --output text
 
     - name: Run pip-audit (Python package auditing)
       run: |
@@ -200,7 +201,7 @@ jobs:
         retention-days: 30
 
     - name: Upload Trivy SARIF to GitHub Security
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       if: always()
       with:
         sarif_file: 'trivy-results.sarif'
@@ -218,8 +219,8 @@ jobs:
     - name: Run Checkov (Infrastructure as Code scanner)
       run: |
         pip install checkov
-        checkov -d . --framework kubernetes,dockerfile,docker_compose --output json --output-file checkov-report.json || true
-        checkov -d . --framework kubernetes,dockerfile,docker_compose
+        checkov -d . --framework kubernetes,dockerfile --output json --output-file checkov-report.json || true
+        checkov -d . --framework kubernetes,dockerfile
 
     - name: Run kube-score (Kubernetes configuration analysis)
       run: |
