@@ -21,17 +21,11 @@ class UserModel(db.Base):
     verification_status = Column(String, default="unverified")
 
     # Relationships
-    payout_methods = relationship(
-        "PayoutMethodModel", back_populates="user", cascade="all, delete-orphan"
-    )
     sessions = relationship(
         "UserSessionModel", back_populates="user", cascade="all, delete-orphan"
     )
     verifications = relationship(
         "IdentityVerificationModel", back_populates="user", cascade="all, delete-orphan"
-    )
-    policies = relationship(
-        "InsurancePolicy", back_populates="user", cascade="all, delete-orphan"
     )
     capsules = relationship("CapsuleModel", back_populates="owner")
 

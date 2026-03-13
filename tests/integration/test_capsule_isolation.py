@@ -30,8 +30,6 @@ from src.models.capsule import CapsuleModel
 # Import ALL related models to ensure SQLAlchemy mappers are configured
 # This prevents "mapper failed to initialize" errors
 try:
-    from src.insurance.models import InsurancePolicy
-    from src.models.payment import PayoutMethodModel
     from src.models.user_management import IdentityVerificationModel, UserSessionModel
 except ImportError as e:
     print(f"Warning: Some models could not be imported: {e}")

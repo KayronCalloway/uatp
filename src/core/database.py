@@ -55,7 +55,6 @@ class SQLAlchemyDB:
         # Import all models here before calling create_all
         # to ensure they are registered on the metadata.
         from src.models.capsule import CapsuleModel  # noqa
-        from src.models.payment import PayoutMethodModel, TransactionModel  # noqa
         from src.models.user import UserModel  # noqa
 
         # UATP 7.2 Training Provenance models

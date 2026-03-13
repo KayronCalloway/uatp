@@ -23,10 +23,22 @@ from src.live_capture.enhanced_context import EnhancedContextExtractor
 from src.live_capture.environment_capture import capture_environment_context
 from src.live_capture.outcome_integration import register_capsule_for_tracking
 from src.live_capture.tool_calls_capture import capture_tool_calls
-from src.ml.calibration_integration import calibrate_capsule_confidence
-from src.ml.historical_accuracy import get_historical_accuracy_engine
 
 logger = logging.getLogger(__name__)
+
+# Optional ML calibration (graceful degradation if not available)
+try:
+    from src.ml.calibration_integration import calibrate_capsule_confidence
+    from src.ml.historical_accuracy import get_historical_accuracy_engine
+
+    _ML_CALIBRATION_AVAILABLE = True
+except ImportError:
+    logger.info(
+        "ML calibration not available - confidence scores will not be calibrated"
+    )
+    calibrate_capsule_confidence = None
+    get_historical_accuracy_engine = None
+    _ML_CALIBRATION_AVAILABLE = False
 
 # Import crypto for Ed25519 signing with RFC 3161 timestamps + ML-DSA-65 post-quantum
 try:
@@ -728,6 +740,8 @@ class RichCaptureEnhancer:
                 # HISTORICAL ACCURACY LEARNING (Gap 2)
                 # Uses embedding to find similar past capsules and learn from outcomes
                 try:
+                    if not _ML_CALIBRATION_AVAILABLE:
+                        raise ImportError("ML calibration not available")
                     historical_engine = get_historical_accuracy_engine()
                     historical_result = historical_engine.analyze_for_capsule(
                         query_embedding=embedding,
@@ -764,6 +778,8 @@ class RichCaptureEnhancer:
                 # CALIBRATION FEEDBACK (Gap 5)
                 # Apply calibration based on historical prediction accuracy
                 try:
+                    if not _ML_CALIBRATION_AVAILABLE:
+                        raise ImportError("ML calibration not available")
                     current_confidence = capsule["payload"].get(
                         "confidence", overall_confidence
                     )

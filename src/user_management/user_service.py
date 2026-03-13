@@ -322,61 +322,11 @@ class UserService:
     async def setup_payout_method(
         self, user_id: str, payout_method: PayoutMethod, payout_details: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Set up user payout method"""
-
-        user = await self.get_user_profile(user_id)
-        if not user:
-            return {"success": False, "error": "User not found"}
-
-        # Validate payout details
-        validation = self._validate_payout_details(payout_method, payout_details)
-        if not validation["valid"]:
-            return {"success": False, "error": validation["error"]}
-
-        # Create or update payout method
-        result = await self.db.execute(
-            select(PayoutMethodModel).where(
-                (PayoutMethodModel.user_id == user_id)
-                & (PayoutMethodModel.method_type == payout_method.value)
-            )
-        )
-        payout_method_model = result.scalars().first()
-
-        if payout_method_model:
-            payout_method_model.payout_details = payout_details
-        else:
-            # Handle multiple payout methods - set others to non-default if this is default
-            is_default = payout_details.get("is_default", True)
-
-            if is_default:
-                # Set all existing payout methods for this user to non-default
-                try:
-                    from sqlalchemy import update
-
-                    await self.db.execute(
-                        update(PayoutMethodModel)
-                        .where(PayoutMethodModel.user_id == user_id)
-                        .values(is_default=False)
-                    )
-                except Exception as e:
-                    logger.warning(f"Failed to update existing payout methods: {e}")
-
-            payout_method_model = PayoutMethodModel(
-                user_id=user_id,
-                method_type=payout_method.value,
-                payout_details=payout_details,
-                is_default=is_default,
-            )
-            self.db.add(payout_method_model)
-
-        await self.db.commit()
-
-        logger.info(f"Payout method configured for {user_id}: {payout_method.value}")
-
+        """Set up user payout method (feature not available)"""
+        # Payout methods feature has been removed
         return {
-            "success": True,
-            "user_id": user_id,
-            "message": "Payout method configured successfully",
+            "success": False,
+            "error": "Payout methods feature is not currently available",
         }
 
     async def delete_user_account(

@@ -570,58 +570,6 @@ async def async_session_factory():
 
 
 @pytest.fixture
-def mock_policy_manager(mock_db_manager):
-    """PolicyManager instance for testing"""
-    import uuid
-    from datetime import datetime
-
-    from src.insurance.policy_manager import (
-        Policy,
-        PolicyHolder,
-        PolicyManager,
-        PolicyStatus,
-        PolicyTerms,
-    )
-    from src.insurance.risk_assessor import DecisionCategory, RiskLevel
-
-    manager = PolicyManager(database_manager=mock_db_manager)
-
-    # Create a sample policy for get_policy calls
-    sample_policy = Policy(
-        policy_id="POL-TEST123",
-        holder=PolicyHolder(
-            user_id=str(uuid.uuid4()),
-            name="Test User",
-            email="test@example.com",
-            organization="Test Org",
-        ),
-        terms=PolicyTerms(
-            coverage_amount=100000,
-            deductible=1000,
-            premium_monthly=150.0,
-            term_months=12,
-            decision_category=DecisionCategory.CUSTOMER_SERVICE,
-            risk_level=RiskLevel.LOW,
-            conditions=[],
-            exclusions=[],
-            max_claims_per_year=3,
-            max_payout_per_claim=50000,
-        ),
-        status=PolicyStatus.ACTIVE,
-        created_at=datetime.utcnow(),
-        activated_at=datetime.utcnow(),
-    )
-
-    # Mock database methods to avoid real DB calls
-    manager.get_policy = AsyncMock(return_value=sample_policy)
-    manager._fetch_policy = AsyncMock(return_value=sample_policy)
-    manager._store_policy = AsyncMock()
-    manager._update_policy = AsyncMock()
-
-    return manager
-
-
-@pytest.fixture
 def mock_database_connection():
     """Mock database connection for testing"""
 
