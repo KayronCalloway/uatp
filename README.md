@@ -90,6 +90,7 @@ uatp/
 │   ├── cli/            # CLI tools (verify, export, inspect)
 │   ├── crypto/         # Key management
 │   ├── export/         # DSSE bundle export (Sigstore style)
+│   ├── live_capture/   # Real-time capture with feedback signal detection
 │   ├── schema/         # Schema definitions and facets
 │   ├── security/       # Ed25519/ML-DSA signatures, RFC 3161
 │   └── services/       # Search, lifecycle services
@@ -167,6 +168,7 @@ UATP is designed so operators cannot sign on behalf of users—the SDK generates
 | DSSE bundle export | Shipped |
 | Full-text search API | Shipped |
 | Verified context retrieval | Shipped |
+| Feedback signal detection | Shipped |
 | ML-DSA-65 (post-quantum) | Beta |
 | RFC 3161 timestamps | Beta |
 | Capsule chaining | Beta |
