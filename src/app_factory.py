@@ -19,12 +19,10 @@ from prometheus_client import Histogram, generate_latest
 
 from src.utils.timezone_utils import utc_now
 
-from .api.constellations_routes import router as constellations_router
 from .auth.auth_middleware import setup_auth_middleware
 from .auth.auth_routes import router as auth_router
 from .core.database import db
 from .database.connection import get_database_manager
-from .insurance.api import router as insurance_router
 
 # Import Redis-backed rate limiter (replaces in-memory slowapi)
 from .middleware.rate_limiting import (
@@ -39,7 +37,6 @@ from .integrations.ai_platform_framework import (  # noqa: E402
 )
 
 # noqa: E402
-from .payments.real_payment_service import create_real_payment_service  # noqa: E402
 from .security.csrf_protection import csrf_middleware  # noqa: E402
 from .security.input_validation import (  # noqa: E402
     PAYMENT_REQUEST_SCHEMA,
@@ -114,21 +111,6 @@ async def lifespan(app: FastAPI):
         logger.info("Initializing SQLAlchemy database...")
         db.init_app(app)
 
-        # Initialize feedback system with session factory
-        from .api.feedback_router import set_session_factory
-
-        set_session_factory(db.session_factory)
-
-        # Initialize feedback loop for outcome tracking (non-critical)
-        try:
-            from .feedback import initialize_tracker
-
-            logger.info("Initializing feedback loop for outcome tracking...")
-            initialize_tracker(db.session_factory)
-            logger.info("Feedback loop initialized - capsules will now track outcomes")
-        except Exception as e:
-            logger.warning(f"Feedback system not available (non-critical): {e}")
-
         # Initialize asyncpg database manager (PostgreSQL - optional in development)
         logger.info("Initializing database connection...")
         try:
@@ -159,7 +141,6 @@ async def lifespan(app: FastAPI):
             openai_key=os.getenv("OPENAI_API_KEY"),
             anthropic_key=os.getenv("ANTHROPIC_API_KEY"),
         )
-        app.state.payment_service = create_real_payment_service(app.state.user_service)
 
         # Initialize live capture conversation monitor
         logger.info("Initializing live capture conversation monitor...")
@@ -773,33 +754,6 @@ def setup_api_routes(app: FastAPI, rate_config: RateLimitConfig):
                 status_code=500, detail="Attribution tracking failed"
             ) from e
 
-    @app.post("/api/v1/payments/payout", tags=["Economics"])
-    async def request_payout(request: Request, payout_data: Dict[str, Any]):
-        """Request payout with real payment processing"""
-        try:
-            # Validate input data
-            validated_data = security_validator.validate_json_schema(
-                payout_data, PAYMENT_REQUEST_SCHEMA
-            )
-
-            payment_service = app.state.payment_service
-            result = await payment_service.initiate_payout(
-                user_id=validated_data.get("user_id"),
-                amount=validated_data["amount"],
-                description=validated_data.get("description"),
-            )
-
-            if result["success"]:
-                logger.info("Payout initiated", transaction_id=result["transaction_id"])
-                return result
-            else:
-                logger.warning("Payout failed", error=result["error"])
-                raise HTTPException(status_code=400, detail=result["error"])
-
-        except Exception as e:
-            logger.error("Payout request error", error=str(e))
-            raise HTTPException(status_code=500, detail="Payout request failed") from e
-
     @app.get("/api/v1/admin/stats", tags=["Monitoring"])
     async def admin_stats(request: Request):
         """Get admin statistics"""
@@ -895,14 +849,6 @@ def create_app() -> FastAPI:
                 "description": "AI attribution tracking and economic value calculation",
             },
             {
-                "name": "Governance",
-                "description": "Decentralized governance, voting, and proposals",
-            },
-            {
-                "name": "Economics",
-                "description": "Economic engine, payments, and FCDE operations",
-            },
-            {
                 "name": "Registry",
                 "description": "LLM provider and model registry management",
             },
@@ -913,10 +859,6 @@ def create_app() -> FastAPI:
             {
                 "name": "Security",
                 "description": "Security validation, cryptographic operations",
-            },
-            {
-                "name": "Insurance",
-                "description": "Insurance policy and claim management for AI liability",
             },
             {
                 "name": "Cursor IDE Integration",
@@ -942,10 +884,6 @@ def create_app() -> FastAPI:
 
     # Include authentication routes
     app.include_router(auth_router)
-    # Include Constellations routes
-    app.include_router(constellations_router)
-    # Include Insurance routes
-    app.include_router(insurance_router)
 
     # Include real database-backed capsules router
     from .api.capsules_fastapi_router import router as capsules_router
@@ -962,26 +900,6 @@ def create_app() -> FastAPI:
 
     app.include_router(trust_router)
 
-    # Include onboarding router
-    from .api.onboarding_fastapi_router import router as onboarding_router
-
-    app.include_router(onboarding_router)
-
-    # Include governance router (converted from Quart)
-    from .api.governance_fastapi_router import router as governance_router
-
-    app.include_router(governance_router)
-
-    # Include economics router (converted from Quart)
-    from .api.economics_fastapi_router import router as economics_router
-
-    app.include_router(economics_router)
-
-    # Include federation router (converted from Quart)
-    from .api.federation_fastapi_router import router as federation_router
-
-    app.include_router(federation_router)
-
     # Include platform router (converted from Quart)
     from .api.platform_fastapi_router import router as platform_router
 
@@ -992,23 +910,10 @@ def create_app() -> FastAPI:
     # from .api.cursor_fastapi_router import router as cursor_router
     # app.include_router(cursor_router)
 
-    # Include feedback and calibration router
-    from .api.feedback_router import router as feedback_router
-
-    app.include_router(feedback_router)
-    # Initialize feedback session factory after database is ready
-    # Note: session_factory is set during app lifespan, not at router include time
-    # The set_session_factory will be called in lifespan after db.init_app()
-
     # Include training data export router
     from .api.export_router import router as export_router
 
     app.include_router(export_router)
-
-    # Include ML dashboard router
-    from .api.ml_dashboard_router import router as ml_dashboard_router
-
-    app.include_router(ml_dashboard_router)
 
     # Include user encryption keys router
     from .api.user_keys_router import router as user_keys_router
@@ -1030,20 +935,10 @@ def create_app() -> FastAPI:
 
     app.include_router(attestation_router)
 
-    # Include UATP 7.2 Edge-Native Capsules router
-    from .api.edge_router import router as edge_router
-
-    app.include_router(edge_router)
-
     # Include UATP 7.2 Model Artifacts and Licenses router
     from .api.model_artifacts_router import router as model_artifacts_router
 
     app.include_router(model_artifacts_router)
-
-    # Include UATP 7.3 ANE Training Provenance router
-    from .api.ane_training_router import router as ane_training_router
-
-    app.include_router(ane_training_router)
 
     # Include UATP 7.4 Agent Execution Traces router
     from .api.agent_execution_router import router as agent_execution_router
@@ -1059,16 +954,6 @@ def create_app() -> FastAPI:
     from .api.reasoning_fastapi_router import router as reasoning_router
 
     app.include_router(reasoning_router)
-
-    # Include Universe Visualization router
-    from .api.universe_fastapi_router import router as universe_router
-
-    app.include_router(universe_router)
-
-    # Include Rights Evolution router
-    from .api.rights_evolution_fastapi_router import router as rights_evolution_router
-
-    app.include_router(rights_evolution_router)
 
     # Setup routes
     setup_health_routes(app)
