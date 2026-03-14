@@ -20,7 +20,15 @@ load_dotenv()
 sys.path.insert(0, os.path.dirname(__file__))
 
 from src.live_capture.claude_code_capture import ClaudeCodeCapture
-from src.live_capture.outcome_integration import process_user_message_for_outcome
+
+# Optional outcome integration (archived)
+try:
+    from src.live_capture.outcome_integration import process_user_message_for_outcome
+
+    _OUTCOME_AVAILABLE = True
+except ImportError:
+    process_user_message_for_outcome = None  # type: ignore
+    _OUTCOME_AVAILABLE = False
 
 
 async def capture_rich_session():
@@ -86,15 +94,16 @@ async def capture_rich_session():
 
             # OUTCOME TRACKING (Gap 1)
             # Check if this message indicates an outcome for a previous capsule
-            try:
-                outcome_result = process_user_message_for_outcome(user_message)
-                if outcome_result and outcome_result.get("updated_capsule"):
-                    print(
-                        f"    Outcome inferred: {outcome_result['status']} "
-                        f"(confidence: {outcome_result['confidence']:.0%})"
-                    )
-            except Exception:
-                pass  # Outcome tracking is optional, don't fail capture
+            if _OUTCOME_AVAILABLE and process_user_message_for_outcome:
+                try:
+                    outcome_result = process_user_message_for_outcome(user_message)
+                    if outcome_result and outcome_result.get("updated_capsule"):
+                        print(
+                            f"    Outcome inferred: {outcome_result['status']} "
+                            f"(confidence: {outcome_result['confidence']:.0%})"
+                        )
+                except Exception:
+                    pass  # Outcome tracking is optional, don't fail capture
 
         except Exception as e:
             print(f"[ERROR] Failed to capture user message: {e}")
