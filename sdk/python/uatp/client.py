@@ -48,7 +48,9 @@ def _derive_device_passphrase() -> str:
     combined = ":".join(machine_info)
     device_hash = hashlib.sha256(combined.encode()).hexdigest()
 
-    # Use first 32 chars as passphrase (128 bits of entropy from device info)
+    # Use first 32 chars as passphrase
+    # NOTE: Entropy is LIMITED by uniqueness of hostname/username/arch, NOT 128 bits.
+    # This is a convenience fallback, not high-security. Use explicit passphrase for production.
     return f"device_{device_hash[:32]}"
 
 
@@ -140,7 +142,7 @@ class UATP:
         self.timeout = timeout
         self.session = requests.Session()
         self.session.headers.update(
-            {"Content-Type": "application/json", "User-Agent": "uatp-python-sdk/0.2.1"}
+            {"Content-Type": "application/json", "User-Agent": "uatp-python-sdk/0.3.0"}
         )
 
     def certify(
@@ -154,7 +156,7 @@ class UATP:
         confidence: Optional[float] = None,
         metadata: Optional[Dict[str, Any]] = None,
         request_timestamp: bool = True,
-        store_on_server: bool = True,
+        store_on_server: bool = False,
     ) -> Union[SignedCapsule, "CertificationResult"]:
         """
         Create a cryptographically certified capsule for an AI decision.
@@ -419,7 +421,7 @@ class UATP:
         plain_language_summary: Optional[Dict[str, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
         request_timestamp: bool = True,
-        store_on_server: bool = True,
+        store_on_server: bool = False,
     ) -> SignedCapsule:
         """
         Create a capsule with enhanced data provenance.

@@ -285,7 +285,8 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
         "valid": False,
         "signature_valid": False,
         "hash_valid": False,
-        "timestamp_valid": None,  # None means not checked
+        "timestamp_present": False,  # Whether timestamp data exists
+        "timestamp_verified": False,  # Whether cryptographically verified (requires rfc3161ng)
         "errors": [],
         "warnings": [],
     }
@@ -350,19 +351,26 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
         result["warnings"].append(f"Could not verify content hash: {e}")
 
     # 3. Check RFC 3161 timestamp (if present)
+    # WARNING: This is NOT cryptographic verification - just presence checking.
+    # Full RFC 3161 verification requires the rfc3161ng library and TSA certificate chain.
     rfc3161 = verification.get("rfc3161")
     if rfc3161:
         try:
-            # Basic check - full verification requires rfc3161ng library
             if "token" in rfc3161 and "tsa" in rfc3161:
-                result["timestamp_valid"] = True
+                # Mark as present but NOT cryptographically verified
+                result["timestamp_present"] = True
+                result["timestamp_verified"] = False  # Not cryptographically verified!
                 result["timestamp_tsa"] = rfc3161.get("tsa")
                 result["timestamp_time"] = rfc3161.get("timestamp")
+                result["warnings"].append(
+                    "RFC 3161 timestamp present but NOT cryptographically verified. "
+                    "Use rfc3161ng library for full verification."
+                )
             else:
                 result["warnings"].append("Incomplete RFC 3161 timestamp data")
 
         except Exception as e:
-            result["warnings"].append(f"Could not verify timestamp: {e}")
+            result["warnings"].append(f"Could not check timestamp: {e}")
 
     # Overall validity
     result["valid"] = result["signature_valid"]

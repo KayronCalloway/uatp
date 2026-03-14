@@ -3,6 +3,7 @@ Secure Key Management System for UATP Capsule Engine
 Provides encrypted key storage, secure memory handling, and key rotation.
 """
 
+import base64
 import logging
 import os
 import secrets
@@ -137,8 +138,11 @@ class SecureKeyManager:
             salt=salt,
             iterations=100000,
         )
-        kdf.derive(password.encode())
-        self._master_key = Fernet(Fernet.generate_key())
+        derived_key = kdf.derive(password.encode())
+
+        # Convert to Fernet-compatible key (requires base64 url-safe encoding)
+        fernet_key = base64.urlsafe_b64encode(derived_key)
+        self._master_key = Fernet(fernet_key)
 
         # Store salt securely
         self._master_salt = salt

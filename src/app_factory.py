@@ -234,11 +234,13 @@ def setup_middleware(app: FastAPI, limiter: RateLimitConfig, metrics: Dict[str, 
         allowed_hosts = [h.strip() for h in env_hosts.split(",") if h.strip()]
     else:
         allowed_hosts = [h.strip() for h in default_hosts.split(",")]
-        if os.getenv("ENVIRONMENT") == "production":
-            logger.warning(
-                "[SECURITY] ALLOWED_HOSTS not set in production! "
-                "Set ALLOWED_HOSTS=uatp.app,api.uatp.app,dashboard.uatp.app"
-            )
+
+    # Only warn if in production AND no ALLOWED_HOSTS was configured
+    if os.getenv("ENVIRONMENT") == "production" and not env_hosts:
+        logger.warning(
+            "[SECURITY] ALLOWED_HOSTS not set in production! "
+            "Set ALLOWED_HOSTS=uatp.app,api.uatp.app,dashboard.uatp.app"
+        )
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
     # Redis-backed rate limiting middleware
