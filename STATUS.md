@@ -2,20 +2,32 @@
 
 > This file is the source of truth. It tells you exactly what's ready, what's not, and what's planned.
 
-## Production Ready
+## Honesty Note
+
+This repo contains two things:
+1. **Core trust protocol** (SDK, signing, verification) — the focus of this project
+2. **Experimental platform code** (attribution, governance, economics) — not part of the core protocol
+
+The "Shipped" items below refer to the **core protocol only**. The platform modules exist in `src/` but are experimental and not maintained to the same standard.
+
+## Working (SDK Path)
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Ed25519 Signatures | **Shipped** | FIPS 186-5 compliant |
-| Capsule Creation API | **Shipped** | FastAPI backend |
-| Python SDK | **Shipped** | `pip install uatp` (v0.3.0) |
-| Local Key Management | **Shipped** | User-sovereign, zero-trust |
-| Capsule Verification | **Shipped** | Standalone, no server needed |
-| DSSE Bundle Export | **Shipped** | Sigstore-compatible |
-| CLI Tools | **Shipped** | `uatp verify`, `uatp export`, `uatp inspect` |
-| Full-Text Search | **Shipped** | FTS5 (SQLite) / ts_vector (PostgreSQL) |
-| Verified Context Retrieval | **Shipped** | Trusted RAG - search with verification status |
-| SQLite Storage | **Shipped** | Development/single-node ready |
+| Ed25519 Signatures | **Working** | FIPS 186-5 compliant, not externally audited |
+| Python SDK | **Working** | `pip install uatp` (v0.3.0) |
+| Local Key Management | **Working** | UserKeyManager, LocalSigner |
+| Capsule Verification | **Working** | Standalone, no server needed |
+| DSSE Bundle Export | **Working** | Sigstore-compatible |
+
+## Working (Backend Path)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Capsule Creation API | **Working** | FastAPI backend |
+| Full-Text Search | **Working** | FTS5 (SQLite) / ts_vector (PostgreSQL) |
+| SQLite Storage | **Working** | Development/single-node |
+| CLI Tools | **Working** | `uatp verify`, `uatp export`, `uatp inspect` |
 
 ## Beta
 
@@ -36,6 +48,18 @@
 | JavaScript/TypeScript SDK | Q2 2026 | Design complete |
 | Hosted SaaS | Q3 2026 | Architecture designed |
 | External Security Audit | Q2 2026 | Seeking auditors |
+
+## Not Part of Core Protocol
+
+The following modules exist in `src/` but are **experimental platform code**, not the core trust protocol:
+
+- `src/attribution/` - Attribution tracking (placeholder)
+- `src/consensus/` - Governance mechanisms (experimental)
+- `src/economic/` - Economic engines (experimental)
+- `src/ethics/` - Ethics circuit breakers (experimental)
+- `src/privacy/` - Privacy primitives (experimental)
+
+These modules are not maintained to the same standard as the SDK and core signing code. They exist as explorations of where the protocol could go, not claims about what it does today.
 
 ## Not for Production Use
 
@@ -68,9 +92,17 @@ We welcome security review. See [SECURITY.md](SECURITY.md) for responsible discl
 
 When we say something is:
 
-- **Shipped**: Production-ready, stable API
-- **Beta**: Works in testing, may need configuration or polish
+- **Working**: Functions correctly in testing, API is stable, not externally audited
+- **Beta**: Works but may need configuration, polish, or has known limitations
+- **Experimental**: Code exists but is not maintained to protocol standards
 - **Planned**: Design exists, code doesn't
+
+**What "Working" does NOT mean:**
+- Externally audited
+- Battle-tested in adversarial production environments
+- Guaranteed to be free of security vulnerabilities
+
+We are seeking external security auditors. See [SECURITY.md](SECURITY.md).
 
 ---
 

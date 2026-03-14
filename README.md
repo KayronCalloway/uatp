@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](STATUS.md)
 
-> **Current state: Beta.** Core signing, verification, and SDK are production-ready. Hosted SaaS is in progress. Not yet independently audited. See [STATUS.md](STATUS.md) for details.
+> **Current state: Beta.** The SDK and core signing work. Not independently audited. The repo also contains experimental platform code beyond the core protocol. See [STATUS.md](STATUS.md) for what's actually shipped.
 
 ---
 
@@ -16,12 +16,18 @@
 
 UATP creates verifiable capsules for AI reasoning: cryptographically signed records that prove what decision was made, with what reasoning, at what time.
 
-- **Ed25519 + ML-DSA-65 signatures** — tamper-evident, quantum-resistant, user-controlled keys
-- **RFC 3161 timestamps** — external time authority (DigiCert)
-- **DSSE bundles** — Sigstore-compatible portable verification
-- **Verified context retrieval** — search capsules with verification status for trusted RAG applications
-- **Zero-trust architecture** — designed so private keys remain on your device ([how this works](TRUST_MODEL.md))
-- **Standalone verification** — verify independently without relying on UATP servers ([verification details](TRUST_MODEL.md#verification))
+**What's working today (SDK path):**
+- **Ed25519 signatures** — tamper-evident, locally-signed, keys never leave your device
+- **RFC 3161 timestamps** — external time authority (DigiCert) - beta
+- **Standalone verification** — verify capsules without trusting UATP servers
+- **DSSE bundles** — Sigstore-compatible export
+
+**What's experimental:**
+- ML-DSA-65 post-quantum signatures (beta, not audited)
+- Server-side capture engine (legacy architecture, being deprecated)
+- Platform modules (attribution, governance, economics) - not part of core protocol
+
+See [TRUST_MODEL.md](TRUST_MODEL.md) for security assumptions and limitations.
 
 ![UATP Capsule Dashboard](docs/images/capsule-verified.png)
 *A verified capsule showing reasoning process, confidence metrics, and cryptographic verification status.*
@@ -180,27 +186,36 @@ UATP operators **cannot** sign on behalf of users—the SDK generates and stores
 
 ## What's Shipped vs Planned
 
+**SDK (`pip install uatp`) — the recommended path:**
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Ed25519 local signing | Working | Keys never leave device |
+| Capsule verification | Working | Standalone, no server needed |
+| Local key management | Working | UserKeyManager, LocalSigner |
+| Device-bound keys | Working | Convenience mode, see security notes below |
+| DSSE bundle export | Working | Sigstore-compatible |
+
+**Backend (`python run.py`) — less mature:**
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Capsule storage API | Working | SQLite/PostgreSQL |
+| Full-text search | Working | FTS5 / ts_vector |
+| RFC 3161 timestamps | Beta | DigiCert TSA integration |
+| Server-side signing | Legacy | Being deprecated, see TRUST_MODEL.md |
+
+**Experimental (code exists, not stable):**
+
 | Component | Status |
 |-----------|--------|
-| **Zero-trust local signing** | Shipped |
-| Ed25519 signatures | Shipped |
-| Python SDK (`pip install uatp`) | Shipped |
-| Local key management | Shipped |
-| Device-bound keys (zero-friction) | Shipped |
-| Capsule verification | Shipped |
-| CLI tools (`uatp verify/export/inspect`) | Shipped |
-| DSSE bundle export | Shipped |
-| Full-text search API | Shipped |
-| Verified context retrieval | Shipped |
-| Feedback signal detection | Shipped |
-| ML-DSA-65 (post-quantum) | Beta |
-| RFC 3161 timestamps | Beta |
-| Capsule chaining | Beta |
+| ML-DSA-65 (post-quantum) | Beta, not audited |
 | Workflow attestation | Beta |
+| Platform modules (attribution, governance) | Experimental |
 | Next.js frontend | Beta |
 | Hosted SaaS | Planned Q3 2026 |
 
-Full breakdown: [STATUS.md](STATUS.md) | Recent changes: [CHANGELOG.md](CHANGELOG.md)
+Full breakdown: [STATUS.md](STATUS.md)
 
 ---
 
