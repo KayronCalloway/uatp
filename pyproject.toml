@@ -107,7 +107,7 @@ docs = [
     "mkdocs>=1.3.0",
     "mkdocs-material>=8.3.0"
 ]
-all = ["uatp-capsule-engine[test,dev,docs]"]
+all = ["uatp[test,dev,docs]"]
 
 [project.urls]
 "Homepage" = "https://github.com/KayronCalloway/uatp"

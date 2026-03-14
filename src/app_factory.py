@@ -68,20 +68,32 @@ def configure_logging():
 
 def create_metrics():
     """Get Prometheus metrics from monitoring module to prevent duplicates."""
-    from prometheus_client import REGISTRY
+    from prometheus_client import REGISTRY, CollectorRegistry
 
     # Import metrics from monitoring module (which handles deduplication)
     from .middleware.monitoring import REQUEST_COUNT, REQUEST_DURATION
 
-    # Create attribution metric if not exists
-    if "attribution_processing_duration_seconds" in REGISTRY._names_to_collectors:
-        attribution_metric = REGISTRY._names_to_collectors[
-            "attribution_processing_duration_seconds"
-        ]
-    else:
+    # Create attribution metric if not exists (use try/except to avoid private API)
+    try:
         attribution_metric = Histogram(
-            "attribution_processing_duration_seconds", "Attribution processing time"
+            "attribution_processing_duration_seconds",
+            "Attribution processing time",
         )
+    except ValueError:
+        # Metric already exists, get it from collectors
+        for collector in REGISTRY.collect():
+            if (
+                hasattr(collector, "_name")
+                and collector._name == "attribution_processing_duration_seconds"
+            ):
+                attribution_metric = collector
+                break
+        else:
+            # Fallback: create with a unique name
+            attribution_metric = Histogram(
+                "attribution_processing_duration_seconds_v2",
+                "Attribution processing time",
+            )
 
     return {
         "REQUEST_COUNT": REQUEST_COUNT,
@@ -214,8 +226,19 @@ def setup_middleware(app: FastAPI, limiter: RateLimitConfig, metrics: Dict[str, 
         expose_headers=["X-Correlation-ID"],
     )
 
-    # Trusted hosts
-    allowed_hosts = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    # Trusted hosts - MUST be configured for production
+    # Development default is localhost only; production MUST set ALLOWED_HOSTS
+    default_hosts = "localhost,127.0.0.1"
+    env_hosts = os.getenv("ALLOWED_HOSTS", "")
+    if env_hosts:
+        allowed_hosts = [h.strip() for h in env_hosts.split(",") if h.strip()]
+    else:
+        allowed_hosts = [h.strip() for h in default_hosts.split(",")]
+        if os.getenv("ENVIRONMENT") == "production":
+            logger.warning(
+                "[SECURITY] ALLOWED_HOSTS not set in production! "
+                "Set ALLOWED_HOSTS=uatp.app,api.uatp.app,dashboard.uatp.app"
+            )
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
     # Redis-backed rate limiting middleware
@@ -677,7 +700,7 @@ def setup_api_routes(app: FastAPI, rate_config: RateLimitConfig):
         """Root endpoint"""
         return {
             "message": "UATP - Unified Agent Trust Protocol",
-            "version": "1.0.0",
+            "version": "0.3.0",
             "environment": os.getenv("ENVIRONMENT", "development"),
         }
 
@@ -685,7 +708,7 @@ def setup_api_routes(app: FastAPI, rate_config: RateLimitConfig):
     async def api_status():
         """API status endpoint"""
         return {
-            "api_version": "1.0.0",
+            "api_version": "0.3.0",
             "status": "operational",
             "features": {
                 "attribution_tracking": True,
@@ -831,7 +854,7 @@ def create_app() -> FastAPI:
 
         All API endpoints require proper authentication. See the `/auth` endpoints for details.
         """,
-        version="1.0.0",
+        version="0.3.0",
         lifespan=lifespan,
         docs_url="/docs" if os.getenv("ENVIRONMENT") != "production" else None,
         redoc_url="/redoc" if os.getenv("ENVIRONMENT") != "production" else None,
@@ -914,6 +937,11 @@ def create_app() -> FastAPI:
     from .api.export_router import router as export_router
 
     app.include_router(export_router)
+
+    # Include RFC 3161 Timestamp router (zero-trust timestamping)
+    from .api.timestamp_router import router as timestamp_router
+
+    app.include_router(timestamp_router)
 
     # Include user encryption keys router
     from .api.user_keys_router import router as user_keys_router

@@ -601,30 +601,35 @@ class UATP:
             ...     }
             ... )
         """
-        # For now, store outcome in capsule metadata via update endpoint
-        # In future, this would be a dedicated /capsules/{id}/outcome endpoint
         try:
-            # Get current capsule
-            proof = self.get_proof(capsule_id)
-
-            # Add outcome to payload
-            updated_payload = proof.payload.copy()
-            updated_payload["outcome"] = outcome
-            updated_payload["outcome_recorded_at"] = datetime.now(
-                timezone.utc
-            ).isoformat()
-
-            # Note: Backend doesn't support updates yet, so this is a placeholder
-            # In production, you'd POST to /capsules/{id}/outcome
-            logger.warning(
-                "Outcome tracking not yet implemented in backend API. "
-                f"Outcome for {capsule_id}: {outcome.get('result', 'unknown')}. "
-                "This will be stored once backend supports /capsules/{id}/outcome endpoint."
+            # POST to the outcome endpoint
+            response = self.session.post(
+                f"{self.base_url}/capsules/{capsule_id}/outcome",
+                params={
+                    "outcome_status": outcome.get("result", "unknown"),
+                    "notes": outcome.get("notes"),
+                    "rating": outcome.get("customer_satisfaction"),
+                },
+                timeout=self.timeout,
             )
 
+            if response.status_code == 401:
+                raise Exception(
+                    "Authentication required. Outcome tracking requires a valid API key."
+                )
+
+            if response.status_code == 404:
+                raise Exception(f"Capsule {capsule_id} not found")
+
+            response.raise_for_status()
+
+            data = response.json()
+            logger.info(
+                f"Outcome recorded for {capsule_id}: {data.get('outcome_status')}"
+            )
             return True
 
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             raise Exception(f"Failed to record outcome: {e}") from e
 
     def close(self) -> None:
