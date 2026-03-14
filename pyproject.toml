@@ -1,6 +1,6 @@
 [project]
-name = "uatp-capsule-engine"
-version = "0.1.0"
+name = "uatp"
+version = "0.3.0"
 description = "UATP Capsule Engine: schema-driven, cryptographically sealed capsule chains for agent trust and auditability."
 authors = [{name = "Kayron Calloway", email = "kayron@houseofcalloway.com"}]
 readme = "README.md"

@@ -147,3 +147,7 @@ deployment/environments/*.env
 # ============================================
 # END SENSITIVE
 # ============================================
+*.egg-info/
+__pycache__/
+test-results/
+.next/

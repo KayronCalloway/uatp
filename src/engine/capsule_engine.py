@@ -196,20 +196,10 @@ class CapsuleEngine:
                 logger.warning(
                     f"Security verification failed for capsule {capsule.capsule_id}: {security_result}"
                 )
-                # In development mode, continue with a warning instead of failing
-                # This allows capsule creation while we debug the post-quantum signature issue
-                if (
-                    os.getenv("ENVIRONMENT") == "development" or True
-                ):  # Temporary override
-                    logger.warning(
-                        "[WARN] Continuing with capsule creation despite security verification failure (development mode)"
-                    )
-                    security_result = {
-                        "development_mode": True,
-                        "security_bypass": True,
-                    }
-                else:
-                    raise UATPEngineError("Capsule failed security verification")
+                # Security verification failed - reject the capsule
+                raise UATPEngineError(
+                    f"Capsule failed security verification: {security_result}"
+                )
 
             # Enhance capsule with security metadata (if supported)
             if hasattr(capsule, "verification") and capsule.verification:
