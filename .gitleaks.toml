@@ -68,10 +68,16 @@ paths = [
 # Allow test keys and example values
 regexes = [
     '''sk-[0]+''',  # Allow test keys with all zeros
+    '''sk-YOUR_OPENAI_API_KEY_HERE''',  # Placeholder in config/secrets.py
+    '''sk-test123''',  # Test key in examples
+    '''sk-test-key''',  # Test key in examples
     '''test_api_key''',
     '''example_key''',
     '''your-api-key-here''',
     '''placeholder_key''',
     '''demo_secret''',
+    '''changeme''',  # Default placeholder password
+    '''SecurePass123!''',  # Test password in examples
+    '''uatp_password''',  # Default dev password
     '''6f4a423a4a4b4a4c4d4e4f505152535455565758595a5b5c5d5e5f6061626364''' # Test signing key from tests
 ]
