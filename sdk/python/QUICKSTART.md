@@ -4,21 +4,22 @@ Get your first AI decision certified in **under 5 minutes**.
 
 ## Prerequisites
 
-- Python 3.8+
+- Python 3.10+
 - Backend API running (see below)
 
 ## Step 1: Start the Backend (30 seconds)
 
 ```bash
 # Clone the repo (if you haven't already)
-git clone https://github.com/KayronCalloway/uatp
-cd uatp-capsule-engine
+git clone https://github.com/KayronCalloway/uatp.git
+cd uatp
 
-# Start the backend API
-./start_backend_dev.sh
+# Install dependencies and start
+pip install -e .
+python run.py
 ```
 
-Wait for: ` Server running on http://localhost:8000`
+Wait for: `Uvicorn running on http://0.0.0.0:8000`
 
 ## Step 2: Install the SDK (10 seconds)
 
@@ -270,7 +271,7 @@ curl http://localhost:8000/health
 
 # If not, start it
 cd /path/to/uatp
-./scripts/dev/start_backend_dev.sh
+python run.py
 ```
 
 ### Import errors?

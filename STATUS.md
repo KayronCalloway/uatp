@@ -8,7 +8,7 @@
 |-----------|--------|-------|
 | Ed25519 Signatures | **Shipped** | FIPS 186-5 compliant |
 | Capsule Creation API | **Shipped** | FastAPI backend |
-| Python SDK | **Shipped** | `pip install uatp` (v0.2.1 on PyPI) |
+| Python SDK | **Shipped** | `pip install uatp` (v0.3.0) |
 | Local Key Management | **Shipped** | User-sovereign, zero-trust |
 | Capsule Verification | **Shipped** | Standalone, no server needed |
 | DSSE Bundle Export | **Shipped** | Sigstore-compatible |
@@ -55,8 +55,13 @@ We welcome security review. See [SECURITY.md](SECURITY.md) for responsible discl
 
 ## Version
 
-- **Current**: 7.3.0
-- **Last Updated**: 2026-03-12
+| Artifact | Version | Notes |
+|----------|---------|-------|
+| **SDK (PyPI)** | 0.3.0 | `pip install uatp` |
+| **Backend** | 0.3.0 | pyproject.toml |
+| **Capsule Schema** | 7.2 | Internal capsule format |
+
+- **Last Updated**: 2026-03-13
 - **Stability**: Beta - Core signing is stable, API may evolve
 
 ## Confidence Levels

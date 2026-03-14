@@ -90,7 +90,6 @@ test = [
     "pytest-cov>=4.0.0",
     "trustme>=1.0.0",
     "cryptography-vectors>=44.0.1",
-    "quart>=0.19.0",
 ]
 dev = [
     "black>=22.0.0",

@@ -2,7 +2,15 @@
 
 > This document defines what UATP can and cannot do, cryptographically enforced.
 
-**Implementation Status:** Partial - see checklist at bottom for what's shipped vs. in progress.
+**Implementation Status:** Core architecture shipped. See [checklist at bottom](#implementation-checklist) for details.
+
+| Guarantee | Status |
+|-----------|--------|
+| Local signing (keys never leave device) | **Shipped** |
+| Hash-only transmission to server | **Shipped** |
+| External RFC 3161 timestamps | **Shipped** (Beta) |
+| Standalone verification | **Shipped** |
+| Transparency log | Planned |
 
 ## Core Principle
 

@@ -925,15 +925,10 @@ def create_app() -> FastAPI:
 
     app.include_router(trust_router)
 
-    # Include platform router (converted from Quart)
+    # Include platform router
     from .api.platform_fastapi_router import router as platform_router
 
     app.include_router(platform_router)
-
-    # Include Cursor IDE integration router (converted from Quart)
-    # NOTE: cursor_fastapi_router was never committed - using cursor_routes instead
-    # from .api.cursor_fastapi_router import router as cursor_router
-    # app.include_router(cursor_router)
 
     # Include training data export router
     from .api.export_router import router as export_router
