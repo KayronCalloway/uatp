@@ -157,7 +157,7 @@ def test_capsule_creation():
                 # If capsule is less than 5 minutes old
                 if current_time - capsule_time < 300:
                     recent_capsules.append(capsule)
-            except:
+            except Exception:
                 continue
 
         if recent_capsules:

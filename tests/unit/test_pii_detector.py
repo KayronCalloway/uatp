@@ -174,7 +174,7 @@ class TestPIIDetector:
         result = detector.redact(text)
         d = result.to_dict()
 
-        assert d["pii_redacted"] == True
+        assert d["pii_redacted"]
         assert d["pii_count"] == 1
         assert "email" in d["types_found"]
         assert len(d["matches"]) == 1

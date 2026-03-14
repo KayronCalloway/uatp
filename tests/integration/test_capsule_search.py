@@ -36,7 +36,7 @@ class TestSearchService:
         assert d["total_count"] == 25
         assert d["page"] == 1
         assert d["per_page"] == 10
-        assert d["has_more"] == True
+        assert d["has_more"]
         assert d["total_pages"] == 3
 
     def test_search_hit_structure(self):
@@ -100,13 +100,13 @@ class TestSearchService:
         results = SearchResults(
             query="", total_count=25, page=1, per_page=10, has_more=True
         )
-        assert results.has_more == True
+        assert results.has_more
 
         # No more results
         results = SearchResults(
             query="", total_count=5, page=1, per_page=10, has_more=False
         )
-        assert results.has_more == False
+        assert not results.has_more
 
 
 class TestSearchEndpoint:

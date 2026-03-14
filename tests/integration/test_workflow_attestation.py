@@ -63,8 +63,8 @@ class TestResourceDescriptor:
             digest={"sha256": "different"},
         )
 
-        assert desc1.matches_digest(desc2) == True
-        assert desc1.matches_digest(desc3) == False
+        assert desc1.matches_digest(desc2)
+        assert not desc1.matches_digest(desc3)
 
     def test_canonical_digest(self):
         desc = ResourceDescriptor(
@@ -170,7 +170,7 @@ class TestLinkAttestation:
         next_link = LinkAttestation(name="step2")
         next_link.add_material("in", digest={"sha256": "abc123"})
 
-        assert next_link.materials_match_products(prev_link) == True
+        assert next_link.materials_match_products(prev_link)
 
     def test_materials_dont_match_products(self):
         prev_link = LinkAttestation(name="step1")
@@ -179,7 +179,7 @@ class TestLinkAttestation:
         next_link = LinkAttestation(name="step2")
         next_link.add_material("in", digest={"sha256": "different"})
 
-        assert next_link.materials_match_products(prev_link) == False
+        assert not next_link.materials_match_products(prev_link)
 
     def test_to_dict_from_dict(self):
         original = LinkAttestation(
@@ -209,7 +209,7 @@ class TestLinkAttestation:
         link.add_product("out2", digest={"sha256": "def456"})
 
         desc = ResourceDescriptor(uri="different", digest={"sha256": "abc123"})
-        assert link.products_contain(desc) == True
+        assert link.products_contain(desc)
 
     def test_products_contain_no_match(self):
         """Test products_contain returns False when no match."""
@@ -217,14 +217,14 @@ class TestLinkAttestation:
         link.add_product("out", digest={"sha256": "abc123"})
 
         desc = ResourceDescriptor(uri="x", digest={"sha256": "no_match"})
-        assert link.products_contain(desc) == False
+        assert not link.products_contain(desc)
 
     def test_products_contain_empty_products(self):
         """Test products_contain with no products."""
         link = LinkAttestation(name="empty_step")
 
         desc = ResourceDescriptor(uri="x", digest={"sha256": "abc"})
-        assert link.products_contain(desc) == False
+        assert not link.products_contain(desc)
 
     def test_canonical_bytes_includes_optional_fields(self):
         """Test canonical_bytes includes command, env, byproducts when set."""
@@ -261,7 +261,7 @@ class TestLinkAttestation:
         # Link with no materials should match (no materials to verify)
         next_link = LinkAttestation(name="next")
 
-        assert next_link.materials_match_products(prev_link) == True
+        assert next_link.materials_match_products(prev_link)
 
     def test_to_dict_from_dict_with_all_timestamps(self):
         """Test serialization with all timestamp fields."""
@@ -295,7 +295,7 @@ class TestSimplePolicy:
     def test_permissive_policy(self):
         links = [LinkAttestation(name="any_step")]
         result = PERMISSIVE_POLICY.evaluate(links)
-        assert result.passed == True
+        assert result.passed
 
     def test_required_steps(self):
         policy = SimplePolicy(required_steps=["step_a", "step_b"])
@@ -303,7 +303,7 @@ class TestSimplePolicy:
         links = [LinkAttestation(name="step_a")]
         result = policy.evaluate(links)
 
-        assert result.passed == False
+        assert not result.passed
         assert any("step_b" in v.message for v in result.violations)
 
     def test_step_order(self):
@@ -318,7 +318,7 @@ class TestSimplePolicy:
             LinkAttestation(name="second"),
         ]
         result = policy.evaluate(links_correct)
-        assert result.passed == True
+        assert result.passed
 
         # Wrong order
         links_wrong = [
@@ -326,7 +326,7 @@ class TestSimplePolicy:
             LinkAttestation(name="first"),
         ]
         result = policy.evaluate(links_wrong)
-        assert result.passed == False
+        assert not result.passed
         assert any(v.rule == "step_order" for v in result.violations)
 
     def test_allowed_signers(self):
@@ -338,13 +338,13 @@ class TestSimplePolicy:
         link_ok = LinkAttestation(name="sign_step")
         link_ok.signed_by = "key_1"
         result = policy.evaluate([link_ok])
-        assert result.passed == True
+        assert result.passed
 
         # Unauthorized signer
         link_bad = LinkAttestation(name="sign_step")
         link_bad.signed_by = "unauthorized_key"
         result = policy.evaluate([link_bad])
-        assert result.passed == False
+        assert not result.passed
 
     def test_extra_steps_not_allowed(self):
         policy = SimplePolicy(
@@ -358,7 +358,7 @@ class TestSimplePolicy:
         ]
         result = policy.evaluate(links)
 
-        assert result.passed == False
+        assert not result.passed
         assert any("extra" in v.message for v in result.violations)
 
     def test_missing_signature_warning(self):
@@ -371,7 +371,7 @@ class TestSimplePolicy:
         # No signature set
         result = policy.evaluate([link])
 
-        assert result.passed == True  # Warnings don't fail
+        assert result.passed  # Warnings don't fail
         assert len(result.warnings) == 1
         assert "no signature" in result.warnings[0].message.lower()
 
@@ -384,7 +384,7 @@ class TestSimplePolicy:
 
         result = policy.evaluate([link])
 
-        assert result.passed == False
+        assert not result.passed
         assert any("digest" in v.message.lower() for v in result.violations)
 
     def test_require_product_digests(self):
@@ -396,7 +396,7 @@ class TestSimplePolicy:
 
         result = policy.evaluate([link])
 
-        assert result.passed == False
+        assert not result.passed
         assert any("digest" in v.message.lower() for v in result.violations)
 
     def test_policy_to_dict_from_dict(self):
@@ -429,7 +429,7 @@ class TestPolicyResult:
         result = PolicyResult(passed=True)
         d = result.to_dict()
 
-        assert d["passed"] == True
+        assert d["passed"]
         assert d["violations"] == []
         assert d["warnings"] == []
 
@@ -441,7 +441,7 @@ class TestPolicyResult:
 
         d = result.to_dict()
 
-        assert d["passed"] == False
+        assert not d["passed"]
         assert len(d["violations"]) == 1
         assert d["violations"][0]["rule"] == "test_rule"
         assert d["violations"][0]["message"] == "Test violation message"
@@ -453,10 +453,10 @@ class TestPolicyResult:
     def test_policy_result_add_violation_sets_passed_false(self):
         """Test that add_violation sets passed to False."""
         result = PolicyResult(passed=True)
-        assert result.passed == True
+        assert result.passed
 
         result.add_violation("rule", "message")
-        assert result.passed == False
+        assert not result.passed
 
     def test_policy_result_add_warning_keeps_passed_true(self):
         """Test that add_warning doesn't change passed status."""
@@ -464,7 +464,7 @@ class TestPolicyResult:
 
         result.add_warning("rule", "warning message")
 
-        assert result.passed == True
+        assert result.passed
         assert len(result.warnings) == 1
 
     def test_policy_result_multiple_violations(self):
@@ -502,15 +502,15 @@ class TestWorkflowAttestation:
 
     def test_is_complete_property(self):
         workflow = WorkflowAttestation(workflow_id="wf_001")
-        assert workflow.is_complete == False
+        assert not workflow.is_complete
 
         workflow.complete()
-        assert workflow.is_complete == True
+        assert workflow.is_complete
 
     def test_is_complete_on_failure(self):
         workflow = WorkflowAttestation(workflow_id="wf_001")
         workflow.fail()
-        assert workflow.is_complete == True
+        assert workflow.is_complete
 
     def test_step_count_property(self):
         workflow = WorkflowAttestation(workflow_id="wf_001")
@@ -552,7 +552,7 @@ class TestWorkflowAttestation:
         workflow.add_step(LinkAttestation(name="only"))
 
         result = workflow.verify_chain()
-        assert result.is_valid == True
+        assert result.is_valid
         assert result.total_handoffs == 0
 
     def test_verify_chain_valid(self):
@@ -578,7 +578,7 @@ class TestWorkflowAttestation:
 
         result = workflow.verify_chain()
 
-        assert result.is_valid == True
+        assert result.is_valid
         assert result.verified_handoffs == 2
         assert result.total_handoffs == 2
         assert len(result.breaks) == 0
@@ -599,7 +599,7 @@ class TestWorkflowAttestation:
 
         result = workflow.verify_chain()
 
-        assert result.is_valid == False
+        assert not result.is_valid
         assert result.verified_handoffs == 0
         assert len(result.breaks) == 1
         assert result.breaks[0]["fromStep"] == "step1"
@@ -628,9 +628,9 @@ class TestWorkflowAttestation:
 
         result = workflow.verify()
 
-        assert result.is_valid == True
-        assert result.chain_result.is_valid == True
-        assert result.policy_result.passed == True
+        assert result.is_valid
+        assert result.chain_result.is_valid
+        assert result.policy_result.passed
 
     def test_to_dict_from_dict(self):
         original = WorkflowAttestation(
@@ -754,7 +754,7 @@ class TestWorkflowAccessorMethods:
 
         assert workflow.status == "failed"
         assert workflow.completed_at is not None
-        assert workflow.is_complete == True
+        assert workflow.is_complete
 
 
 class TestChainVerificationResult:
@@ -769,7 +769,7 @@ class TestChainVerificationResult:
         )
         d = result.to_dict()
 
-        assert d["isValid"] == True
+        assert d["isValid"]
         assert d["verifiedHandoffs"] == 3
         assert d["totalHandoffs"] == 3
         assert d["breaks"] == []
@@ -789,7 +789,7 @@ class TestChainVerificationResult:
             message="Material not found in products",
         )
 
-        assert result.is_valid == False
+        assert not result.is_valid
         assert len(result.breaks) == 1
         assert result.breaks[0]["fromStep"] == "step1"
         assert result.breaks[0]["toStep"] == "step2"
@@ -824,11 +824,11 @@ class TestWorkflowVerificationResult:
         d = wf_result.to_dict()
 
         assert d["workflowId"] == "wf_test"
-        assert d["isValid"] == True
+        assert d["isValid"]
         assert d["stepCount"] == 3
         assert "verifiedAt" in d
         assert d["chain"]["verifiedHandoffs"] == 2
-        assert d["policy"]["passed"] == True
+        assert d["policy"]["passed"]
 
 
 class TestAttestationVerifier:
@@ -843,7 +843,7 @@ class TestAttestationVerifier:
 
         result = verifier.verify_link(link)
 
-        assert result.is_valid == True
+        assert result.is_valid
         assert result.link_name == "test"
 
     def test_verify_link_content_hash(self):
@@ -854,8 +854,8 @@ class TestAttestationVerifier:
 
         result = verifier.verify_link(link, expected_hash=expected_hash)
 
-        assert result.is_valid == True
-        assert result.content_hash_valid == True
+        assert result.is_valid
+        assert result.content_hash_valid
 
     def test_verify_chain(self):
         verifier = AttestationVerifier()
@@ -869,7 +869,7 @@ class TestAttestationVerifier:
 
         result = verifier.verify_chain([link1, link2])
 
-        assert result.is_valid == True
+        assert result.is_valid
         assert result.verified_handoffs == 1
 
     def test_verify_links_batch(self):
@@ -906,10 +906,10 @@ class TestAttestationVerifier:
 
         results = verifier.verify_links([link1, link2], expected_hashes)
 
-        assert results[0].is_valid == True
-        assert results[0].content_hash_valid == True
-        assert results[1].is_valid == False
-        assert results[1].content_hash_valid == False
+        assert results[0].is_valid
+        assert results[0].content_hash_valid
+        assert not results[1].is_valid
+        assert not results[1].content_hash_valid
 
 
 class TestHelperFunctions:
@@ -957,7 +957,7 @@ class TestHelperFunctions:
 
         # Verify chain is valid
         result = workflow.verify_chain()
-        assert result.is_valid == True
+        assert result.is_valid
 
     def test_compute_digest(self):
         data = {"key": "value", "nested": {"a": 1}}
@@ -1069,10 +1069,10 @@ class TestRealWorldScenario:
         # Verify entire workflow
         result = workflow.verify()
 
-        assert result.is_valid == True
-        assert result.chain_result.is_valid == True
+        assert result.is_valid
+        assert result.chain_result.is_valid
         assert result.chain_result.verified_handoffs == 2
-        assert result.policy_result.passed == True
+        assert result.policy_result.passed
         assert workflow.status == "completed"
 
     def test_tampered_chain_detection(self):
@@ -1098,8 +1098,8 @@ class TestRealWorldScenario:
         result = workflow.verify()
 
         # Should detect the tampering
-        assert result.is_valid == False
-        assert result.chain_result.is_valid == False
+        assert not result.is_valid
+        assert not result.chain_result.is_valid
         assert len(result.chain_result.breaks) == 1
         assert "inference" in result.chain_result.breaks[0]["fromStep"]
         assert "review" in result.chain_result.breaks[0]["toStep"]
@@ -1118,11 +1118,11 @@ class TestAttestationValidity:
         validity = AttestationValidity.create_with_ttl(3600)  # 1 hour
         assert validity.not_before is not None
         assert validity.not_after is not None
-        assert validity.is_valid_at() == True
+        assert validity.is_valid_at()
 
     def test_is_valid_at_current_time(self):
         validity = AttestationValidity.create_with_ttl(3600)
-        assert validity.is_valid_at() == True
+        assert validity.is_valid_at()
 
     def test_not_yet_valid(self):
         from datetime import timedelta
@@ -1134,8 +1134,8 @@ class TestAttestationValidity:
             issued_at=now,
             not_before=future,
         )
-        assert validity.is_valid_at(now) == False
-        assert validity.is_valid_at(future + timedelta(seconds=1)) == True
+        assert not validity.is_valid_at(now)
+        assert validity.is_valid_at(future + timedelta(seconds=1))
 
     def test_expired(self):
         from datetime import timedelta
@@ -1148,8 +1148,8 @@ class TestAttestationValidity:
             not_before=past,
             not_after=past + timedelta(minutes=30),  # Expired 30 min ago
         )
-        assert validity.is_expired() == True
-        assert validity.is_valid_at() == False
+        assert validity.is_expired()
+        assert not validity.is_valid_at()
 
     def test_remaining_validity_seconds(self):
         validity = AttestationValidity.create_with_ttl(3600)
@@ -1190,7 +1190,7 @@ class TestLinkVerificationResult:
 
         assert d["linkName"] == "test_step"
         assert d["stepId"] == "s1"
-        assert d["isValid"] == True
+        assert d["isValid"]
         assert d["errors"] == []
         assert d["warnings"] == []
         # signature_valid and content_hash_valid should be omitted when None
@@ -1209,8 +1209,8 @@ class TestLinkVerificationResult:
         )
         d = result.to_dict()
 
-        assert d["signatureValid"] == True
-        assert d["contentHashValid"] == True
+        assert d["signatureValid"]
+        assert d["contentHashValid"]
 
     def test_to_dict_with_errors(self):
         from src.attestation.verification import LinkVerificationResult
@@ -1225,7 +1225,7 @@ class TestLinkVerificationResult:
         )
         d = result.to_dict()
 
-        assert d["isValid"] == False
+        assert not d["isValid"]
         assert "Signature verification failed" in d["errors"]
         assert len(d["warnings"]) == 1
 
@@ -1237,7 +1237,7 @@ class TestVerifierEdgeCases:
         verifier = AttestationVerifier()
         result = verifier.verify_chain([])
 
-        assert result.is_valid == True
+        assert result.is_valid
         assert result.verified_handoffs == 0
         assert result.total_handoffs == 0
 
@@ -1249,7 +1249,7 @@ class TestVerifierEdgeCases:
 
         result = verifier.verify_chain([link])
 
-        assert result.is_valid == True
+        assert result.is_valid
         assert result.verified_handoffs == 0
         assert result.total_handoffs == 0
 
@@ -1274,10 +1274,10 @@ class TestVerifierEdgeCases:
         result = verifier.verify_workflow(workflow)
 
         assert result.workflow_id == "wf_verify_test"
-        assert result.is_valid == True
+        assert result.is_valid
         assert result.step_count == 2
-        assert result.chain_result.is_valid == True
-        assert result.policy_result.passed == True
+        assert result.chain_result.is_valid
+        assert result.policy_result.passed
 
 
 class TestHelperFunctionEdgeCases:

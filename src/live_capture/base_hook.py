@@ -307,7 +307,7 @@ class BaseHook(ABC):
         """
         pass
 
-    def _log_platform_specific_init(self) -> None:
+    def _log_platform_specific_init(self) -> None:  # noqa: B027
         """
         Optional: Log platform-specific initialization info.
 
@@ -672,7 +672,7 @@ class BaseHook(ABC):
         except Exception as e:
             logger.error(f"Failed to store rich capsule: {e}")
 
-    def _log_platform_specific_success(self, capsule_id: str, **kwargs) -> None:
+    def _log_platform_specific_success(self, capsule_id: str, **kwargs) -> None:  # noqa: B027
         """
         Optional: Log platform-specific success info.
 

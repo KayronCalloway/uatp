@@ -195,8 +195,8 @@ class SecureMemoryManager:
             # Fallback to ctypes on Unix-like systems
             if sys.platform != "win32":
                 libc = ctypes.CDLL("libc.so.6")
-                libc.mlock
-                return True
+                if hasattr(libc, "mlock"):
+                    return True
         except (OSError, AttributeError):
             pass
 

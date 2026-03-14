@@ -30,37 +30,37 @@ class TestSignatureFormatValidation:
     def test_ed25519_signature_validation_valid(self):
         """Test valid Ed25519 signature format."""
         valid_sig = "ed25519:" + "a" * 128  # 64 bytes = 128 hex chars
-        assert _validate_signature_format(valid_sig, "ed25519") == True
+        assert _validate_signature_format(valid_sig, "ed25519")
 
     def test_ed25519_signature_validation_missing_prefix(self):
         """Test Ed25519 signature without prefix fails."""
         invalid_sig = "a" * 128
-        assert _validate_signature_format(invalid_sig, "ed25519") == False
+        assert not _validate_signature_format(invalid_sig, "ed25519")
 
     def test_ed25519_signature_validation_wrong_length(self):
         """Test Ed25519 signature with wrong length fails."""
         invalid_sig = "ed25519:" + "a" * 64  # Too short
-        assert _validate_signature_format(invalid_sig, "ed25519") == False
+        assert not _validate_signature_format(invalid_sig, "ed25519")
 
     def test_ed25519_signature_validation_invalid_hex(self):
         """Test Ed25519 signature with invalid hex fails."""
         invalid_sig = "ed25519:" + "g" * 128  # 'g' is not valid hex
-        assert _validate_signature_format(invalid_sig, "ed25519") == False
+        assert not _validate_signature_format(invalid_sig, "ed25519")
 
     def test_dilithium_signature_validation_valid(self):
         """Test valid Dilithium signature format."""
         valid_sig = "dilithium3:" + "a" * 4500  # Substantial length
-        assert _validate_signature_format(valid_sig, "dilithium3") == True
+        assert _validate_signature_format(valid_sig, "dilithium3")
 
     def test_dilithium_signature_validation_too_short(self):
         """Test short Dilithium signature fails."""
         invalid_sig = "dilithium3:" + "a" * 100  # Too short
-        assert _validate_signature_format(invalid_sig, "dilithium3") == False
+        assert not _validate_signature_format(invalid_sig, "dilithium3")
 
     def test_empty_signature_validation(self):
         """Test empty signature fails validation."""
-        assert _validate_signature_format("", "ed25519") == False
-        assert _validate_signature_format(None, "ed25519") == False
+        assert not _validate_signature_format("", "ed25519")
+        assert not _validate_signature_format(None, "ed25519")
 
 
 class TestPublicKeyFormatValidation:
@@ -69,27 +69,27 @@ class TestPublicKeyFormatValidation:
     def test_ed25519_public_key_validation_valid(self):
         """Test valid Ed25519 public key format."""
         valid_key = "a" * 64  # 32 bytes = 64 hex chars
-        assert _validate_public_key_format(valid_key, "ed25519") == True
+        assert _validate_public_key_format(valid_key, "ed25519")
 
     def test_ed25519_public_key_validation_wrong_length(self):
         """Test Ed25519 public key with wrong length fails."""
         invalid_key = "a" * 32  # Too short
-        assert _validate_public_key_format(invalid_key, "ed25519") == False
+        assert not _validate_public_key_format(invalid_key, "ed25519")
 
     def test_dilithium_public_key_validation_valid(self):
         """Test valid Dilithium public key format."""
         valid_key = "a" * 3000  # Substantial length for Dilithium3
-        assert _validate_public_key_format(valid_key, "dilithium3") == True
+        assert _validate_public_key_format(valid_key, "dilithium3")
 
     def test_dilithium_public_key_validation_too_short(self):
         """Test short Dilithium public key fails."""
         invalid_key = "a" * 100  # Too short
-        assert _validate_public_key_format(invalid_key, "dilithium3") == False
+        assert not _validate_public_key_format(invalid_key, "dilithium3")
 
     def test_invalid_hex_public_key(self):
         """Test public key with invalid hex fails."""
         invalid_key = "g" * 64  # 'g' is not valid hex
-        assert _validate_public_key_format(invalid_key, "ed25519") == False
+        assert not _validate_public_key_format(invalid_key, "ed25519")
 
 
 class TestReplayProtection:
@@ -106,7 +106,7 @@ class TestReplayProtection:
         public_key = "test_public_key"
 
         result = _check_replay_protection(hash_str, signature, public_key)
-        assert result == True
+        assert result
 
     def test_reverification_allowed(self):
         """Test re-verification of same signature is allowed.
@@ -121,11 +121,11 @@ class TestReplayProtection:
 
         # First use should succeed
         result1 = _check_replay_protection(hash_str, signature, public_key)
-        assert result1 == True
+        assert result1
 
         # Re-verification with same hash+signature+key should be ALLOWED
         result2 = _check_replay_protection(hash_str, signature, public_key)
-        assert result2 == True  # Legitimate re-verification is allowed
+        assert result2  # Legitimate re-verification is allowed
 
     def test_different_signatures_allowed(self):
         """Test different signatures are both allowed."""
@@ -133,10 +133,10 @@ class TestReplayProtection:
         public_key = "test_public_key"
 
         result1 = _check_replay_protection(hash_str, "signature1", public_key)
-        assert result1 == True
+        assert result1
 
         result2 = _check_replay_protection(hash_str, "signature2", public_key)
-        assert result2 == True
+        assert result2
 
     def test_cache_stats(self):
         """Test cache statistics functionality."""
@@ -205,7 +205,7 @@ class TestPostQuantumCryptographyFixes:
         pq = PostQuantumCrypto()
 
         result = pq._secure_fallback_verify(b"message", b"signature", b"key")
-        assert result == False
+        assert not result
 
     @patch("src.crypto.post_quantum.pq_crypto")
     def test_hybrid_verification_requires_both_signatures(self, mock_pq_crypto):
@@ -233,7 +233,7 @@ class TestPostQuantumCryptographyFixes:
             result = pq.hybrid_verify(
                 message, signatures, ed25519_public, dilithium_public
             )
-            assert result == False  # Should fail if Ed25519 fails
+            assert not result  # Should fail if Ed25519 fails
 
     def test_hybrid_verification_missing_signatures(self):
         """Test hybrid verification fails with missing signatures."""
@@ -247,7 +247,7 @@ class TestPostQuantumCryptographyFixes:
         result = pq.hybrid_verify(
             message, incomplete_signatures, ed25519_public, dilithium_public
         )
-        assert result == False
+        assert not result
 
 
 class TestZeroKnowledgeProofFixes:
@@ -299,7 +299,7 @@ class TestZeroKnowledgeProofFixes:
         )
 
         result = zk._verify_fallback_proof(dummy_proof)
-        assert result == False
+        assert not result
 
 
 class TestSecureKeyManager:
@@ -435,13 +435,13 @@ class TestEnhancedCryptoUtils:
                         result1, _ = verify_capsule(
                             mock_capsule, "a" * 64, "ed25519:" + "b" * 128
                         )
-                        assert result1 == True
+                        assert result1
 
                         # Re-verification of same capsule should also succeed
                         result2, _ = verify_capsule(
                             mock_capsule, "a" * 64, "ed25519:" + "b" * 128
                         )
-                        assert result2 == True  # Re-verification is allowed
+                        assert result2  # Re-verification is allowed
 
 
 class TestSecurityIntegration:
@@ -497,7 +497,7 @@ class TestSecurityIntegration:
                             "ed25519:" + "b" * 128,  # Valid Ed25519 signature
                         )
 
-                        assert result == True
+                        assert result
                         assert "verified" in message.lower()
 
 

@@ -114,7 +114,7 @@ class TestDSSEEnvelope:
 
         assert envelope.payload_type == PAYLOAD_TYPE_CAPSULE
         assert envelope.payload_bytes() == content
-        assert envelope.is_signed == False
+        assert not envelope.is_signed
 
     def test_envelope_payload_json(self):
         data = {"capsule_id": "caps_123", "type": "reasoning_trace"}
@@ -135,7 +135,7 @@ class TestDSSEEnvelope:
 
         envelope.sign(keyid="mock-key-123", sign_func=mock_sign)
 
-        assert envelope.is_signed == True
+        assert envelope.is_signed
         assert len(envelope.signatures) == 1
         assert envelope.signatures[0].keyid == "mock-key-123"
 
@@ -156,8 +156,8 @@ class TestDSSEEnvelope:
         def mock_verify(message: bytes, sig: bytes) -> bool:
             return sig == b"valid_sig"
 
-        assert envelope.verify("key-1", mock_verify) == True
-        assert envelope.verify("wrong-key", mock_verify) == False
+        assert envelope.verify("key-1", mock_verify)
+        assert not envelope.verify("wrong-key", mock_verify)
 
     def test_envelope_to_dict_from_dict(self):
         content = b'{"id": "test"}'
@@ -222,7 +222,7 @@ class TestDSSEEnvelope:
         envelope.sign(keyid="key1", sign_func=sign1)
         envelope.sign(keyid="key2", sign_func=sign2)
 
-        assert envelope.is_signed == True
+        assert envelope.is_signed
         assert len(envelope.signatures) == 2
         assert envelope.signatures[0].keyid == "key1"
         assert envelope.signatures[1].keyid == "key2"
@@ -244,7 +244,7 @@ class TestVerificationMaterial:
         )
 
         assert material.public_key_bytes() == b"test_key"
-        assert material.is_hybrid == False
+        assert not material.is_hybrid
 
     def test_hybrid_material(self):
         material = VerificationMaterial(
@@ -253,7 +253,7 @@ class TestVerificationMaterial:
             pq_algorithm="ml-dsa-65",
         )
 
-        assert material.is_hybrid == True
+        assert material.is_hybrid
 
     def test_timestamp_evidence(self):
         ts = TimestampEvidence(
@@ -262,7 +262,7 @@ class TestVerificationMaterial:
             timestamp=datetime.now(timezone.utc),
         )
 
-        assert ts.has_token == True
+        assert ts.has_token
 
         d = ts.to_dict()
         restored = TimestampEvidence.from_dict(d)
@@ -346,7 +346,7 @@ class TestUATPBundle:
 
         result = bundle.verify()
 
-        assert result.is_valid == False
+        assert not result.is_valid
         assert any("no signatures" in e for e in result.errors)
 
     def test_bundle_structure(self):
@@ -430,8 +430,8 @@ class TestBundleWithRealCrypto:
         # Verify
         result = bundle.verify()
 
-        assert result.is_valid == True
-        assert result.signature_valid == True
+        assert result.is_valid
+        assert result.signature_valid
         assert len(result.errors) == 0
 
     def test_tampered_payload_fails_verification(self, ed25519_keys):
@@ -461,8 +461,8 @@ class TestBundleWithRealCrypto:
         # Verify should fail
         result = bundle.verify()
 
-        assert result.is_valid == False
-        assert result.signature_valid == False
+        assert not result.is_valid
+        assert not result.signature_valid
 
 
 class TestIntegration:
@@ -530,7 +530,7 @@ class TestVerificationResult:
         result = VerificationResult(is_valid=True)
         d = result.to_dict()
 
-        assert d["isValid"] == True
+        assert d["isValid"]
         assert d["errors"] == []
         assert d["warnings"] == []
         assert "verifiedAt" in d
@@ -547,8 +547,8 @@ class TestVerificationResult:
         )
         d = result.to_dict()
 
-        assert d["signatureValid"] == True
-        assert d["timestampValid"] == False
+        assert d["signatureValid"]
+        assert not d["timestampValid"]
 
     def test_to_dict_with_hybrid_signature(self):
         """Test to_dict with PQ signature validation."""
@@ -561,7 +561,7 @@ class TestVerificationResult:
         )
         d = result.to_dict()
 
-        assert d["pqSignatureValid"] == True
+        assert d["pqSignatureValid"]
 
     def test_to_dict_with_errors(self):
         """Test to_dict with errors and warnings."""
@@ -574,7 +574,7 @@ class TestVerificationResult:
         )
         d = result.to_dict()
 
-        assert d["isValid"] == False
+        assert not d["isValid"]
         assert len(d["errors"]) == 2
         assert len(d["warnings"]) == 1
 
@@ -593,7 +593,7 @@ class TestBundleIsHybrid:
             pq_algorithm="ml-dsa-65",
         )
 
-        assert bundle.is_hybrid == True
+        assert bundle.is_hybrid
 
     def test_bundle_is_hybrid_false(self):
         """Test is_hybrid returns False for non-hybrid bundle."""
@@ -604,13 +604,13 @@ class TestBundleIsHybrid:
             key_id="test",
         )
 
-        assert bundle.is_hybrid == False
+        assert not bundle.is_hybrid
 
     def test_bundle_is_hybrid_no_verification(self):
         """Test is_hybrid returns False when no verification material."""
         bundle = UATPBundle(dsse=DSSEEnvelope.create(b'{"test": true}'))
 
-        assert bundle.is_hybrid == False
+        assert not bundle.is_hybrid
 
 
 class TestTimestampEvidenceToDict:
@@ -658,8 +658,8 @@ class TestBundleVerifyCustomFunc:
 
         result = bundle.verify(verify_func=custom_verify)
 
-        assert result.is_valid == True
-        assert result.signature_valid == True
+        assert result.is_valid
+        assert result.signature_valid
 
     def test_verify_with_custom_func_failure(self):
         """Test verify with custom verification function that fails."""
@@ -678,8 +678,8 @@ class TestBundleVerifyCustomFunc:
 
         result = bundle.verify(verify_func=custom_verify)
 
-        assert result.is_valid == False
-        assert result.signature_valid == False
+        assert not result.is_valid
+        assert not result.signature_valid
 
 
 class TestSignPAE:
@@ -728,7 +728,7 @@ class TestVerifyPAE:
             return message == expected_pae and sig == b"valid_sig"
 
         result = verify_pae(payload_type, payload, b"valid_sig", mock_verify)
-        assert result == True
+        assert result
 
     def test_verify_pae_failure(self):
         """Test verify_pae returns False for invalid signature."""
@@ -739,7 +739,7 @@ class TestVerifyPAE:
             return False  # Always fail
 
         result = verify_pae(payload_type, payload, b"any_sig", mock_verify)
-        assert result == False
+        assert not result
 
     def test_verify_pae_different_payload_fails(self):
         """Test verify_pae fails when payload differs."""
@@ -755,7 +755,7 @@ class TestVerifyPAE:
 
         # Verification with tampered payload should fail
         result = verify_pae(payload_type, tampered_payload, b"sig", mock_verify)
-        assert result == False
+        assert not result
 
 
 class TestDSSESignatureSerialization:
@@ -835,7 +835,7 @@ class TestDSSEEnvelopeVerifyAny:
 
         is_valid, keyid = envelope.verify_any(verify_funcs)
 
-        assert is_valid == True
+        assert is_valid
         assert keyid == "key-2"
 
     def test_verify_any_no_match(self):
@@ -851,7 +851,7 @@ class TestDSSEEnvelopeVerifyAny:
 
         is_valid, keyid = envelope.verify_any(verify_funcs)
 
-        assert is_valid == False
+        assert not is_valid
         assert keyid is None
 
     def test_verify_any_all_fail(self):
@@ -864,5 +864,5 @@ class TestDSSEEnvelopeVerifyAny:
 
         is_valid, keyid = envelope.verify_any(verify_funcs)
 
-        assert is_valid == False
+        assert not is_valid
         assert keyid is None

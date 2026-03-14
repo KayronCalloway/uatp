@@ -296,7 +296,7 @@ class ServiceContainer:
                     continue
 
                 param_type = type_hints.get(param_name)
-                if param_type and param_type != type(None):
+                if param_type and param_type is not type(None):
                     # Handle generic types
                     origin = get_origin(param_type)
                     if origin is not None:

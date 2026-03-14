@@ -55,7 +55,7 @@ class TestResultFormatting:
 
         d = result_to_dict(result)
 
-        assert d["is_valid"] == True
+        assert d["is_valid"]
         assert d["verified_at"] == "2026-03-12T10:00:00+00:00"
         assert any(c["name"] == "signature" for c in d["checks"])
 
