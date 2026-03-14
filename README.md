@@ -136,7 +136,7 @@ Full structure with audit priorities: [Repository Map](docs/repository-map.md)
 
 ## How Verification Works
 
-**True Zero-Trust Architecture:** The SDK signs ALL capsules locally. Your private key NEVER leaves your device.
+**SDK Zero-Trust Flow:** The SDK signs capsules locally. Your private key never leaves your device.
 
 ```
 ┌─────────────────────────────┐
@@ -146,14 +146,12 @@ Full structure with audit priorities: [Repository Map](docs/repository-map.md)
 │  ✓ Ed25519 + PBKDF2 480K    │
 │  ✓ Keys stored ~/.uatp/keys │
 └──────────────┬──────────────┘
-               │ Only hash transmitted
+               │
                ▼
 ┌─────────────────────────────┐
 │  UATP SERVER                │
-│  - Receives hash only       │
-│  - CANNOT sign for you      │
-│  - Stores pre-signed        │
-│    capsules on request      │
+│  Default: hash only         │
+│  Optional: store capsule    │
 └──────────────┬──────────────┘
                │ Hash for timestamp
                ▼
@@ -164,7 +162,15 @@ Full structure with audit priorities: [Repository Map](docs/repository-map.md)
 └─────────────────────────────┘
 ```
 
-UATP operators **cannot** sign on behalf of users—the SDK generates and stores private keys locally and never transmits them. The server only receives content hashes (not content) and pre-signed capsules (not unsigned data). Capsule integrity is independently verifiable without trusting UATP infrastructure. See [TRUST_MODEL.md](TRUST_MODEL.md) for assumptions and [THREAT_MODEL.md](THREAT_MODEL.md) for limitations.
+**What the server sees (SDK default `store_on_server=False`):**
+- Hash only (32 bytes) — for timestamping
+- No capsule content transmitted
+
+**What the server sees (if `store_on_server=True`):**
+- Full signed capsule including content
+- Use this for server-side storage/search
+
+UATP operators **cannot** sign on behalf of users—the SDK generates and stores private keys locally and never transmits them. See [TRUST_MODEL.md](TRUST_MODEL.md) for security assumptions.
 
 ---
 

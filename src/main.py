@@ -24,12 +24,11 @@ def create_asgi_app():
         """Production security headers for ASGI deployment"""
         response = await call_next(request)
 
-        # Add security headers
+        # Add security headers (modern set - X-XSS-Protection removed as deprecated)
         response.headers.update(
             {
                 "X-Content-Type-Options": "nosniff",
                 "X-Frame-Options": "DENY",
-                "X-XSS-Protection": "1; mode=block",
                 "Referrer-Policy": "strict-origin-when-cross-origin",
             }
         )

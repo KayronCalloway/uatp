@@ -353,11 +353,10 @@ class SecurityManager:
         return re.match(pattern, email) is not None
 
     def get_security_headers(self) -> Dict[str, str]:
-        """Get recommended security headers."""
+        """Get recommended security headers (modern set, no deprecated headers)."""
         return {
             "X-Content-Type-Options": "nosniff",
             "X-Frame-Options": "DENY",
-            "X-XSS-Protection": "1; mode=block",
             "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
             "Content-Security-Policy": "default-src 'self'",
             "Referrer-Policy": "strict-origin-when-cross-origin",
