@@ -701,7 +701,7 @@ class HorizontalChainSharding:
             # 3. Register new shards and mark old shard as split
             self.shards[left_shard_id] = left_shard
             self.shards[right_shard_id] = right_shard
-            shard.status = ShardStatus.SPLIT  # Mark as split
+            shard.state = ShardState.SPLITTING  # Mark as split
             shard.metadata["split_into"] = [left_shard_id, right_shard_id]
 
             logger.info(

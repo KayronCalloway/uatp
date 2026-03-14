@@ -158,6 +158,9 @@ async def compute_cqss(chain: List[Capsule], verify_capsule_fn) -> CQSSResult:
     confidences = [c.confidence for c in chain if c.confidence is not None]
     avg_confidence = statistics.mean(confidences) if confidences else 0
 
+    # Calculate fork quality impact for quality penalties
+    fork_quality_impact = min(1.0, fork_count / max(chain_length, 1) * 2)
+
     # Calculate complexity score based on fork/join structure (0-100) with quality impact
     complexity_base = min(100, (fork_count + len(join_points)) * 10)
     complexity_score = complexity_base * (1 - 0.5 * math.exp(-chain_length / 10))

@@ -5,9 +5,12 @@ Provides endpoints for capturing live AI conversations and generating capsules.
 
 import asyncio
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+
+if TYPE_CHECKING:
+    from src.live_capture.conversation_monitor import LiveConversationMonitor
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/live", tags=["Live Capture"])

@@ -50,6 +50,7 @@ def handle_api_exception(e: Exception, logger: logging.Logger, context: str) -> 
     """
     from src.engine.exceptions import (
         CapsuleLoggingError,
+        CapsuleSigningError,
         InvalidCapsuleParameterError,
         InvalidRequestError,
         ValidationError,

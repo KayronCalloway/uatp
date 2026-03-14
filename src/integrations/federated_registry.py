@@ -606,15 +606,6 @@ class FederatedModelRegistry:
             logger.error("CapsuleEngine required to distribute reasoning trace")
             return None
 
-    def _get_trusted_validators(self) -> List[FederationMember]:
-        """Return a list of trusted validators from the federation members."""
-        return [
-            member
-            for member_id, member in self.members.items()
-            if member.role == FederationRole.VALIDATOR
-            and member.trust_score >= self.trust_config.trust_threshold
-        ]
-
     async def _query_federated_traces(
         self, query: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
@@ -835,84 +826,6 @@ class FederatedModelRegistry:
             f"Applied governance decision {decision_id} from member {member_id}"
         )
         return True
-
-    async def distribute_reasoning_trace(
-        self,
-        trace_id: str,
-        provider: str,
-        reasoning_steps: List[MultiModalReasoningStep],
-        metadata: Dict[str, Any] = None,
-    ) -> Optional[str]:
-        """Distribute reasoning trace to federation members.
-
-        Args:
-            trace_id: ID of the reasoning trace
-            provider: Provider name
-            reasoning_steps: List of reasoning steps
-            metadata: Optional metadata
-
-        Returns:
-            Capsule ID if successful, None otherwise
-        """
-        # Format trace content for capsule
-        trace_content = {
-            "reasoning_steps": [step.model_dump() for step in reasoning_steps],
-            "metadata": metadata or {},
-        }
-
-        try:
-            # Create trace capsule
-            capsule = await self.create_federation_capsule(
-                capsule_type="REASONING_TRACE",
-                content=json.dumps(trace_content),
-                metadata={
-                    "trace_id": trace_id,
-                    "provider": provider,
-                    "step_count": len(reasoning_steps),
-                    "federation_action": "distribute_trace",
-                },
-            )
-
-            if not capsule:
-                return None
-
-            # Store in cache
-            if not hasattr(self, "capsule_cache"):
-                self.capsule_cache = {}
-            self.capsule_cache[capsule.id] = capsule
-
-            # Index the trace
-            if not hasattr(self, "trace_index"):
-                self.trace_index = {}
-            self.trace_index[trace_id] = {
-                "capsule_id": capsule.id,
-                "provider": provider,
-                "step_count": len(reasoning_steps),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "member_id": self.member.id,
-            }
-
-            # Store in local traces index so it can be queried later
-            self.traces[trace_id] = {
-                "provider": provider,
-                "content": {
-                    "reasoning_steps": [step.model_dump() for step in reasoning_steps],
-                    "metadata": metadata or {},
-                },
-                "capsule_id": capsule.id,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            }
-
-            # Federation distribution implementation would go here
-            logger.info(
-                f"Would distribute reasoning trace capsule {capsule.id} to federation"
-            )
-
-            return capsule.id
-
-        except Exception as e:
-            logger.error(f"Failed to distribute reasoning trace: {e}")
-            return None
 
 
 async def demo_federated_registry():

@@ -127,10 +127,6 @@ class MediaContent(BaseModel):
         """Return the SHA-256 hash of the content (attribute-style)."""
         return self.get_content_hash()
 
-    def content_hash(self) -> str:  # noqa: D401 legacy callable alias
-        """Callable alias retained for backward-compatibility with tests."""
-        return self.get_content_hash()
-
     def content_hash_(self) -> str:  # pragma: no cover – deprecated double alias
         return self.get_content_hash()
 

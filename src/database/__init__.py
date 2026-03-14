@@ -8,7 +8,7 @@ support, connection pooling, migrations, and comprehensive data persistence.
 
 from .connection import DatabaseManager, get_database_manager
 from .migrations import MigrationManager, run_migrations
-from .models import *
+from .models import Attribution, Base
 
 __all__ = [
     # Core database management

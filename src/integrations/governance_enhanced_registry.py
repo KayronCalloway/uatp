@@ -25,7 +25,6 @@ from src.governance.advanced_governance import (
 from src.integrations.advanced_llm_registry import (
     LLMOutput,
     LLMProviderAdapter,
-    ReasoningStep,
     create_and_sign_reasoning_capsule,
 )
 
