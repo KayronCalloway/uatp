@@ -72,20 +72,20 @@ class TestSignatureFacet:
             pq_algorithm="ml-dsa-65",
             pq_signature="xyz",
         )
-        assert facet.is_hybrid() == True
+        assert facet.is_hybrid()
 
         facet_simple = UATPSignatureRunFacet(signature="abc")
-        assert facet_simple.is_hybrid() == False
+        assert not facet_simple.is_hybrid()
 
     def test_has_trusted_timestamp(self):
         facet = UATPSignatureRunFacet(
             signature="abc",
             timestamp_token="base64token",
         )
-        assert facet.has_trusted_timestamp() == True
+        assert facet.has_trusted_timestamp()
 
         facet_no_ts = UATPSignatureRunFacet(signature="abc")
-        assert facet_no_ts.has_trusted_timestamp() == False
+        assert not facet_no_ts.has_trusted_timestamp()
 
 
 class TestVerificationFacet:
@@ -93,16 +93,16 @@ class TestVerificationFacet:
 
     def test_verification_status(self):
         facet = UATPVerificationRunFacet(is_verified=True)
-        assert facet.is_fully_verified() == True
+        assert facet.is_fully_verified()
 
         facet.add_error("Signature mismatch")
-        assert facet.is_verified == False
-        assert facet.is_fully_verified() == False
+        assert not facet.is_verified
+        assert not facet.is_fully_verified()
 
     def test_add_warning(self):
         facet = UATPVerificationRunFacet(is_verified=True)
         facet.add_warning("Timestamp near expiry")
-        assert facet.is_verified == True  # Warning doesn't fail verification
+        assert facet.is_verified  # Warning doesn't fail verification
         assert "Timestamp near expiry" in facet.warnings
 
 
@@ -127,15 +127,15 @@ class TestConfidenceFacet:
 
     def test_high_confidence(self):
         facet = UATPConfidenceRunFacet(confidence=0.9)
-        assert facet.is_high_confidence() == True
-        assert facet.is_high_confidence(threshold=0.95) == False
+        assert facet.is_high_confidence()
+        assert not facet.is_high_confidence(threshold=0.95)
 
     def test_calibration_significant(self):
         facet = UATPConfidenceRunFacet(calibration_adjustment=0.1)
-        assert facet.is_calibration_significant() == True
+        assert facet.is_calibration_significant()
 
         facet_minor = UATPConfidenceRunFacet(calibration_adjustment=0.02)
-        assert facet_minor.is_calibration_significant() == False
+        assert not facet_minor.is_calibration_significant()
 
 
 class TestEntities:
@@ -285,11 +285,11 @@ class TestFacetDeletion:
 
     def test_delete_facet(self):
         facet = UATPSignatureRunFacet(signature="test")
-        assert facet._deleted == False
+        assert not facet._deleted
 
         facet.delete(reason="Superseded by new signature")
 
-        assert facet._deleted == True
+        assert facet._deleted
         assert facet._deleted_at is not None
         assert facet._deletion_reason == "Superseded by new signature"
 
@@ -298,7 +298,7 @@ class TestFacetDeletion:
         facet.delete(reason="Test deletion")
 
         d = facet.to_dict()
-        assert d["_deleted"] == True
+        assert d["_deleted"]
         assert "_deletedAt" in d
         assert d["_deletionReason"] == "Test deletion"
 
@@ -364,8 +364,6 @@ class TestLineageEventEdgeCases:
 
     def test_event_all_event_types(self):
         """Test all standard event types."""
-        from src.schema.entities import LineageEvent
-
         for event_type in ["START", "RUNNING", "COMPLETE", "FAIL", "ABORT"]:
             event = LineageEvent(event_type=event_type)
             d = event.to_dict()
