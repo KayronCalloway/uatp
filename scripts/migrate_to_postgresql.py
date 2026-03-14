@@ -177,7 +177,7 @@ class PostgreSQLMigrator:
                     standardized["timestamp"].replace("Z", "+00:00")
                 )
                 standardized["timestamp"] = dt.isoformat()
-            except:
+            except Exception:
                 standardized["timestamp"] = datetime.now().isoformat()
 
         return standardized

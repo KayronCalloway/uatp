@@ -7,16 +7,14 @@ Run this script with Streamlit to see the visualization:
     streamlit run tests/test_consent_capsule_visualization.py
 """
 
-import datetime
 import uuid
+from datetime import datetime, timezone
 
 import streamlit as st
+from visualizer.components.uatp7_inspector import render_consent_content
 
 # Import the required modules
 from capsules.specialized_capsules import ConsentCapsule
-from visualizer.components.uatp7_inspector import (
-    render_consent_content,
-)
 
 # Set page config
 st.set_page_config(

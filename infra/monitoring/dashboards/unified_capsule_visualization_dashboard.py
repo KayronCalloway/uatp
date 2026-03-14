@@ -3,14 +3,6 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import streamlit as st
-from capsules.specialized_capsules import (
-    CapsuleExpirationCapsule,
-    ConsentCapsule,
-    EconomicCapsule,
-    GovernanceCapsule,
-    SimulatedMaliceCapsule,
-    TrustRenewalCapsule,
-)
 from visualizer.components.uatp7_inspector import (
     render_capsule_expiration_content,
     render_consent_content,
@@ -18,6 +10,15 @@ from visualizer.components.uatp7_inspector import (
     render_governance_content,
     render_simulated_malice_content,
     render_trust_renewal_content,
+)
+
+from capsules.specialized_capsules import (
+    CapsuleExpirationCapsule,
+    ConsentCapsule,
+    EconomicCapsule,
+    GovernanceCapsule,
+    SimulatedMaliceCapsule,
+    TrustRenewalCapsule,
 )
 
 # Define icons (text-based) and colors for different capsule types

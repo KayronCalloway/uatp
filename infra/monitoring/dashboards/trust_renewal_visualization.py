@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 
 import streamlit as st
-from capsules.specialized_capsules import TrustRenewalCapsule
 from visualizer.components.uatp7_inspector import render_trust_renewal_content
+
+from capsules.specialized_capsules import TrustRenewalCapsule
 
 
 def main():

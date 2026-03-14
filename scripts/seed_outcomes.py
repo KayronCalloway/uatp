@@ -152,7 +152,7 @@ def seed_outcomes(db_path: str, limit: int = 50):
         if isinstance(payload, str):
             try:
                 payload = json.loads(payload)
-            except:
+            except Exception:
                 payload = {}
 
         signals = extract_signals(payload)

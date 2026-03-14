@@ -76,7 +76,7 @@ def extract_text(capsule: Dict[str, Any]) -> str:
     if isinstance(payload, str):
         try:
             payload = json.loads(payload)
-        except:
+        except Exception:
             payload = {}
 
     if prompt := payload.get("prompt"):

@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import logging
 
 from src.agent.spending_limits import AgentSpendingManager
+
 from src.auth.agent_auth import AgentAuthManager
 
 logging.basicConfig(level=logging.INFO)

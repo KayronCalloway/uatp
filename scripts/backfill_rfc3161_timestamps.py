@@ -105,7 +105,7 @@ async def backfill_timestamps(dry_run: bool = False, limit: int = None):
 
             # Check if already trusted
             ts_info = verification.get("timestamp", {})
-            if ts_info.get("trusted") == True:
+            if ts_info.get("trusted"):
                 stats["already_trusted"] += 1
                 continue
 

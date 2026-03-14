@@ -34,7 +34,7 @@ def check_postgresql_running():
             text=True,
         )
         return "uatp_postgresql" in result.stdout
-    except:
+    except Exception:
         return False
 
 

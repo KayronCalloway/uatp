@@ -246,20 +246,17 @@ class SecurityValidator:
                             spec = spec.get("template", {}).get("spec", {})
 
                         security_context = spec.get("securityContext", {})
-                        if security_context.get("runAsNonRoot") == True:
+                        if security_context.get("runAsNonRoot"):
                             pod_security_checks["runAsNonRoot"] = True
 
                         containers = spec.get("containers", [])
                         for container in containers:
                             container_security = container.get("securityContext", {})
 
-                            if container_security.get("readOnlyRootFilesystem") == True:
+                            if container_security.get("readOnlyRootFilesystem"):
                                 pod_security_checks["readOnlyRootFilesystem"] = True
 
-                            if (
-                                container_security.get("allowPrivilegeEscalation")
-                                == False
-                            ):
+                            if not container_security.get("allowPrivilegeEscalation"):
                                 pod_security_checks["allowPrivilegeEscalation"] = True
 
                             capabilities = container_security.get("capabilities", {})

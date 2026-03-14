@@ -383,7 +383,7 @@ class DatabaseBackupManager:
                             with zipf.open("backup_metadata.json") as f:
                                 metadata = json.load(f)
                                 backup_info["metadata"] = metadata.get("metadata", {})
-                except:
+                except Exception:
                     pass
 
                 backups.append(backup_info)

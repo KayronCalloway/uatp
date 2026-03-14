@@ -11,6 +11,7 @@ import sys
 
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 # Add project root to path

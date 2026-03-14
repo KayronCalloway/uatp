@@ -9,10 +9,10 @@ import json
 from datetime import datetime, timedelta
 
 import streamlit as st
+from visualizer.components.uatp7_inspector import render_uatp7_content
 
 # Import required modules from the project
 from capsules.specialized_capsules import EconomicCapsule
-from visualizer.components.uatp7_inspector import render_uatp7_content
 
 # Set page configuration
 st.set_page_config(
