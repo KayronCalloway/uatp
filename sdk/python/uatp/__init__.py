@@ -23,7 +23,7 @@ from .models import (
     create_simple_reasoning_step,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = [
     "UATP",
     "CertificationResult",

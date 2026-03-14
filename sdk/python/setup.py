@@ -9,7 +9,7 @@ with open("README.md", encoding="utf-8") as fh:
 
 setup(
     name="uatp",
-    version="0.2.1",
+    version="0.3.0",
     author="Kayron Calloway",
     author_email="Kayron@houseofcalloway.com",
     description="Cryptographic proof that AI made a decision, with this reasoning, at this time",
