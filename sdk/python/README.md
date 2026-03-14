@@ -18,12 +18,13 @@ pip install -e .
 ## Quick Start
 
 ```python
-from uatp import UATP
+from uatp import UATP, verify_capsule_standalone
 
 client = UATP()
 
-# Create proof
-capsule = client.certify(
+# Create proof (signs locally, sends hash only to server by default)
+signed = client.certify(
+    task="Loan decision",
     decision="Loan approved: $50,000 at 5.2% APR",
     reasoning=[
         {"step": 1, "thought": "Credit score 720 (excellent)"},
@@ -31,12 +32,14 @@ capsule = client.certify(
     ]
 )
 
-# Verify proof
-assert capsule.verify() == True
+print(f"Capsule ID: {signed.capsule_id}")
+print(f"Signature: {signed.signature[:32]}...")
 
-# Tamper detection
-capsule.decision = "Loan approved: $500,000"
-assert capsule.verify() == False  # Signature invalid
+# Verify locally (no server needed)
+from uatp import LocalSigner
+signer = LocalSigner(passphrase="your-passphrase")
+is_valid = signer.verify_capsule(signed)
+print(f"Valid: {is_valid}")
 ```
 
 ## What This Does
@@ -66,12 +69,12 @@ client = UATP()  # Local development
 client = UATP(base_url="https://your-server.com")  # Production
 ```
 
-### `client.certify(decision, reasoning, task=None, confidence=None, metadata=None)`
+### `client.certify(task, decision, reasoning, confidence=None, metadata=None, store_on_server=False)`
 
-Create cryptographically signed capsule.
+Create cryptographically signed capsule. Signs locally by default.
 
 ```python
-result = client.certify(
+signed = client.certify(
     task="Approve loan",
     decision="Approved for $50,000",
     reasoning=[
@@ -82,16 +85,22 @@ result = client.certify(
 )
 ```
 
-**Returns:** `CertificationResult` with `capsule_id`, `proof_url`, `signature`, `timestamp`
+**Returns:** `SignedCapsule` with:
+- `capsule_id` - Unique identifier
+- `signature` - Ed25519 signature (hex)
+- `public_key` - Verification key (hex)
+- `content_hash` - SHA-256 of content
+- `signed_at` - Timestamp
+- `content` - The actual capsule content (stays local unless stored)
 
 ### `client.get_proof(capsule_id)`
 
-Retrieve full proof.
+Retrieve proof from server (requires `store_on_server=True` when creating).
 
 ```python
 proof = client.get_proof("cap_abc123")
-print(proof.decision)
-print(proof.verify())  # True or False
+print(proof.capsule_id)
+print(proof.signature_valid)  # True or False
 ```
 
 ### `client.list_capsules(limit=10)`
@@ -104,31 +113,41 @@ for c in capsules:
     print(f"{c.capsule_id}: {c.task}")
 ```
 
-## Local Signing (Recommended)
+## Local Signing (Default)
 
-For maximum security, sign locally without sending content to server:
+All signing happens locally. Private key never leaves your device.
 
 ```python
 from uatp import UATP
 
 client = UATP()
 
-# Sign locally - private key never leaves your device
-result = client.certify_local(
-    decision="Sensitive decision",
-    reasoning=[...],
-    passphrase="your-secure-passphrase"
+# Default: store_on_server=False
+# Signs locally, sends only hash for timestamping
+signed = client.certify(
+    task="Sensitive decision",
+    decision="Approved",
+    reasoning=[{"step": 1, "thought": "Analysis complete"}],
+    passphrase="your-secure-passphrase"  # Optional: uses device-bound key if omitted
 )
 
-# Only hash sent to server for timestamping
-# Content stays local
+# Content stays local, only hash sent to server
+print(f"Content hash: {signed.content_hash}")
+
+# To also store on server (for retrieval/search):
+signed = client.certify(
+    ...,
+    store_on_server=True  # Full capsule sent to server
+)
 ```
 
 ## Running the Backend
 
 ```bash
+git clone https://github.com/KayronCalloway/uatp.git
 cd uatp
-./scripts/dev/start_backend_dev.sh
+pip install -e .
+python run.py
 # Server runs on http://localhost:8000
 ```
 

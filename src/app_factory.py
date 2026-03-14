@@ -459,7 +459,7 @@ def setup_health_routes(app: FastAPI):
             activities = []
 
             # Get recent capsules from database
-            async with db.session() as session:
+            async with db.get_session() as session:
                 from sqlalchemy import text
 
                 result = await session.execute(
@@ -511,7 +511,7 @@ def setup_health_routes(app: FastAPI):
             # Database health
             db_health = 95
             try:
-                async with db.session() as session:
+                async with db.get_session() as session:
                     from sqlalchemy import text
 
                     start = time.time()

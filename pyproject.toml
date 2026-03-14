@@ -30,9 +30,8 @@ dependencies = [
     "asyncpg>=0.29.0",
     "psycopg2-binary>=2.9.0",
     "alembic>=1.12.0",
-    # Redis
+    # Redis (redis>=4.2 includes redis.asyncio, aioredis is deprecated)
     "redis>=5.0.0",
-    "aioredis>=2.0.0",
     # Validation & Serialization
     "pydantic[email]>=2.0.0",
     "pydantic-settings>=2.0.0",
