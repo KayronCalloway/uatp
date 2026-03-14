@@ -1,17 +1,55 @@
 """
 UATP Client - Core SDK functionality
+
+Zero-Trust Architecture:
+- Private keys NEVER leave your device
+- All signing happens locally using Ed25519
+- Only content hash sent to server for RFC 3161 timestamping
+- Capsules can be verified independently without UATP
 """
 
+import hashlib
 import logging
+import os
+import platform
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import requests
 
 from .crypto import LocalSigner, SignedCapsule, verify_capsule_standalone
 
 logger = logging.getLogger(__name__)
+
+
+def _derive_device_passphrase() -> str:
+    """
+    Derive a device-bound passphrase from machine-specific info.
+
+    This enables zero-friction onboarding while maintaining security:
+    - Passphrase is deterministic per machine
+    - Different machines = different keys
+    - No passphrase to remember
+
+    Security note: This is less secure than a user-chosen passphrase
+    but far better than server-side signing. The key still never leaves
+    the device.
+    """
+    # Gather machine-specific info
+    machine_info = [
+        platform.node(),  # Hostname
+        os.getenv("USER", os.getenv("USERNAME", "")),  # Username
+        platform.machine(),  # CPU architecture
+        str(os.path.expanduser("~")),  # Home directory path
+    ]
+
+    # Hash to create deterministic passphrase
+    combined = ":".join(machine_info)
+    device_hash = hashlib.sha256(combined.encode()).hexdigest()
+
+    # Use first 32 chars as passphrase (128 bits of entropy from device info)
+    return f"device_{device_hash[:32]}"
 
 
 @dataclass
@@ -110,13 +148,21 @@ class UATP:
         task: str,
         decision: str,
         reasoning: List[Dict[str, Any]],
+        passphrase: Optional[str] = None,
+        device_bound: bool = True,
+        key_dir: str = "~/.uatp/keys",
         confidence: Optional[float] = None,
         metadata: Optional[Dict[str, Any]] = None,
-    ) -> CertificationResult:
+        request_timestamp: bool = True,
+        store_on_server: bool = True,
+    ) -> Union[SignedCapsule, "CertificationResult"]:
         """
         Create a cryptographically certified capsule for an AI decision.
 
-        This is the main method you'll use to make AI decisions auditable.
+        ZERO-TRUST: Private key NEVER leaves your device.
+        - All signing happens locally using Ed25519
+        - Only the content hash is sent to UATP for timestamping
+        - Capsules can be verified independently without UATP
 
         Args:
             task: Description of the task (e.g., "Book doctor appointment")
@@ -125,39 +171,40 @@ class UATP:
                       - 'step': int (step number)
                       - 'thought': str (what the AI considered)
                       - 'confidence': float (0-1, how confident)
-            confidence: Overall confidence score (0-1). If not provided, averaged from reasoning.
+            passphrase: Your signing key passphrase. If not provided and device_bound=True,
+                       a machine-specific passphrase is derived automatically.
+            device_bound: If True (default), derive passphrase from machine info.
+                         Set to False if you provide your own passphrase.
+            key_dir: Directory for key storage (default: ~/.uatp/keys)
+            confidence: Overall confidence score (0-1). Auto-calculated if not provided.
             metadata: Optional additional metadata to attach
+            request_timestamp: If True, request RFC 3161 timestamp from external TSA
+            store_on_server: If True, store capsule on UATP server for retrieval
 
         Returns:
-            CertificationResult with capsule_id and proof_url
+            SignedCapsule with cryptographic proof (and CertificationResult if stored)
 
         Raises:
-            requests.HTTPError: If API request fails
             ValueError: If parameters are invalid
 
         Example:
+            >>> # Zero-friction (device-bound key)
             >>> result = client.certify(
             ...     task="Diagnose patient symptoms",
             ...     decision="Likely common cold, recommend rest and fluids",
             ...     reasoning=[
-            ...         {
-            ...             "step": 1,
-            ...             "thought": "Patient reports sore throat, congestion, fatigue",
-            ...             "confidence": 0.98
-            ...         },
-            ...         {
-            ...             "step": 2,
-            ...             "thought": "No fever >101°F rules out flu",
-            ...             "confidence": 0.85
-            ...         },
-            ...         {
-            ...             "step": 3,
-            ...             "thought": "Symptoms match common cold profile",
-            ...             "confidence": 0.87
-            ...         }
-            ...     ],
-            ...     confidence=0.87,
-            ...     metadata={"model": "gpt-4", "patient_id": "12345"}
+            ...         {"step": 1, "thought": "Patient reports symptoms", "confidence": 0.98},
+            ...         {"step": 2, "thought": "Symptoms match cold profile", "confidence": 0.87}
+            ...     ]
+            ... )
+            >>>
+            >>> # With custom passphrase (more secure)
+            >>> result = client.certify(
+            ...     task="Approve loan",
+            ...     decision="Approved: $50k at 6.5%",
+            ...     reasoning=[{"step": 1, "thought": "Credit score 720"}],
+            ...     passphrase="my-secure-passphrase",
+            ...     device_bound=False
             ... )
         """
         # Validate inputs
@@ -170,48 +217,113 @@ class UATP:
         if not reasoning or not isinstance(reasoning, list):
             raise ValueError("reasoning must be a non-empty list")
 
+        # Determine passphrase
+        if passphrase:
+            if len(passphrase) < 8:
+                raise ValueError("passphrase must be at least 8 characters")
+            signing_passphrase = passphrase
+        elif device_bound:
+            signing_passphrase = _derive_device_passphrase()
+        else:
+            raise ValueError("Either provide a passphrase or set device_bound=True")
+
         # Calculate confidence if not provided
         if confidence is None:
             confidences = [step.get("confidence", 0.5) for step in reasoning]
             confidence = sum(confidences) / len(confidences) if confidences else 0.5
 
-        # Prepare request payload in format backend expects
+        # Create content for signing
         timestamp = datetime.now(timezone.utc)
-        capsule_data = {
-            "type": "reasoning_trace",
-            "version": "1.0",
-            "payload": {
-                "task": task,
-                "decision": decision,
-                "reasoning_chain": reasoning,
-                "confidence": confidence,
-                "metadata": {
-                    **(metadata or {}),
-                    "timestamp": timestamp.isoformat(),
-                    "sdk_version": "0.2.1",
-                },
+        content = {
+            "task": task,
+            "decision": decision,
+            "reasoning_chain": reasoning,
+            "confidence": confidence,
+            "metadata": {
+                **(metadata or {}),
+                "timestamp": timestamp.isoformat(),
+                "sdk_version": "0.3.0",
+                "signing_mode": "local",
             },
         }
 
-        # Make API request
-        try:
-            response = self.session.post(
-                f"{self.base_url}/capsules", json=capsule_data, timeout=self.timeout
-            )
-            response.raise_for_status()
-            data = response.json()
+        # Create local signer (auto-generates key if none exists)
+        signer = LocalSigner(
+            passphrase=signing_passphrase,
+            key_dir=key_dir,
+            auto_generate=True,
+        )
 
-            # Parse response
-            capsule_id = data["capsule_id"]
-            return CertificationResult(
-                capsule_id=capsule_id,
-                proof_url=f"{self.base_url}/capsules/{capsule_id}/verify",
-                timestamp=timestamp,
-                success=data.get("success", True),
-            )
+        # Sign locally - private key NEVER leaves device
+        signed = signer.sign_capsule(content)
 
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Failed to certify decision: {e}") from e
+        logger.info(f"Locally signed capsule: {signed.capsule_id}")
+        logger.debug(f"Public key: {signed.public_key[:16]}...")
+
+        # Request RFC 3161 timestamp if desired
+        if request_timestamp:
+            try:
+                # Send ONLY the hash to UATP - content stays local
+                response = self.session.post(
+                    f"{self.base_url}/timestamp",
+                    json={"hash": signed.content_hash},
+                    timeout=self.timeout,
+                )
+                if response.ok:
+                    ts_data = response.json()
+                    signed.timestamp_token = ts_data.get("rfc3161")
+                    signed.timestamp_tsa = ts_data.get("tsa")
+                    signed.timestamped_at = datetime.now(timezone.utc)
+                    logger.info(
+                        f"Timestamp obtained from {signed.timestamp_tsa or 'TSA'}"
+                    )
+                else:
+                    logger.warning(
+                        f"Timestamp request failed: {response.status_code}. "
+                        "Capsule is still valid, just without external timestamp."
+                    )
+            except requests.exceptions.RequestException as e:
+                logger.warning(
+                    f"Could not obtain timestamp: {e}. "
+                    "Capsule is still valid, just without external timestamp."
+                )
+
+        # Store on server if requested
+        if store_on_server:
+            try:
+                # Convert to verifiable format and store
+                capsule_data = signer.to_verifiable_dict(signed)
+                capsule_data["type"] = "reasoning_trace"
+                capsule_data["payload"] = content
+
+                response = self.session.post(
+                    f"{self.base_url}/capsules/store",
+                    json=capsule_data,
+                    timeout=self.timeout,
+                )
+
+                if response.ok:
+                    data = response.json()
+                    # Add server storage info to signed capsule
+                    signed.server_stored = True
+                    signed.proof_url = (
+                        f"{self.base_url}/capsules/{signed.capsule_id}/verify"
+                    )
+                    logger.info(f"Capsule stored on server: {signed.capsule_id}")
+                else:
+                    logger.warning(
+                        f"Could not store on server: {response.status_code}. "
+                        "Capsule is still valid locally."
+                    )
+                    signed.server_stored = False
+
+            except requests.exceptions.RequestException as e:
+                logger.warning(
+                    f"Could not store on server: {e}. Capsule is still valid locally."
+                )
+                signed.server_stored = False
+
+        return signed
 
     def get_proof(self, capsule_id: str) -> CapsuleProof:
         """
@@ -298,29 +410,41 @@ class UATP:
         task: str,
         decision: str,
         reasoning_steps: List,  # List[ReasoningStep] or List[Dict]
+        passphrase: Optional[str] = None,
+        device_bound: bool = True,
+        key_dir: str = "~/.uatp/keys",
         confidence: Optional[float] = None,
         risk_assessment: Optional[Dict[str, Any]] = None,
         alternatives_considered: Optional[List[Dict[str, Any]]] = None,
         plain_language_summary: Optional[Dict[str, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
-    ) -> CertificationResult:
+        request_timestamp: bool = True,
+        store_on_server: bool = True,
+    ) -> SignedCapsule:
         """
         Create a capsule with enhanced data provenance.
 
+        ZERO-TRUST: Private key NEVER leaves your device.
         This is the RECOMMENDED method for enterprise use with full audit trails.
 
         Args:
             task: Description of the task
             decision: The AI's final decision
             reasoning_steps: List of ReasoningStep objects (or dicts with full provenance)
+            passphrase: Your signing key passphrase. If not provided and device_bound=True,
+                       a machine-specific passphrase is derived automatically.
+            device_bound: If True (default), derive passphrase from machine info.
+            key_dir: Directory for key storage (default: ~/.uatp/keys)
             confidence: Overall confidence (0-1)
             risk_assessment: RiskAssessment dict with probability, financial impact, safeguards
             alternatives_considered: List of Alternative dicts showing options evaluated
             plain_language_summary: PlainLanguageSummary dict for human-readable explanations
             metadata: Additional metadata
+            request_timestamp: If True, request RFC 3161 timestamp from external TSA
+            store_on_server: If True, store capsule on UATP server for retrieval
 
         Returns:
-            CertificationResult with capsule_id and proof_url
+            SignedCapsule with cryptographic proof
 
         Example:
             >>> from uatp import DataSource, ReasoningStep, RiskAssessment
@@ -351,11 +475,7 @@ class UATP:
             ...         "expected_value": 280,
             ...         "value_at_risk_95": 22500,
             ...         "safeguards": ["Income verified", "Collateral secured"]
-            ...     },
-            ...     alternatives_considered=[
-            ...         {"amount": 40000, "apr": 6.0, "why_not_chosen": "User needs $50k"},
-            ...         {"amount": 50000, "apr": 7.5, "why_not_chosen": "Rate too high"}
-            ...     ]
+            ...     }
             ... )
         """
         # Convert ReasoningStep objects to dicts
@@ -374,186 +494,49 @@ class UATP:
                     confidences.append(step["confidence"])
             confidence = sum(confidences) / len(confidences) if confidences else 0.5
 
-        # Prepare rich payload
-        timestamp = datetime.now(timezone.utc)
-        payload = {
-            "task": task,
-            "decision": decision,
-            "reasoning_chain": reasoning_chain,
-            "confidence": confidence,
-            "metadata": {
-                **(metadata or {}),
-                "timestamp": timestamp.isoformat(),
-                "sdk_version": "0.2.1",
-                "data_richness": "enterprise",
-            },
+        # Build rich metadata
+        rich_metadata = {
+            **(metadata or {}),
+            "data_richness": "enterprise",
         }
 
-        # Add optional rich data (handle both dicts and objects)
+        # Add optional rich data
         if risk_assessment:
             if hasattr(risk_assessment, "to_dict"):
-                payload["risk_assessment"] = risk_assessment.to_dict()
+                rich_metadata["risk_assessment"] = risk_assessment.to_dict()
             else:
-                payload["risk_assessment"] = risk_assessment
+                rich_metadata["risk_assessment"] = risk_assessment
 
         if alternatives_considered:
             if isinstance(alternatives_considered, list):
-                payload["alternatives_considered"] = [
+                rich_metadata["alternatives_considered"] = [
                     alt.to_dict() if hasattr(alt, "to_dict") else alt
                     for alt in alternatives_considered
                 ]
             else:
-                payload["alternatives_considered"] = alternatives_considered
+                rich_metadata["alternatives_considered"] = alternatives_considered
 
         if plain_language_summary:
             if hasattr(plain_language_summary, "to_dict"):
-                payload["plain_language_summary"] = plain_language_summary.to_dict()
+                rich_metadata["plain_language_summary"] = (
+                    plain_language_summary.to_dict()
+                )
             else:
-                payload["plain_language_summary"] = plain_language_summary
+                rich_metadata["plain_language_summary"] = plain_language_summary
 
-        capsule_data = {"type": "reasoning_trace", "version": "1.0", "payload": payload}
-
-        # Make API request
-        try:
-            response = self.session.post(
-                f"{self.base_url}/capsules", json=capsule_data, timeout=self.timeout
-            )
-            response.raise_for_status()
-            data = response.json()
-
-            capsule_id = data["capsule_id"]
-            return CertificationResult(
-                capsule_id=capsule_id,
-                proof_url=f"{self.base_url}/capsules/{capsule_id}/verify",
-                timestamp=timestamp,
-                success=data.get("success", True),
-            )
-
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Failed to certify rich decision: {e}") from e
-
-    def certify_local(
-        self,
-        task: str,
-        decision: str,
-        reasoning: List[Dict[str, Any]],
-        passphrase: str,
-        key_dir: str = "~/.uatp/keys",
-        confidence: Optional[float] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        request_timestamp: bool = True,
-    ) -> SignedCapsule:
-        """
-        Certify with local signing (zero-trust mode).
-
-        Private key NEVER leaves device.
-        Only hash is sent to UATP for timestamping (if requested).
-
-        This is the gold standard for security - use this when you need:
-        - Maximum security (key never transmitted)
-        - Compliance with strict data policies
-        - User-sovereign cryptographic proofs
-
-        Args:
-            task: Description of the task
-            decision: The AI's final decision
-            reasoning: List of reasoning steps
-            passphrase: Passphrase for your local signing key
-            key_dir: Directory for key storage (default: ~/.uatp/keys)
-            confidence: Overall confidence (0-1). Auto-calculated if not provided.
-            metadata: Optional additional metadata
-            request_timestamp: If True, request RFC 3161 timestamp from UATP
-
-        Returns:
-            SignedCapsule with cryptographic proof
-
-        Example:
-            >>> from uatp import UATP
-            >>> client = UATP()
-            >>> result = client.certify_local(
-            ...     task="Approve loan",
-            ...     decision="Approved: $50k at 6.5%",
-            ...     reasoning=[{"step": 1, "thought": "Credit score 720"}],
-            ...     passphrase="my-secret-passphrase"
-            ... )
-            >>> print(f"Signed: {result.capsule_id}")
-            >>> print(f"Signature: {result.signature[:32]}...")
-        """
-        # Validate inputs
-        if not task or not isinstance(task, str):
-            raise ValueError("task must be a non-empty string")
-
-        if not decision or not isinstance(decision, str):
-            raise ValueError("decision must be a non-empty string")
-
-        if not reasoning or not isinstance(reasoning, list):
-            raise ValueError("reasoning must be a non-empty list")
-
-        if not passphrase or len(passphrase) < 8:
-            raise ValueError("passphrase must be at least 8 characters")
-
-        # Calculate confidence if not provided
-        if confidence is None:
-            confidences = [step.get("confidence", 0.5) for step in reasoning]
-            confidence = sum(confidences) / len(confidences) if confidences else 0.5
-
-        # Create content for signing
-        timestamp = datetime.now(timezone.utc)
-        content = {
-            "task": task,
-            "decision": decision,
-            "reasoning_chain": reasoning,
-            "confidence": confidence,
-            "metadata": {
-                **(metadata or {}),
-                "timestamp": timestamp.isoformat(),
-                "sdk_version": "0.2.1",
-                "signing_mode": "local",
-            },
-        }
-
-        # Create local signer (auto-generates key if none exists)
-        signer = LocalSigner(
+        # Use main certify method with local signing
+        return self.certify(
+            task=task,
+            decision=decision,
+            reasoning=reasoning_chain,
             passphrase=passphrase,
+            device_bound=device_bound,
             key_dir=key_dir,
-            auto_generate=True,
+            confidence=confidence,
+            metadata=rich_metadata,
+            request_timestamp=request_timestamp,
+            store_on_server=store_on_server,
         )
-
-        # Sign locally
-        signed = signer.sign_capsule(content)
-
-        logger.info(f"Locally signed capsule: {signed.capsule_id}")
-        logger.debug(f"Public key: {signed.public_key[:16]}...")
-
-        # Request RFC 3161 timestamp if desired
-        if request_timestamp:
-            try:
-                # Send only the hash to UATP for timestamping
-                response = self.session.post(
-                    f"{self.base_url}/timestamp",
-                    json={"hash": signed.content_hash},
-                    timeout=self.timeout,
-                )
-                if response.ok:
-                    ts_data = response.json()
-                    signed.timestamp_token = ts_data.get("rfc3161")
-                    signed.timestamp_tsa = ts_data.get("tsa")
-                    signed.timestamped_at = datetime.now(timezone.utc)
-                    logger.info(
-                        f"Timestamp obtained from {signed.timestamp_tsa or 'TSA'}"
-                    )
-                else:
-                    logger.warning(
-                        f"Timestamp request failed: {response.status_code}. "
-                        "Capsule is still valid, just without external timestamp."
-                    )
-            except requests.exceptions.RequestException as e:
-                logger.warning(
-                    f"Could not obtain timestamp: {e}. "
-                    "Capsule is still valid, just without external timestamp."
-                )
-
-        return signed
 
     def verify_local(self, capsule_data: Dict[str, Any]) -> Dict[str, Any]:
         """

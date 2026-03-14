@@ -631,6 +631,111 @@ async def get_capsule(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
+@router.post("/store")
+async def store_presigned_capsule(
+    capsule_data: Dict[str, Any],
+    request: Request,
+    session: AsyncSession = Depends(get_db_session),
+):
+    """
+    Store a pre-signed capsule (zero-trust mode).
+
+    ZERO-TRUST: This endpoint accepts capsules that were signed locally by the SDK.
+    The server does NOT sign on behalf of the user - it only stores and timestamps.
+
+    The capsule MUST contain:
+    - verification.signature: Ed25519 signature created by user's local key
+    - verification.verify_key: User's public key for verification
+    - verification.hash: SHA-256 hash of content
+
+    Args:
+        capsule_data: Pre-signed capsule data with verification block
+
+    Returns:
+        Success response with capsule_id
+    """
+    correlation_id = get_correlation_id()
+
+    # Optional auth (capsules can be stored anonymously for now)
+    current_user = get_current_user_optional(request)
+    user_id = current_user.get("user_id") if current_user else None
+
+    try:
+        # Validate that the capsule has a signature
+        verification = capsule_data.get("verification", {})
+        if not verification.get("signature"):
+            raise HTTPException(
+                status_code=400,
+                detail="Pre-signed capsule must include verification.signature. "
+                "Use the SDK's certify() method with local signing.",
+            )
+
+        if not verification.get("verify_key"):
+            raise HTTPException(
+                status_code=400,
+                detail="Pre-signed capsule must include verification.verify_key",
+            )
+
+        # Mark as user-signed (not server-signed)
+        if "signer" not in verification:
+            verification["signer"] = "user"
+        capsule_data["verification"] = verification
+
+        # Extract or generate capsule_id
+        capsule_id = capsule_data.get("capsule_id")
+        if not capsule_id:
+            capsule_id = (
+                f"caps_{utc_now().strftime('%Y_%m_%d')}_{uuid.uuid4().hex[:16]}"
+            )
+            capsule_data["capsule_id"] = capsule_id
+
+        # Normalize capsule_type field name
+        if "type" in capsule_data and "capsule_type" not in capsule_data:
+            capsule_data["capsule_type"] = capsule_data.pop("type")
+
+        # Create database record
+        capsule = CapsuleModel(
+            capsule_id=capsule_id,
+            capsule_type=capsule_data.get("capsule_type", "user_signed"),
+            status="sealed",
+            version=capsule_data.get("version", "7.2"),
+            payload=capsule_data.get("payload") or capsule_data.get("content", {}),
+            verification=verification,
+            timestamp=utc_now(),
+            owner_id=user_id,
+            content_hash=verification.get("hash"),
+        )
+
+        session.add(capsule)
+        await session.commit()
+        await session.refresh(capsule)
+
+        logger.info(
+            f"[{correlation_id}] Stored pre-signed capsule: {capsule_id} "
+            f"(signer: user, verify_key: {verification.get('verify_key', '')[:16]}...)"
+        )
+
+        return {
+            "success": True,
+            "capsule_id": capsule_id,
+            "message": "Pre-signed capsule stored successfully",
+            "signer": "user",
+            "zero_trust": True,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await session.rollback()
+        logger.error(
+            f"[{correlation_id}] Failed to store pre-signed capsule: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=500, detail=f"Failed to store capsule: {str(e)}"
+        )
+
+
 @router.post("")
 async def create_capsule(
     capsule_data: Dict[str, Any],
@@ -639,6 +744,9 @@ async def create_capsule(
 ):
     """
     Create a new capsule with automatic lineage and chain tracking.
+
+    DEPRECATED: This endpoint signs on the server. For zero-trust architecture,
+    use the SDK's certify() method which signs locally, then POST to /capsules/store.
 
     If parent_capsule_id is provided, lineage edges are automatically registered.
     If chain_id is provided, the capsule is tracked for chain sealing.
@@ -652,6 +760,12 @@ async def create_capsule(
         Success response with capsule_id
     """
     user_id = current_user.get("user_id")
+
+    # Log deprecation warning
+    logger.warning(
+        "DEPRECATED: POST /capsules with server-side signing. "
+        "Use SDK certify() + POST /capsules/store for zero-trust."
+    )
 
     try:
         # Extract lineage and chain parameters
@@ -677,6 +791,7 @@ async def create_capsule(
             "message": "Capsule created successfully",
             "lineage_registered": parent_capsule_id is not None,
             "chain_tracked": chain_id is not None,
+            "warning": "DEPRECATED: Server-side signing. Use SDK certify() for zero-trust.",
         }
 
     except Exception as e:

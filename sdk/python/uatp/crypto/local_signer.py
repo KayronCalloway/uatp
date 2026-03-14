@@ -47,6 +47,10 @@ class SignedCapsule:
     timestamp_tsa: Optional[str] = None
     timestamped_at: Optional[datetime] = None
 
+    # Server storage info (if capsule was stored on UATP server)
+    server_stored: bool = False
+    proof_url: Optional[str] = None
+
 
 class LocalSigner:
     """

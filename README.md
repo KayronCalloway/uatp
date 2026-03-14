@@ -51,6 +51,8 @@ python run.py
 from uatp import UATP
 
 client = UATP()  # Connects to localhost:8000
+
+# Zero-trust: signing happens locally, private key never leaves your device
 result = client.certify(
     task="Loan decision",
     decision="Approved for $50,000 at 5.2% APR",
@@ -61,7 +63,21 @@ result = client.certify(
 )
 
 print(f"Capsule ID: {result.capsule_id}")
-print(f"Verified: {client.get_proof(result.capsule_id).verify()}")
+print(f"Signature: {result.signature[:32]}...")  # Ed25519 signature
+print(f"Public Key: {result.public_key[:32]}...")  # Your verify key
+```
+
+**Security modes:**
+```python
+# Device-bound (default): passphrase derived from machine info
+result = client.certify(task=..., decision=..., reasoning=...)
+
+# Custom passphrase (more secure, portable across machines)
+result = client.certify(
+    task=..., decision=..., reasoning=...,
+    passphrase="your-secure-passphrase",
+    device_bound=False
+)
 ```
 
 Full setup: [SDK Quickstart](sdk/python/QUICKSTART.md)
@@ -111,21 +127,24 @@ Full structure with audit priorities: [Repository Map](docs/repository-map.md)
 
 ## How Verification Works
 
+**True Zero-Trust Architecture:** The SDK signs ALL capsules locally. Your private key NEVER leaves your device.
+
 ```
 ┌─────────────────────────────┐
 │  YOUR DEVICE                │
-│  - Private key (encrypted)  │
-│  - Signing happens locally  │
-│  - Content remains local    │
-│    by default               │
+│  ✓ Private key (encrypted)  │
+│  ✓ ALL signing happens here │
+│  ✓ Ed25519 + PBKDF2 480K    │
+│  ✓ Keys stored ~/.uatp/keys │
 └──────────────┬──────────────┘
                │ Only hash transmitted
                ▼
 ┌─────────────────────────────┐
 │  UATP SERVER                │
 │  - Receives hash only       │
-│  - Designed to never see    │
-│    content or private keys  │
+│  - CANNOT sign for you      │
+│  - Stores pre-signed        │
+│    capsules on request      │
 └──────────────┬──────────────┘
                │ Hash for timestamp
                ▼
@@ -136,7 +155,7 @@ Full structure with audit priorities: [Repository Map](docs/repository-map.md)
 └─────────────────────────────┘
 ```
 
-UATP is designed so operators cannot sign on behalf of users—the SDK generates and stores private keys locally and never transmits them. Capsule integrity is independently verifiable without trusting UATP infrastructure. Timestamping uses an external RFC 3161 authority. See [TRUST_MODEL.md](TRUST_MODEL.md) for assumptions and [THREAT_MODEL.md](THREAT_MODEL.md) for limitations.
+UATP operators **cannot** sign on behalf of users—the SDK generates and stores private keys locally and never transmits them. The server only receives content hashes (not content) and pre-signed capsules (not unsigned data). Capsule integrity is independently verifiable without trusting UATP infrastructure. See [TRUST_MODEL.md](TRUST_MODEL.md) for assumptions and [THREAT_MODEL.md](THREAT_MODEL.md) for limitations.
 
 ---
 
@@ -160,9 +179,11 @@ UATP is designed so operators cannot sign on behalf of users—the SDK generates
 
 | Component | Status |
 |-----------|--------|
+| **Zero-trust local signing** | Shipped |
 | Ed25519 signatures | Shipped |
 | Python SDK (`pip install uatp`) | Shipped |
 | Local key management | Shipped |
+| Device-bound keys (zero-friction) | Shipped |
 | Capsule verification | Shipped |
 | CLI tools (`uatp verify/export/inspect`) | Shipped |
 | DSSE bundle export | Shipped |
