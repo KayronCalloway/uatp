@@ -38,8 +38,16 @@ from ..security.security_manager import (
     SecurityLevel,
     UnifiedSecurityManager,
 )
-from .ethics_circuit_breaker import EthicsCircuitBreaker
 from .exceptions import UATPEngineError
+
+# Optional ethics integration (archived)
+try:
+    from .ethics_circuit_breaker import EthicsCircuitBreaker
+
+    _ETHICS_AVAILABLE = True
+except ImportError:
+    EthicsCircuitBreaker = None  # type: ignore
+    _ETHICS_AVAILABLE = False
 
 # Load environment variables
 load_dotenv()
@@ -75,44 +83,51 @@ class CapsuleEngine:
         # Initialize OpenAI client with retry logic
         self.openai_client = openai_client or OpenAIClient()
 
-        # Initialize ethics circuit breaker
-        # Determine which refusal policy to use for ethics evaluation.
-        # Tests need TestRefusalPolicy to avoid blocking capsule creation.
-        # Use environment variable so production deployments can control behavior.
-        from src.security.refusal_policy import RealRefusalPolicy, TestRefusalPolicy
+        # Initialize ethics circuit breaker (optional - archived feature)
+        self.ethics_circuit_breaker = None
+        self.mirror_agent = None
 
-        enable_refusal_env = os.environ.get("UATP_ETHICS_ENABLE_REFUSAL")
-        if enable_refusal_env is not None:
-            # Explicit configuration via environment variable
-            refusal_policy = (
-                RealRefusalPolicy()
-                if enable_refusal_env.lower() == "true"
-                else TestRefusalPolicy()
-            )
-        else:
-            # Default: use TestRefusalPolicy when running under pytest, RealRefusalPolicy otherwise
-            refusal_policy = (
-                TestRefusalPolicy()
-                if os.environ.get("PYTEST_CURRENT_TEST")
-                else RealRefusalPolicy()
-            )
+        if _ETHICS_AVAILABLE and EthicsCircuitBreaker is not None:
+            try:
+                from src.security.refusal_policy import (
+                    RealRefusalPolicy,
+                    TestRefusalPolicy,
+                )
 
-        self.ethics_circuit_breaker = EthicsCircuitBreaker(
-            refusal_policy=refusal_policy,
-            strict_mode=os.environ.get("UATP_ETHICS_STRICT_MODE", "false").lower()
-            == "true",
-        )
+                enable_refusal_env = os.environ.get("UATP_ETHICS_ENABLE_REFUSAL")
+                if enable_refusal_env is not None:
+                    refusal_policy = (
+                        RealRefusalPolicy()
+                        if enable_refusal_env.lower() == "true"
+                        else TestRefusalPolicy()
+                    )
+                else:
+                    refusal_policy = (
+                        TestRefusalPolicy()
+                        if os.environ.get("PYTEST_CURRENT_TEST")
+                        else RealRefusalPolicy()
+                    )
+
+                self.ethics_circuit_breaker = EthicsCircuitBreaker(
+                    refusal_policy=refusal_policy,
+                    strict_mode=os.environ.get(
+                        "UATP_ETHICS_STRICT_MODE", "false"
+                    ).lower()
+                    == "true",
+                )
+
+                # Initialize Mirror Mode agent (probabilistic self-audit)
+                from src.mirror_mode import get_mirror_agent
+
+                self.mirror_agent = get_mirror_agent(
+                    policy_engine=self.ethics_circuit_breaker,
+                    capsule_engine=self,
+                )
+            except ImportError:
+                logger.info("Ethics/Mirror Mode not available - running without")
 
         # Initialize runtime trust enforcer
         self.runtime_trust_enforcer = RuntimeTrustEnforcer()
-
-        # Initialize Mirror Mode agent (probabilistic self-audit)
-        from src.mirror_mode import get_mirror_agent
-
-        self.mirror_agent = get_mirror_agent(
-            policy_engine=self.ethics_circuit_breaker,
-            capsule_engine=self,
-        )
 
         # Initialize unified security manager
         self.security_manager = None

@@ -5,12 +5,9 @@ Provides endpoints for capturing live AI conversations and generating capsules.
 
 import asyncio
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-
-if TYPE_CHECKING:
-    from src.live_capture.conversation_monitor import LiveConversationMonitor
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/live", tags=["Live Capture"])
@@ -73,7 +70,7 @@ async def get_monitor_instance(request: Request):
 @router.post("/capture/message")
 async def capture_message(
     message: ConversationMessage,
-    monitor: "LiveConversationMonitor" = Depends(get_monitor_instance),
+    monitor: "Any" = Depends(get_monitor_instance),
 ):
     """Capture a conversation message for real-time monitoring."""
     try:
@@ -99,7 +96,7 @@ async def capture_message(
 
 @router.get("/capture/conversation/{session_id}")
 async def get_conversation_status(
-    session_id: str, monitor: "LiveConversationMonitor" = Depends(get_monitor_instance)
+    session_id: str, monitor: "Any" = Depends(get_monitor_instance)
 ):
     """Get the status of a conversation being monitored."""
     try:
@@ -118,7 +115,7 @@ async def get_conversation_status(
 
 @router.get("/capture/conversations")
 async def list_active_conversations(
-    monitor: "LiveConversationMonitor" = Depends(get_monitor_instance),
+    monitor: "Any" = Depends(get_monitor_instance),
 ):
     """List all active conversations being monitored."""
     try:
@@ -142,7 +139,7 @@ async def list_active_conversations(
 @router.post("/capture/batch")
 async def capture_batch_messages(
     request: BatchMessagesRequest,
-    monitor: "LiveConversationMonitor" = Depends(get_monitor_instance),
+    monitor: "Any" = Depends(get_monitor_instance),
 ):
     """Capture multiple messages in a batch for better performance."""
     try:
@@ -177,7 +174,7 @@ async def capture_batch_messages(
 @router.post("/capture/openai")
 async def capture_openai_conversation(
     request: OpenAIConversationRequest,
-    monitor: "LiveConversationMonitor" = Depends(get_monitor_instance),
+    monitor: "Any" = Depends(get_monitor_instance),
 ):
     """Specialized endpoint for OpenAI conversations."""
     try:
@@ -215,7 +212,7 @@ async def capture_openai_conversation(
 @router.post("/capture/claude")
 async def capture_claude_conversation(
     request: ClaudeConversationRequest,
-    monitor: "LiveConversationMonitor" = Depends(get_monitor_instance),
+    monitor: "Any" = Depends(get_monitor_instance),
 ):
     """Specialized endpoint for Claude conversations."""
     try:
@@ -265,7 +262,7 @@ async def capture_claude_conversation(
 
 @router.post("/monitor/start")
 async def start_monitoring(
-    monitor: "LiveConversationMonitor" = Depends(get_monitor_instance),
+    monitor: "Any" = Depends(get_monitor_instance),
 ):
     """Start the live monitoring system."""
     try:
@@ -280,7 +277,7 @@ async def start_monitoring(
 
 @router.get("/monitor/status")
 async def get_monitoring_status(
-    monitor: "LiveConversationMonitor" = Depends(get_monitor_instance),
+    monitor: "Any" = Depends(get_monitor_instance),
 ):
     """Get the current monitoring status."""
     try:

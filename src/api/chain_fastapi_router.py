@@ -24,7 +24,20 @@ from src.api.chain_sealer import ChainSealer
 from src.core.database import db
 from src.models.capsule import CapsuleModel
 from src.models.chain_seal import ChainSealModel
-from src.services.capsule_lifecycle_service import capsule_lifecycle_service
+
+
+# Stub for archived capsule_lifecycle_service
+class _LifecycleServiceStub:
+    """Stub for archived capsule_lifecycle_service."""
+
+    def get_chain_capsules(self, chain_id: str) -> list:
+        return []
+
+    def compute_chain_hash(self, chain_id: str) -> str:
+        return ""
+
+
+capsule_lifecycle_service = _LifecycleServiceStub()
 
 logger = logging.getLogger(__name__)
 

@@ -32,9 +32,17 @@ from .middleware.rate_limiting import (
 
 db_manager = get_database_manager()
 from .database.migrations import run_migrations  # noqa: E402
-from .integrations.ai_platform_framework import (  # noqa: E402
-    setup_multi_platform_attribution,
-)
+
+# Optional AI platform integration (archived)
+try:
+    from .integrations.ai_platform_framework import (  # noqa: E402
+        setup_multi_platform_attribution,
+    )
+
+    _AI_PLATFORM_AVAILABLE = True
+except ImportError:
+    setup_multi_platform_attribution = None  # type: ignore
+    _AI_PLATFORM_AVAILABLE = False
 
 # noqa: E402
 from .security.csrf_protection import csrf_middleware  # noqa: E402
@@ -149,10 +157,14 @@ async def lifespan(app: FastAPI):
         # Initialize services
         logger.info("Initializing services...")
         app.state.user_service = create_user_service()
-        app.state.ai_orchestrator = setup_multi_platform_attribution(
-            openai_key=os.getenv("OPENAI_API_KEY"),
-            anthropic_key=os.getenv("ANTHROPIC_API_KEY"),
-        )
+
+        if _AI_PLATFORM_AVAILABLE and setup_multi_platform_attribution:
+            app.state.ai_orchestrator = setup_multi_platform_attribution(
+                openai_key=os.getenv("OPENAI_API_KEY"),
+                anthropic_key=os.getenv("ANTHROPIC_API_KEY"),
+            )
+        else:
+            app.state.ai_orchestrator = None
 
         # Initialize live capture conversation monitor
         logger.info("Initializing live capture conversation monitor...")

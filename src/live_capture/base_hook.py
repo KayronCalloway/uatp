@@ -28,12 +28,21 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from src.live_capture.real_time_capsule_generator import capture_live_interaction
-from src.live_capture.rich_capture_integration import RichCaptureEnhancer
 
 logger = logging.getLogger(__name__)
 
+# Optional rich capture integration (graceful degradation)
+try:
+    from src.live_capture.rich_capture_integration import RichCaptureEnhancer
+
+    _RICH_CAPTURE_AVAILABLE = True
+except ImportError:
+    RichCaptureEnhancer = None  # type: ignore
+    _RICH_CAPTURE_AVAILABLE = False
+    logger.info("Rich capture integration not available - using basic capture")
+
 # Feedback loop integration flag
-_FEEDBACK_LOOP_ENABLED = True
+_FEEDBACK_LOOP_ENABLED = False  # Disabled - feedback module not implemented
 
 
 @dataclass
@@ -506,6 +515,9 @@ class BaseHook(ABC):
             )
 
             # Use RichCaptureEnhancer to create capsule with rich metadata
+            if not _RICH_CAPTURE_AVAILABLE or RichCaptureEnhancer is None:
+                raise ImportError("RichCaptureEnhancer not available")
+
             logger.info(
                 f"Creating rich capsule with enhanced metadata for {self.platform}..."
             )

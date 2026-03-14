@@ -24,8 +24,16 @@ load_dotenv()
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.live_capture.rich_capture_integration import RichCaptureEnhancer
 from src.live_capture.signal_detector import SignalDetector, detect_signal
+
+# Optional rich capture integration (graceful degradation)
+try:
+    from src.live_capture.rich_capture_integration import RichCaptureEnhancer
+
+    _RICH_CAPTURE_AVAILABLE = True
+except ImportError:
+    RichCaptureEnhancer = None  # type: ignore
+    _RICH_CAPTURE_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(
@@ -539,6 +547,10 @@ class ClaudeCodeCapture:
 
         try:
             # Create capsule with rich metadata
+            if not _RICH_CAPTURE_AVAILABLE or RichCaptureEnhancer is None:
+                logger.warning("Rich capture not available, skipping capsule creation")
+                return None
+
             capsule_data = (
                 RichCaptureEnhancer.create_capsule_from_session_with_rich_metadata(
                     session=session, user_id=session.user_id
