@@ -708,16 +708,20 @@ def setup_api_routes(app: FastAPI, rate_config: RateLimitConfig):
 
     @app.get("/api/v1/status")
     async def api_status():
-        """API status endpoint"""
+        """API status endpoint - reflects actual implementation status"""
         return {
             "api_version": "0.3.0",
             "status": "operational",
             "features": {
-                "attribution_tracking": True,
-                "payment_processing": True,
-                "ai_integrations": True,
-                "privacy_compliance": True,
+                "capsule_creation": True,
+                "capsule_verification": True,
+                "local_signing_sdk": True,
+                "rfc3161_timestamps": True,
+                "full_text_search": True,
+                "attribution_tracking": False,  # Planned
+                "payment_processing": False,  # Planned
             },
+            "see": "STATUS.md for full breakdown",
         }
 
     @app.post("/api/v1/users/register", tags=["Authentication"])
@@ -767,34 +771,11 @@ def setup_api_routes(app: FastAPI, rate_config: RateLimitConfig):
 
     @app.post("/api/v1/attribution/track", tags=["Attribution"])
     async def track_attribution(request: Request, attribution_data: Dict[str, Any]):
-        """Track attribution event"""
-        try:
-            # This would integrate with the attribution middleware
-            logger.info("Attribution tracked", data=attribution_data)
-            return {"success": True, "attribution_id": "attr_123"}
-
-        except Exception as e:
-            logger.error("Attribution tracking error", error=str(e))
-            raise HTTPException(
-                status_code=500, detail="Attribution tracking failed"
-            ) from e
-
-    @app.get("/api/v1/admin/stats", tags=["Monitoring"])
-    async def admin_stats(request: Request):
-        """Get admin statistics"""
-        try:
-            # This would be protected by authentication
-            stats = {
-                "total_users": 1000,
-                "total_attributions": 50000,
-                "total_payouts": 25000.00,
-                "active_conversations": 150,
-            }
-            return stats
-
-        except Exception as e:
-            logger.error("Admin stats error", error=str(e))
-            raise HTTPException(status_code=500, detail="Failed to get stats") from e
+        """Track attribution event - NOT YET IMPLEMENTED"""
+        raise HTTPException(
+            status_code=501,
+            detail="Attribution tracking not yet implemented. See STATUS.md for roadmap.",
+        )
 
 
 def setup_development_routes(app: FastAPI):

@@ -27,14 +27,19 @@ def _derive_device_passphrase() -> str:
     """
     Derive a device-bound passphrase from machine-specific info.
 
-    This enables zero-friction onboarding while maintaining security:
-    - Passphrase is deterministic per machine
-    - Different machines = different keys
-    - No passphrase to remember
+    SECURITY BOUNDARY: This is a CONVENIENCE feature, not a security feature.
 
-    Security note: This is less secure than a user-chosen passphrase
-    but far better than server-side signing. The key still never leaves
-    the device.
+    What it provides:
+    - Zero-friction onboarding (no passphrase to remember)
+    - Deterministic per-machine keys
+    - Keys still never leave the device
+
+    What it does NOT provide:
+    - High entropy (inputs are hostname/username/arch - often guessable)
+    - Protection against local attackers who know the machine
+    - Portability (keys tied to specific machine)
+
+    For production/sensitive use: Pass an explicit passphrase with device_bound=False.
     """
     # Gather machine-specific info
     machine_info = [

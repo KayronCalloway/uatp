@@ -250,13 +250,25 @@ This architecture supports:
 
 ## Implementation Checklist
 
-- [x] Remove server-side signing keys from git
-- [x] Implement `UserKeyManager` for local key generation (`src/crypto/user_key_manager.py`)
-- [x] Implement `LocalSigner` for user-side signing (`src/crypto/local_signer.py`)
+**SDK (Local Signing Path) - SHIPPED:**
+- [x] Implement `UserKeyManager` for local key generation (`sdk/python/uatp/crypto/user_key_manager.py`)
+- [x] Implement `LocalSigner` for user-side signing (`sdk/python/uatp/crypto/local_signer.py`)
 - [x] Implement hash-only timestamp flow
-- [x] Document key backup/recovery process (in UserKeyManager)
-- [x] Create standalone verification function
-- [x] Update SDK to use new local signing (`sdk/python/uatp/crypto/`, `client.certify_local()`)
+- [x] Document key backup/recovery process
+- [x] Create standalone verification function (`verify_capsule_standalone`)
+- [x] SDK `certify()` uses local signing by default
+
+**Server Engine - LEGACY PATH (being deprecated):**
+- [ ] Remove server-side `UATP_SIGNING_KEY` from engine (currently still present in `src/engine/capsule_engine.py`)
+- [ ] Migrate all server-created capsules to user-signed or attestation-only mode
+
+**Note on Dual Architecture:**
+The SDK (`pip install uatp`) implements full zero-trust local signing. The server engine (`src/engine/`) still supports server-side signing for:
+- Live capture hooks (Claude Code integration)
+- Legacy API compatibility
+- Enterprise deployments where server-side attestation is acceptable
+
+Server-signed capsules are clearly marked with `"signer": "server"` vs `"signer": "user"`. The SDK path is the recommended approach for new integrations.
 - [ ] Create transparency log infrastructure
 - [ ] Security audit of new architecture
 - [x] Update Claude Code capture to use local signing (`UATP_SIGNING_MODE=local`)

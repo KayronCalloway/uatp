@@ -69,10 +69,13 @@ print(f"Public Key: {result.public_key[:32]}...")  # Your verify key
 
 **Security modes:**
 ```python
-# Device-bound (default): passphrase derived from machine info
+# Device-bound (default): CONVENIENCE mode - passphrase derived from machine info
+# Good for: development, demos, low-stakes use
+# Not recommended for: production with sensitive data
 result = client.certify(task=..., decision=..., reasoning=...)
 
-# Custom passphrase (more secure, portable across machines)
+# Custom passphrase: RECOMMENDED for production
+# Provides: user-controlled entropy, portability across machines
 result = client.certify(
     task=..., decision=..., reasoning=...,
     passphrase="your-secure-passphrase",
