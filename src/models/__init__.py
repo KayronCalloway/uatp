@@ -5,5 +5,11 @@ Imports models together to ensure SQLAlchemy relationships are resolved correctl
 
 from .capsule import CapsuleModel
 from .user import UserModel
+from .user_management import IdentityVerificationModel, UserSessionModel
 
-__all__ = ["UserModel", "CapsuleModel"]
+__all__ = [
+    "UserModel",
+    "CapsuleModel",
+    "UserSessionModel",
+    "IdentityVerificationModel",
+]
