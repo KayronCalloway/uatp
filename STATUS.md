@@ -61,6 +61,8 @@ The following modules exist in `src/` but are **experimental platform code**, no
 
 These modules are not maintained to the same standard as the SDK and core signing code. They exist as explorations of where the protocol could go, not claims about what it does today.
 
+**API Route Gating:** In production (`ENVIRONMENT=production`), only core protocol routes are exposed. Experimental routes (model registry, workflow chains, agent execution, etc.) require `UATP_ENABLE_EXPERIMENTAL=true` to be enabled.
+
 ## Not for Production Use
 
 - **Demo scripts** (`scripts/demo/`) - For demonstration only
@@ -85,7 +87,7 @@ We welcome security review. See [SECURITY.md](SECURITY.md) for responsible discl
 | **Backend** | 0.3.0 | pyproject.toml |
 | **Capsule Schema** | 7.2 | Internal capsule format |
 
-- **Last Updated**: 2026-03-13
+- **Last Updated**: 2026-03-15
 - **Stability**: Beta - Core signing is stable, API may evolve
 
 ## Confidence Levels

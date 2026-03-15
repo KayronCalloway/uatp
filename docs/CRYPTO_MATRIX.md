@@ -44,8 +44,8 @@
 | `uatp_crypto_v7.py` | ML-DSA-65 | `oqs` (liboqs-python) | Post-quantum (optional) |
 | `uatp_crypto_v7.py` | SHA-256 | `hashlib` | Content and Merkle hashing |
 | `uatp_crypto_v7.py` | AES-256 | `cryptography.hazmat.primitives.ciphers` | Key storage |
-| `secure_key_manager.py` | Fernet | `cryptography.fernet` | Session key encryption |
-| `secure_key_manager.py` | PBKDF2HMAC | `cryptography.hazmat.primitives.kdf.pbkdf2` | Key derivation |
+| `src/crypto/secure_key_manager.py` | Fernet | `cryptography.fernet` | Session key encryption |
+| `src/crypto/secure_key_manager.py` | PBKDF2HMAC | `cryptography.hazmat.primitives.kdf.pbkdf2` | 480,000 iterations |
 | `rfc3161_timestamps.py` | RFC 3161 | `httpx` (to external TSA) | DigiCert/FreeTSA |
 
 **Security Properties:**
