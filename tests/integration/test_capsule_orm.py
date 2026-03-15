@@ -106,7 +106,7 @@ class TestCapsuleORM:
             test_capsule = CapsuleModel(
                 capsule_id=self.test_capsule_id,
                 capsule_type="reasoning_trace",
-                version="7.0",
+                version="7.2",
                 timestamp=datetime.now(timezone.utc),
                 status="SEALED",
                 verification={"verified": True, "hash": "test"},
@@ -200,7 +200,7 @@ class TestCapsuleModelMethods:
         capsule = CapsuleModel(
             capsule_id="test_123",
             capsule_type="reasoning_trace",
-            version="7.0",
+            version="7.2",
             timestamp=datetime.now(timezone.utc),
             status="SEALED",
             verification={},

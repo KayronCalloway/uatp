@@ -1,7 +1,7 @@
 [project]
-name = "uatp"
+name = "uatp-engine"
 version = "0.3.0"
-description = "UATP Capsule Engine: schema-driven, cryptographically sealed capsule chains for agent trust and auditability."
+description = "UATP Capsule Engine: FastAPI backend for cryptographically sealed AI decision capsules. For the client SDK, see sdk/python/ or pip install uatp."
 authors = [{name = "Kayron Calloway", email = "kayron@houseofcalloway.com"}]
 readme = "README.md"
 license = {text = "MIT"}

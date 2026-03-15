@@ -63,7 +63,7 @@ def sample_capsule_payload():
     return {
         "capsule_id": f"test_api_{unique_id}",
         "type": "reasoning_trace",
-        "version": "7.0",
+        "version": "7.2",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "payload": {
             "reasoning_steps": [

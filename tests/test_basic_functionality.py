@@ -29,7 +29,7 @@ def test_basic_capsule_creation():
 
     capsule = ReasoningTraceCapsule(
         capsule_id="caps_2025_07_09_abcdef1234567890",
-        version="7.0",
+        version="7.2",
         timestamp=datetime.now(timezone.utc),
         status=CapsuleStatus.DRAFT,
         verification=verification,

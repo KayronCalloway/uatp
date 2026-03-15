@@ -21,7 +21,7 @@ from src.cli.verify import verify_cmd
 
 
 @click.group()
-@click.version_option(version="1.0.0", prog_name="uatp")
+@click.version_option(version="0.3.0", prog_name="uatp")
 def cli() -> None:
     """
     UATP - Universal AI Transparency Protocol CLI.

@@ -162,7 +162,7 @@ class UATP:
         metadata: Optional[Dict[str, Any]] = None,
         request_timestamp: bool = True,
         store_on_server: bool = False,
-    ) -> Union[SignedCapsule, "CertificationResult"]:
+    ) -> SignedCapsule:
         """
         Create a cryptographically certified capsule for an AI decision.
 
@@ -189,7 +189,8 @@ class UATP:
             store_on_server: If True, store capsule on UATP server for retrieval
 
         Returns:
-            SignedCapsule with cryptographic proof (and CertificationResult if stored)
+            SignedCapsule with cryptographic proof. If store_on_server=True,
+            the capsule will have server_stored=True and proof_url set.
 
         Raises:
             ValueError: If parameters are invalid
@@ -356,17 +357,23 @@ class UATP:
                 timeout=self.timeout,
             )
             response.raise_for_status()
-            capsule = response.json()
+            data = response.json()
+
+            # API returns {"capsule": {...}, "verification": {...}}
+            # Extract capsule data from nested structure
+            capsule = data.get("capsule", data)  # Fallback to data if not nested
 
             return CapsuleProof(
-                capsule_id=capsule["capsule_id"],
-                capsule_type=capsule.get("type", "unknown"),
+                capsule_id=capsule.get("capsule_id", capsule.get("id", capsule_id)),
+                capsule_type=capsule.get(
+                    "type", capsule.get("capsule_type", "unknown")
+                ),
                 status=capsule.get("status", "unknown"),
                 timestamp=datetime.fromisoformat(
                     capsule["timestamp"].replace("Z", "+00:00")
                 ),
                 payload=capsule.get("payload", {}),
-                _raw_data=capsule,
+                _raw_data=data,  # Store full response for verification
             )
 
         except requests.exceptions.HTTPError as e:

@@ -40,7 +40,7 @@ def sample_capsule_data():
     return {
         "capsule_id": "test_capsule_001",
         "capsule_type": "reasoning_trace",
-        "version": "7.0",
+        "version": "7.2",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "status": "SEALED",
         "payload": {
@@ -212,7 +212,7 @@ class TestCryptoEdgeCases:
         capsule = {
             "capsule_id": "empty_payload_test",
             "capsule_type": "test",
-            "version": "7.0",
+            "version": "7.2",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "payload": {},
         }
@@ -226,7 +226,7 @@ class TestCryptoEdgeCases:
         capsule = {
             "capsule_id": "nested_test",
             "capsule_type": "test",
-            "version": "7.0",
+            "version": "7.2",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "payload": {
                 "level1": {
@@ -244,7 +244,7 @@ class TestCryptoEdgeCases:
         capsule = {
             "capsule_id": "unicode_test",
             "capsule_type": "test",
-            "version": "7.0",
+            "version": "7.2",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "payload": {
                 "emoji": "Hello!",

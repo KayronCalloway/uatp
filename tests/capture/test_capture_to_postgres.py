@@ -38,7 +38,7 @@ async def test_capture_flow():
     capsule_data = {
         "capsule_id": test_id,
         "capsule_type": "reasoning_trace",
-        "version": "7.0",
+        "version": "7.2",
         "timestamp": datetime.utcnow(),
         "status": "sealed",
         "payload": {

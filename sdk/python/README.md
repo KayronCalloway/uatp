@@ -110,7 +110,7 @@ List capsules.
 ```python
 capsules = client.list_capsules(limit=10)
 for c in capsules:
-    print(f"{c.capsule_id}: {c.task}")
+    print(f"{c.capsule_id}: {c.capsule_type} ({c.status})")
 ```
 
 ## Local Signing (Default)

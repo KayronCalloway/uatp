@@ -316,13 +316,13 @@ def sample_test_data():
             {
                 "capsule_id": "test-capsule-1",
                 "content": "Test capsule content",
-                "version": "7.0",
+                "version": "7.2",
                 "author": "test_user",
             },
             {
                 "capsule_id": "test-capsule-2",
                 "content": "Another test capsule",
-                "version": "7.0",
+                "version": "7.2",
                 "author": "admin_user",
             },
         ],

@@ -48,7 +48,7 @@ def test_new_capsule_creation():
     # Test uncertainty capsule
     uncertainty_capsule = UncertaintyCapsule(
         capsule_id="caps_2025_07_09_abcdef1234567890",
-        version="7.0",
+        version="7.2",
         timestamp=datetime.now(timezone.utc),
         status=CapsuleStatus.DRAFT,
         verification=verification,
@@ -66,7 +66,7 @@ def test_new_capsule_creation():
     # Test consent capsule
     consent_capsule = ConsentCapsule(
         capsule_id="caps_2025_07_09_fedcba0987654321",
-        version="7.0",
+        version="7.2",
         timestamp=datetime.now(timezone.utc),
         status=CapsuleStatus.DRAFT,
         verification=verification,
@@ -163,7 +163,7 @@ def test_manipulation_attempt_capsule():
 
     manipulation_capsule = ManipulationAttemptCapsule(
         capsule_id="caps_2025_07_09_1234567890abcdef",
-        version="7.0",
+        version="7.2",
         timestamp=datetime.now(timezone.utc),
         status=CapsuleStatus.SEALED,
         verification=verification,
