@@ -72,7 +72,7 @@ jobs:
     - name: Run Safety (PyPI vulnerability database)
       run: |
         safety scan --output json > safety-report.json 2>&1 || true
-        safety scan --output text
+        safety scan --output screen
 
     - name: Run pip-audit (Python package auditing)
       run: |
