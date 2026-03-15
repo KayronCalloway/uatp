@@ -270,10 +270,13 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
     from nacl.signing import VerifyKey
 
     result: Dict[str, Any] = {
-        "valid": False,
+        # Individual verification components - ground truth
         "signature_valid": False,
-        "hash_valid": False,
-        "timestamp_valid": None,  # None means not checked
+        "content_hash_match": False,
+        "timestamp_present": False,
+        "timestamp_verified": False,  # Requires rfc3161ng library
+        # Aggregate status - precise about what was verified
+        "assurance_level": "none",  # "none" | "signature_only" | "signature_and_hash" | "full"
         "errors": [],
         "warnings": [],
     }
@@ -326,37 +329,52 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
         computed_hash = hashlib.sha256(canonical).hexdigest()
 
         if computed_hash == stored_hash:
-            result["hash_valid"] = True
+            result["content_hash_match"] = True
         else:
-            result["warnings"].append(
-                "Content hash mismatch - capsule structure may have changed during storage"
+            # Hash mismatch is a verification failure, not a warning
+            result["errors"].append(
+                "Content hash mismatch: stored content differs from signed content"
             )
-            # This isn't necessarily an error - UATP wrapping can change structure
-            # The signature over the original hash is what matters
 
     except Exception as e:
-        result["warnings"].append(f"Could not verify content hash: {e}")
+        result["errors"].append(f"Content hash verification failed: {e}")
 
     # 3. Check RFC 3161 timestamp (if present)
+    # WARNING: This checks presence only, NOT cryptographic validity
+    # Full RFC 3161 verification requires rfc3161ng library and TSA cert chain
     rfc3161 = verification.get("rfc3161")
     if rfc3161:
         try:
-            # Basic check - full verification requires rfc3161ng library
             if "token" in rfc3161 and "tsa" in rfc3161:
-                result["timestamp_valid"] = True
+                result["timestamp_present"] = True
+                result["timestamp_verified"] = False  # NOT cryptographically verified
                 result["timestamp_tsa"] = rfc3161.get("tsa")
                 result["timestamp_time"] = rfc3161.get("timestamp")
             else:
                 result["warnings"].append("Incomplete RFC 3161 timestamp data")
 
         except Exception as e:
-            result["warnings"].append(f"Could not verify timestamp: {e}")
+            result["warnings"].append(f"Could not check timestamp: {e}")
 
-    # Overall validity
-    result["valid"] = result["signature_valid"]
+    # Compute assurance level based on what actually verified
+    if not result["signature_valid"]:
+        result["assurance_level"] = "none"
+    elif not result["content_hash_match"]:
+        result["assurance_level"] = "signature_only"
+        result["warnings"].append(
+            "Signature valid over stored hash, but content may have been modified."
+        )
+    elif result["timestamp_verified"]:
+        result["assurance_level"] = "full"
+    elif result["timestamp_present"]:
+        result["assurance_level"] = "signature_and_hash"
+        result["warnings"].append(
+            "RFC 3161 timestamp present but NOT cryptographically verified."
+        )
+    else:
+        result["assurance_level"] = "signature_and_hash"
 
-    if result["valid"]:
-        result["signer"] = verification.get("signer", "unknown")
-        result["capsule_id"] = capsule_data.get("capsule_id")
+    result["signer"] = verification.get("signer", "unknown")
+    result["capsule_id"] = capsule_data.get("capsule_id")
 
     return result

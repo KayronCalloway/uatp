@@ -30,7 +30,7 @@ setup(
         "Topic :: Security :: Cryptography",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=[
         "requests>=2.28.0",
         "pynacl>=1.5.0",  # Ed25519 signatures

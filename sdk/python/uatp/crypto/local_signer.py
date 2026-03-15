@@ -282,11 +282,13 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
     from nacl.signing import VerifyKey
 
     result: Dict[str, Any] = {
-        "valid": False,
+        # Individual verification components - these are the ground truth
         "signature_valid": False,
-        "hash_valid": False,
-        "timestamp_present": False,  # Whether timestamp data exists
-        "timestamp_verified": False,  # Whether cryptographically verified (requires rfc3161ng)
+        "content_hash_match": False,
+        "timestamp_present": False,
+        "timestamp_verified": False,  # Requires rfc3161ng library
+        # Aggregate status - be precise about what was actually verified
+        "assurance_level": "none",  # "none" | "signature_only" | "signature_and_hash" | "full"
         "errors": [],
         "warnings": [],
     }
@@ -339,16 +341,16 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
         computed_hash = hashlib.sha256(canonical).hexdigest()
 
         if computed_hash == stored_hash:
-            result["hash_valid"] = True
+            result["content_hash_match"] = True
         else:
-            result["warnings"].append(
-                "Content hash mismatch - capsule structure may have changed during storage"
+            # Hash mismatch is a verification failure, not a warning
+            # The content has changed from what was originally signed
+            result["errors"].append(
+                "Content hash mismatch: stored content differs from signed content"
             )
-            # This isn't necessarily an error - UATP wrapping can change structure
-            # The signature over the original hash is what matters
 
     except Exception as e:
-        result["warnings"].append(f"Could not verify content hash: {e}")
+        result["errors"].append(f"Content hash verification failed: {e}")
 
     # 3. Check RFC 3161 timestamp (if present)
     # WARNING: This is NOT cryptographic verification - just presence checking.
@@ -372,11 +374,30 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
         except Exception as e:
             result["warnings"].append(f"Could not check timestamp: {e}")
 
-    # Overall validity
-    result["valid"] = result["signature_valid"]
+    # Compute assurance level based on what actually verified
+    # This is explicit about the strength of the verification
+    if not result["signature_valid"]:
+        result["assurance_level"] = "none"
+    elif not result["content_hash_match"]:
+        # Signature valid but content changed - this is suspicious
+        result["assurance_level"] = "signature_only"
+        result["warnings"].append(
+            "Signature valid over stored hash, but content may have been modified. "
+            "This could indicate tampering or storage transformation."
+        )
+    elif result["timestamp_verified"]:
+        result["assurance_level"] = "full"
+    elif result["timestamp_present"]:
+        result["assurance_level"] = "signature_and_hash"
+        result["warnings"].append(
+            "RFC 3161 timestamp present but NOT cryptographically verified. "
+            "Install rfc3161ng for full timestamp verification."
+        )
+    else:
+        result["assurance_level"] = "signature_and_hash"
 
-    if result["valid"]:
-        result["signer"] = verification.get("signer", "unknown")
-        result["capsule_id"] = capsule_data.get("capsule_id")
+    # Add metadata
+    result["signer"] = verification.get("signer", "unknown")
+    result["capsule_id"] = capsule_data.get("capsule_id")
 
     return result

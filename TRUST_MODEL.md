@@ -8,7 +8,7 @@
 |-----------|--------|
 | Local signing (keys never leave device) | **Shipped** |
 | Hash-only transmission to server | **Shipped** |
-| External RFC 3161 timestamps | **Shipped** (Beta) |
+| External RFC 3161 timestamps | **Shipped** (Beta) - see note below |
 | Standalone verification | **Shipped** |
 | Transparency log | Planned |
 
@@ -127,11 +127,16 @@ The system is designed so that even if UATP (the company/operator) wanted to act
 │     └─ Verify: Ed25519.verify(public_key, signature, hash)               │
 │        Result: Proves content was signed by key holder                   │
 │                                                                          │
-│  2. TIMESTAMP CHECK                                                      │
+│  2. TIMESTAMP CHECK (requires rfc3161ng library)                         │
 │     ├─ Extract RFC 3161 token                                            │
 │     ├─ Verify TSA signature (DigiCert's public key is public)            │
 │     ├─ Check hash in token matches capsule hash                          │
 │     └─ Result: Proves capsule existed at claimed time                    │
+│                                                                          │
+│     ⚠️  NOTE: verify_capsule_standalone() currently checks               │
+│         timestamp PRESENCE only. Full TSA signature verification         │
+│         requires the rfc3161ng library and TSA certificate chain.        │
+│         Without it, assurance_level caps at "signature_and_hash".        │
 │                                                                          │
 │  3. INTEGRITY CHECK                                                      │
 │     ├─ Recompute hash of current content                                 │
@@ -257,6 +262,19 @@ This architecture supports:
 - [x] Document key backup/recovery process
 - [x] Create standalone verification function (`verify_capsule_standalone`)
 - [x] SDK `certify()` uses local signing by default
+
+**RFC 3161 Timestamp Verification - PARTIAL:**
+- [x] Timestamp tokens are obtained from DigiCert TSA
+- [x] Tokens are stored in capsule verification block
+- [x] `verify_capsule_standalone()` checks timestamp presence
+- [ ] Full TSA signature verification (requires `rfc3161ng` library)
+- [ ] TSA certificate chain validation
+
+**Current assurance levels from verify_capsule_standalone():**
+- `"none"` - Signature verification failed
+- `"signature_only"` - Signature valid but content hash mismatch
+- `"signature_and_hash"` - Ed25519 signature + content integrity verified (timestamp present but NOT cryptographically verified)
+- `"full"` - All above + RFC 3161 timestamp cryptographically verified (requires rfc3161ng)
 
 **Server Engine - LEGACY PATH (being deprecated):**
 - [ ] Remove server-side `UATP_SIGNING_KEY` from engine (currently still present in `src/engine/capsule_engine.py`)
