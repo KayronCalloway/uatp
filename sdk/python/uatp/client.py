@@ -130,7 +130,7 @@ class UATP:
 
     def __init__(
         self,
-        api_key: str = "demo-key",  # For now, no auth required
+        api_key: Optional[str] = None,
         base_url: str = "http://localhost:8000",
         timeout: int = 30,
     ):
@@ -138,10 +138,17 @@ class UATP:
         Initialize UATP client.
 
         Args:
-            api_key: Your UATP API key (optional for now)
+            api_key: Your UATP API key. None for local-only mode.
             base_url: API base URL (default: localhost for development)
             timeout: Request timeout in seconds
+
+        Note:
+            For production, always provide an explicit api_key and base_url.
+            The defaults are for local development only.
         """
+        if base_url == "http://localhost:8000":
+            logger.warning("UATP client using localhost - set base_url for production")
+
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
@@ -231,6 +238,10 @@ class UATP:
                 raise ValueError("passphrase must be at least 8 characters")
             signing_passphrase = passphrase
         elif device_bound:
+            logger.warning(
+                "Using device-bound passphrase (DEVELOPMENT ONLY). "
+                "For production, provide an explicit passphrase parameter."
+            )
             signing_passphrase = _derive_device_passphrase()
         else:
             raise ValueError("Either provide a passphrase or set device_bound=True")

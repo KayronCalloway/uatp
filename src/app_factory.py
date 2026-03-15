@@ -562,13 +562,12 @@ def setup_health_routes(app: FastAPI):
             # Crypto/signature system health - verify key manager is accessible
             crypto_health = 100
             try:
-                from src.security.secure_key_manager import SecureKeyManager
+                from src.crypto.secure_key_manager import SecureKeyManager
 
                 key_manager = SecureKeyManager()
-                if key_manager.get_signing_key():
-                    crypto_health = 100
-                else:
-                    crypto_health = 50
+                # list_keys() returns dict of managed keys - if it works, crypto is healthy
+                key_manager.list_keys()
+                crypto_health = 100
             except Exception:
                 crypto_health = 0
 
@@ -908,70 +907,88 @@ def create_app() -> FastAPI:
 
     app.include_router(capsules_router)
 
-    # Include live capture router for real-time monitoring
-    from .api.live_capture_fastapi_router import router as live_capture_router
+    # === CORE PROTOCOL ROUTES (always included) ===
 
-    app.include_router(live_capture_router)
-
-    # Include trust management router
-    from .api.trust_fastapi_router import router as trust_router
-
-    app.include_router(trust_router)
-
-    # Include platform router
-    from .api.platform_fastapi_router import router as platform_router
-
-    app.include_router(platform_router)
-
-    # Include training data export router
-    from .api.export_router import router as export_router
-
-    app.include_router(export_router)
-
-    # Include RFC 3161 Timestamp router (zero-trust timestamping)
+    # RFC 3161 Timestamp router (zero-trust timestamping)
     from .api.timestamp_router import router as timestamp_router
 
     app.include_router(timestamp_router)
 
-    # Include user encryption keys router
+    # User encryption keys router
     from .api.user_keys_router import router as user_keys_router
 
     app.include_router(user_keys_router)
 
-    # Include UATP 7.2 Model Registry router (Training Provenance)
-    from .api.model_registry_router import router as model_registry_router
+    # Training data export router (DSSE bundles)
+    from .api.export_router import router as export_router
 
-    app.include_router(model_registry_router)
+    app.include_router(export_router)
 
-    # Include UATP 7.2 Workflow Chain router (Agentic Workflows)
-    from .api.workflow_chain_router import router as workflow_chain_router
+    # Trust management router
+    from .api.trust_fastapi_router import router as trust_router
 
-    app.include_router(workflow_chain_router)
+    app.include_router(trust_router)
 
-    # Include UATP 7.2 Hardware Attestation router
-    from .api.attestation_router import router as attestation_router
+    # === EXPERIMENTAL ROUTES (dev/staging only) ===
+    # These are platform features beyond the core protocol.
+    # Not included in production unless UATP_ENABLE_EXPERIMENTAL=true
 
-    app.include_router(attestation_router)
+    _enable_experimental = os.getenv("UATP_ENABLE_EXPERIMENTAL", "").lower() in (
+        "true",
+        "1",
+        "yes",
+    )
+    _is_dev = os.getenv("ENVIRONMENT", "development").lower() in (
+        "development",
+        "dev",
+        "staging",
+    )
 
-    # Include UATP 7.2 Model Artifacts and Licenses router
-    from .api.model_artifacts_router import router as model_artifacts_router
+    if _enable_experimental or _is_dev:
+        # Live capture router for real-time monitoring
+        from .api.live_capture_fastapi_router import router as live_capture_router
 
-    app.include_router(model_artifacts_router)
+        app.include_router(live_capture_router)
 
-    # Include UATP 7.4 Agent Execution Traces router
-    from .api.agent_execution_router import router as agent_execution_router
+        # Platform router
+        from .api.platform_fastapi_router import router as platform_router
 
-    app.include_router(agent_execution_router)
+        app.include_router(platform_router)
 
-    # Include Chain Sealing router
-    from .api.chain_fastapi_router import router as chain_router
+        # Model Registry router (Training Provenance)
+        from .api.model_registry_router import router as model_registry_router
 
-    app.include_router(chain_router)
+        app.include_router(model_registry_router)
 
-    # Include Reasoning Analysis router
-    from .api.reasoning_fastapi_router import router as reasoning_router
+        # Workflow Chain router (Agentic Workflows)
+        from .api.workflow_chain_router import router as workflow_chain_router
 
-    app.include_router(reasoning_router)
+        app.include_router(workflow_chain_router)
+
+        # Hardware Attestation router
+        from .api.attestation_router import router as attestation_router
+
+        app.include_router(attestation_router)
+
+        # Model Artifacts and Licenses router
+        from .api.model_artifacts_router import router as model_artifacts_router
+
+        app.include_router(model_artifacts_router)
+
+        # Agent Execution Traces router
+        from .api.agent_execution_router import router as agent_execution_router
+
+        app.include_router(agent_execution_router)
+
+        # Chain Sealing router
+        from .api.chain_fastapi_router import router as chain_router
+
+        app.include_router(chain_router)
+
+        # Reasoning Analysis router
+        from .api.reasoning_fastapi_router import router as reasoning_router
+
+        app.include_router(reasoning_router)
 
     # Setup routes
     setup_health_routes(app)
