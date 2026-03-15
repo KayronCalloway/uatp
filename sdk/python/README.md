@@ -100,7 +100,7 @@ Retrieve proof from server (requires `store_on_server=True` when creating).
 ```python
 proof = client.get_proof("cap_abc123")
 print(proof.capsule_id)
-print(proof.signature_valid)  # True or False
+print(proof.verify())  # True if signature valid, False otherwise
 ```
 
 ### `client.list_capsules(limit=10)`

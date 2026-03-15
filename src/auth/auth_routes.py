@@ -357,9 +357,9 @@ async def forgot_password(
                 sg.send(message)
                 logger.info(f"Password reset email sent to {user.email}")
             else:
-                # Development mode - log the token
+                # Development mode - NO token logging (security)
                 logger.warning(
-                    f"No email provider configured. Password reset token: {reset_token}"
+                    "No email provider configured. Password reset requested but email not sent."
                 )
                 logger.info(
                     "Add SENDGRID_API_KEY to enable email delivery in production"
@@ -367,10 +367,8 @@ async def forgot_password(
 
         except ImportError:
             logger.error("SendGrid library not installed. Run: pip install sendgrid")
-            logger.info(f"Password reset token for {user.email}: {reset_token}")
         except Exception as e:
             logger.error(f"Failed to send reset email: {e}")
-            logger.info(f"Password reset token for {user.email}: {reset_token}")
 
         return {"message": "Password reset email sent if user exists"}
 
