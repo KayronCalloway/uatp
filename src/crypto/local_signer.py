@@ -266,6 +266,7 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Verification result dict with status and details
     """
+    from nacl import exceptions as nacl_exceptions
     from nacl.encoding import HexEncoder
     from nacl.signing import VerifyKey
 
@@ -305,8 +306,24 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
         verify_key.verify(stored_hash.encode("utf-8"), signature_bytes)
         result["signature_valid"] = True
 
+    except nacl_exceptions.BadSignatureError:
+        result["errors"].append(
+            "Signature verification failed: invalid Ed25519 signature"
+        )
+        return result
+    except nacl_exceptions.CryptoError as e:
+        result["errors"].append(
+            f"Cryptographic error during signature verification: {e}"
+        )
+        return result
+    except ValueError as e:
+        result["errors"].append(f"Malformed cryptographic data: {e}")
+        return result
     except Exception as e:
-        result["errors"].append(f"Signature verification failed: {e}")
+        # Catch-all for unexpected errors - log but don't expose internals
+        result["errors"].append(
+            f"Unexpected error during signature verification: {type(e).__name__}"
+        )
         return result
 
     # 2. Check content hash
@@ -336,8 +353,15 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
                 "Content hash mismatch: stored content differs from signed content"
             )
 
+    except TypeError as e:
+        result["errors"].append(f"Content contains non-serializable data: {e}")
+    except json.JSONDecodeError as e:
+        result["errors"].append(f"Content JSON encoding failed: {e}")
     except Exception as e:
-        result["errors"].append(f"Content hash verification failed: {e}")
+        # Catch-all for unexpected errors
+        result["errors"].append(
+            f"Unexpected error during hash verification: {type(e).__name__}"
+        )
 
     # 3. Check RFC 3161 timestamp (if present)
     # WARNING: This checks presence only, NOT cryptographic validity
