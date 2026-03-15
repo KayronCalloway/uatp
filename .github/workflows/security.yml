@@ -38,7 +38,7 @@ jobs:
     - name: Run Safety check
       run: |
         safety scan --output json > safety-report.json 2>&1 || true
-        safety scan --output text || true
+        safety scan --output screen || true
       continue-on-error: true
 
     - name: Upload security reports
