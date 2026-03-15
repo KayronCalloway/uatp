@@ -88,7 +88,8 @@ test = [
     "hypothesis>=6.0.0",
     "pytest-cov>=4.0.0",
     "trustme>=1.0.0",
-    "cryptography-vectors>=44.0.1",
+    # NOTE: cryptography-vectors removed - it was triggering 228 false positive
+    # security alerts for test .pem files. Not actually used in our tests.
 ]
 dev = [
     "black>=22.0.0",
