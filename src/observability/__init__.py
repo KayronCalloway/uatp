@@ -34,23 +34,89 @@ Usage:
 # Performance and Security Monitoring
 from .performance_monitor import PerformanceMonitor, get_monitor, track_query
 from .security_monitor import SecurityEventType, SecurityMonitor, get_security_monitor
-from .sentry_integration import (
-    AgentErrorTracking,
-    CapsuleErrorTracking,
-    SafetyErrorTracking,
-    add_agent_breadcrumb,
-    add_capsule_breadcrumb,
-    add_security_breadcrumb,
-    capture_exception,
-    capture_message,
-    clear_user,
-    flush_sentry,
-    identify_user,
-    monitored,
-    sentry_context,
-    sentry_transaction,
-    setup_sentry,
-)
+
+# Sentry integration is optional (requires sentry-sdk)
+try:
+    from .sentry_integration import (
+        AgentErrorTracking,
+        CapsuleErrorTracking,
+        SafetyErrorTracking,
+        add_agent_breadcrumb,
+        add_capsule_breadcrumb,
+        add_security_breadcrumb,
+        capture_exception,
+        capture_message,
+        clear_user,
+        flush_sentry,
+        identify_user,
+        monitored,
+        sentry_context,
+        sentry_transaction,
+        setup_sentry,
+    )
+
+    _SENTRY_AVAILABLE = True
+except ImportError:
+    _SENTRY_AVAILABLE = False
+
+    # Stub implementations for when sentry is not available
+    def setup_sentry(*args, **kwargs):
+        pass
+
+    def capture_exception(*args, **kwargs):
+        pass
+
+    def capture_message(*args, **kwargs):
+        pass
+
+    def sentry_context(*args, **kwargs):
+        from contextlib import contextmanager
+
+        @contextmanager
+        def _noop():
+            yield
+
+        return _noop()
+
+    def sentry_transaction(*args, **kwargs):
+        from contextlib import contextmanager
+
+        @contextmanager
+        def _noop():
+            yield
+
+        return _noop()
+
+    def monitored(func):
+        return func
+
+    class CapsuleErrorTracking:
+        pass
+
+    class SafetyErrorTracking:
+        pass
+
+    class AgentErrorTracking:
+        pass
+
+    def add_capsule_breadcrumb(*args, **kwargs):
+        pass
+
+    def add_security_breadcrumb(*args, **kwargs):
+        pass
+
+    def add_agent_breadcrumb(*args, **kwargs):
+        pass
+
+    def identify_user(*args, **kwargs):
+        pass
+
+    def clear_user(*args, **kwargs):
+        pass
+
+    def flush_sentry(*args, **kwargs):
+        pass
+
 
 __all__ = [
     # Error Tracking
