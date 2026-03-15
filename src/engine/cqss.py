@@ -154,9 +154,20 @@ async def compute_cqss(chain: List[Capsule], verify_capsule_fn) -> CQSSResult:
         capsule_types.get("Introspective", 0) / chain_length if chain_length > 0 else 0
     )
 
-    # Compute confidence stats
+    # Compute confidence stats with distributional context
+    # NOTE: Mean alone can mask important distributional shape (e.g., bimodal distributions)
+    # We include min/max/stddev to provide fuller picture for decision-making
     confidences = [c.confidence for c in chain if c.confidence is not None]
-    avg_confidence = statistics.mean(confidences) if confidences else 0
+    if confidences:
+        avg_confidence = statistics.mean(confidences)
+        min_confidence = min(confidences)
+        max_confidence = max(confidences)
+        confidence_stddev = statistics.stdev(confidences) if len(confidences) > 1 else 0
+    else:
+        avg_confidence = 0
+        min_confidence = None
+        max_confidence = None
+        confidence_stddev = None
 
     # Calculate fork quality impact for quality penalties
     fork_quality_impact = min(1.0, fork_count / max(chain_length, 1) * 2)
@@ -221,7 +232,17 @@ async def compute_cqss(chain: List[Capsule], verify_capsule_fn) -> CQSSResult:
         # Capsule type metrics
         "joint_capsule_ratio": round(joint_capsule_ratio, 2),
         "introspective_ratio": round(introspective_ratio, 2),
+        # Confidence metrics (mean + distribution for context)
         "avg_confidence": round(avg_confidence, 2),
+        "min_confidence": round(min_confidence, 2)
+        if min_confidence is not None
+        else None,
+        "max_confidence": round(max_confidence, 2)
+        if max_confidence is not None
+        else None,
+        "confidence_stddev": round(confidence_stddev, 2)
+        if confidence_stddev is not None
+        else None,
         # Time metrics
         "timestamp_consistency": (
             round(timestamp_consistency, 2)
