@@ -32,7 +32,7 @@ requests==2.32.4
 # Validation & Serialization - Updated
 pydantic==2.12.5
 pydantic-settings==2.7.0
-validators==0.34.0
+validators==0.35.0
 
 # Monitoring & Observability - Security updates
 prometheus-client==0.21.1
