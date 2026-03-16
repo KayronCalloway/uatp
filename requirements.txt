@@ -7,7 +7,7 @@ starlette==0.52.1
 
 # Database - Latest secure versions
 asyncpg==0.30.0
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.11
 SQLAlchemy==2.0.36
 alembic==1.14.0
 
