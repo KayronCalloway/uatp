@@ -114,9 +114,9 @@ pydantic-settings==2.7.0
 psutil==6.1.0
 
 # Additional security dependencies
-cryptography-vectors==44.0.1
 pyopenssl==24.3.0
-trustme==1.2.0
+# cryptography-vectors removed - test-only, causes false positive security alerts (.pem files)
+# trustme removed - test-only
 
 # Analysis & ML
 numpy==1.26.4
