@@ -3,9 +3,12 @@
 **Cryptographic audit trails for AI decisions.**
 
 [![CI](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml)
+[![Security](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml)
 [![PyPI](https://img.shields.io/pypi/v/uatp)](https://pypi.org/project/uatp/)
+[![Downloads](https://img.shields.io/pypi/dm/uatp)](https://pypi.org/project/uatp/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](STATUS.md)
 
 > **Current state: Beta.** The SDK and core signing work. Not independently audited. The repo also contains experimental platform code beyond the core protocol. See [STATUS.md](STATUS.md) for what's actually shipped.
