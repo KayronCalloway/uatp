@@ -69,7 +69,7 @@ aiosqlite==0.20.0
 orjson==3.11.5
 
 # Email - Updated for security
-email-validator==2.2.0
+email-validator==2.3.0
 
 # Security scanning and validation
 safety==3.7.0
