@@ -110,6 +110,11 @@ SYSTEM_STATUS.md
 # Claude Code context (internal development only)
 CLAUDE.md
 
+# Runtime data files
+*.jsonl
+capsule_chain.jsonl
+live_capture.db
+
 # Build artifacts
 build/
 dist/
