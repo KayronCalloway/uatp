@@ -383,7 +383,7 @@ class KeyRotationManager:
             "sha256",
             ":".join(factors).encode("utf-8"),
             b"key-rotation-salt",
-            100000,
+            480_000,
         )
 
     def _encrypt_key(self, key_data: bytes) -> bytes:
@@ -391,7 +391,7 @@ class KeyRotationManager:
         from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
         password = self._get_key_password()
-        aes_key = hashlib.pbkdf2_hmac("sha256", password, b"rotation-aes-key", 100000)
+        aes_key = hashlib.pbkdf2_hmac("sha256", password, b"rotation-aes-key", 480_000)
         nonce = os.urandom(12)
         aesgcm = AESGCM(aes_key)
         ciphertext: bytes = aesgcm.encrypt(nonce, key_data, None)
@@ -402,7 +402,7 @@ class KeyRotationManager:
         from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
         password = self._get_key_password()
-        aes_key = hashlib.pbkdf2_hmac("sha256", password, b"rotation-aes-key", 100000)
+        aes_key = hashlib.pbkdf2_hmac("sha256", password, b"rotation-aes-key", 480_000)
         nonce = encrypted_data[:12]
         ciphertext = encrypted_data[12:]
         aesgcm = AESGCM(aes_key)

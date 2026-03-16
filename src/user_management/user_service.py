@@ -113,7 +113,7 @@ class UserService:
         """Hash password with salt"""
         salt = secrets.token_hex(16)
         password_hash = hashlib.pbkdf2_hmac(
-            "sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000
+            "sha256", password.encode("utf-8"), salt.encode("utf-8"), 480_000
         )
         return f"{salt}:{password_hash.hex()}"
 
@@ -122,7 +122,7 @@ class UserService:
         try:
             salt, hash_hex = stored_hash.split(":")
             password_hash = hashlib.pbkdf2_hmac(
-                "sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000
+                "sha256", password.encode("utf-8"), salt.encode("utf-8"), 480_000
             )
             return hash_hex == password_hash.hex()
         except Exception:

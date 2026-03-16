@@ -171,7 +171,7 @@ def _derive_key_password() -> bytes:
 
     # Use machine UUID in salt for additional device binding
     salt = hashlib.sha256(f"uatp-v7-{machine_uuid}".encode()).digest()[:16]
-    derived = hashlib.pbkdf2_hmac("sha256", combined, salt, 100000)
+    derived = hashlib.pbkdf2_hmac("sha256", combined, salt, 480_000)
 
     logger.warning(
         "[WARN] Using derived key password. Set UATP_KEY_PASSWORD for production."
@@ -372,7 +372,7 @@ class UATPCryptoV7:
 
         password = _derive_key_password()
         # Derive AES key from password
-        aes_key = hashlib.pbkdf2_hmac("sha256", password, b"pq-aes-key-v2", 100000)
+        aes_key = hashlib.pbkdf2_hmac("sha256", password, b"pq-aes-key-v2", 480_000)
 
         # Generate nonce and encrypt
         nonce = os.urandom(12)
@@ -388,7 +388,7 @@ class UATPCryptoV7:
 
         password = _derive_key_password()
         # Derive AES key from password
-        aes_key = hashlib.pbkdf2_hmac("sha256", password, b"pq-aes-key-v2", 100000)
+        aes_key = hashlib.pbkdf2_hmac("sha256", password, b"pq-aes-key-v2", 480_000)
 
         # Extract nonce and ciphertext
         nonce = encrypted_data[:12]

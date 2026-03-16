@@ -70,7 +70,7 @@ def _derive_key_password() -> bytes:
         "uatp-capsule-engine-dev-key",  # Salt
     ]
     combined = ":".join(factors).encode("utf-8")
-    derived = hashlib.pbkdf2_hmac("sha256", combined, b"uatp-salt", 100000)
+    derived = hashlib.pbkdf2_hmac("sha256", combined, b"uatp-salt", 480_000)
 
     logger.warning(
         "[WARN] Using derived key password. Set UATP_KEY_PASSWORD for production."

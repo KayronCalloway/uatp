@@ -275,7 +275,7 @@ class DataEncryption:
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt,
-            iterations=100000,
+            iterations=480_000,  # OWASP recommends 310,000+ for SHA256
         )
         return base64.urlsafe_b64encode(kdf.derive(password.encode()))
 
