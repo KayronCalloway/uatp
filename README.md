@@ -51,6 +51,24 @@ pip install -e .
 python run.py
 ```
 
+**That's it for development.** The backend:
+- Uses SQLite by default (no database setup needed)
+- Runs on `http://localhost:8000`
+- Auto-creates `uatp_dev.db` on first run
+
+**Optional:** Copy `.env.example` to `.env` to customize settings (JWT secrets, PostgreSQL, etc.)
+
+### 2b. Start the frontend (optional)
+
+```bash
+cd frontend
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+Opens dashboard at `http://localhost:3000`
+
 ### 3. Create a capsule
 
 ```python
