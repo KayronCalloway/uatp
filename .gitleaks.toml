@@ -62,7 +62,18 @@ paths = [
     '''.*example.*''',
     '''.*\.md$''',
     '''.*\.txt$''',
-    '''docs/.*'''
+    '''docs/.*''',
+    # Minified JS libraries - false positives
+    '''.*\.min\.js$''',
+    '''.*vis-network.*''',
+    '''.*node_modules.*''',
+    '''frontend/public/lib/.*''',
+    '''public/lib/.*''',
+    '''visualizer/lib/.*''',
+    '''src/lib/.*''',
+    # Lock files
+    '''package-lock\.json$''',
+    '''poetry\.lock$''',
 ]
 
 # Allow test keys and example values
