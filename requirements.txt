@@ -88,7 +88,7 @@ httpcore==1.0.9
 httptools==0.6.4
 idna==3.10
 itsdangerous==2.2.0
-multidict==6.6.3
+multidict==6.7.1
 packaging==26.0
 pycparser==2.22
 # pydantic-core==2.14.1  # Managed by pydantic
