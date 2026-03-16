@@ -1,0 +1,427 @@
+"""
+Local Signer - Zero-Trust Capsule Signing
+
+This module implements the zero-trust signing flow:
+1. User creates capsule content LOCALLY
+2. User signs with their LOCAL key (never transmitted)
+3. Only the HASH is sent to UATP for timestamping
+4. Timestamp comes from EXTERNAL TSA (DigiCert/FreeTSA)
+5. Complete capsule stays LOCAL unless user chooses to publish
+
+UATP never sees:
+- The capsule content
+- The user's private key
+- The signature (it's computed locally)
+
+UATP only sees:
+- The SHA-256 hash (32 bytes, no content)
+- Returns: RFC 3161 timestamp from external TSA
+"""
+
+import hashlib
+import json
+import logging
+import secrets
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+
+from .user_key_manager import UserKeyManager, get_user_key_manager
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class SignedCapsule:
+    """A locally signed capsule ready for timestamping."""
+
+    capsule_id: str
+    content_hash: str  # SHA-256 of canonical content
+    signature: str  # Ed25519 signature (hex)
+    public_key: str  # Signer's public key (hex)
+    signed_at: datetime
+    content: Dict[str, Any]  # The actual content (stays local)
+
+    # Timestamp added after UATP provides it
+    timestamp_token: Optional[Dict[str, Any]] = None
+    timestamp_tsa: Optional[str] = None
+    timestamped_at: Optional[datetime] = None
+
+    # Server storage info (if capsule was stored on UATP server)
+    server_stored: bool = False
+    proof_url: Optional[str] = None
+
+
+class LocalSigner:
+    """
+    Signs capsules locally using user's private key.
+
+    This is the core of UATP's zero-trust architecture:
+    - All signing happens on the user's device
+    - Private keys never leave the device
+    - Only hashes are transmitted for timestamping
+
+    Usage:
+        signer = LocalSigner(passphrase="user's secret")
+
+        # Sign a capsule
+        signed = signer.sign_capsule({
+            "decision": "Approve loan",
+            "reasoning": [...]
+        })
+
+        # signed.content_hash can be sent to UATP for timestamping
+        # signed.content stays local
+    """
+
+    def __init__(
+        self,
+        passphrase: str,
+        key_manager: Optional[UserKeyManager] = None,
+        key_dir: Optional[str] = None,
+        key_id: Optional[str] = None,
+        auto_generate: bool = True,
+    ):
+        """
+        Initialize LocalSigner.
+
+        Args:
+            passphrase: User's passphrase for accessing their private key
+            key_manager: Optional custom key manager. Uses default if not provided.
+            key_dir: Directory for key storage. Defaults to ~/.uatp/keys
+            key_id: Which key to use. Uses current key if not provided.
+            auto_generate: If True, generate a new key if none exists.
+        """
+        self.key_manager = key_manager or get_user_key_manager(key_dir=key_dir)
+        self.passphrase = passphrase
+        self.key_id = key_id
+
+        # Try to get existing key
+        key_info = (
+            self.key_manager.get_key(key_id)
+            if key_id
+            else self.key_manager.get_current_key()
+        )
+
+        # Auto-generate if no key exists and auto_generate is enabled
+        if not key_info and auto_generate:
+            logger.info("No signing key found. Generating new key pair...")
+            key_info = self.key_manager.generate_key_pair(passphrase)
+
+        if not key_info:
+            raise ValueError(
+                "No signing key found. Generate one first with: "
+                "key_manager.generate_key_pair(passphrase)"
+            )
+
+        self.public_key = key_info.public_key_hex
+        self._key_id = key_info.key_id
+
+    def _canonical_json(self, data: Dict[str, Any]) -> bytes:
+        """
+        Create canonical JSON representation for hashing.
+
+        Ensures consistent hashing regardless of key order, formatting, etc.
+        """
+
+        def serialize(obj: Any) -> str:
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+        return json.dumps(
+            data,
+            sort_keys=True,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            default=serialize,
+        ).encode("utf-8")
+
+    def _compute_hash(self, content: Dict[str, Any]) -> str:
+        """Compute SHA-256 hash of canonical content."""
+        canonical = self._canonical_json(content)
+        return hashlib.sha256(canonical).hexdigest()
+
+    def sign_capsule(
+        self,
+        content: Dict[str, Any],
+        capsule_id: Optional[str] = None,
+    ) -> SignedCapsule:
+        """
+        Sign capsule content locally.
+
+        This creates a cryptographic signature over the content using
+        the user's private key. The signature proves:
+        1. The content was created by the key holder
+        2. The content hasn't been modified since signing
+
+        Args:
+            content: The capsule content to sign
+            capsule_id: Optional capsule ID. Auto-generated if not provided.
+
+        Returns:
+            SignedCapsule with signature and hash (ready for timestamping)
+
+        Security:
+            - Signing happens entirely locally
+            - Private key is decrypted only for signing, then cleared
+            - No network calls are made
+        """
+        if capsule_id is None:
+            timestamp_str = datetime.now(timezone.utc).strftime("%Y_%m_%d_%H%M%S")
+            capsule_id = f"caps_{timestamp_str}_{secrets.token_hex(4)}"
+
+        # Compute hash of content
+        content_hash = self._compute_hash(content)
+
+        # Sign the hash locally
+        signature = self.key_manager.sign(
+            data_hash=content_hash,
+            passphrase=self.passphrase,
+            key_id=self._key_id,
+        )
+
+        signed_at = datetime.now(timezone.utc)
+
+        logger.info(f"Locally signed capsule: {capsule_id}")
+        logger.debug(f"Content hash: {content_hash[:16]}...")
+        logger.debug(f"Signed with key: {self._key_id}")
+
+        return SignedCapsule(
+            capsule_id=capsule_id,
+            content_hash=content_hash,
+            signature=signature,
+            public_key=self.public_key,
+            signed_at=signed_at,
+            content=content,
+        )
+
+    def verify_capsule(self, capsule: SignedCapsule) -> bool:
+        """
+        Verify a signed capsule.
+
+        This can be done by anyone - only needs public information.
+        No private key or passphrase required.
+
+        Args:
+            capsule: The signed capsule to verify
+
+        Returns:
+            True if signature is valid and content hasn't been modified
+        """
+        # Recompute hash
+        computed_hash = self._compute_hash(capsule.content)
+
+        # Check hash matches
+        if computed_hash != capsule.content_hash:
+            logger.warning("Content hash mismatch - content may have been modified")
+            return False
+
+        # Verify signature
+        is_valid = self.key_manager.verify(
+            data_hash=capsule.content_hash,
+            signature_hex=capsule.signature,
+            public_key_hex=capsule.public_key,
+        )
+
+        if is_valid:
+            logger.info(f"Capsule verified: {capsule.capsule_id}")
+        else:
+            logger.warning(f"Capsule verification failed: {capsule.capsule_id}")
+
+        return is_valid
+
+    def to_verifiable_dict(self, signed: SignedCapsule) -> Dict[str, Any]:
+        """
+        Convert signed capsule to UATP format for storage/transmission.
+
+        The output format matches UATP v7 and can be independently verified.
+        """
+        verification: Dict[str, Any] = {
+            "hash": signed.content_hash,
+            "signature": f"ed25519:{signed.signature}",
+            "verify_key": signed.public_key,
+            "signer": "user",  # Indicates user signed, not UATP
+            "signed_at": signed.signed_at.isoformat(),
+        }
+
+        # Add timestamp if available
+        if signed.timestamp_token:
+            verification["rfc3161"] = signed.timestamp_token
+            verification["timestamp_tsa"] = signed.timestamp_tsa
+            if signed.timestamped_at:
+                verification["timestamped_at"] = signed.timestamped_at.isoformat()
+
+        capsule: Dict[str, Any] = {
+            "capsule_id": signed.capsule_id,
+            "version": "7.2",
+            "type": "user_signed",
+            "timestamp": signed.signed_at.isoformat(),
+            "content": signed.content,
+            "verification": verification,
+        }
+
+        return capsule
+
+
+def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Verify a capsule without any UATP infrastructure.
+
+    This function can be used by anyone to verify a capsule
+    using only the cryptographic data embedded in the capsule itself.
+    No trust in UATP required.
+
+    Args:
+        capsule_data: The capsule to verify (dict format)
+
+    Returns:
+        Verification result dict with status and details
+    """
+    from nacl import exceptions as nacl_exceptions
+    from nacl.encoding import HexEncoder
+    from nacl.signing import VerifyKey
+
+    result: Dict[str, Any] = {
+        # Individual verification components - these are the ground truth
+        "signature_valid": False,
+        "content_hash_match": False,
+        "timestamp_present": False,
+        "timestamp_verified": False,  # Requires rfc3161ng library
+        # Aggregate status - be precise about what was actually verified
+        "assurance_level": "none",  # "none" | "signature_only" | "signature_and_hash" | "full"
+        "errors": [],
+        "warnings": [],
+    }
+
+    verification = capsule_data.get("verification", {})
+
+    # 1. Check signature
+    try:
+        signature_str = verification.get("signature", "")
+        if signature_str.startswith("ed25519:"):
+            signature_hex = signature_str.split(":", 1)[1]
+        else:
+            signature_hex = signature_str
+
+        public_key_hex = verification.get("verify_key", "")
+        stored_hash = verification.get("hash", "")
+
+        if not all([signature_hex, public_key_hex, stored_hash]):
+            result["errors"].append("Missing signature, verify_key, or hash")
+            return result
+
+        # Verify Ed25519 signature
+        verify_key = VerifyKey(public_key_hex, encoder=HexEncoder)
+        signature_bytes = bytes.fromhex(signature_hex)
+
+        verify_key.verify(stored_hash.encode("utf-8"), signature_bytes)
+        result["signature_valid"] = True
+
+    except nacl_exceptions.BadSignatureError:
+        result["errors"].append(
+            "Signature verification failed: invalid Ed25519 signature"
+        )
+        return result
+    except nacl_exceptions.CryptoError as e:
+        result["errors"].append(
+            f"Cryptographic error during signature verification: {e}"
+        )
+        return result
+    except ValueError as e:
+        result["errors"].append(f"Malformed cryptographic data: {e}")
+        return result
+    except Exception as e:
+        # Catch-all for unexpected errors - log but don't expose internals
+        result["errors"].append(
+            f"Unexpected error during signature verification: {type(e).__name__}"
+        )
+        return result
+
+    # 2. Check content hash
+    try:
+        content = capsule_data.get("content", {})
+
+        def serialize(obj: Any) -> str:
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+        canonical = json.dumps(
+            content,
+            sort_keys=True,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            default=serialize,
+        ).encode("utf-8")
+
+        computed_hash = hashlib.sha256(canonical).hexdigest()
+
+        if computed_hash == stored_hash:
+            result["content_hash_match"] = True
+        else:
+            # Hash mismatch is a verification failure, not a warning
+            # The content has changed from what was originally signed
+            result["errors"].append(
+                "Content hash mismatch: stored content differs from signed content"
+            )
+
+    except TypeError as e:
+        result["errors"].append(f"Content contains non-serializable data: {e}")
+    except json.JSONDecodeError as e:
+        result["errors"].append(f"Content JSON encoding failed: {e}")
+    except Exception as e:
+        # Catch-all for unexpected errors
+        result["errors"].append(
+            f"Unexpected error during hash verification: {type(e).__name__}"
+        )
+
+    # 3. Check RFC 3161 timestamp (if present)
+    # WARNING: This is NOT cryptographic verification - just presence checking.
+    # Full RFC 3161 verification requires the rfc3161ng library and TSA certificate chain.
+    rfc3161 = verification.get("rfc3161")
+    if rfc3161:
+        try:
+            if "token" in rfc3161 and "tsa" in rfc3161:
+                # Mark as present but NOT cryptographically verified
+                result["timestamp_present"] = True
+                result["timestamp_verified"] = False  # Not cryptographically verified!
+                result["timestamp_tsa"] = rfc3161.get("tsa")
+                result["timestamp_time"] = rfc3161.get("timestamp")
+                result["warnings"].append(
+                    "RFC 3161 timestamp present but NOT cryptographically verified. "
+                    "Use rfc3161ng library for full verification."
+                )
+            else:
+                result["warnings"].append("Incomplete RFC 3161 timestamp data")
+
+        except Exception as e:
+            result["warnings"].append(f"Could not check timestamp: {e}")
+
+    # Compute assurance level based on what actually verified
+    # This is explicit about the strength of the verification
+    if not result["signature_valid"]:
+        result["assurance_level"] = "none"
+    elif not result["content_hash_match"]:
+        # Signature valid but content changed - this is suspicious
+        result["assurance_level"] = "signature_only"
+        result["warnings"].append(
+            "Signature valid over stored hash, but content may have been modified. "
+            "This could indicate tampering or storage transformation."
+        )
+    elif result["timestamp_verified"]:
+        result["assurance_level"] = "full"
+    elif result["timestamp_present"]:
+        result["assurance_level"] = "signature_and_hash"
+        result["warnings"].append(
+            "RFC 3161 timestamp present but NOT cryptographically verified. "
+            "Install rfc3161ng for full timestamp verification."
+        )
+    else:
+        result["assurance_level"] = "signature_and_hash"
+
+    # Add metadata
+    result["signer"] = verification.get("signer", "unknown")
+    result["capsule_id"] = capsule_data.get("capsule_id")
+
+    return result

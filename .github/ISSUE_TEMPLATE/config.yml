@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerabilities (Critical)
+    url: https://github.com/KayronCalloway/uatp/blob/main/SECURITY.md
+    about: For critical security issues, please email directly. Do not open a public issue.
+  - name: Questions & Discussions
+    url: https://github.com/KayronCalloway/uatp/discussions
+    about: Ask questions and discuss UATP with the community.
+  - name: Documentation
+    url: https://github.com/KayronCalloway/uatp/blob/main/README.md
+    about: Check the documentation before opening an issue.

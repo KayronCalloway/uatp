@@ -1,0 +1,561 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backup-credentials
+  namespace: uatp-prod
+type: Opaque
+data:
+  # S3 credentials for backup storage (base64 encoded)
+  AWS_ACCESS_KEY_ID: YmFja3VwX2FjY2Vzc19rZXlfaWQ=
+  AWS_SECRET_ACCESS_KEY: YmFja3VwX3NlY3JldF9hY2Nlc3Nfa2V5
+  AWS_REGION: dXMtZWFzdC0x
+  S3_BUCKET: dWF0cC1iYWNrdXAtYnVja2V0
+  ENCRYPTION_KEY: ZGF0YWJhc2VfZW5jcnlwdGlvbl9rZXlfZm9yX2JhY2t1cHM=
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-config
+  namespace: uatp-prod
+data:
+  backup-schedule.conf: |
+    # Backup configuration
+    BACKUP_RETENTION_DAYS=30
+    BACKUP_COMPRESSION=true
+    BACKUP_ENCRYPTION=true
+    BACKUP_VERIFICATION=true
+    BACKUP_NOTIFICATION_WEBHOOK=https://alerts.uatp.ai/webhook/backup
+
+    # Database backup settings
+    DB_BACKUP_TIMEOUT=3600
+    DB_BACKUP_PARALLEL_JOBS=4
+    DB_BACKUP_COMPRESSION_LEVEL=6
+
+    # File backup settings
+    FILE_BACKUP_INCLUDE_LOGS=false
+    FILE_BACKUP_INCLUDE_CACHE=false
+    FILE_BACKUP_EXCLUDE_PATTERNS="*.tmp,*.log,*.cache"
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup
+  namespace: uatp-prod
+  labels:
+    app: database-backup
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM UTC
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: database-backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: postgres-backup
+            image: postgres:14-alpine
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+
+              # Load environment variables
+              source /etc/backup-config/backup-schedule.conf
+
+              # Generate timestamp
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              BACKUP_FILE="uatp_db_backup_${TIMESTAMP}.sql.gz"
+
+              echo "Starting database backup: $BACKUP_FILE"
+
+              # Create backup with compression
+              pg_dump "$DATABASE_URL" --verbose --no-owner --no-privileges | gzip > "/tmp/$BACKUP_FILE"
+
+              # Verify backup integrity
+              echo "Verifying backup integrity..."
+              if ! gunzip -t "/tmp/$BACKUP_FILE"; then
+                echo "Backup verification failed!"
+                exit 1
+              fi
+
+              # Upload to S3
+              echo "Uploading backup to S3..."
+              aws s3 cp "/tmp/$BACKUP_FILE" "s3://$S3_BUCKET/database/daily/$BACKUP_FILE" --server-side-encryption AES256
+
+              # Cleanup old backups (keep last 30 days)
+              echo "Cleaning up old backups..."
+              aws s3 ls "s3://$S3_BUCKET/database/daily/" | while read -r line; do
+                createDate=$(echo "$line" | awk '{print $1" "$2}')
+                createDate=$(date -d "$createDate" +%s)
+                olderThan=$(date -d "$BACKUP_RETENTION_DAYS days ago" +%s)
+                if [[ $createDate -lt $olderThan ]]; then
+                  fileName=$(echo "$line" | awk '{print $4}')
+                  if [[ $fileName != "" ]]; then
+                    aws s3 rm "s3://$S3_BUCKET/database/daily/$fileName"
+                    echo "Deleted old backup: $fileName"
+                  fi
+                fi
+              done
+
+              # Send success notification
+              curl -X POST "$BACKUP_NOTIFICATION_WEBHOOK" \
+                -H "Content-Type: application/json" \
+                -d "{\"status\": \"success\", \"type\": \"database\", \"file\": \"$BACKUP_FILE\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+              echo "Database backup completed successfully: $BACKUP_FILE"
+            env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: uatp-secrets
+                  key: DATABASE_URL
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: backup-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_DEFAULT_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: backup-credentials
+                  key: AWS_REGION
+            - name: S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: backup-credentials
+                  key: S3_BUCKET
+            volumeMounts:
+            - name: backup-config
+              mountPath: /etc/backup-config
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "250m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+          volumes:
+          - name: backup-config
+            configMap:
+              name: backup-config
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: weekly-full-backup
+  namespace: uatp-prod
+  labels:
+    app: weekly-backup
+spec:
+  schedule: "0 1 * * 0"  # Weekly on Sunday at 1 AM UTC
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: weekly-backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: full-backup
+            image: alpine:3.18
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+
+              # Install required tools
+              apk add --no-cache postgresql-client aws-cli curl
+
+              # Load environment variables
+              source /etc/backup-config/backup-schedule.conf
+
+              # Generate timestamp
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              DB_BACKUP_FILE="uatp_weekly_db_backup_${TIMESTAMP}.sql.gz"
+
+              echo "Starting weekly full backup: $DB_BACKUP_FILE"
+
+              # Create comprehensive database backup
+              pg_dump "$DATABASE_URL" --verbose --no-owner --no-privileges --format=custom | gzip > "/tmp/$DB_BACKUP_FILE"
+
+              # Verify backup
+              if ! gunzip -t "/tmp/$DB_BACKUP_FILE"; then
+                echo "Database backup verification failed!"
+                exit 1
+              fi
+
+              # Upload to S3
+              echo "Uploading weekly backup to S3..."
+              aws s3 cp "/tmp/$DB_BACKUP_FILE" "s3://$S3_BUCKET/database/weekly/$DB_BACKUP_FILE" --server-side-encryption AES256
+
+              # Create backup manifest
+              MANIFEST_FILE="backup_manifest_${TIMESTAMP}.json"
+              cat > "/tmp/$MANIFEST_FILE" << EOF
+              {
+                "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+                "type": "weekly_full",
+                "database_backup": "$DB_BACKUP_FILE",
+                "database_size": $(stat -c%s "/tmp/$DB_BACKUP_FILE"),
+                "retention_policy": "${BACKUP_RETENTION_DAYS}_days",
+                "verification_status": "passed"
+              }
+              EOF
+
+              # Upload manifest
+              aws s3 cp "/tmp/$MANIFEST_FILE" "s3://$S3_BUCKET/manifests/$MANIFEST_FILE" --server-side-encryption AES256
+
+              # Cleanup old weekly backups (keep last 8 weeks)
+              echo "Cleaning up old weekly backups..."
+              aws s3 ls "s3://$S3_BUCKET/database/weekly/" | while read -r line; do
+                createDate=$(echo "$line" | awk '{print $1" "$2}')
+                createDate=$(date -d "$createDate" +%s)
+                olderThan=$(date -d "56 days ago" +%s)  # 8 weeks
+                if [[ $createDate -lt $olderThan ]]; then
+                  fileName=$(echo "$line" | awk '{print $4}')
+                  if [[ $fileName != "" ]]; then
+                    aws s3 rm "s3://$S3_BUCKET/database/weekly/$fileName"
+                    echo "Deleted old weekly backup: $fileName"
+                  fi
+                fi
+              done
+
+              # Send success notification
+              curl -X POST "$BACKUP_NOTIFICATION_WEBHOOK" \
+                -H "Content-Type: application/json" \
+                -d "{\"status\": \"success\", \"type\": \"weekly_full\", \"files\": [\"$DB_BACKUP_FILE\"], \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+              echo "Weekly full backup completed successfully"
+            env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: uatp-secrets
+                  key: DATABASE_URL
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: backup-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_DEFAULT_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: backup-credentials
+                  key: AWS_REGION
+            - name: S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: backup-credentials
+                  key: S3_BUCKET
+            volumeMounts:
+            - name: backup-config
+              mountPath: /etc/backup-config
+            resources:
+              requests:
+                memory: "512Mi"
+                cpu: "500m"
+              limits:
+                memory: "1Gi"
+                cpu: "1000m"
+          volumes:
+          - name: backup-config
+            configMap:
+              name: backup-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: disaster-recovery-service
+  namespace: uatp-prod
+  labels:
+    app: disaster-recovery
+spec:
+  selector:
+    app: disaster-recovery
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: disaster-recovery-controller
+  namespace: uatp-prod
+  labels:
+    app: disaster-recovery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: disaster-recovery
+  template:
+    metadata:
+      labels:
+        app: disaster-recovery
+    spec:
+      serviceAccountName: disaster-recovery-sa
+      containers:
+      - name: dr-controller
+        image: alpine:3.18
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Install required tools
+          apk add --no-cache postgresql-client aws-cli curl python3 py3-pip
+          pip3 install flask kubernetes
+
+          # Start disaster recovery service
+          python3 /app/dr-service.py
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: uatp-secrets
+              key: DATABASE_URL
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: backup-credentials
+              key: AWS_ACCESS_KEY_ID
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backup-credentials
+              key: AWS_SECRET_ACCESS_KEY
+        - name: AWS_DEFAULT_REGION
+          valueFrom:
+            secretKeyRef:
+              name: backup-credentials
+              key: AWS_REGION
+        - name: S3_BUCKET
+          valueFrom:
+            secretKeyRef:
+              name: backup-credentials
+              key: S3_BUCKET
+        volumeMounts:
+        - name: dr-scripts
+          mountPath: /app
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: dr-scripts
+        configMap:
+          name: dr-scripts
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dr-scripts
+  namespace: uatp-prod
+data:
+  dr-service.py: |
+    #!/usr/bin/env python3
+    from flask import Flask, request, jsonify
+    import subprocess
+    import os
+    import json
+    from datetime import datetime
+
+    app = Flask(__name__)
+
+    @app.route('/health')
+    def health():
+        return jsonify({"status": "healthy"}), 200
+
+    @app.route('/ready')
+    def ready():
+        return jsonify({"status": "ready"}), 200
+
+    @app.route('/disaster-recovery/restore', methods=['POST'])
+    def restore_from_backup():
+        try:
+            data = request.json
+            backup_file = data.get('backup_file')
+            restore_type = data.get('restore_type', 'database')
+
+            if not backup_file:
+                return jsonify({"error": "backup_file is required"}), 400
+
+            # Validate backup file exists
+            s3_bucket = os.getenv('S3_BUCKET')
+            check_cmd = f"aws s3 ls s3://{s3_bucket}/database/daily/{backup_file}"
+            result = subprocess.run(check_cmd, shell=True, capture_output=True, text=True)
+
+            if result.returncode != 0:
+                return jsonify({"error": f"Backup file not found: {backup_file}"}), 404
+
+            # Download backup
+            download_cmd = f"aws s3 cp s3://{s3_bucket}/database/daily/{backup_file} /tmp/{backup_file}"
+            subprocess.run(download_cmd, shell=True, check=True)
+
+            # Restore database
+            database_url = os.getenv('DATABASE_URL')
+            restore_cmd = f"gunzip -c /tmp/{backup_file} | psql {database_url}"
+            restore_result = subprocess.run(restore_cmd, shell=True, capture_output=True, text=True)
+
+            if restore_result.returncode != 0:
+                return jsonify({
+                    "error": "Database restore failed",
+                    "details": restore_result.stderr
+                }), 500
+
+            # Cleanup
+            os.remove(f"/tmp/{backup_file}")
+
+            return jsonify({
+                "status": "success",
+                "message": f"Database restored from {backup_file}",
+                "timestamp": datetime.utcnow().isoformat()
+            }), 200
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route('/disaster-recovery/status')
+    def dr_status():
+        try:
+            # Check database connectivity
+            database_url = os.getenv('DATABASE_URL')
+            db_check = subprocess.run(
+                f"psql {database_url} -c 'SELECT 1;'",
+                shell=True, capture_output=True, text=True
+            )
+
+            # Check S3 connectivity
+            s3_bucket = os.getenv('S3_BUCKET')
+            s3_check = subprocess.run(
+                f"aws s3 ls s3://{s3_bucket}/",
+                shell=True, capture_output=True, text=True
+            )
+
+            return jsonify({
+                "status": "operational",
+                "database_status": "connected" if db_check.returncode == 0 else "disconnected",
+                "backup_storage_status": "connected" if s3_check.returncode == 0 else "disconnected",
+                "timestamp": datetime.utcnow().isoformat()
+            }), 200
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route('/disaster-recovery/list-backups')
+    def list_backups():
+        try:
+            s3_bucket = os.getenv('S3_BUCKET')
+            list_cmd = f"aws s3 ls s3://{s3_bucket}/database/daily/ --recursive"
+            result = subprocess.run(list_cmd, shell=True, capture_output=True, text=True)
+
+            if result.returncode != 0:
+                return jsonify({"error": "Failed to list backups"}), 500
+
+            backups = []
+            for line in result.stdout.strip().split('\n'):
+                if line.strip():
+                    parts = line.split()
+                    if len(parts) >= 4:
+                        backups.append({
+                            "date": parts[0],
+                            "time": parts[1],
+                            "size": parts[2],
+                            "filename": parts[3].split('/')[-1]
+                        })
+
+            return jsonify({
+                "backups": backups,
+                "total_count": len(backups)
+            }), 200
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=8080, debug=False)
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: disaster-recovery-sa
+  namespace: uatp-prod
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: disaster-recovery-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: disaster-recovery-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: disaster-recovery-role
+subjects:
+- kind: ServiceAccount
+  name: disaster-recovery-sa
+  namespace: uatp-prod

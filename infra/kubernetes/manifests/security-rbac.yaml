@@ -1,0 +1,194 @@
+---
+# UATP Capsule Engine - Comprehensive RBAC Configuration
+# Security-hardened Role-Based Access Control for production
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: uatp-service-account
+  namespace: uatp-prod
+  labels:
+    app: uatp-api
+    environment: production
+    security.uatp.ai/role: application
+  annotations:
+    description: "UATP Capsule Engine service account with minimal required permissions"
+
+---
+# Minimal Role for UATP Application - Principle of Least Privilege
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: uatp-prod
+  name: uatp-app-role
+  labels:
+    app: uatp-api
+    environment: production
+    security.uatp.ai/role: application-role
+rules:
+# ConfigMaps - Read only for configuration
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+  resourceNames: ["uatp-config", "uatp-app-config"]
+
+# Secrets - Read only for credentials
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch"]
+  resourceNames: ["uatp-secrets", "uatp-db-secrets", "uatp-api-keys"]
+
+# Services - Read only for service discovery
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list", "watch"]
+
+# Endpoints - Read only for load balancing
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get", "list", "watch"]
+
+# Pods - Limited read access for health checks and metrics
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+
+# Events - Create for application events
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create"]
+
+---
+# RoleBinding - Connect ServiceAccount to Role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: uatp-app-rolebinding
+  namespace: uatp-prod
+  labels:
+    app: uatp-api
+    environment: production
+    security.uatp.ai/binding: application
+subjects:
+- kind: ServiceAccount
+  name: uatp-service-account
+  namespace: uatp-prod
+roleRef:
+  kind: Role
+  name: uatp-app-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Restricted ServiceAccount for monitoring
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: uatp-monitoring-sa
+  namespace: uatp-prod
+  labels:
+    app: monitoring
+    environment: production
+    security.uatp.ai/role: monitoring
+
+---
+# Monitoring Role - Read-only access to metrics
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: uatp-prod
+  name: uatp-monitoring-role
+  labels:
+    app: monitoring
+    environment: production
+    security.uatp.ai/role: monitoring-role
+rules:
+# Pods - Read metrics endpoints
+- apiGroups: [""]
+  resources: ["pods", "pods/proxy"]
+  verbs: ["get", "list", "watch"]
+
+# Services - Access to metrics services
+- apiGroups: [""]
+  resources: ["services", "services/proxy"]
+  verbs: ["get", "list", "watch"]
+
+# Endpoints - For service discovery
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get", "list", "watch"]
+
+# Nodes - For node metrics (if needed)
+- apiGroups: [""]
+  resources: ["nodes", "nodes/metrics", "nodes/proxy"]
+  verbs: ["get", "list", "watch"]
+
+---
+# Monitoring RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: uatp-monitoring-rolebinding
+  namespace: uatp-prod
+  labels:
+    app: monitoring
+    environment: production
+    security.uatp.ai/binding: monitoring
+subjects:
+- kind: ServiceAccount
+  name: uatp-monitoring-sa
+  namespace: uatp-prod
+roleRef:
+  kind: Role
+  name: uatp-monitoring-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Cluster-level permissions (minimal) - Only if absolutely necessary
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: uatp-minimal-cluster-role
+  labels:
+    app: uatp-api
+    environment: production
+    security.uatp.ai/role: cluster-minimal
+rules:
+# Only for health checks and basic operations
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list"]
+
+# For service mesh or ingress controller communication (if needed)
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies"]
+  verbs: ["get", "list"]
+
+---
+# Security Policy for RBAC Validation
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uatp-rbac-policy
+  namespace: uatp-prod
+  labels:
+    security.uatp.ai/type: policy
+    security.uatp.ai/version: "1.0"
+data:
+  rbac-policy.yaml: |
+    # RBAC Security Policy for UATP Capsule Engine
+    rules:
+      - name: "minimum-permissions"
+        description: "All service accounts must have minimal required permissions only"
+        enforcement: "strict"
+
+      - name: "no-cluster-admin"
+        description: "No service account should have cluster-admin privileges"
+        enforcement: "strict"
+
+      - name: "namespace-isolation"
+        description: "Service accounts should only access resources in their namespace"
+        enforcement: "strict"
+
+      - name: "secret-access-audit"
+        description: "All secret access must be logged and monitored"
+        enforcement: "audit"

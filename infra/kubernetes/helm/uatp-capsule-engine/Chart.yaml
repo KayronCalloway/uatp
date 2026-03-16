@@ -1,0 +1,35 @@
+apiVersion: v2
+name: uatp-capsule-engine
+description: A Helm chart for UATP Capsule Engine
+
+# Chart version
+version: 0.1.0
+
+# Application version
+appVersion: "1.0.0"
+
+# Chart type
+type: application
+
+# Dependencies
+dependencies: []
+
+# Maintainers
+maintainers:
+  - name: UATP Team
+    email: team@uatp.org
+
+# Keywords
+keywords:
+  - uatp
+  - capsule
+  - ai
+  - trust
+  - reasoning
+
+# Sources
+sources:
+  - https://github.com/anthropics/uatp-capsule-engine
+
+# Home page
+home: https://github.com/anthropics/uatp-capsule-engine

@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uatp-config
+  namespace: uatp-production
+data:
+  ENVIRONMENT: "production"
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  LOG_LEVEL: "INFO"
+
+  # Database Configuration
+  DATABASE_HOST: "postgresql-service"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "uatp_production"
+  DATABASE_USER: "uatp_user"
+  DB_POOL_SIZE: "10"
+  DB_MAX_OVERFLOW: "20"
+  DB_POOL_TIMEOUT: "30"
+  DB_POOL_RECYCLE: "3600"
+
+  # Redis Configuration
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+
+  # Attribution Configuration
+  UBA_PERCENTAGE: "0.15"
+  MINIMUM_PAYOUT_THRESHOLD: "10.00"
+  ATTRIBUTION_CONFIDENCE_THRESHOLD: "0.5"
+
+  # Rate Limiting
+  RATE_LIMIT_PER_MINUTE: "1000"
+  RATE_LIMIT_PER_HOUR: "50000"
+
+  # PayPal Configuration
+  PAYPAL_MODE: "live"
+
+  # File Storage
+  AWS_REGION: "us-east-1"
+  AWS_S3_BUCKET: "uatp-production-files"
+
+  # Kubernetes
+  NAMESPACE: "uatp-production"
+  REPLICAS: "3"
+
+  # Monitoring
+  SENTRY_ENVIRONMENT: "production"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: uatp-secrets
+  namespace: uatp-production
+type: Opaque
+stringData:
+  # Database
+  DATABASE_PASSWORD: "your_secure_password_here"
+  DATABASE_URL: "postgresql://uatp_user:your_secure_password_here@postgresql-service:5432/uatp_production"
+
+  # Redis
+  REDIS_URL: "redis://redis-service:6379/0"
+
+  # AI API Keys
+  OPENAI_API_KEY: "sk-your-openai-api-key-here"
+  ANTHROPIC_API_KEY: "sk-ant-your-anthropic-api-key-here"
+  HUGGINGFACE_API_KEY: "hf_your-huggingface-api-key-here"
+  COHERE_API_KEY: "your-cohere-api-key-here"
+
+  # Payment Processors
+  STRIPE_SECRET_KEY: "sk_live_your_stripe_secret_key"
+  STRIPE_PUBLISHABLE_KEY: "pk_live_your_stripe_publishable_key"
+  STRIPE_WEBHOOK_SECRET: "whsec_your_webhook_secret"
+  PAYPAL_CLIENT_ID: "your_paypal_client_id"
+  PAYPAL_CLIENT_SECRET: "your_paypal_client_secret"
+
+  # Security
+  SECRET_KEY: "your-super-secret-key-for-jwt-tokens"
+  JWT_SECRET: "your-jwt-secret-key"
+  ENCRYPTION_KEY: "your-32-character-encryption-key"
+
+  # External Services
+  SMTP_PASSWORD: "your_sendgrid_api_key"
+  SENTRY_DSN: "https://your-sentry-dsn@sentry.io/project-id"
+
+  # AWS
+  AWS_ACCESS_KEY_ID: "your_aws_access_key"
+  AWS_SECRET_ACCESS_KEY: "your_aws_secret_key"

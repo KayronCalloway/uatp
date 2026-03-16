@@ -1,0 +1,19 @@
+services:
+  uatp-api:
+    deploy:
+      replicas: 3
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    environment:
+      ENV: production
+    healthcheck:
+      interval: 30s
+      retries: 3
+      test: curl -f http://localhost:8000/health
+      timeout: 10s
+    image: uatp/api:v2.0.0
+    ports:
+    - 8000:8000
+version: '3.8'

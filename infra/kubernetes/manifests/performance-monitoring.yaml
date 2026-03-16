@@ -1,0 +1,420 @@
+---
+# Performance Metrics Service Monitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: uatp-performance-monitor
+  namespace: uatp-prod
+  labels:
+    app: uatp-api
+    monitoring: performance
+spec:
+  selector:
+    matchLabels:
+      app: uatp-api
+      monitoring: enabled
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+    scheme: http
+    honorLabels: true
+    scrapeTimeout: 10s
+    metricRelabelings:
+    - sourceLabels: [__name__]
+      regex: 'uatp_.*|http_.*|database_.*|capsule_.*|reasoning_.*'
+      action: keep
+    - sourceLabels: [__name__]
+      regex: 'go_.*|process_.*|python_.*'
+      action: keep
+
+---
+# Custom Metrics API for HPA
+apiVersion: v1
+kind: Service
+metadata:
+  name: custom-metrics-apiserver
+  namespace: uatp-prod
+  labels:
+    app: custom-metrics-apiserver
+spec:
+  ports:
+  - port: 443
+    targetPort: 6443
+  selector:
+    app: custom-metrics-apiserver
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custom-metrics-apiserver
+  namespace: uatp-prod
+  labels:
+    app: custom-metrics-apiserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: custom-metrics-apiserver
+  template:
+    metadata:
+      labels:
+        app: custom-metrics-apiserver
+    spec:
+      serviceAccountName: custom-metrics-apiserver
+      containers:
+      - name: custom-metrics-apiserver
+        image: k8s.gcr.io/prometheus-adapter/prometheus-adapter:v0.11.0
+        args:
+        - --secure-port=6443
+        - --tls-cert-file=/var/run/serving-cert/tls.crt
+        - --tls-private-key-file=/var/run/serving-cert/tls.key
+        - --logtostderr=true
+        - --prometheus-url=http://prometheus-server:9090/
+        - --metrics-relist-interval=1m
+        - --v=4
+        - --config=/etc/adapter/config.yaml
+        ports:
+        - containerPort: 6443
+          name: https
+        volumeMounts:
+        - name: volume-serving-cert
+          mountPath: /var/run/serving-cert
+          readOnly: true
+        - name: config
+          mountPath: /etc/adapter/
+          readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+      volumes:
+      - name: volume-serving-cert
+        secret:
+          secretName: cm-adapter-serving-certs
+      - name: config
+        configMap:
+          name: adapter-config
+
+---
+# Performance Dashboard ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: performance-dashboard-config
+  namespace: uatp-prod
+data:
+  performance-dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "UATP Performance Dashboard",
+        "tags": ["uatp", "performance"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Request Rate",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "rate(uatp_http_requests_total[5m])",
+                "legendFormat": "Requests/sec"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "reqps",
+                "thresholds": {
+                  "steps": [
+                    {"color": "green", "value": null},
+                    {"color": "yellow", "value": 100},
+                    {"color": "red", "value": 500}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 2,
+            "title": "Response Time",
+            "type": "timeseries",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.50, uatp_request_duration_seconds_bucket)",
+                "legendFormat": "50th percentile"
+              },
+              {
+                "expr": "histogram_quantile(0.95, uatp_request_duration_seconds_bucket)",
+                "legendFormat": "95th percentile"
+              },
+              {
+                "expr": "histogram_quantile(0.99, uatp_request_duration_seconds_bucket)",
+                "legendFormat": "99th percentile"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "Resource Utilization",
+            "type": "timeseries",
+            "targets": [
+              {
+                "expr": "rate(container_cpu_usage_seconds_total{pod=~\"uatp-api-.*\"}[5m]) * 100",
+                "legendFormat": "CPU Usage %"
+              },
+              {
+                "expr": "container_memory_usage_bytes{pod=~\"uatp-api-.*\"} / container_spec_memory_limit_bytes * 100",
+                "legendFormat": "Memory Usage %"
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "Error Rate",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "rate(uatp_http_requests_total{status=~\"5..\"}[5m]) / rate(uatp_http_requests_total[5m]) * 100",
+                "legendFormat": "Error Rate %"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percent",
+                "thresholds": {
+                  "steps": [
+                    {"color": "green", "value": null},
+                    {"color": "yellow", "value": 1},
+                    {"color": "red", "value": 5}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 5,
+            "title": "Database Performance",
+            "type": "timeseries",
+            "targets": [
+              {
+                "expr": "uatp_database_connections_active",
+                "legendFormat": "Active Connections"
+              },
+              {
+                "expr": "uatp_database_query_duration_seconds",
+                "legendFormat": "Query Duration"
+              }
+            ]
+          },
+          {
+            "id": 6,
+            "title": "Capsule Processing Metrics",
+            "type": "timeseries",
+            "targets": [
+              {
+                "expr": "rate(uatp_capsule_created_total[5m])",
+                "legendFormat": "Capsules Created/sec"
+              },
+              {
+                "expr": "uatp_capsule_processing_duration_seconds",
+                "legendFormat": "Processing Duration"
+              }
+            ]
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "30s"
+      }
+    }
+
+---
+# Performance Alerting Rules
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uatp-performance-alerts
+  namespace: uatp-prod
+  labels:
+    app: uatp-api
+    role: alert-rules
+spec:
+  groups:
+  - name: performance.rules
+    interval: 30s
+    rules:
+    # Response Time Alerts
+    - alert: UATPHighResponseTime
+      expr: histogram_quantile(0.95, uatp_request_duration_seconds_bucket) > 1.0
+      for: 2m
+      labels:
+        severity: warning
+        component: api
+      annotations:
+        summary: "UATP API high response time"
+        description: "95th percentile response time is {{ $value }}s for the last 2 minutes"
+        runbook: "https://docs.uatp.org/runbooks/high-response-time"
+
+    - alert: UATPCriticalResponseTime
+      expr: histogram_quantile(0.95, uatp_request_duration_seconds_bucket) > 3.0
+      for: 1m
+      labels:
+        severity: critical
+        component: api
+      annotations:
+        summary: "UATP API critical response time"
+        description: "95th percentile response time is {{ $value }}s for the last minute"
+
+    # Throughput Alerts
+    - alert: UATPLowThroughput
+      expr: rate(uatp_http_requests_total[5m]) < 10
+      for: 5m
+      labels:
+        severity: warning
+        component: api
+      annotations:
+        summary: "UATP API low throughput"
+        description: "Request rate is {{ $value }} requests/sec, below expected threshold"
+
+    # Resource Utilization Alerts
+    - alert: UATPHighCPUUsage
+      expr: rate(container_cpu_usage_seconds_total{pod=~"uatp-api-.*"}[5m]) * 100 > 80
+      for: 5m
+      labels:
+        severity: warning
+        component: infrastructure
+      annotations:
+        summary: "UATP API high CPU usage"
+        description: "CPU usage is {{ $value }}% on pod {{ $labels.pod }}"
+
+    - alert: UATPHighMemoryUsage
+      expr: container_memory_usage_bytes{pod=~"uatp-api-.*"} / container_spec_memory_limit_bytes * 100 > 85
+      for: 3m
+      labels:
+        severity: warning
+        component: infrastructure
+      annotations:
+        summary: "UATP API high memory usage"
+        description: "Memory usage is {{ $value }}% on pod {{ $labels.pod }}"
+
+    # Database Performance Alerts
+    - alert: UATPDatabaseSlowQueries
+      expr: uatp_database_query_duration_seconds > 2.0
+      for: 2m
+      labels:
+        severity: warning
+        component: database
+      annotations:
+        summary: "UATP database slow queries detected"
+        description: "Database queries taking {{ $value }}s to complete"
+
+    - alert: UATPDatabaseConnectionPoolExhaustion
+      expr: uatp_database_connections_active / uatp_database_connections_max * 100 > 90
+      for: 1m
+      labels:
+        severity: critical
+        component: database
+      annotations:
+        summary: "UATP database connection pool near exhaustion"
+        description: "{{ $value }}% of database connections are active"
+
+    # Capsule Processing Alerts
+    - alert: UATPCapsuleProcessingDelay
+      expr: uatp_capsule_processing_duration_seconds > 5.0
+      for: 3m
+      labels:
+        severity: warning
+        component: capsule-engine
+      annotations:
+        summary: "UATP capsule processing delays"
+        description: "Capsule processing taking {{ $value }}s, above normal threshold"
+
+    # Queue Depth Alerts
+    - alert: UATPHighQueueDepth
+      expr: uatp_queue_depth > 100
+      for: 2m
+      labels:
+        severity: warning
+        component: processing
+      annotations:
+        summary: "UATP high queue depth"
+        description: "Queue depth is {{ $value }}, indicating processing backlog"
+
+---
+# Performance Metrics Collector
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: performance-metrics-collector
+  namespace: uatp-prod
+  labels:
+    app: performance-collector
+spec:
+  selector:
+    matchLabels:
+      app: performance-collector
+  template:
+    metadata:
+      labels:
+        app: performance-collector
+    spec:
+      serviceAccountName: performance-collector
+      hostNetwork: true
+      hostPID: true
+      containers:
+      - name: node-exporter
+        image: prom/node-exporter:v1.6.0
+        args:
+        - --path.procfs=/host/proc
+        - --path.sysfs=/host/sys
+        - --path.rootfs=/host/root
+        - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+        - --web.listen-address=:9100
+        ports:
+        - containerPort: 9100
+          name: metrics
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        volumeMounts:
+        - name: proc
+          mountPath: /host/proc
+          readOnly: true
+        - name: sys
+          mountPath: /host/sys
+          readOnly: true
+        - name: root
+          mountPath: /host/root
+          readOnly: true
+      volumes:
+      - name: proc
+        hostPath:
+          path: /proc
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: root
+        hostPath:
+          path: /
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+
+---
+# Service Account for Performance Collector
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: performance-collector
+  namespace: uatp-prod

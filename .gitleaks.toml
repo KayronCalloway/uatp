@@ -1,0 +1,49 @@
+# GitLeaks configuration for UATP Capsule Engine
+title = "UATP Capsule Engine GitLeaks Config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowlist for known safe patterns"
+paths = [
+    # Test and example files
+    '''.*test.*''',
+    '''.*example.*''',
+    '''.*\.md$''',
+    '''docs/.*''',
+    # Minified JS libraries - false positives
+    '''.*\.min\.js$''',
+    '''.*vis-network.*''',
+    '''.*node_modules.*''',
+    '''frontend/public/lib/.*''',
+    '''public/lib/.*''',
+    '''visualizer/lib/.*''',
+    '''src/lib/.*''',
+    # Lock files
+    '''package-lock\.json$''',
+    '''poetry\.lock$''',
+    # Infrastructure config (placeholder values)
+    '''infra/.*''',
+    '''\.github/workflows/.*''',
+    '''docker-compose.*''',
+    '''.*\.env\.example$''',
+    '''.*\.env\.sample$''',
+]
+
+regexes = [
+    # Placeholder connection strings
+    '''localhost''',
+    '''127\.0\.0\.1''',
+    '''example\.com''',
+    '''your-.*-here''',
+    '''changeme''',
+    '''password''',
+    '''uatp_password''',
+    '''uatp_user''',
+    # Test keys
+    '''sk-[0]+''',
+    '''test.*key''',
+    '''demo.*key''',
+    '''placeholder''',
+]

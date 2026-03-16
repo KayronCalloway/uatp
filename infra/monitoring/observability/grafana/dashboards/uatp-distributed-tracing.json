@@ -1,0 +1,147 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "UATP Distributed Tracing",
+    "tags": ["uatp", "tracing", "distributed", "opentelemetry"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Trace Volume",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(traces_received_total[5m])",
+            "legendFormat": "Traces/sec",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Traces/sec",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Span Duration Distribution",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "rate(span_duration_seconds_bucket[5m])",
+            "legendFormat": "{{le}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Error Traces",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(traces_received_total{status=\"error\"}[5m])",
+            "legendFormat": "Error Traces/sec",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Error Traces/sec",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Capsule Operation Traces",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(traces_received_total{operation_type=~\"capsule_.*\"}[5m])",
+            "legendFormat": "{{operation_type}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Traces/sec",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Service Dependency Map",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(spans_received_total[5m]) by (service_name, span_kind)",
+            "legendFormat": "{{service_name}} - {{span_kind}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Spans/sec",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "Slow Traces (>1s)",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, histogram_quantile(0.95, rate(span_duration_seconds_bucket[5m])) > 1)",
+            "legendFormat": "Service",
+            "refId": "A",
+            "format": "table"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 7,
+        "title": "Attribution Chain Traces",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(traces_received_total{operation_type=\"attribution_track\"}[5m])",
+            "legendFormat": "Attribution Tracking",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Traces/sec",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "schemaVersion": 27,
+    "version": 1,
+    "links": [
+      {
+        "title": "Jaeger UI",
+        "url": "http://jaeger.uatp.local",
+        "type": "link",
+        "icon": "external link"
+      }
+    ]
+  }
+}

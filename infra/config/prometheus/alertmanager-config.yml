@@ -1,0 +1,248 @@
+# Alertmanager Configuration for UATP Capsule Engine
+# Handles alert routing and notification delivery
+
+global:
+  # How long to wait before sending a notification about a new alert
+  resolve_timeout: 5m
+
+  # Slack webhook URL (configure via environment variable or secret)
+  slack_api_url: "${SLACK_WEBHOOK_URL}"
+
+  # PagerDuty integration key
+  pagerduty_url: "https://events.pagerduty.com/v2/enqueue"
+
+# Templates for alert notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree for alert distribution
+route:
+  # Default receiver for all alerts
+  receiver: 'default'
+
+  # Group alerts by these labels
+  group_by: ['alertname', 'cluster', 'service']
+
+  # How long to wait before sending initial notification
+  group_wait: 30s
+
+  # How long to wait before sending notification about new alerts in existing group
+  group_interval: 5m
+
+  # How long to wait before re-sending notification
+  repeat_interval: 4h
+
+  # Child routes for specific alert types
+  routes:
+    # Critical alerts go to PagerDuty + Slack
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: true
+      group_wait: 10s
+      repeat_interval: 1h
+
+    # Warning alerts go to Slack only
+    - match:
+        severity: warning
+      receiver: 'slack-warnings'
+      group_wait: 30s
+      repeat_interval: 12h
+
+    # Business metrics alerts
+    - match:
+        component: business
+      receiver: 'business-team'
+      group_wait: 1m
+      repeat_interval: 24h
+
+    # Database alerts (critical)
+    - match:
+        component: database
+      receiver: 'database-team'
+      continue: true
+
+    # Authentication/Security alerts
+    - match_re:
+        component: (authentication|security)
+      receiver: 'security-team'
+      group_wait: 10s
+
+# Alert receivers (notification destinations)
+receivers:
+  # Default receiver (email)
+  - name: 'default'
+    email_configs:
+      - to: 'ops@uatp.app'
+        from: 'alerts@uatp.app'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'alerts@uatp.app'
+        auth_identity: 'alerts@uatp.app'
+        auth_password: '${SMTP_PASSWORD}'
+        headers:
+          Subject: '[UATP Alert] {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          Alert: {{ .Labels.alertname }}
+          Severity: {{ .Labels.severity }}
+          Summary: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Runbook: {{ .Annotations.runbook }}
+          {{ end }}
+
+  # Critical alerts - PagerDuty + Slack + Email
+  - name: 'critical-alerts'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_SERVICE_KEY}'
+        description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+        details:
+          firing: '{{ .Alerts.Firing | len }}'
+          resolved: '{{ .Alerts.Resolved | len }}'
+          severity: '{{ .CommonLabels.severity }}'
+
+    slack_configs:
+      - channel: '#uatp-critical-alerts'
+        title: ':fire: CRITICAL ALERT :fire:'
+        title_link: '{{ .ExternalURL }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Severity:* {{ .Labels.severity }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+
+    email_configs:
+      - to: 'oncall@uatp.app, engineering-leads@uatp.app'
+        from: 'critical-alerts@uatp.app'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'alerts@uatp.app'
+        auth_password: '${SMTP_PASSWORD}'
+
+  # Warning alerts - Slack only
+  - name: 'slack-warnings'
+    slack_configs:
+      - channel: '#uatp-warnings'
+        title: ':warning: Warning Alert'
+        title_link: '{{ .ExternalURL }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Component:* {{ .Labels.component }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        color: 'warning'
+        send_resolved: true
+
+  # Business team notifications
+  - name: 'business-team'
+    slack_configs:
+      - channel: '#uatp-business-metrics'
+        title: ':chart_with_upwards_trend: Business Metric Alert'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        color: 'good'
+
+    email_configs:
+      - to: 'business-team@uatp.app, product@uatp.app'
+        from: 'metrics@uatp.app'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'alerts@uatp.app'
+        auth_password: '${SMTP_PASSWORD}'
+
+  # Database team
+  - name: 'database-team'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_DATABASE_KEY}'
+        description: 'Database Alert: {{ .CommonAnnotations.summary }}'
+
+    slack_configs:
+      - channel: '#uatp-database'
+        title: ':database: Database Alert'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook }}
+          {{ end }}
+        color: 'danger'
+
+    email_configs:
+      - to: 'dba@uatp.app'
+        from: 'database-alerts@uatp.app'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'alerts@uatp.app'
+        auth_password: '${SMTP_PASSWORD}'
+
+  # Security team
+  - name: 'security-team'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_SECURITY_KEY}'
+        description: 'Security Alert: {{ .CommonAnnotations.summary }}'
+
+    slack_configs:
+      - channel: '#uatp-security'
+        title: ':lock: Security Alert'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Component:* {{ .Labels.component }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+
+    email_configs:
+      - to: 'security@uatp.app, ciso@uatp.app'
+        from: 'security-alerts@uatp.app'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'alerts@uatp.app'
+        auth_password: '${SMTP_PASSWORD}'
+
+# Inhibition rules - suppress certain alerts when others are firing
+inhibit_rules:
+  # Suppress warning alerts when critical alert is firing for same service
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'service', 'instance']
+
+  # Suppress pod alerts when deployment alert is firing
+  - source_match:
+      alertname: 'DeploymentReplicasMismatch'
+    target_match_re:
+      alertname: 'Pod.*'
+    equal: ['namespace', 'deployment']
+
+  # Suppress high latency alerts when service is down
+  - source_match:
+      alertname: 'ServiceDown'
+    target_match:
+      alertname: 'HighLatency'
+    equal: ['service', 'instance']
+
+  # Suppress cache alerts when Redis is down
+  - source_match:
+      alertname: 'RedisDown'
+    target_match_re:
+      alertname: '.*Cache.*'
+    equal: ['instance']
+
+  # Suppress query performance alerts when database is down
+  - source_match:
+      alertname: 'DatabaseDown'
+    target_match_re:
+      alertname: 'Database.*'
+    equal: ['instance']

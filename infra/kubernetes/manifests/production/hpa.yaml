@@ -1,0 +1,51 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: uatp-api-hpa
+  namespace: uatp-production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: uatp-api
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    # Scale based on CPU utilization
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70  # Target 70% CPU
+
+    # Scale based on memory utilization
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80  # Target 80% memory
+
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5 minutes
+      policies:
+        - type: Percent
+          value: 50  # Scale down max 50% at a time
+          periodSeconds: 60
+        - type: Pods
+          value: 2  # Scale down max 2 pods at a time
+          periodSeconds: 60
+      selectPolicy: Min  # Use the policy that scales down the least
+
+    scaleUp:
+      stabilizationWindowSeconds: 0  # Scale up immediately
+      policies:
+        - type: Percent
+          value: 100  # Scale up max 100% at a time
+          periodSeconds: 30
+        - type: Pods
+          value: 4  # Scale up max 4 pods at a time
+          periodSeconds: 30
+      selectPolicy: Max  # Use the policy that scales up the most

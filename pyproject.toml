@@ -1,0 +1,202 @@
+[project]
+name = "uatp-engine"
+version = "0.3.0"
+description = "UATP Capsule Engine: FastAPI backend for cryptographically sealed AI decision capsules. For the client SDK, see sdk/python/ or pip install uatp."
+authors = [{name = "Kayron Calloway", email = "kayron@houseofcalloway.com"}]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+keywords = ["uatp", "agent", "trust", "protocol", "capsule", "ai", "cryptography"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security :: Cryptography",
+]
+dependencies = [
+    # Web Framework
+    "fastapi>=0.109.0",
+    "starlette>=0.35.0",
+    "uvicorn[standard]>=0.23.2",
+    "gunicorn>=21.0.0",
+    # Database
+    "sqlalchemy>=2.0.0",
+    "aiosqlite>=0.19.0",
+    "asyncpg>=0.29.0",
+    "psycopg2-binary>=2.9.0",
+    "alembic>=1.12.0",
+    # Redis (redis>=4.2 includes redis.asyncio, aioredis is deprecated)
+    "redis>=5.0.0",
+    # Validation & Serialization
+    "pydantic[email]>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "orjson>=3.11.5",
+    "email-validator>=2.0.0",
+    # Authentication & Security
+    "pynacl>=1.5.0",
+    "bcrypt>=4.0.0",
+    "PyJWT>=2.8.0",
+    "cryptography>=44.0.1",
+    "passlib>=1.7.4",
+    "bleach>=6.0.0",
+    "argon2-cffi>=23.1.0",
+    # "ecdsa>=0.18.0",  # KNOWN VULN: Side-channel attacks - we use PyNaCl instead
+    "pyopenssl>=23.0.0",
+    # HTTP Clients
+    "httpx>=0.26.0",
+    "aiohttp>=3.13.3",
+    "requests>=2.32.4",
+    # Monitoring & Logging
+    "structlog>=23.1.0",
+    "prometheus-client>=0.17.0",
+    "psutil>=5.9.0",
+    # Task Queue
+    "celery>=5.3.0",
+    "kombu>=5.3.0",
+    # Async utilities
+    "aiofiles>=23.0.0",
+    "anyio>=3.7.0",
+    # Date/Time & Config
+    "python-dateutil>=2.8.0",
+    "python-dotenv>=1.0.0",
+    "python-multipart>=0.0.22",
+    "pytz>=2023.3",
+    "pyyaml>=6.0.0",
+    "toml>=0.10.0",
+    "click>=8.0.0",
+    # Analysis & ML
+    "numpy>=1.24.0",
+    # Integrations
+    "openai>=1.0.0",
+    "stripe>=5.0.0",
+    # Graph processing
+    "networkx>=3.0",
+    # Resilience patterns
+    "tenacity>=8.0.0",
+    "circuit-breaker>=0.1.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.23.0",
+    "hypothesis>=6.0.0",
+    "pytest-cov>=4.0.0",
+    "trustme>=1.0.0",
+    # NOTE: cryptography-vectors removed - it was triggering 228 false positive
+    # security alerts for test .pem files. Not actually used in our tests.
+]
+dev = [
+    "black>=22.0.0",
+    "mypy>=0.910",
+    "isort>=5.10.0",
+    "flake8>=4.0.0",
+    "ruff>=0.4.0",
+    "pre-commit>=3.3.3",
+    "pip-tools>=7.0.0",
+    "safety>=3.0.0",
+    "bandit>=1.7.0",
+]
+docs = [
+    "mkdocs>=1.3.0",
+    "mkdocs-material>=8.3.0"
+]
+all = ["uatp[test,dev,docs]"]
+
+[project.urls]
+"Homepage" = "https://github.com/KayronCalloway/uatp"
+"Bug Tracker" = "https://github.com/KayronCalloway/uatp/issues"
+"Documentation" = "https://github.com/KayronCalloway/uatp#readme"
+
+[project.scripts]
+uatp = "src.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.json", "*.jsonl", "*.md", "py.typed"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# Development tool configurations
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+# Exclude archived/legacy code; type-check active src/
+exclude = """(?x)(
+    ^archive/
+    | ^tests/
+    | ^test_.*\\.py$
+    | ^sdk/python/examples/
+)"""
+
+# Ignore missing imports from third-party libraries without stubs
+[[tool.mypy.overrides]]
+module = ["aiofiles.*", "redis.*", "nacl.*", "fastapi.*", "starlette.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 88
+exclude = [
+    "archive/",
+    "tests/legacy/",
+    "scripts/legacy_fixes/",
+    "infra/monitoring/dashboards/",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "W"]
+ignore = [
+    "E501",   # Line too long
+    "E402",   # Module level import not at top (often intentional)
+    "B008",   # Function call in default argument (FastAPI Depends pattern)
+    "B017",   # pytest.raises(Exception) - blind exception assertion
+    "B904",   # Exception chaining (raise from)
+    "F401",   # Imported but unused (often re-exports in __init__.py)
+    "F841",   # Local variable assigned but never used (common in tests)
+    "B007",   # Unused loop variable
+]
+# REMOVED: E722 (bare except), F821 (undefined name), F403 (star imports)
+# These are real bugs and should not be ignored
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(levelname)s:%(name)s:%(message)s"
+markers = [
+    "asyncio: marks tests as async",
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "performance: marks tests as performance tests",
+    "stress: marks tests as stress tests",
+    "security: marks tests as security tests"
+]
+minversion = "7.0"
+testpaths = [
+    "tests"
+]
+norecursedirs = [".*", "build", "dist", "dashboards", "tests/performance"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"

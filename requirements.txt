@@ -1,0 +1,108 @@
+# UATP Capsule Engine Dependencies - Security Hardened 2025
+
+# Web Framework - Updated for security patches
+fastapi==0.135.1
+uvicorn[standard]==0.34.0
+starlette==0.52.1
+werkzeug>=3.1.6  # CVE-2024-49767 fix
+
+# Database - Latest secure versions
+asyncpg==0.30.0
+psycopg2-binary==2.9.11
+SQLAlchemy==2.0.36
+alembic==1.14.0
+
+# Redis - Updated for security
+redis==5.2.1
+aioredis==2.0.1
+
+# Authentication & Security - Critical security updates
+PyJWT==2.12.1
+bcrypt==5.0.0
+cryptography>=46.0.0  # Security updates
+pynacl==1.6.2
+passlib==1.7.4
+bleach==6.2.0
+argon2-cffi==23.1.0  # More secure password hashing
+
+# HTTP Client - Security patches
+httpx==0.28.1
+aiohttp==3.13.3
+requests==2.32.4
+
+# Validation & Serialization - Updated
+pydantic==2.12.5
+pydantic-settings==2.7.0
+validators==0.35.0
+
+# Monitoring & Observability - Security updates
+prometheus-client==0.21.1
+structlog==25.5.0
+sentry-sdk==2.19.2
+
+# Task Queue - Security patches
+celery==5.4.0
+kombu==5.4.2
+
+# Date/Time
+python-dateutil==2.9.0.post0
+pytz==2023.3
+
+# Utilities
+click==8.1.7
+python-dotenv==1.2.2
+python-multipart==0.0.22
+cbor2==5.8.0
+
+# Production Server - Security hardened
+gunicorn==23.0.0
+
+# Configuration Management
+pyyaml==6.0.3
+toml==0.10.2
+
+# Async utilities
+anyio==4.12.1
+aiofiles==25.1.0
+aiosqlite==0.20.0
+
+# JSON handling - Updated
+orjson>=3.11.7  # CVE-2025-67221 fix
+
+# Email - Updated for security
+email-validator==2.3.0
+
+# Security scanning and validation
+safety==3.7.0
+bandit==1.8.0
+
+# Transitive dependencies - let pip resolve these automatically
+# Only pin if there's a specific version requirement
+
+# Circuit Breaker Pattern
+circuit-breaker==0.1.1
+tenacity==9.0.0
+
+# Enhanced Configuration Management
+pydantic-settings==2.7.0
+
+# System Monitoring - Updated
+psutil==6.1.0
+
+# Additional security dependencies
+pyopenssl>=26.0.0  # Supports cryptography 46+
+# cryptography-vectors removed - test-only, causes false positive security alerts (.pem files)
+# trustme removed - test-only
+
+# Analysis & ML
+numpy==1.26.4
+
+# Integrations
+openai==1.58.1
+stripe==5.5.0
+
+# Graph processing
+networkx==3.4.2
+
+# Async web framework (for tests)
+quart==0.19.9

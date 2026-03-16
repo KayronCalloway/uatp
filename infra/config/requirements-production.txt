@@ -1,0 +1,69 @@
+# UATP Capsule Engine - Production-specific Requirements
+# These packages are additional to requirements.txt for production deployment
+
+# Production ASGI/WSGI Servers
+hypercorn>=0.16.0  # Async ASGI server optimized for Quart
+gunicorn>=21.2.0
+
+# Production Database Support
+psycopg2-binary>=2.9.7  # PostgreSQL adapter
+
+# Monitoring and Observability
+prometheus-client>=0.17.1
+sentry-sdk>=1.32.0
+
+# Performance and Caching
+redis>=4.6.0
+hiredis>=2.2.3  # Faster Redis protocol parsing
+
+# Security Enhancements
+cryptography>=44.0.1
+bcrypt>=4.2.0
+
+# Production Logging
+structlog>=23.1.0
+python-json-logger>=2.0.7
+
+# SSL/TLS Support
+pyOpenSSL>=23.2.0
+certifi>=2023.7.22
+
+# System Monitoring
+psutil>=5.9.5
+
+# Production Configuration Management
+python-dotenv>=1.0.0
+
+# Email Support (for notifications)
+sendgrid>=6.10.0
+
+# Cloud Storage (AWS S3)
+boto3>=1.28.25
+botocore>=1.31.25
+
+# HTTP Client with better performance
+httpx[http2]>=0.28.0
+
+# Advanced JSON handling
+orjson>=3.11.5
+
+# Memory profiling (development/debugging in production)
+memory-profiler>=0.60.0
+
+# Process management
+supervisor>=4.2.5
+
+# Rate limiting
+slowapi>=0.1.9
+
+# Advanced validation
+email-validator>=2.0.0
+
+# Distributed Tracing (OpenTelemetry)
+opentelemetry-api>=1.24.0
+opentelemetry-sdk>=1.24.0
+opentelemetry-instrumentation-quart>=0.45b0
+opentelemetry-instrumentation-sqlalchemy>=0.45b0
+opentelemetry-instrumentation-redis>=0.45b0
+opentelemetry-exporter-prometheus>=0.45b0
+opentelemetry-exporter-jaeger>=1.21.0
