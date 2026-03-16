@@ -4,6 +4,7 @@
 fastapi==0.135.1
 uvicorn[standard]==0.34.0
 starlette==0.52.1
+werkzeug>=3.1.6  # CVE-2024-49767 fix
 
 # Database - Latest secure versions
 asyncpg==0.30.0
@@ -66,7 +67,7 @@ aiofiles==25.1.0
 aiosqlite==0.20.0
 
 # JSON handling - Updated
-orjson==3.11.5
+orjson>=3.11.7  # CVE-2025-67221 fix
 
 # Email - Updated for security
 email-validator==2.3.0
