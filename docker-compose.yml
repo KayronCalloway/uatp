@@ -1,215 +1,48 @@
-version: '3.8'
+# UATP - Quick Start
+#
+# Usage:
+#   docker compose up
+#
+# Then open: http://localhost:3000
+#
+# For production setup with PostgreSQL, Redis, monitoring:
+#   docker compose -f docker-compose.prod.yml up
+#
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: uatp_postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${DB_NAME:-uatp_capsule_engine}
-      POSTGRES_USER: ${DB_USERNAME:-uatp_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-uatp_password}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
-    ports:
-      - "${DB_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-uatp_user} -d ${DB_NAME:-uatp_capsule_engine}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - uatp_network
-
-  # Redis for caching and session storage
-  redis:
-    image: redis:7-alpine
-    container_name: uatp_redis
-    restart: unless-stopped
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_password}", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - uatp_network
-
-  # Main UATP Application
-  uatp_app:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: uatp_app
-    restart: unless-stopped
     ports:
-      - "${APP_PORT:-8000}:8000"
-      - "${HEALTH_PORT:-8080}:8080"
-      - "${METRICS_PORT:-9090}:9090"
+      - "8000:8000"
     environment:
-      # Database
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-uatp_capsule_engine}
-      DB_USERNAME: ${DB_USERNAME:-uatp_user}
-      DB_PASSWORD: ${DB_PASSWORD:-uatp_password}
-
-      # Redis
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
-
-      # Application
-      ENVIRONMENT: ${ENVIRONMENT:-production}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-
-      # Security
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-
-      # API Configuration
-      API_VERSION: v1
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:8000}
-
+      - DATABASE_URL=sqlite:///./data/uatp.db
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - CORS_ORIGINS=http://localhost:3000
     volumes:
-      - app_logs:/app/logs
-      - app_data:/app/data
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - uatp_data:/app/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    networks:
-      - uatp_network
-
-  # Nginx Reverse Proxy
-  nginx:
-    image: nginx:1.25-alpine
-    container_name: uatp_nginx
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
-    ports:
-      - "${NGINX_HTTP_PORT:-80}:80"
-      - "${NGINX_HTTPS_PORT:-443}:443"
-    volumes:
-      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./config/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-      - nginx_logs:/var/log/nginx
-    depends_on:
-      - uatp_app
-    networks:
-      - uatp_network
 
-  # Monitoring - Prometheus
-  prometheus:
-    image: prom/prometheus:v2.45.0
-    container_name: uatp_prometheus
-    restart: unless-stopped
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
-      - "${PROMETHEUS_PORT:-9091}:9090"
-    volumes:
-      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./config/prometheus/rules:/etc/prometheus/rules:ro
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=30d'
-      - '--web.enable-lifecycle'
-    depends_on:
-      - uatp_app
-    networks:
-      - uatp_network
-
-  # Monitoring - Grafana
-  grafana:
-    image: grafana/grafana:10.1.0
-    container_name: uatp_grafana
-    restart: unless-stopped
-    ports:
-      - "${GRAFANA_PORT:-3000}:3000"
+      - "3000:3000"
     environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
-      GF_INSTALL_PLUGINS: grafana-piechart-panel,grafana-worldmap-panel
-    volumes:
-      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
-      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
-      - grafana_data:/var/lib/grafana
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
-      - prometheus
-    networks:
-      - uatp_network
-
-  # Log Management - ELK Stack (optional)
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
-    container_name: uatp_elasticsearch
-    restart: unless-stopped
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "${ELASTICSEARCH_PORT:-9200}:9200"
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - uatp_network
-    profiles:
-      - monitoring
-
-  # Database Backup Service
-  backup:
-    image: postgres:15-alpine
-    container_name: uatp_backup
-    restart: unless-stopped
-    environment:
-      PGPASSWORD: ${DB_PASSWORD:-uatp_password}
-      POSTGRES_HOST: postgres
-      POSTGRES_DB: ${DB_NAME:-uatp_capsule_engine}
-      POSTGRES_USER: ${DB_USERNAME:-uatp_user}
-    volumes:
-      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
-      - backups:/backups
-    depends_on:
-      postgres:
+      backend:
         condition: service_healthy
-    command: >
-      sh -c "
-        chmod +x /usr/local/bin/backup.sh &&
-        echo '0 2 * * * /usr/local/bin/backup.sh' | crontab - &&
-        crond -f -L /dev/stdout
-      "
-    networks:
-      - uatp_network
-
-networks:
-  uatp_network:
-    driver: bridge
+    restart: unless-stopped
 
 volumes:
-  postgres_data:
-  redis_data:
-  app_logs:
-  app_data:
-  nginx_logs:
-  prometheus_data:
-  grafana_data:
-  elasticsearch_data:
-  backups:
+  uatp_data:

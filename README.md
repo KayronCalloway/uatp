@@ -11,7 +11,63 @@
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](STATUS.md)
 
-> **Current state: Beta.** The SDK and core signing work. Not independently audited. The repo also contains experimental platform code beyond the core protocol. See [STATUS.md](STATUS.md) for what's actually shipped.
+---
+
+## Try It Now
+
+**30-second proof it works:**
+
+```bash
+pip install uatp
+python -c "
+from uatp import UATP
+result = UATP().certify(
+    task='Hello World',
+    decision='First cryptographic audit trail',
+    reasoning=[{'step': 1, 'thought': 'It works', 'confidence': 1.0}]
+)
+print(f'Signed: {result.signature[:32]}...')
+"
+```
+
+Your private key was just generated locally and never transmitted anywhere.
+
+---
+
+## Three Ways to Run
+
+| Goal | Command | What You Get |
+|------|---------|--------------|
+| **SDK only** | `pip install uatp` | Local signing, no server needed |
+| **Full local app** | `./start-dev.sh` | Backend + dashboard at localhost:3000 |
+| **Docker** | `docker compose up` | Everything containerized |
+
+### Option 1: SDK Only (Simplest)
+
+```bash
+pip install uatp
+python examples/hello_world.py
+```
+
+### Option 2: Full Local App (One Command)
+
+```bash
+git clone https://github.com/KayronCalloway/uatp.git
+cd uatp
+./start-dev.sh
+```
+
+Opens http://localhost:3000 automatically.
+
+### Option 3: Docker (Least Setup)
+
+```bash
+git clone https://github.com/KayronCalloway/uatp.git
+cd uatp
+docker compose up
+```
+
+Open http://localhost:3000
 
 ---
 
@@ -19,7 +75,7 @@
 
 UATP creates verifiable capsules for AI reasoning: cryptographically signed records that prove what decision was made, with what reasoning, at what time.
 
-**What's working today (SDK path):**
+**What's working today:**
 - **Ed25519 signatures** — tamper-evident, locally-signed, keys never leave your device
 - **RFC 3161 timestamps** — external time authority (DigiCert) - beta
 - **Standalone verification** — verify capsules without trusting UATP servers
@@ -27,59 +83,22 @@ UATP creates verifiable capsules for AI reasoning: cryptographically signed reco
 
 **What's experimental:**
 - ML-DSA-65 post-quantum signatures (beta, not audited)
-- Server-side capture engine (legacy architecture, being deprecated)
 - Platform modules (attribution, governance, economics) - not part of core protocol
 
-See [TRUST_MODEL.md](TRUST_MODEL.md) for security assumptions and limitations.
+See [TRUST_MODEL.md](TRUST_MODEL.md) for security assumptions. See [STATUS.md](STATUS.md) for what's shipped.
 
 ![UATP Capsule Dashboard](docs/images/capsule-verified.png)
-*A verified capsule showing reasoning process, confidence metrics, and cryptographic verification status.*
+*Verified capsule showing reasoning process, confidence metrics, and cryptographic verification.*
 
 ---
 
-## Quick Start
-
-### 1. Install the SDK
-
-```bash
-pip install uatp
-```
-
-### 2. Start the backend (if running locally)
-
-```bash
-git clone https://github.com/KayronCalloway/uatp.git
-cd uatp
-pip install -e .
-python run.py
-```
-
-**That's it for development.** The backend:
-- Uses SQLite by default (no database setup needed)
-- Runs on `http://localhost:8000`
-- Auto-creates `uatp_dev.db` on first run
-
-**Optional:** Copy `.env.example` to `.env` to customize settings (JWT secrets, PostgreSQL, etc.)
-
-### 2b. Start the frontend (optional)
-
-```bash
-cd frontend
-cp .env.example .env.local
-npm install
-npm run dev
-```
-
-Opens dashboard at `http://localhost:3000`
-
-### 3. Create a capsule
+## Create a Capsule
 
 ```python
 from uatp import UATP
 
-client = UATP()  # Connects to localhost:8000
+client = UATP()
 
-# Zero-trust: signing happens locally, private key never leaves your device
 result = client.certify(
     task="Loan decision",
     decision="Approved for $50,000 at 5.2% APR",
@@ -90,27 +109,10 @@ result = client.certify(
 )
 
 print(f"Capsule ID: {result.capsule_id}")
-print(f"Signature: {result.signature[:32]}...")  # Ed25519 signature
-print(f"Public Key: {result.public_key[:32]}...")  # Your verify key
+print(f"Signature: {result.signature[:32]}...")
 ```
 
-**Security modes:**
-```python
-# Device-bound (default): CONVENIENCE mode - passphrase derived from machine info
-# Good for: development, demos, low-stakes use
-# Not recommended for: production with sensitive data
-result = client.certify(task=..., decision=..., reasoning=...)
-
-# Custom passphrase: RECOMMENDED for production
-# Provides: user-controlled entropy, portability across machines
-result = client.certify(
-    task=..., decision=..., reasoning=...,
-    passphrase="your-secure-passphrase",
-    device_bound=False
-)
-```
-
-Full setup: [SDK Quickstart](sdk/python/QUICKSTART.md)
+More examples: [examples/](examples/)
 
 ---
 
@@ -200,14 +202,8 @@ UATP operators **cannot** sign on behalf of users—the SDK generates and stores
 | Workflow | Purpose |
 |----------|---------|
 | `ci.yml` | Tests, lint, type checking on push/PR |
-| `security-scan.yml` | Comprehensive security analysis |
-| `security.yml` | Gitleaks, Trivy scans |
+| `security.yml` | Bandit, Safety, Gitleaks, Trivy scans |
 | `release.yml` | Versioned releases |
-| `build.yml` | Docker image builds |
-| `code-quality.yml` | Pre-commit, ruff, mypy |
-| `test.yml` | Test matrix (Python 3.10/3.11, SQLite/PostgreSQL) |
-| `performance.yml` | Performance benchmarks |
-| `blue-green-deploy.yml` | Production deployments |
 
 ---
 
