@@ -30,6 +30,21 @@ cd frontend
 npm install
 ```
 
+### Environment Setup
+```bash
+# Copy the example environment file
+cp .env.example .env.local
+
+# Edit if needed (defaults work for local development)
+```
+
+Required environment variables:
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NEXT_PUBLIC_UATP_API_URL` | `http://localhost:8000` | Backend API URL |
+| `NEXT_PUBLIC_ENABLE_REAL_API` | `true` | Use real backend (vs mock) |
+| `NEXT_PUBLIC_ENABLE_MOCK_FALLBACK` | `true` | Fall back to mock if API unavailable |
+
 ### Development Server
 ```bash
 npm run dev
