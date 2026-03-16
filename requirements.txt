@@ -75,33 +75,8 @@ email-validator==2.3.0
 safety==3.7.0
 bandit==1.8.0
 
-# Additional dependencies from existing requirements
-aiosignal==1.4.0
-attrs==25.3.0
-blinker==1.9.0
-certifi==2025.7.9
-cffi>=2.0.0  # pynacl 1.6.2 requires cffi>=2.0.0
-charset-normalizer==3.4.2
-frozenlist==1.7.0
-h11==0.16.0
-httpcore==1.0.9
-httptools==0.6.4
-idna==3.10
-itsdangerous==2.2.0
-multidict==6.6.3
-packaging==26.0
-pycparser==2.22
-# pydantic-core==2.14.1  # Managed by pydantic
-sniffio==1.3.1
-typing-extensions==4.14.1
-urllib3==2.6.3
-uvloop==0.21.0
-watchfiles==1.1.0
-websockets==15.0.1
-yarl==1.23.0
-
-# ecdsa==0.19.0  # KNOWN VULN: Side-channel attacks (CVE-2024-23342) - inherent to Python, unfixable
-# We use PyNaCl for actual signing. Consider removing if not needed as transitive dep.
+# Transitive dependencies - let pip resolve these automatically
+# Only pin if there's a specific version requirement
 
 # Circuit Breaker Pattern
 circuit-breaker==0.1.1
@@ -114,7 +89,7 @@ pydantic-settings==2.7.0
 psutil==6.1.0
 
 # Additional security dependencies
-pyopenssl==24.3.0
+pyopenssl>=26.0.0  # Supports cryptography 46+
 # cryptography-vectors removed - test-only, causes false positive security alerts (.pem files)
 # trustme removed - test-only
 
