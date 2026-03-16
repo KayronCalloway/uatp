@@ -57,7 +57,7 @@ cbor2==5.8.0
 gunicorn==23.0.0
 
 # Configuration Management
-pyyaml==6.0.2
+pyyaml==6.0.3
 toml==0.10.2
 
 # Async utilities
