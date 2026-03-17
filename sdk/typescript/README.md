@@ -8,13 +8,13 @@ Cryptographic audit trails for AI decisions.
 ## Installation
 
 ```bash
-npm install uatp
+npm install @coolwithakay/uatp
 ```
 
 ## Quick Start
 
 ```typescript
-import { UATP } from 'uatp';
+import { UATP } from '@coolwithakay/uatp';
 
 const client = new UATP();
 
@@ -58,7 +58,7 @@ Your private key **never leaves your device**:
 ### Basic Usage
 
 ```typescript
-import { UATP } from 'uatp';
+import { UATP } from '@coolwithakay/uatp';
 
 const client = new UATP();
 
@@ -168,7 +168,7 @@ Record actual outcome for a decision.
 ### React
 
 ```typescript
-import { UATP } from 'uatp';
+import { UATP } from '@coolwithakay/uatp';
 import { useState } from 'react';
 
 function useUATP() {
@@ -186,7 +186,7 @@ function useUATP() {
 
 ```typescript
 // pages/api/certify.ts
-import { UATP } from 'uatp';
+import { UATP } from '@coolwithakay/uatp';
 
 const client = new UATP({ baseUrl: process.env.UATP_URL });
 
@@ -200,7 +200,7 @@ export default async function handler(req, res) {
 
 ```typescript
 // In your Lovable-generated app
-import { UATP } from 'uatp';
+import { UATP } from '@coolwithakay/uatp';
 
 const client = new UATP();
 

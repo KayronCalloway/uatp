@@ -1,5 +1,5 @@
 {
-  "name": "uatp",
+  "name": "@coolwithakay/uatp",
   "version": "0.1.0",
   "description": "Cryptographic audit trails for AI decisions",
   "main": "dist/index.js",
