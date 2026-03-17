@@ -5,8 +5,10 @@
 [![CI](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml)
 [![Security](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml)
 [![PyPI](https://img.shields.io/pypi/v/uatp)](https://pypi.org/project/uatp/)
+[![npm](https://img.shields.io/npm/v/@coolwithakay/uatp)](https://www.npmjs.com/package/@coolwithakay/uatp)
 [![Downloads](https://img.shields.io/pypi/dm/uatp)](https://pypi.org/project/uatp/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Node 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](STATUS.md)
@@ -15,8 +17,7 @@
 
 ## Try It Now
 
-**30-second proof it works:**
-
+**Python:**
 ```bash
 pip install uatp
 python -c "
@@ -30,7 +31,32 @@ print(f'Signed: {result.signature[:32]}...')
 "
 ```
 
+**TypeScript / JavaScript:**
+```bash
+npm install @coolwithakay/uatp
+```
+```typescript
+import { UATP } from '@coolwithakay/uatp';
+
+const client = new UATP();
+const result = await client.certify({
+  task: 'Hello World',
+  decision: 'First cryptographic audit trail',
+  reasoning: [{ step: 1, thought: 'It works', confidence: 1.0 }]
+});
+console.log(`Signed: ${result.signature.slice(0, 32)}...`);
+```
+
 Your private key was just generated locally and never transmitted anywhere.
+
+---
+
+## Install
+
+| Language | Command |
+|----------|---------|
+| **Python** | `pip install uatp` |
+| **TypeScript** | `npm install @coolwithakay/uatp` |
 
 ---
 
@@ -47,6 +73,11 @@ Your private key was just generated locally and never transmitted anywhere.
 ```bash
 pip install uatp
 python examples/hello_world.py
+```
+
+Or with TypeScript:
+```bash
+npm install @coolwithakay/uatp
 ```
 
 ### Option 2: Full Local App (One Command)
@@ -143,6 +174,7 @@ uatp/
 │   ├── security/       # Ed25519/ML-DSA signatures, RFC 3161
 │   └── services/       # Search, lifecycle services
 ├── sdk/python/         # Python SDK
+├── sdk/typescript/     # TypeScript SDK (npm: @coolwithakay/uatp)
 ├── frontend/           # Next.js dashboard (beta)
 ├── tests/              # 1400+ tests
 └── infra/              # Docker, Kubernetes configs
