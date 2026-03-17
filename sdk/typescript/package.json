@@ -1,0 +1,60 @@
+{
+  "name": "uatp",
+  "version": "0.1.0",
+  "description": "Cryptographic audit trails for AI decisions",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "uatp",
+    "ai",
+    "audit",
+    "cryptography",
+    "ed25519",
+    "signatures",
+    "reasoning",
+    "compliance"
+  ],
+  "author": "UATP Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KayronCalloway/uatp.git",
+    "directory": "sdk/typescript"
+  },
+  "homepage": "https://github.com/KayronCalloway/uatp#readme",
+  "bugs": {
+    "url": "https://github.com/KayronCalloway/uatp/issues"
+  },
+  "dependencies": {
+    "@noble/ed25519": "^2.1.0",
+    "@noble/hashes": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
