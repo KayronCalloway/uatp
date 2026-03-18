@@ -535,8 +535,13 @@ class PostgreSQLManager:
             )
 
             # Get record counts
+            # SECURITY: Table names are hardcoded constants - validated against allowlist
+            ALLOWED_TABLES = frozenset(
+                ["users", "capsules", "sessions", "chain_seals", "audit_log"]
+            )
             record_counts = {}
-            for table in ["users", "capsules", "sessions", "chain_seals", "audit_log"]:
+            for table in ALLOWED_TABLES:
+                # Table name is validated constant - safe for interpolation
                 count = await conn.fetchval(f"SELECT COUNT(*) FROM {table}")
                 record_counts[table] = count
 

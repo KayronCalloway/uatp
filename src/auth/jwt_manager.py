@@ -44,17 +44,20 @@ class JWTManager:
 
         # SECURITY: Fail fast if JWT_SECRET not set in production
         if not self.secret_key:
-            env = os.getenv("ENVIRONMENT", "development")
+            env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development"))
             if env in ("production", "prod", "staging"):
                 raise RuntimeError(
-                    "JWT_SECRET environment variable must be set in production. "
+                    "CRITICAL: JWT_SECRET environment variable is required in production. "
+                    "Set JWT_SECRET to a secure random value (minimum 32 bytes). "
                     'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
                 )
-            # Allow insecure default only in development
-            self.secret_key = "dev-only-insecure-key-do-not-use-in-prod"
+            # SECURITY: Development only - generate ephemeral secret per session
+            # This ensures tokens don't persist across restarts and no hardcoded secrets exist
+            self.secret_key = secrets.token_hex(32)
             logger.warning(
-                "JWT_SECRET not set - using insecure development key. "
-                "Set JWT_SECRET env var before deploying to production."
+                "JWT_SECRET not set - using ephemeral development key. "
+                "Tokens will NOT persist across restarts. "
+                "Set JWT_SECRET env var for production."
             )
 
     def hash_password(self, password: str) -> str:

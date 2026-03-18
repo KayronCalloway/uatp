@@ -5,6 +5,7 @@ Enhanced with comprehensive security validation and replay protection.
 """
 
 import hashlib
+import hmac
 import logging
 import threading
 import time
@@ -596,11 +597,10 @@ def verify_capsule(
             logger.error("SECURITY ERROR: Empty hash values not allowed")
             return False, "Empty hash values"
 
-        if actual_hash != expected_hash:
-            logger.error(
-                f"SECURITY ERROR: Hash mismatch - expected {expected_hash}, got {actual_hash}"
-            )
-            return False, f"Hash mismatch: expected {expected_hash}, got {actual_hash}"
+        # SECURITY: Use constant-time comparison to prevent timing attacks
+        if not hmac.compare_digest(actual_hash, expected_hash):
+            logger.error("SECURITY ERROR: Hash mismatch detected")
+            return False, "Hash mismatch: content integrity check failed"
 
         # SECURITY: Check replay protection
         signature_without_prefix = signature_hex.replace("ed25519:", "")

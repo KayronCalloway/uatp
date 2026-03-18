@@ -105,4 +105,4 @@ stripe==5.5.0
 networkx==3.4.2
 
 # Async web framework (for tests)
-quart==0.19.9
+quart==0.20.0  # CVE-2024-49767 fix
