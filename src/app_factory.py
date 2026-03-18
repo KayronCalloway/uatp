@@ -167,21 +167,40 @@ async def lifespan(app: FastAPI):
             app.state.ai_orchestrator = None
 
         # Initialize live capture conversation monitor
-        logger.info("Initializing live capture conversation monitor...")
-        from .live_capture.conversation_monitor import get_monitor
-
-        app.state.conversation_monitor = get_monitor(db_manager=db)
-
-        # Start monitoring in background
-        import asyncio
-
-        app.state.monitor_task = asyncio.create_task(
-            app.state.conversation_monitor.start_monitoring()
+        # SECURITY: Live capture requires explicit opt-in via UATP_ENABLE_LIVE_CAPTURE
+        # This prevents accidental data capture in environments where it's not intended
+        _enable_live_capture = os.getenv("UATP_ENABLE_LIVE_CAPTURE", "").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+        _is_local_dev = os.getenv("ENVIRONMENT", "development").lower() in (
+            "development",
+            "dev",
         )
 
-        logger.info(
-            f"Live capture enabled with significance threshold: {app.state.conversation_monitor.significance_threshold}"
-        )
+        if _enable_live_capture or _is_local_dev:
+            logger.info("Initializing live capture conversation monitor...")
+            from .live_capture.conversation_monitor import get_monitor
+
+            app.state.conversation_monitor = get_monitor(db_manager=db)
+
+            # Start monitoring in background
+            import asyncio
+
+            app.state.monitor_task = asyncio.create_task(
+                app.state.conversation_monitor.start_monitoring()
+            )
+
+            logger.info(
+                f"Live capture enabled with significance threshold: {app.state.conversation_monitor.significance_threshold}"
+            )
+        else:
+            logger.info(
+                "Live capture DISABLED. Set UATP_ENABLE_LIVE_CAPTURE=true to enable."
+            )
+            app.state.conversation_monitor = None
+            app.state.monitor_task = None
 
         logger.info("UATP application started successfully")
 
@@ -239,20 +258,30 @@ def setup_middleware(app: FastAPI, limiter: RateLimitConfig, metrics: Dict[str, 
     )
 
     # Trusted hosts - MUST be configured for production
-    # Development default is localhost only; production MUST set ALLOWED_HOSTS
-    default_hosts = "localhost,127.0.0.1"
+    # SECURITY: Production requires explicit ALLOWED_HOSTS - fail closed
     env_hosts = os.getenv("ALLOWED_HOSTS", "")
-    if env_hosts:
+    current_env = os.getenv("ENVIRONMENT", "development").lower()
+
+    if current_env in ("production", "prod"):
+        # SECURITY: Fail closed in production - no default hosts allowed
+        if not env_hosts:
+            raise RuntimeError(
+                "SECURITY: ALLOWED_HOSTS must be set in production. "
+                "Set ALLOWED_HOSTS=yourdomain.com,api.yourdomain.com"
+            )
+        allowed_hosts = [h.strip() for h in env_hosts.split(",") if h.strip()]
+        if not allowed_hosts:
+            raise RuntimeError(
+                "SECURITY: ALLOWED_HOSTS is empty in production. "
+                "Set ALLOWED_HOSTS=yourdomain.com,api.yourdomain.com"
+            )
+    elif env_hosts:
+        # Non-production with explicit hosts
         allowed_hosts = [h.strip() for h in env_hosts.split(",") if h.strip()]
     else:
-        allowed_hosts = [h.strip() for h in default_hosts.split(",")]
+        # Development/staging without explicit hosts - localhost only
+        allowed_hosts = ["localhost", "127.0.0.1"]
 
-    # Only warn if in production AND no ALLOWED_HOSTS was configured
-    if os.getenv("ENVIRONMENT") == "production" and not env_hosts:
-        logger.warning(
-            "[SECURITY] ALLOWED_HOSTS not set in production! "
-            "Set ALLOWED_HOSTS=uatp.app,api.uatp.app,dashboard.uatp.app"
-        )
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
     # Redis-backed rate limiting middleware
@@ -938,13 +967,22 @@ def create_app() -> FastAPI:
         "1",
         "yes",
     )
-    _is_dev = os.getenv("ENVIRONMENT", "development").lower() in (
+    # SECURITY: Only local development auto-enables experimental routes
+    # Staging and production require explicit UATP_ENABLE_EXPERIMENTAL=true
+    _is_local_dev = os.getenv("ENVIRONMENT", "development").lower() in (
         "development",
         "dev",
-        "staging",
     )
+    # Log warning if staging has experimental routes enabled
+    _env = os.getenv("ENVIRONMENT", "development").lower()
+    if _env == "staging" and _enable_experimental:
+        _logger = structlog.get_logger(__name__)
+        _logger.warning(
+            "SECURITY: Experimental routes enabled in staging via UATP_ENABLE_EXPERIMENTAL. "
+            "Ensure these routes are properly secured before production."
+        )
 
-    if _enable_experimental or _is_dev:
+    if _enable_experimental or _is_local_dev:
         # Live capture router for real-time monitoring
         from .api.live_capture_fastapi_router import router as live_capture_router
 

@@ -256,39 +256,107 @@ LOG_LEVEL = settings.LOG_LEVEL
 LOG_FORMAT = settings.LOG_FORMAT
 
 
+def _is_placeholder_secret(value: str) -> bool:
+    """Check if a secret value is a placeholder that should not be used."""
+    if not value:
+        return True
+    placeholder_patterns = [
+        "CHANGE_ME",
+        "change_me",
+        "your-",
+        "YOUR_",
+        "placeholder",
+        "PLACEHOLDER",
+        "example",
+        "EXAMPLE",
+        "xxx",
+        "XXX",
+        "dev-only",
+        "test-only",
+    ]
+    return any(pattern in value for pattern in placeholder_patterns)
+
+
 def validate_production_secrets():
     """
     Validate all secrets are properly configured for production environment.
 
+    SECURITY: This function rejects placeholder secrets to prevent accidental
+    deployment with insecure defaults. The application will refuse to start
+    in production if any secrets contain placeholder patterns.
+
     Raises:
         RuntimeError: If production validation fails
     """
-    env = os.getenv("UATP_ENV", "development")
+    env = os.getenv("UATP_ENV", os.getenv("ENVIRONMENT", "development"))
 
-    if env == "production":
+    if env in ("production", "prod", "staging"):
         errors = []
 
         # Check CSRF secret
-        csrf_secret = os.getenv("CSRF_SECRET_KEY")
+        csrf_secret = os.getenv("CSRF_SECRET_KEY", "")
         if not csrf_secret:
             errors.append("CSRF_SECRET_KEY must be set in production")
+        elif _is_placeholder_secret(csrf_secret):
+            errors.append(
+                "CSRF_SECRET_KEY contains placeholder value - generate with: "
+                'python -c "import secrets; print(secrets.token_urlsafe(32))"'
+            )
         elif len(csrf_secret) < 32:
             errors.append(
                 "CSRF_SECRET_KEY must be at least 32 characters in production"
             )
 
         # Check JWT secret
-        jwt_secret = os.getenv("JWT_SECRET")
+        jwt_secret = os.getenv("JWT_SECRET", os.getenv("JWT_SECRET_KEY", ""))
         if not jwt_secret:
             errors.append("JWT_SECRET must be set in production")
-        elif jwt_secret == "your-jwt-secret-key-change-in-production":
-            errors.append("JWT_SECRET must be changed from default value in production")
+        elif _is_placeholder_secret(jwt_secret):
+            errors.append(
+                "JWT_SECRET contains placeholder value - generate with: "
+                'python -c "import secrets; print(secrets.token_urlsafe(64))"'
+            )
         elif len(jwt_secret) < 32:
             errors.append("JWT_SECRET must be at least 32 characters in production")
 
+        # Check encryption key
+        encryption_key = os.getenv("ENCRYPTION_KEY", "")
+        if not encryption_key:
+            errors.append("ENCRYPTION_KEY must be set in production")
+        elif _is_placeholder_secret(encryption_key):
+            errors.append(
+                "ENCRYPTION_KEY contains placeholder value - generate with: "
+                'python -c "import secrets; print(secrets.token_urlsafe(32))"'
+            )
+
+        # Check database password
+        db_password = os.getenv("DB_PASSWORD", "")
+        if _is_placeholder_secret(db_password):
+            errors.append(
+                "DB_PASSWORD contains placeholder value - generate with: "
+                "openssl rand -base64 32"
+            )
+
+        # Check Redis password
+        redis_password = os.getenv("REDIS_PASSWORD", "")
+        if _is_placeholder_secret(redis_password):
+            errors.append(
+                "REDIS_PASSWORD contains placeholder value - generate with: "
+                "openssl rand -base64 32"
+            )
+
+        # Check ALLOWED_HOSTS is set
+        allowed_hosts = os.getenv("ALLOWED_HOSTS", "")
+        if not allowed_hosts:
+            errors.append(
+                "ALLOWED_HOSTS must be set in production - set to your domain(s)"
+            )
+
         # If there are errors, raise RuntimeError
         if errors:
-            error_msg = "Production secret validation failed:\n" + "\n".join(
-                f"  - {err}" for err in errors
+            error_msg = (
+                "SECURITY: Production secret validation failed!\n"
+                "The application cannot start with placeholder or missing secrets.\n\n"
+                + "\n".join(f"  - {err}" for err in errors)
             )
             raise RuntimeError(error_msg)

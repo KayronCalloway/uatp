@@ -286,9 +286,14 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
         # Individual verification components - these are the ground truth
         "signature_valid": False,
         "content_hash_match": False,
+        # SECURITY: Timestamp status is explicit - never conflate presence with proof
+        # Values: "absent" | "present_unverified" | "cryptographically_verified"
+        "timestamp_status": "absent",
+        # Legacy fields maintained for backwards compatibility
         "timestamp_present": False,
         "timestamp_verified": False,  # Requires rfc3161ng library
         # Aggregate status - be precise about what was actually verified
+        # SECURITY: assurance_level explicitly excludes timestamp unless cryptographically verified
         "assurance_level": "none",  # "none" | "signature_only" | "signature_and_hash" | "full"
         "errors": [],
         "warnings": [],
@@ -377,48 +382,62 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
         )
 
     # 3. Check RFC 3161 timestamp (if present)
-    # WARNING: This is NOT cryptographic verification - just presence checking.
+    # SECURITY WARNING: This is NOT cryptographic verification - just presence checking.
     # Full RFC 3161 verification requires the rfc3161ng library and TSA certificate chain.
+    # A present-but-unverified timestamp provides NO time assurance whatsoever.
     rfc3161 = verification.get("rfc3161")
     if rfc3161:
         try:
             if "token" in rfc3161 and "tsa" in rfc3161:
-                # Mark as present but NOT cryptographically verified
+                # SECURITY: Explicitly mark as present but NOT cryptographically verified
+                # This timestamp data is UNTRUSTWORTHY without cryptographic verification
+                result["timestamp_status"] = "present_unverified"
                 result["timestamp_present"] = True
-                result["timestamp_verified"] = False  # Not cryptographically verified!
+                result["timestamp_verified"] = False  # NOT cryptographically verified!
                 result["timestamp_tsa"] = rfc3161.get("tsa")
                 result["timestamp_time"] = rfc3161.get("timestamp")
                 result["warnings"].append(
-                    "RFC 3161 timestamp present but NOT cryptographically verified. "
-                    "Use rfc3161ng library for full verification."
+                    "SECURITY: RFC 3161 timestamp data is PRESENT but NOT CRYPTOGRAPHICALLY VERIFIED. "
+                    "This provides NO time assurance. The timestamp could be forged or swapped. "
+                    "For actual time proof, use rfc3161ng library with TSA certificate chain verification."
                 )
             else:
-                result["warnings"].append("Incomplete RFC 3161 timestamp data")
+                result["timestamp_status"] = "absent"
+                result["warnings"].append(
+                    "Incomplete RFC 3161 timestamp data - treated as absent"
+                )
 
         except Exception as e:
-            result["warnings"].append(f"Could not check timestamp: {e}")
+            result["timestamp_status"] = "absent"
+            result["warnings"].append(
+                f"Could not check timestamp (treated as absent): {e}"
+            )
 
-    # Compute assurance level based on what actually verified
-    # This is explicit about the strength of the verification
+    # Compute assurance level based on what ACTUALLY verified cryptographically
+    # SECURITY: Be brutally explicit about the strength of verification
+    # Timestamp presence without cryptographic verification provides ZERO time assurance
     if not result["signature_valid"]:
         result["assurance_level"] = "none"
     elif not result["content_hash_match"]:
         # Signature valid but content changed - this is suspicious
         result["assurance_level"] = "signature_only"
         result["warnings"].append(
-            "Signature valid over stored hash, but content may have been modified. "
-            "This could indicate tampering or storage transformation."
+            "SECURITY: Signature valid over stored hash, but content differs. "
+            "This could indicate tampering, storage transformation, or replay attack."
         )
-    elif result["timestamp_verified"]:
+    elif result["timestamp_status"] == "cryptographically_verified":
+        # Only "full" if timestamp was ACTUALLY cryptographically verified
         result["assurance_level"] = "full"
-    elif result["timestamp_present"]:
-        result["assurance_level"] = "signature_and_hash"
-        result["warnings"].append(
-            "RFC 3161 timestamp present but NOT cryptographically verified. "
-            "Install rfc3161ng for full timestamp verification."
-        )
     else:
+        # signature_and_hash means: signature valid + hash matches + NO verified timestamp
+        # SECURITY: This level explicitly excludes any time assurance
         result["assurance_level"] = "signature_and_hash"
+        if result["timestamp_status"] == "present_unverified":
+            result["warnings"].append(
+                "SECURITY: Assurance level is 'signature_and_hash' (NOT 'full') because "
+                "timestamp is present but NOT cryptographically verified. "
+                "Unverified timestamps provide NO time assurance and should not be trusted."
+            )
 
     # Add metadata
     result["signer"] = verification.get("signer", "unknown")

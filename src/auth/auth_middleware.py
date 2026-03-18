@@ -121,10 +121,28 @@ def require_user_or_admin(
 
 
 class RateLimiter:
-    """Simple rate limiter for authentication attempts"""
+    """
+    SECURITY WARNING: In-memory rate limiter for LOCAL DEVELOPMENT AND TESTING ONLY.
+
+    This rate limiter is NOT suitable for production because:
+    - State is lost on restart
+    - State is not shared across multiple workers/instances
+    - Can be bypassed by restarting the service or hitting different workers
+
+    For production, use the Redis-backed rate limiter in src/middleware/rate_limiting.py
+    """
 
     def __init__(self):
-        self.attempts = {}  # In production, use Redis
+        import os
+
+        env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development")).lower()
+        if env in ("production", "prod", "staging"):
+            logger.warning(
+                "SECURITY: In-memory RateLimiter instantiated in %s environment. "
+                "This is NOT recommended - use Redis-backed rate limiting instead.",
+                env,
+            )
+        self.attempts = {}  # SECURITY: In-memory only - use Redis in production
 
     def is_rate_limited(
         self, identifier: str, max_attempts: int = 5, window_minutes: int = 15
@@ -158,11 +176,18 @@ class RateLimiter:
 
 
 # Global rate limiter instance
+# SECURITY: This is for local development only. Production uses Redis-backed limiter.
 rate_limiter = RateLimiter()
 
 
 def check_rate_limit(request: Request, identifier: str = None):
-    """Check rate limit for authentication attempts"""
+    """
+    Check rate limit for authentication attempts.
+
+    SECURITY NOTE: This uses the in-memory rate limiter which is only suitable
+    for local development. In production, the Redis-backed middleware in
+    src/middleware/rate_limiting.py provides distributed rate limiting.
+    """
     if identifier is None:
         identifier = request.client.host
 
