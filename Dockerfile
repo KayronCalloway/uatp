@@ -32,7 +32,7 @@ FROM python:3.11-slim as runtime
 
 # Set labels for image metadata
 LABEL maintainer="UATP Team" \
-      version="1.0.0" \
+      version="1.0.1" \
       description="UATP Capsule Engine - AI Rights and Financial Operations Platform"
 
 # Install runtime dependencies and security updates

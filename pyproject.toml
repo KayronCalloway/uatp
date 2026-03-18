@@ -1,6 +1,6 @@
 [project]
 name = "uatp-engine"
-version = "0.3.0"
+version = "1.0.1"
 description = "UATP Capsule Engine: FastAPI backend for cryptographically sealed AI decision capsules. For the client SDK, see sdk/python/ or pip install uatp."
 authors = [{name = "Kayron Calloway", email = "kayron@houseofcalloway.com"}]
 readme = "README.md"
