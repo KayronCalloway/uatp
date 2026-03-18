@@ -6,14 +6,209 @@ Production-ready JWT token generation, validation, and management
 import logging
 import os
 import secrets
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 import bcrypt
 import jwt
 
 logger = logging.getLogger(__name__)
+
+
+# ==============================================================================
+# SECURITY: Redis-backed Token Revocation List
+# ==============================================================================
+class TokenRevocationList:
+    """
+    Redis-backed token revocation list for JWT invalidation.
+
+    SECURITY: Provides persistent token revocation that survives service restarts.
+    Uses JTI (JWT ID) for efficient storage and TTL-based automatic cleanup.
+
+    Falls back to in-memory storage when Redis is unavailable (development only).
+    """
+
+    def __init__(self):
+        self._redis_client = None
+        self._redis_available = False
+        self._in_memory_fallback: Dict[str, float] = {}  # jti -> expiration timestamp
+        self._user_tokens: Dict[str, Set[str]] = {}  # user_id -> set of jtis
+        self._last_cleanup = time.time()
+        self._init_redis()
+
+    def _init_redis(self):
+        """Initialize Redis connection for token revocation."""
+        try:
+            import redis
+
+            redis_host = os.getenv("REDIS_HOST", "localhost")
+            redis_port = int(os.getenv("REDIS_PORT", "6379"))
+            redis_password = os.getenv("REDIS_PASSWORD")
+            redis_db = int(os.getenv("REDIS_REVOCATION_DB", "2"))
+
+            self._redis_client = redis.Redis(
+                host=redis_host,
+                port=redis_port,
+                password=redis_password,
+                db=redis_db,
+                decode_responses=True,
+                socket_connect_timeout=2,
+            )
+
+            # Test connection
+            self._redis_client.ping()
+            self._redis_available = True
+            logger.info("Token revocation list using Redis backend")
+
+        except ImportError:
+            logger.warning(
+                "SECURITY: redis package not installed. "
+                "Token revocation will use in-memory storage (development only)."
+            )
+            self._redis_available = False
+
+        except Exception as e:
+            env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development"))
+            if env in ("production", "prod", "staging"):
+                logger.error(
+                    f"CRITICAL: Redis unavailable for token revocation in {env}: {e}"
+                )
+            else:
+                logger.warning(
+                    f"Redis unavailable for token revocation: {e}. "
+                    "Using in-memory fallback (development only)."
+                )
+            self._redis_available = False
+
+    def revoke_token(self, jti: str, user_id: str, ttl_seconds: int):
+        """
+        Revoke a token by its JTI.
+
+        Args:
+            jti: JWT ID (unique token identifier)
+            user_id: User ID for the token
+            ttl_seconds: Time until token would naturally expire (for cleanup)
+        """
+        if self._redis_available:
+            try:
+                # Store revoked token with TTL
+                key = f"revoked:{jti}"
+                self._redis_client.setex(key, ttl_seconds, user_id)
+
+                # Track user's revoked tokens (for revoke_all_user_tokens)
+                user_key = f"user_revoked:{user_id}"
+                self._redis_client.sadd(user_key, jti)
+                self._redis_client.expire(user_key, ttl_seconds)
+
+                logger.info(f"Token revoked: jti={jti[:8]}... user={user_id}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Redis error revoking token: {e}")
+                # Fall through to in-memory fallback
+
+        # In-memory fallback
+        expiration = time.time() + ttl_seconds
+        self._in_memory_fallback[jti] = expiration
+
+        if user_id not in self._user_tokens:
+            self._user_tokens[user_id] = set()
+        self._user_tokens[user_id].add(jti)
+
+        self._cleanup_expired()
+        logger.info(f"Token revoked (in-memory): jti={jti[:8]}... user={user_id}")
+        return True
+
+    def is_revoked(self, jti: str) -> bool:
+        """Check if a token is revoked."""
+        if self._redis_available:
+            try:
+                return self._redis_client.exists(f"revoked:{jti}") > 0
+            except Exception as e:
+                logger.error(f"Redis error checking revocation: {e}")
+                # Fall through to in-memory check
+
+        # Check in-memory (also used as fallback)
+        if jti in self._in_memory_fallback:
+            if self._in_memory_fallback[jti] > time.time():
+                return True
+            # Expired, clean up
+            del self._in_memory_fallback[jti]
+
+        return False
+
+    def revoke_all_user_tokens(self, user_id: str, ttl_seconds: int = 86400):
+        """
+        Revoke all tokens for a user.
+
+        Args:
+            user_id: User ID to revoke all tokens for
+            ttl_seconds: TTL for the revocation entries
+        """
+        if self._redis_available:
+            try:
+                # Store user-level revocation marker
+                key = f"user_revoked_all:{user_id}"
+                self._redis_client.setex(key, ttl_seconds, str(time.time()))
+                logger.info(f"All tokens revoked for user: {user_id}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Redis error revoking user tokens: {e}")
+
+        # In-memory fallback - revoke all known tokens for this user
+        if user_id in self._user_tokens:
+            expiration = time.time() + ttl_seconds
+            for jti in self._user_tokens[user_id]:
+                self._in_memory_fallback[jti] = expiration
+
+        logger.info(f"All tokens revoked (in-memory) for user: {user_id}")
+        return True
+
+    def is_user_revoked(self, user_id: str, token_iat: float) -> bool:
+        """
+        Check if all user tokens were revoked after the token was issued.
+
+        Args:
+            user_id: User ID
+            token_iat: Token issued-at timestamp
+
+        Returns:
+            True if user's tokens were revoked after this token was issued
+        """
+        if self._redis_available:
+            try:
+                key = f"user_revoked_all:{user_id}"
+                revoked_at = self._redis_client.get(key)
+                if revoked_at:
+                    return float(revoked_at) > token_iat
+            except Exception as e:
+                logger.error(f"Redis error checking user revocation: {e}")
+
+        return False
+
+    def _cleanup_expired(self):
+        """Clean up expired entries from in-memory storage."""
+        now = time.time()
+
+        # Only cleanup every 5 minutes
+        if now - self._last_cleanup < 300:
+            return
+
+        self._last_cleanup = now
+        expired = [jti for jti, exp in self._in_memory_fallback.items() if exp <= now]
+
+        for jti in expired:
+            del self._in_memory_fallback[jti]
+
+        if expired:
+            logger.debug(f"Cleaned up {len(expired)} expired revocation entries")
+
+
+# Singleton revocation list
+_token_revocation_list = TokenRevocationList()
 
 
 @dataclass
@@ -39,8 +234,8 @@ class JWTManager:
         self.refresh_token_expire = timedelta(days=30)
         self.password_reset_expire = timedelta(hours=1)
 
-        # Token blacklist for revoked tokens (in production, use Redis)
-        self.revoked_tokens = set()
+        # SECURITY: Use Redis-backed revocation list (falls back to in-memory in dev)
+        self._revocation_list = _token_revocation_list
 
         # SECURITY: Fail fast if JWT_SECRET not set in production
         if not self.secret_key:
@@ -122,13 +317,28 @@ class JWTManager:
     ) -> Optional[Dict[str, Any]]:
         """Verify and decode token"""
         try:
-            # Check if token is revoked
-            if token in self.revoked_tokens:
-                logger.warning("Attempt to use revoked token")
+            # Decode token first to get JTI and user_id
+            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+
+            # SECURITY: Check if token is revoked (by JTI)
+            jti = payload.get("jti")
+            if jti and self._revocation_list.is_revoked(jti):
+                logger.warning(f"Attempt to use revoked token: jti={jti[:8]}...")
                 return None
 
-            # Decode token
-            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+            # SECURITY: Check if all user tokens were revoked after this token was issued
+            user_id = payload.get("user_id")
+            iat = payload.get("iat")
+            if user_id and iat:
+                # Convert iat to timestamp if it's a datetime
+                iat_timestamp = (
+                    iat if isinstance(iat, (int, float)) else iat.timestamp()
+                )
+                if self._revocation_list.is_user_revoked(user_id, iat_timestamp):
+                    logger.warning(
+                        f"Token issued before user-wide revocation: user={user_id}"
+                    )
+                    return None
 
             # Check token type
             if payload.get("type") != token_type:
@@ -178,15 +388,46 @@ class JWTManager:
         }
 
     def revoke_token(self, token: str):
-        """Revoke a token (add to blacklist)"""
-        self.revoked_tokens.add(token)
-        logger.info("Token revoked")
+        """Revoke a token by adding its JTI to the revocation list."""
+        try:
+            # Decode without verification to get JTI and user_id
+            payload = jwt.decode(token, options={"verify_signature": False})
+            jti = payload.get("jti")
+            user_id = payload.get("user_id", "unknown")
+            exp = payload.get("exp")
 
-    def revoke_all_user_tokens(self, user_id: str):
-        """Revoke all tokens for a user (would use Redis with user_id prefix)"""
-        # In production, you'd query Redis for all tokens with this user_id
-        # and add them to the blacklist
-        logger.info(f"All tokens revoked for user {user_id}")
+            if not jti:
+                logger.warning("Cannot revoke token without JTI")
+                return False
+
+            # Calculate TTL (time until token expires naturally)
+            if exp:
+                exp_timestamp = (
+                    exp if isinstance(exp, (int, float)) else exp.timestamp()
+                )
+                ttl = max(1, int(exp_timestamp - time.time()))
+            else:
+                # Default to 24 hours if no expiration
+                ttl = 86400
+
+            return self._revocation_list.revoke_token(jti, user_id, ttl)
+
+        except jwt.DecodeError as e:
+            logger.error(f"Cannot decode token for revocation: {e}")
+            return False
+
+    def revoke_all_user_tokens(self, user_id: str, ttl_seconds: int = 86400):
+        """
+        Revoke all tokens for a user.
+
+        This invalidates all tokens issued before this revocation,
+        forcing the user to re-authenticate.
+
+        Args:
+            user_id: User ID to revoke tokens for
+            ttl_seconds: How long to maintain the revocation (default: 24h)
+        """
+        return self._revocation_list.revoke_all_user_tokens(user_id, ttl_seconds)
 
     def get_token_claims(self, token: str) -> Optional[Dict[str, Any]]:
         """Get token claims without verification (for debugging)"""
