@@ -425,7 +425,13 @@ def verify_workflow_from_server(
 @click.argument("files", nargs=-1, type=click.Path(exists=False))
 @click.option("--capsule-id", "-c", help="Verify capsule by ID from server")
 @click.option("--workflow", "-w", help="Verify workflow by ID from server")
-@click.option("--server", "-s", default="http://localhost:8000", help="UATP server URL")
+@click.option(
+    "--server",
+    "-s",
+    envvar="UATP_SERVER_URL",
+    default=None,
+    help="UATP server URL (or set UATP_SERVER_URL)",
+)
 @click.option(
     "--output",
     "-o",

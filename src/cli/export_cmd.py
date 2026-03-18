@@ -23,7 +23,13 @@ import click
     help="Export format",
 )
 @click.option("--output", "-o", type=click.Path(), help="Output file (default: stdout)")
-@click.option("--server", "-s", default="http://localhost:8000", help="UATP server URL")
+@click.option(
+    "--server",
+    "-s",
+    envvar="UATP_SERVER_URL",
+    default=None,
+    help="UATP server URL (or set UATP_SERVER_URL)",
+)
 @click.option("--pretty", "-p", is_flag=True, help="Pretty print JSON")
 def export_cmd(
     capsule_id: str,

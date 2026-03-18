@@ -229,7 +229,13 @@ def inspect_capsule_from_server(
 @click.command("inspect")
 @click.argument("file", required=False, type=click.Path(exists=False))
 @click.option("--capsule-id", "-c", help="Inspect capsule by ID from server")
-@click.option("--server", "-s", default="http://localhost:8000", help="UATP server URL")
+@click.option(
+    "--server",
+    "-s",
+    envvar="UATP_SERVER_URL",
+    default=None,
+    help="UATP server URL (or set UATP_SERVER_URL)",
+)
 @click.option("--payload", "-p", is_flag=True, help="Show payload content")
 def inspect_cmd(
     file: Optional[str],

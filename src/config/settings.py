@@ -41,11 +41,13 @@ class Settings:
     COMPRESSED_STORAGE: bool = False
     MAX_CHAIN_SIZE: int = 10000
 
-    # API settings
-    API_HOST: str = "127.0.0.1"
-    API_PORT: int = 5000
+    # API settings - configured via environment variables in production
+    API_HOST: str = os.getenv("UATP_API_HOST", "0.0.0.0")
+    API_PORT: int = int(os.getenv("UATP_API_PORT", "5000"))
     RATE_LIMIT: int = 100  # Requests per minute
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8080"]
+    CORS_ORIGINS: List[str] = (
+        os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else []
+    )
     API_KEYS: Dict[str, Any] = {}
 
     # Capsule settings
