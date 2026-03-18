@@ -41,6 +41,21 @@ IS_SQLITE = "sqlite" in DATABASE_URL.lower()
 # Set up logging
 logger = logging.getLogger(__name__)
 
+
+def to_uuid(user_id: str) -> uuid.UUID:
+    """
+    Convert a user_id string to a UUID object for database queries.
+
+    The owner_id column in the database is of type UUID(as_uuid=True),
+    so we need to convert the string user_id from JWT tokens to UUID.
+    """
+    try:
+        return uuid.UUID(user_id)
+    except (ValueError, TypeError):
+        logger.warning(f"Invalid user_id format (not a UUID): {user_id[:8]}...")
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
+
+
 router = APIRouter(prefix="/capsules", tags=["Capsules"])
 
 
@@ -281,7 +296,7 @@ async def get_capsule_stats(
         # SECURITY: Non-admin users only see their own capsule stats
         # Admins see aggregate stats for all capsules
         if not user_is_admin and user_id:
-            count_query = count_query.where(CapsuleModel.owner_id == user_id)
+            count_query = count_query.where(CapsuleModel.owner_id == to_uuid(user_id))
 
         # Apply test data filtering (skip on SQLite - JSONB syntax not supported)
         if not include_test and not IS_SQLITE:
@@ -305,7 +320,7 @@ async def get_capsule_stats(
             type_query = type_query.where(~CapsuleModel.capsule_id.like("demo-%"))
         # SECURITY: Non-admin users only see their own capsule stats
         if not user_is_admin and user_id:
-            type_query = type_query.where(CapsuleModel.owner_id == user_id)
+            type_query = type_query.where(CapsuleModel.owner_id == to_uuid(user_id))
 
         # Apply test data filtering to type query (skip on SQLite - JSONB syntax not supported)
         if not include_test and not IS_SQLITE:
@@ -350,7 +365,7 @@ async def get_capsule_stats(
             recent_query = recent_query.where(~CapsuleModel.capsule_id.like("demo-%"))
         # SECURITY: Non-admin users only see their own capsule stats
         if not user_is_admin and user_id:
-            recent_query = recent_query.where(CapsuleModel.owner_id == user_id)
+            recent_query = recent_query.where(CapsuleModel.owner_id == to_uuid(user_id))
 
         # Apply test data filtering to recent activity (skip on SQLite - JSONB syntax not supported)
         if not include_test and not IS_SQLITE:
@@ -434,7 +449,7 @@ async def list_capsules(
         # SECURITY: Non-admin users only see their own capsules (excludes legacy/NULL owner)
         # Admins see all capsules
         if not user_is_admin and user_id:
-            query = query.where(CapsuleModel.owner_id == user_id)
+            query = query.where(CapsuleModel.owner_id == to_uuid(user_id))
 
         # Apply type filter
         if type:
@@ -475,7 +490,7 @@ async def list_capsules(
 
         # SECURITY: Non-admin users only see their own capsules
         if not user_is_admin and user_id:
-            count_query = count_query.where(CapsuleModel.owner_id == user_id)
+            count_query = count_query.where(CapsuleModel.owner_id == to_uuid(user_id))
 
         if type:
             count_query = count_query.where(CapsuleModel.capsule_type == type)
@@ -1418,7 +1433,7 @@ async def get_outcome_statistics(
         ).group_by(CapsuleModel.outcome_status)
         # Non-admin users only see their own capsule stats
         if not user_is_admin:
-            status_query = status_query.where(CapsuleModel.owner_id == user_id)
+            status_query = status_query.where(CapsuleModel.owner_id == to_uuid(user_id))
         status_result = await session.execute(status_query)
         status_counts = {
             status or "untracked": count for status, count in status_result.fetchall()
@@ -1429,7 +1444,7 @@ async def get_outcome_statistics(
             CapsuleModel.user_feedback_rating.isnot(None)
         )
         if not user_is_admin:
-            rating_query = rating_query.where(CapsuleModel.owner_id == user_id)
+            rating_query = rating_query.where(CapsuleModel.owner_id == to_uuid(user_id))
         rating_result = await session.execute(rating_query)
         avg_rating = rating_result.scalar()
 
@@ -1439,7 +1454,7 @@ async def get_outcome_statistics(
         )
         if not user_is_admin:
             feedback_count_query = feedback_count_query.where(
-                CapsuleModel.owner_id == user_id
+                CapsuleModel.owner_id == to_uuid(user_id)
             )
         feedback_result = await session.execute(feedback_count_query)
         feedback_count = feedback_result.scalar() or 0

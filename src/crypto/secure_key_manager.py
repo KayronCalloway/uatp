@@ -413,6 +413,41 @@ class SecureKeyManager:
         # For now, return empty dict as public keys should be stored elsewhere
         return {}
 
+    def derive_user_encryption_key(self, user_id: str) -> bytes:
+        """
+        Derive a user-specific encryption key using HKDF.
+
+        This creates a unique 256-bit AES key for each user, derived from
+        the master key and the user's ID. The key can be used for
+        client-side payload encryption.
+
+        Args:
+            user_id: Unique user identifier
+
+        Returns:
+            32-byte (256-bit) AES key
+        """
+        from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
+        if not self._master_salt:
+            raise RuntimeError("Master key not initialized")
+
+        # Use HKDF to derive user-specific key
+        # The master salt combined with user-specific info ensures unique keys per user
+        hkdf = HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,  # 256-bit key for AES-256
+            salt=self._master_salt,
+            info=f"uatp-user-encryption-key-v1-{user_id}".encode(),
+        )
+
+        # Use the master salt as input key material (IKM)
+        # This is secure because HKDF extracts entropy from any input
+        # and the user_id in info ensures unique output per user
+        user_key = hkdf.derive(self._master_salt + user_id.encode())
+        logger.debug(f"Derived encryption key for user {user_id[:8]}...")
+        return user_key
+
     def __del__(self):
         """Secure cleanup on object destruction."""
         if hasattr(self, "secure_memory"):

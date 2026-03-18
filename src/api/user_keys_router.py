@@ -22,7 +22,7 @@ from typing import Dict
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth.auth_middleware import get_current_user
-from ..security.secure_key_manager import SecureKeyManager, create_secure_key_manager
+from ..crypto.secure_key_manager import SecureKeyManager, get_key_manager
 
 logger = logging.getLogger(__name__)
 
@@ -32,11 +32,11 @@ router = APIRouter(prefix="/user-keys", tags=["User Keys"])
 _key_manager: SecureKeyManager = None
 
 
-def get_key_manager() -> SecureKeyManager:
+def get_user_key_manager() -> SecureKeyManager:
     """Get or create the secure key manager singleton."""
     global _key_manager
     if _key_manager is None:
-        _key_manager = create_secure_key_manager()
+        _key_manager = get_key_manager()
     return _key_manager
 
 
@@ -62,7 +62,7 @@ async def get_my_encryption_key(
         raise HTTPException(status_code=401, detail="User ID not found in token")
 
     try:
-        key_manager = get_key_manager()
+        key_manager = get_user_key_manager()
         user_key = key_manager.derive_user_encryption_key(user_id)
 
         # Return key as Base64 for easy transport

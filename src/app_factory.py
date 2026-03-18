@@ -76,32 +76,56 @@ def configure_logging():
 
 def create_metrics():
     """Get Prometheus metrics from monitoring module to prevent duplicates."""
-    from prometheus_client import REGISTRY, CollectorRegistry
+    from prometheus_client import REGISTRY
 
     # Import metrics from monitoring module (which handles deduplication)
     from .middleware.monitoring import REQUEST_COUNT, REQUEST_DURATION
 
     # Create attribution metric if not exists (use try/except to avoid private API)
-    try:
-        attribution_metric = Histogram(
+    attribution_metric = None
+
+    # First, check if metric already exists in registry
+    for collector in list(REGISTRY._names_to_collectors.values()):
+        if hasattr(collector, "_name") and collector._name in (
             "attribution_processing_duration_seconds",
-            "Attribution processing time",
-        )
-    except ValueError:
-        # Metric already exists, get it from collectors
-        for collector in REGISTRY.collect():
-            if (
-                hasattr(collector, "_name")
-                and collector._name == "attribution_processing_duration_seconds"
-            ):
-                attribution_metric = collector
-                break
-        else:
-            # Fallback: create with a unique name
+            "attribution_processing_duration_seconds_v2",
+        ):
+            attribution_metric = collector
+            break
+
+    # If not found, try to create it
+    if attribution_metric is None:
+        try:
+            attribution_metric = Histogram(
+                "attribution_processing_duration_seconds",
+                "Attribution processing time",
+            )
+        except ValueError:
+            # Metric registered by another thread/process, try to find it again
+            for collector in list(REGISTRY._names_to_collectors.values()):
+                if (
+                    hasattr(collector, "_name")
+                    and collector._name == "attribution_processing_duration_seconds"
+                ):
+                    attribution_metric = collector
+                    break
+
+    # Final fallback: create a no-op metric to avoid None errors
+    if attribution_metric is None:
+        try:
             attribution_metric = Histogram(
                 "attribution_processing_duration_seconds_v2",
                 "Attribution processing time",
             )
+        except ValueError:
+            # Even fallback exists - find it
+            for collector in list(REGISTRY._names_to_collectors.values()):
+                if (
+                    hasattr(collector, "_name")
+                    and collector._name == "attribution_processing_duration_seconds_v2"
+                ):
+                    attribution_metric = collector
+                    break
 
     return {
         "REQUEST_COUNT": REQUEST_COUNT,
