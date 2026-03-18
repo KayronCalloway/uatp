@@ -3,10 +3,10 @@ name: uatp-capsule-engine
 description: A Helm chart for UATP Capsule Engine
 
 # Chart version
-version: 0.1.0
+version: 1.0.1
 
 # Application version
-appVersion: "1.0.0"
+appVersion: "1.0.1"
 
 # Chart type
 type: application

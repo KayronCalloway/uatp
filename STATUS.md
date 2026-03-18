@@ -15,7 +15,7 @@ The "Shipped" items below refer to the **core protocol only**. The platform modu
 | Component | Status | Notes |
 |-----------|--------|-------|
 | Ed25519 Signatures | **Working** | FIPS 186-5 algorithm, implementation not FIPS-certified |
-| Python SDK | **Working** | `pip install uatp` (v0.3.0) |
+| Python SDK | **Working** | `pip install uatp` (v1.0.1) |
 | Local Key Management | **Working** | UserKeyManager, LocalSigner |
 | Capsule Verification | **Working** | Standalone, no server needed |
 | DSSE Bundle Export | **Working** | Sigstore-compatible |
@@ -83,8 +83,8 @@ We welcome security review. See [SECURITY.md](SECURITY.md) for responsible discl
 
 | Artifact | Version | Notes |
 |----------|---------|-------|
-| **SDK (PyPI)** | 0.3.0 | `pip install uatp` |
-| **Backend** | 0.3.0 | pyproject.toml |
+| **SDK (PyPI)** | 1.0.1 | `pip install uatp` |
+| **Backend** | 1.0.1 | pyproject.toml |
 | **Capsule Schema** | 7.2 | Internal capsule format |
 
 - **Last Updated**: 2026-03-15
