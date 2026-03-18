@@ -8,7 +8,7 @@ including token generation, validation, and user management.
 """
 
 import asyncio
-import hashlib
+import hmac
 import logging
 import os
 import secrets
@@ -16,6 +16,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
+import bcrypt
 import jwt
 
 from src.utils.timezone_utils import utc_now
@@ -80,18 +81,42 @@ class JWTAuthenticator:
         logger.info(f"   Refresh expiration: {JWT_REFRESH_EXPIRATION_DAYS} days")
 
     def hash_password(self, password: str) -> str:
-        """Hash a password using SHA-256 with salt."""
-        salt = secrets.token_hex(16)
-        password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
-        return f"{salt}:{password_hash}"
+        """Hash a password using bcrypt.
+
+        SECURITY: bcrypt is designed to be slow and resistant to GPU/ASIC attacks.
+        Work factor of 12 provides ~300ms hash time on modern hardware.
+        """
+        salt = bcrypt.gensalt(rounds=12)
+        return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
     def verify_password(self, password: str, password_hash: str) -> bool:
-        """Verify a password against its hash."""
+        """Verify a password against its bcrypt hash.
+
+        SECURITY: Uses constant-time comparison internally via bcrypt.checkpw.
+        Also supports legacy SHA-256 hashes for migration.
+        """
         try:
-            salt, stored_hash = password_hash.split(":")
-            computed_hash = hashlib.sha256((password + salt).encode()).hexdigest()
-            return computed_hash == stored_hash
-        except ValueError:
+            # Check for legacy SHA-256 format (salt:hash)
+            if ":" in password_hash and not password_hash.startswith("$2"):
+                # SECURITY WARNING: Legacy SHA-256 hash detected
+                # This is maintained only for backwards compatibility during migration
+                import hashlib
+
+                logger.warning(
+                    "SECURITY: Legacy SHA-256 password hash detected. "
+                    "User should change password to upgrade to bcrypt."
+                )
+                salt, stored_hash = password_hash.split(":")
+                computed_hash = hashlib.sha256((password + salt).encode()).hexdigest()
+                # Use constant-time comparison
+                return hmac.compare_digest(computed_hash, stored_hash)
+
+            # Modern bcrypt verification
+            return bcrypt.checkpw(
+                password.encode("utf-8"), password_hash.encode("utf-8")
+            )
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Password verification error: {e}")
             return False
 
     def create_user(

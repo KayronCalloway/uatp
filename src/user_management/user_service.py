@@ -5,6 +5,7 @@ Complete user onboarding and management system for UATP
 
 import asyncio
 import hashlib
+import hmac
 import logging
 import re
 import secrets
@@ -12,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+import bcrypt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -110,23 +112,61 @@ class UserService:
         }
 
     def hash_password(self, password: str) -> str:
-        """Hash password with salt"""
-        salt = secrets.token_hex(16)
-        password_hash = hashlib.pbkdf2_hmac(
-            "sha256", password.encode("utf-8"), salt.encode("utf-8"), 480_000
-        )
-        return f"{salt}:{password_hash.hex()}"
+        """Hash password using bcrypt.
+
+        SECURITY: bcrypt is designed to be slow and resistant to GPU/ASIC attacks.
+        Work factor of 12 provides ~300ms hash time on modern hardware.
+        """
+        salt = bcrypt.gensalt(rounds=12)
+        return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
     def verify_password(self, password: str, stored_hash: str) -> bool:
-        """Verify password against stored hash"""
+        """Verify password against stored hash (bcrypt or legacy PBKDF2).
+
+        SECURITY: Supports both bcrypt and legacy PBKDF2 hashes for migration.
+        Legacy hashes use constant-time comparison.
+        """
         try:
-            salt, hash_hex = stored_hash.split(":")
-            password_hash = hashlib.pbkdf2_hmac(
-                "sha256", password.encode("utf-8"), salt.encode("utf-8"), 480_000
-            )
-            return hash_hex == password_hash.hex()
-        except Exception:
+            # Check for legacy PBKDF2 format (salt:hash)
+            if ":" in stored_hash and not stored_hash.startswith("$2"):
+                # SECURITY WARNING: Legacy PBKDF2 hash detected
+                logger.warning(
+                    "SECURITY: Legacy PBKDF2 password hash detected. "
+                    "User should change password to upgrade to bcrypt."
+                )
+                salt, hash_hex = stored_hash.split(":")
+                password_hash = hashlib.pbkdf2_hmac(
+                    "sha256", password.encode("utf-8"), salt.encode("utf-8"), 480_000
+                )
+                # Use constant-time comparison
+                return hmac.compare_digest(hash_hex, password_hash.hex())
+
+            # Modern bcrypt verification
+            return bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8"))
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Password verification error: {e}")
             return False
+
+    def needs_password_rehash(self, stored_hash: str) -> bool:
+        """Check if password hash needs to be upgraded.
+
+        Returns True for legacy PBKDF2 hashes or bcrypt with insufficient rounds.
+        """
+        # Legacy PBKDF2 format needs upgrade
+        if ":" in stored_hash and not stored_hash.startswith("$2"):
+            return True
+
+        # Check bcrypt rounds
+        try:
+            if stored_hash.startswith("$2"):
+                parts = stored_hash.split("$")
+                if len(parts) >= 3:
+                    current_rounds = int(parts[2])
+                    return current_rounds < 12
+        except (ValueError, IndexError):
+            pass
+
+        return False
 
     async def register_user(
         self, email: str, username: str, password: str, full_name: str, **kwargs
