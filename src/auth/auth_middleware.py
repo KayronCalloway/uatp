@@ -266,17 +266,106 @@ async def authentication_middleware(request: Request, call_next):
 
 # Security headers middleware
 async def security_headers_middleware(request: Request, call_next):
-    """Add security headers to responses"""
+    """
+    Add security headers to all responses.
+
+    SECURITY: These headers protect against common web vulnerabilities:
+    - X-Content-Type-Options: Prevents MIME type sniffing
+    - X-Frame-Options: Prevents clickjacking
+    - Strict-Transport-Security: Forces HTTPS (HSTS)
+    - Content-Security-Policy: Prevents XSS and data injection
+    - Referrer-Policy: Controls referrer information
+    - Permissions-Policy: Disables unused browser features
+    - Cache-Control: Prevents caching of sensitive data
+    - X-Permitted-Cross-Domain-Policies: Restricts Adobe Flash/PDF cross-domain access
+    """
+    import os
+
     response = await call_next(request)
 
-    # Add security headers (X-XSS-Protection removed - deprecated by modern browsers)
+    # Determine if we're in production for stricter CSP
+    env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development"))
+    is_production = env in ("production", "prod", "staging")
+
+    # X-Content-Type-Options: Prevent MIME type sniffing
     response.headers["X-Content-Type-Options"] = "nosniff"
+
+    # X-Frame-Options: Prevent clickjacking
+    # DENY = no framing allowed, SAMEORIGIN = only same origin can frame
     response.headers["X-Frame-Options"] = "DENY"
-    response.headers["Strict-Transport-Security"] = (
-        "max-age=31536000; includeSubDomains"
-    )
+
+    # Strict-Transport-Security: Force HTTPS for 1 year
+    # includeSubDomains ensures all subdomains use HTTPS
+    # preload allows inclusion in browser HSTS preload lists
+    if is_production:
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains; preload"
+        )
+    else:
+        # Shorter max-age for development (1 hour)
+        response.headers["Strict-Transport-Security"] = "max-age=3600"
+
+    # Content-Security-Policy: Prevent XSS and data injection attacks
+    # SECURITY: This is the most important header for XSS protection
+    if is_production:
+        # Strict CSP for production
+        csp_directives = [
+            "default-src 'self'",  # Default: only same origin
+            "script-src 'self'",  # Scripts: only same origin (no inline/eval)
+            "style-src 'self' 'unsafe-inline'",  # Styles: allow inline for frameworks
+            "img-src 'self' data: https:",  # Images: self, data URIs, and HTTPS
+            "font-src 'self'",  # Fonts: only same origin
+            "connect-src 'self'",  # XHR/WebSocket: only same origin
+            "frame-ancestors 'none'",  # Prevent framing (stronger than X-Frame-Options)
+            "base-uri 'self'",  # Prevent base tag hijacking
+            "form-action 'self'",  # Form submissions: only same origin
+            "object-src 'none'",  # No plugins (Flash, Java, etc.)
+            "upgrade-insecure-requests",  # Upgrade HTTP to HTTPS automatically
+        ]
+    else:
+        # Relaxed CSP for development (allows inline scripts for hot reload)
+        csp_directives = [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",  # Dev tools need eval
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: https: http:",
+            "font-src 'self' data:",
+            "connect-src 'self' ws: wss: http: https:",  # WebSocket for hot reload
+            "frame-ancestors 'self'",
+            "base-uri 'self'",
+            "form-action 'self'",
+        ]
+
+    response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
+
+    # Referrer-Policy: Control referrer header
+    # strict-origin-when-cross-origin: Full URL for same-origin, origin only for cross-origin
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+
+    # Permissions-Policy: Disable unused browser features
+    # This reduces attack surface by disabling APIs the app doesn't need
+    response.headers["Permissions-Policy"] = (
+        "geolocation=(), "
+        "microphone=(), "
+        "camera=(), "
+        "payment=(), "
+        "usb=(), "
+        "magnetometer=(), "
+        "gyroscope=(), "
+        "accelerometer=()"
+    )
+
+    # Cache-Control: Prevent caching of sensitive API responses
+    # Only apply to API endpoints, not static assets
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = (
+            "no-store, no-cache, must-revalidate, private"
+        )
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+
+    # X-Permitted-Cross-Domain-Policies: Restrict Adobe cross-domain access
+    response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
 
     return response
 
