@@ -14,7 +14,7 @@
 
 ## Core Principle
 
-**UATP operates on a zero-knowledge, user-sovereign architecture.**
+**UATP operates on a zero-trust, user-sovereign architecture.**
 
 The system is designed so that even if UATP (the company/operator) wanted to act maliciously, the cryptography prevents it.
 
@@ -232,7 +232,7 @@ This architecture supports:
 | GDPR Right to Erasure | Content is local; user can delete |
 | GDPR Data Minimization | UATP only sees hashes, not content |
 | EU AI Act Transparency | Full audit trail of AI decisions |
-| Evidentiary Integrity | RFC 3161 timestamps, Ed25519 signatures (FIPS 186-5 compliant) |
+| Evidentiary Integrity | RFC 3161 timestamps, Ed25519 signatures (FIPS 186-5 algorithm) |
 | SOC 2 | Separation of concerns, audit logging |
 
 ---

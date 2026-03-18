@@ -31,6 +31,7 @@ from ..core.database import db
 from ..models.capsule import CapsuleModel
 from ..services.capsule_lifecycle_service import capsule_lifecycle_service
 from ..services.capsule_search_service import get_search_service
+from ..services.workflow_chain_service import is_placeholder_signature
 from ..utils.timezone_utils import utc_now
 from ..utils.uatp_envelope import is_envelope_format, wrap_in_uatp_envelope
 
@@ -668,6 +669,14 @@ async def store_presigned_capsule(
                 status_code=400,
                 detail="Pre-signed capsule must include verification.signature. "
                 "Use the SDK's certify() method with local signing.",
+            )
+
+        # SECURITY: Reject placeholder signatures
+        if is_placeholder_signature(verification.get("signature")):
+            raise HTTPException(
+                status_code=400,
+                detail="Placeholder signatures are not allowed. "
+                "Use the SDK's certify() method for cryptographic signing.",
             )
 
         if not verification.get("verify_key"):
@@ -1622,6 +1631,8 @@ async def create_capsule_from_conversation(
         capsule_id = f"caps_{utc_now().strftime('%Y_%m_%d')}_{uuid.uuid4().hex[:16]}"
 
         # Create capsule from conversation
+        # NOTE: This is an internal/system endpoint - capsules are NOT cryptographically signed.
+        # For cryptographically signed capsules, use the SDK's certify() method.
         capsule_data = {
             "capsule_id": capsule_id,
             "capsule_type": "conversation_capture",
@@ -1634,8 +1645,9 @@ async def create_capsule_from_conversation(
                 "captured_at": utc_now().isoformat(),
             },
             "verification": {
-                "signature": f"ed25519:{'0' * 128}",
-                "merkle_root": f"sha256:{'0' * 64}",
+                "signer": "system",  # Indicates NOT user-signed
+                "signature": None,  # No cryptographic signature
+                "note": "System-generated capsule without cryptographic signature. Use SDK certify() for signed capsules.",
             },
         }
 
@@ -1722,6 +1734,22 @@ async def create_generic_capsule(
         )
         capsule_type = capsule_data.get("capsule_type", "generic")
 
+        # Get verification data - if not provided, mark as system-generated (not signed)
+        # NOTE: For cryptographically signed capsules, use the SDK's certify() method.
+        verification = capsule_data.get("verification")
+        if not verification:
+            verification = {
+                "signer": "system",  # Indicates NOT user-signed
+                "signature": None,  # No cryptographic signature
+                "note": "System-generated capsule without cryptographic signature. Use SDK certify() for signed capsules.",
+            }
+        elif is_placeholder_signature(verification.get("signature")):
+            # Reject placeholder signatures - they give false appearance of signing
+            raise HTTPException(
+                status_code=400,
+                detail="Placeholder signatures are not allowed. Use SDK certify() for cryptographic signing, or omit verification for system-generated capsules.",
+            )
+
         # Create database record
         capsule = CapsuleModel(
             capsule_id=capsule_id,
@@ -1729,13 +1757,7 @@ async def create_generic_capsule(
             status=capsule_data.get("status", "sealed"),
             version=capsule_data.get("version", "7.1"),
             payload=capsule_data.get("payload", {}),
-            verification=capsule_data.get(
-                "verification",
-                {
-                    "signature": f"ed25519:{'0' * 128}",
-                    "merkle_root": f"sha256:{'0' * 64}",
-                },
-            ),
+            verification=verification,
             timestamp=utc_now(),
         )
 

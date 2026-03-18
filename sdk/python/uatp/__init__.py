@@ -2,7 +2,7 @@
 UATP Python SDK - Cryptographically verifiable AI decisions
 """
 
-from .client import UATP, CapsuleProof, CertificationResult
+from .client import UATP, CapsuleProof
 from .crypto import (
     LocalSigner,
     SignedCapsule,
@@ -26,7 +26,6 @@ from .models import (
 __version__ = "0.3.0"
 __all__ = [
     "UATP",
-    "CertificationResult",
     "CapsuleProof",
     # Zero-trust local signing
     "LocalSigner",

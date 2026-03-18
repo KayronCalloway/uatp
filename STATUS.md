@@ -14,7 +14,7 @@ The "Shipped" items below refer to the **core protocol only**. The platform modu
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Ed25519 Signatures | **Working** | FIPS 186-5 compliant, not externally audited |
+| Ed25519 Signatures | **Working** | FIPS 186-5 algorithm, implementation not FIPS-certified |
 | Python SDK | **Working** | `pip install uatp` (v0.3.0) |
 | Local Key Management | **Working** | UserKeyManager, LocalSigner |
 | Capsule Verification | **Working** | Standalone, no server needed |
@@ -34,7 +34,7 @@ The "Shipped" items below refer to the **core protocol only**. The platform modu
 | Component | Status | Notes |
 |-----------|--------|-------|
 | RFC 3161 Timestamps | **Beta** | DigiCert TSA integration working, requires config |
-| ML-DSA-65 (Post-Quantum) | **Beta** | FIPS 204 compliant, not externally audited |
+| ML-DSA-65 (Post-Quantum) | **Beta** | FIPS 204 algorithm, implementation not audited |
 | Capsule Chaining | **Beta** | Cryptographic linking works, prev_hash/content_hash |
 | Workflow Attestation | **Beta** | in-toto style chain-of-custody |
 | PostgreSQL Storage | **Beta** | Works, needs production hardening |
@@ -75,7 +75,7 @@ The following have not been reviewed by external security firms:
 
 - Cryptographic implementation (internal review only)
 - Key derivation parameters (follows OWASP guidelines)
-- Post-quantum signatures (FIPS 204 compliant, not audited)
+- Post-quantum signatures (FIPS 204 algorithm, not audited)
 
 We welcome security review. See [SECURITY.md](SECURITY.md) for responsible disclosure.
 

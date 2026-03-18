@@ -60,19 +60,6 @@ def _derive_device_passphrase() -> str:
 
 
 @dataclass
-class CertificationResult:
-    """Result of certifying an AI decision."""
-
-    capsule_id: str
-    proof_url: str
-    timestamp: datetime
-    success: bool
-
-    def __repr__(self) -> str:
-        return f"CertificationResult(capsule_id='{self.capsule_id}', proof_url='{self.proof_url}')"
-
-
-@dataclass
 class CapsuleProof:
     """Full cryptographic proof of an AI decision."""
 
@@ -124,8 +111,10 @@ class UATP:
         ...     ]
         ... )
         >>>
-        >>> print(result.proof_url)
-        'http://localhost:8000/capsules/abc123'
+        >>> print(result.capsule_id)
+        'cap_abc123'
+        >>> print(result.signature[:32])
+        'a1b2c3d4...'
     """
 
     def __init__(
@@ -153,9 +142,13 @@ class UATP:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.session = requests.Session()
-        self.session.headers.update(
-            {"Content-Type": "application/json", "User-Agent": "uatp-python-sdk/0.3.0"}
-        )
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "uatp-python-sdk/0.3.0",
+        }
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        self.session.headers.update(headers)
 
     def certify(
         self,
@@ -252,8 +245,10 @@ class UATP:
             confidence = sum(confidences) / len(confidences) if confidences else 0.5
 
         # Create content for signing
+        # IMPORTANT: Include all fields BEFORE signing - type must be part of signed content
         timestamp = datetime.now(timezone.utc)
         content = {
+            "type": "reasoning_trace",  # Include type in signed content
             "task": task,
             "decision": decision,
             "reasoning_chain": reasoning,
@@ -311,9 +306,9 @@ class UATP:
         if store_on_server:
             try:
                 # Convert to verifiable format and store
+                # IMPORTANT: Do NOT modify capsule_data after signing - content is already
+                # included in the signed data via signer.to_verifiable_dict()
                 capsule_data = signer.to_verifiable_dict(signed)
-                capsule_data["type"] = "reasoning_trace"
-                capsule_data["payload"] = content
 
                 response = self.session.post(
                     f"{self.base_url}/capsules/store",

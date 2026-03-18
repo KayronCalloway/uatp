@@ -60,6 +60,18 @@ Your private key was just generated locally and never transmitted anywhere.
 
 ---
 
+## Packages
+
+| Package | Install | Purpose |
+|---------|---------|---------|
+| `uatp` | `pip install uatp` | Python SDK (recommended) |
+| `@coolwithakay/uatp` | `npm install @coolwithakay/uatp` | TypeScript SDK |
+| `uatp-engine` | `pip install -e .` (local) | Backend server (for operators) |
+
+**Most users should install the SDK.** The engine is only needed if you're running your own UATP server.
+
+---
+
 ## Three Ways to Run
 
 | Goal | Command | What You Get |
