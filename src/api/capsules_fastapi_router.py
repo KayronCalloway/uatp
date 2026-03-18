@@ -62,6 +62,7 @@ async def search_capsules(
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(10, ge=1, le=100, description="Results per page"),
     type: Optional[str] = Query(None, description="Filter by capsule type"),
+    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
     """
@@ -69,15 +70,17 @@ async def search_capsules(
 
     Uses FTS5 for SQLite and ts_vector for PostgreSQL.
     Returns results with snippets and relevance scores.
-    """
-    # Optional auth - search is public but we can filter by owner if authenticated
-    current_user = get_current_user_optional(request)
-    user_is_admin = is_admin_user(current_user) if current_user else False
-    user_id = current_user.get("user_id") if current_user else None
 
-    # Non-admin authenticated users only see their own capsules
+    SECURITY: Authentication required. Non-admin users only see their own capsules.
+    """
+    # SECURITY FIX: Authentication now required (was optional, allowing data enumeration)
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
+
+    # Non-admin users only see their own capsules
+    # Admins see all capsules
     owner_filter = None
-    if current_user and not user_is_admin and user_id:
+    if not user_is_admin and user_id:
         owner_filter = user_id
 
     try:
@@ -110,6 +113,7 @@ async def get_verified_context(
     min_confidence: Optional[float] = Query(
         None, ge=0.0, le=1.0, description="Minimum confidence score"
     ),
+    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
     """
@@ -127,8 +131,17 @@ async def get_verified_context(
 
     This endpoint enables LLMs to use only cryptographically verified context,
     ensuring trustworthy retrieval-augmented generation.
+
+    SECURITY: Authentication required. Non-admin users only see their own capsules.
     """
     from src.services.verified_context_service import get_verified_context_service
+
+    # SECURITY FIX: Authentication now required (was optional)
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
+
+    # Build owner filter for non-admin users
+    owner_filter = None if user_is_admin else user_id
 
     try:
         service = get_verified_context_service()
@@ -140,6 +153,7 @@ async def get_verified_context(
             verified_only=verified_only,
             capsule_type=type,
             min_confidence=min_confidence,
+            owner_id=owner_filter,
         )
         return results.to_dict()
 
@@ -158,16 +172,17 @@ async def get_capsule_stats(
     include_test: bool = Query(
         False, description="Include test data in results (default: exclude)"
     ),
+    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
-    """Get comprehensive capsule statistics from database (public: aggregate stats, auth: user-specific)"""
-    try:
-        # Optional auth - works for both authenticated and unauthenticated users
-        current_user = get_current_user_optional(request)
+    """Get comprehensive capsule statistics.
 
-        # Determine if user is admin (unauthenticated users are not admins)
-        user_is_admin = is_admin_user(current_user) if current_user else False
-        user_id = current_user.get("user_id") if current_user else None
+    SECURITY: Authentication required. Non-admin users only see their own capsule stats.
+    """
+    try:
+        # SECURITY FIX: Authentication now required (was optional)
+        user_is_admin = is_admin_user(current_user)
+        user_id = current_user.get("user_id")
 
         # Build base query with demo filtering
         base_query = select(CapsuleModel)
@@ -179,9 +194,9 @@ async def get_capsule_stats(
         if not demo_mode:
             count_query = count_query.where(~CapsuleModel.capsule_id.like("demo-%"))
 
-        # Non-admin authenticated users only see their own capsules
-        # Unauthenticated users and admins see aggregate stats for all capsules
-        if current_user and not user_is_admin and user_id:
+        # SECURITY: Non-admin users only see their own capsule stats
+        # Admins see aggregate stats for all capsules
+        if not user_is_admin and user_id:
             count_query = count_query.where(CapsuleModel.owner_id == user_id)
 
         # Apply test data filtering (skip on SQLite - JSONB syntax not supported)
@@ -204,8 +219,8 @@ async def get_capsule_stats(
         ).group_by(CapsuleModel.capsule_type)
         if not demo_mode:
             type_query = type_query.where(~CapsuleModel.capsule_id.like("demo-%"))
-        # Non-admin authenticated users only see their own capsules
-        if current_user and not user_is_admin and user_id:
+        # SECURITY: Non-admin users only see their own capsule stats
+        if not user_is_admin and user_id:
             type_query = type_query.where(CapsuleModel.owner_id == user_id)
 
         # Apply test data filtering to type query (skip on SQLite - JSONB syntax not supported)
@@ -249,8 +264,8 @@ async def get_capsule_stats(
         )
         if not demo_mode:
             recent_query = recent_query.where(~CapsuleModel.capsule_id.like("demo-%"))
-        # Non-admin authenticated users only see their own capsules
-        if current_user and not user_is_admin and user_id:
+        # SECURITY: Non-admin users only see their own capsule stats
+        if not user_is_admin and user_id:
             recent_query = recent_query.where(CapsuleModel.owner_id == user_id)
 
         # Apply test data filtering to recent activity (skip on SQLite - JSONB syntax not supported)
@@ -310,14 +325,17 @@ async def list_capsules(
         description="Include demo capsules (default: exclude demo capsules with 'demo-' prefix)",
     ),
     session: AsyncSession = Depends(get_db_session),
+    current_user: Dict = Depends(get_current_user),
 ):
-    """List capsules with pagination and filtering (public: all capsules, auth: user-specific)"""
+    """List capsules with pagination and filtering.
+
+    SECURITY: Authentication required. Non-admin users only see their own capsules.
+    """
     correlation_id = get_correlation_id()
 
-    # Optional auth - works for both authenticated and unauthenticated users
-    current_user = get_current_user_optional(request)
-    user_is_admin = is_admin_user(current_user) if current_user else False
-    user_id = current_user.get("user_id") if current_user else None
+    # SECURITY FIX: Authentication now required (was optional)
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
 
     logger.info(
         f"[{correlation_id}] GET /capsules - page={page}, per_page={per_page}, "
@@ -329,9 +347,9 @@ async def list_capsules(
         # Build query
         query = select(CapsuleModel)
 
-        # Non-admin authenticated users only see their own capsules
-        # Unauthenticated users and admins see all capsules
-        if current_user and not user_is_admin and user_id:
+        # SECURITY: Non-admin users only see their own capsules (excludes legacy/NULL owner)
+        # Admins see all capsules
+        if not user_is_admin and user_id:
             query = query.where(CapsuleModel.owner_id == user_id)
 
         # Apply type filter
@@ -371,8 +389,8 @@ async def list_capsules(
         # Get total count
         count_query = select(func.count(CapsuleModel.id))
 
-        # Non-admin authenticated users only see their own capsules
-        if current_user and not user_is_admin and user_id:
+        # SECURITY: Non-admin users only see their own capsules
+        if not user_is_admin and user_id:
             count_query = count_query.where(CapsuleModel.owner_id == user_id)
 
         if type:
@@ -526,13 +544,24 @@ async def get_capsule(
         if not capsule:
             raise HTTPException(status_code=404, detail="Capsule not found")
 
-        # Verify ownership:
-        # - Unauthenticated users can access legacy capsules (owner_id=NULL)
+        # SECURITY FIX: Strict ownership verification
+        # - Legacy capsules (owner_id=NULL) are admin-only (system/migration data)
         # - Authenticated non-admin users can only access their own capsules
         # - Admins can access all capsules
-        if current_user and not user_is_admin and user_id:
-            # Authenticated non-admin user
-            if capsule.owner_id is not None and str(capsule.owner_id) != user_id:
+        # - Unauthenticated users cannot access any capsules
+        if not current_user:
+            # Unauthenticated users cannot access individual capsules
+            raise HTTPException(status_code=401, detail="Authentication required")
+
+        if not user_is_admin:
+            # Non-admin users cannot access legacy capsules (owner_id=NULL)
+            if capsule.owner_id is None:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Access denied: legacy capsule (admin-only)",
+                )
+            # Non-admin users can only access their own capsules
+            if str(capsule.owner_id) != user_id:
                 raise HTTPException(status_code=403, detail="Access denied")
 
         # Fix timestamp format

@@ -294,6 +294,7 @@ class VerifiedContextService:
         verified_only: bool = False,
         capsule_type: Optional[str] = None,
         min_confidence: Optional[float] = None,
+        owner_id: Optional[str] = None,
     ) -> VerifiedContextResults:
         """
         Search capsules with verification status.
@@ -306,6 +307,7 @@ class VerifiedContextService:
             verified_only: If True, only return verified capsules
             capsule_type: Optional filter by type
             min_confidence: Optional minimum confidence threshold
+            owner_id: Optional filter by owner (SECURITY: required for non-admin users)
 
         Returns:
             VerifiedContextResults with verification status for each hit
@@ -318,6 +320,7 @@ class VerifiedContextService:
             page=1,  # We'll paginate after filtering
             per_page=per_page * search_multiplier * page,  # Get more to filter
             capsule_type=capsule_type,
+            owner_id=owner_id,
         )
 
         # Fetch full capsule data for verification
