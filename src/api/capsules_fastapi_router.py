@@ -44,6 +44,90 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/capsules", tags=["Capsules"])
 
 
+# ==============================================================================
+# SECURITY: Rate Limiter for Verification Endpoint
+# ==============================================================================
+class VerificationRateLimiter:
+    """
+    Per-IP rate limiter for the verification endpoint to prevent brute-force enumeration.
+
+    SECURITY: This limits verification requests to prevent attackers from:
+    - Enumerating valid capsule IDs
+    - DoS attacks on cryptographic verification (expensive operation)
+    - Automated scraping of capsule data
+
+    Limit: 10 requests per minute per IP address
+    """
+
+    def __init__(self, max_requests: int = 10, window_seconds: int = 60):
+        import time
+
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self.requests: Dict[str, list] = {}
+        self._last_cleanup = time.time()
+
+    def _get_client_ip(self, request: Request) -> str:
+        """Get client IP, considering proxy headers."""
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            return forwarded_for.split(",")[0].strip()
+        real_ip = request.headers.get("X-Real-IP")
+        if real_ip:
+            return real_ip
+        return request.client.host if request.client else "unknown"
+
+    def is_allowed(self, request: Request) -> tuple[bool, int]:
+        """
+        Check if request is allowed.
+
+        Returns:
+            (allowed: bool, retry_after: int) - retry_after is seconds until next allowed request
+        """
+        import time
+
+        now = time.time()
+        client_ip = self._get_client_ip(request)
+        key = f"verify:{client_ip}"
+
+        # Periodic cleanup (every 5 minutes)
+        if now - self._last_cleanup > 300:
+            self._cleanup_expired(now)
+            self._last_cleanup = now
+
+        # Initialize or clean expired requests for this key
+        cutoff = now - self.window_seconds
+        if key not in self.requests:
+            self.requests[key] = []
+        self.requests[key] = [t for t in self.requests[key] if t > cutoff]
+
+        # Check limit
+        if len(self.requests[key]) >= self.max_requests:
+            # Calculate retry_after (time until oldest request expires)
+            oldest = min(self.requests[key])
+            retry_after = int(oldest + self.window_seconds - now) + 1
+            return False, max(1, retry_after)
+
+        # Record this request
+        self.requests[key].append(now)
+        return True, 0
+
+    def _cleanup_expired(self, now: float):
+        """Remove expired entries from all keys."""
+        cutoff = now - self.window_seconds
+        expired_keys = []
+        for key in self.requests:
+            self.requests[key] = [t for t in self.requests[key] if t > cutoff]
+            if not self.requests[key]:
+                expired_keys.append(key)
+        for key in expired_keys:
+            del self.requests[key]
+
+
+# SECURITY: Singleton rate limiter for verification endpoint
+_verification_rate_limiter = VerificationRateLimiter(max_requests=10, window_seconds=60)
+
+
 def get_correlation_id() -> str:
     """Generate a unique correlation ID for request tracing"""
     return str(uuid.uuid4())[:8]
@@ -847,13 +931,29 @@ async def verify_capsule(
     session: AsyncSession = Depends(get_db_session),
 ):
     """
-    Verify a specific capsule's cryptographic integrity (public endpoint).
+    Verify a specific capsule's cryptographic integrity.
 
-    CRITICAL SECURITY FIX: Now performs actual cryptographic verification
+    SECURITY: Rate limited to 10 requests/minute per IP to prevent:
+    - Brute-force enumeration of capsule IDs
+    - DoS via expensive cryptographic verification
+    - Automated data scraping
+
+    CRITICAL SECURITY FIX: Performs actual cryptographic verification
     using CryptoSealer.verify_capsule() instead of trusting metadata flags.
-
-    Verification is public - anyone can verify a capsule's integrity.
     """
+    # SECURITY: Apply rate limiting to prevent enumeration attacks
+    allowed, retry_after = _verification_rate_limiter.is_allowed(request)
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "Rate limit exceeded",
+                "message": "Too many verification requests. Limit: 10 per minute.",
+                "retry_after": retry_after,
+            },
+            headers={"Retry-After": str(retry_after)},
+        )
+
     # Optional auth (verification is public but we log who verifies)
     current_user = get_current_user_optional(request)
     current_user.get("user_id") if current_user else None
@@ -1042,10 +1142,25 @@ async def verify_capsule_chain(
     """
     Verify the cryptographic hash chain integrity for a capsule.
 
+    SECURITY: Rate limited to prevent enumeration attacks.
+
     Walks backward through prev_hash links and verifies each content_hash matches.
     If any capsule's content_hash doesn't match its computed hash, the chain is broken.
     """
     import hashlib
+
+    # SECURITY: Apply rate limiting to prevent enumeration attacks
+    allowed, retry_after = _verification_rate_limiter.is_allowed(request)
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "Rate limit exceeded",
+                "message": "Too many verification requests. Limit: 10 per minute.",
+                "retry_after": retry_after,
+            },
+            headers={"Retry-After": str(retry_after)},
+        )
 
     try:
         # Start with the target capsule
