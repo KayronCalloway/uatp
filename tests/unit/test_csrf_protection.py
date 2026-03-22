@@ -190,18 +190,7 @@ class TestCSRFProtectionRequest:
         token = csrf.get_token_from_request(request)
         assert token == "token-from-header"
 
-    def test_get_token_from_query_params(self):
-        """Test extracting token from query params."""
-        csrf = CSRFProtection(secret_key="test-secret")
-
-        request = MagicMock()
-        request.headers.get.return_value = None
-        request.query_params.get.return_value = "token-from-query"
-        # Ensure form check doesn't match
-        delattr(request, "form")
-
-        token = csrf.get_token_from_request(request)
-        assert token == "token-from-query"
+    # Test for token from query params intentionally removed for security
 
 
 class TestDoubleSubmitCSRF:

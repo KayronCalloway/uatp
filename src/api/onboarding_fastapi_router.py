@@ -7,8 +7,10 @@ Provides endpoints for onboarding new users and platforms to the system.
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+
+from src.api.auth_middleware import get_current_user
 
 router = APIRouter(prefix="/onboarding/api", tags=["Onboarding"])
 
@@ -102,8 +104,15 @@ async def get_platforms():
 
 
 @router.get("/status/{user_id}")
-async def get_onboarding_status(user_id: str):
+async def get_onboarding_status(
+    user_id: str, current_user: dict = Depends(get_current_user)
+):
     """Get onboarding status for a specific user."""
+    if str(current_user.get("sub", current_user.get("user_id"))) != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to view this user's onboarding status",
+        )
     # Mock data for now - will be replaced with real user onboarding status
     # In production, this would query the database for user's onboarding progress
 
@@ -128,8 +137,14 @@ async def get_onboarding_status(user_id: str):
 
 
 @router.post("/start/{user_id}")
-async def start_onboarding(user_id: str):
+async def start_onboarding(
+    user_id: str, current_user: dict = Depends(get_current_user)
+):
     """Start the onboarding process for a user."""
+    if str(current_user.get("sub", current_user.get("user_id"))) != user_id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to start onboarding for this user"
+        )
     return {
         "success": True,
         "user_id": user_id,
@@ -141,8 +156,15 @@ async def start_onboarding(user_id: str):
 
 
 @router.post("/complete-step/{user_id}/{step}")
-async def complete_onboarding_step(user_id: str, step: str):
+async def complete_onboarding_step(
+    user_id: str, step: str, current_user: dict = Depends(get_current_user)
+):
     """Mark an onboarding step as completed."""
+    if str(current_user.get("sub", current_user.get("user_id"))) != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to modify this user's onboarding status",
+        )
     valid_steps = [
         "account_created",
         "email_verified",
@@ -167,8 +189,14 @@ async def complete_onboarding_step(user_id: str, step: str):
 
 
 @router.post("/connect-platform/{user_id}/{platform_id}")
-async def connect_platform(user_id: str, platform_id: str):
+async def connect_platform(
+    user_id: str, platform_id: str, current_user: dict = Depends(get_current_user)
+):
     """Connect a platform for a user."""
+    if str(current_user.get("sub", current_user.get("user_id"))) != user_id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to connect platforms for this user"
+        )
     valid_platforms = [
         "openai",
         "anthropic",

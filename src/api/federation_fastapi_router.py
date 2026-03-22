@@ -11,13 +11,16 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from src.api.auth_middleware import get_current_user
 from src.utils.timezone_utils import utc_now
 
 # Router configuration
-router = APIRouter(prefix="/federation", tags=["Federation"])
+router = APIRouter(
+    prefix="/federation", tags=["Federation"], dependencies=[Depends(get_current_user)]
+)
 
 
 # Pydantic models for request/response

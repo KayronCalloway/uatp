@@ -443,10 +443,23 @@ class RuntimeTrustEnforcer:
                     capsule_time = datetime.fromisoformat(
                         capsule_time.replace("Z", "+00:00")
                     )
-                except Exception:
-                    capsule_time = datetime.now(timezone.utc)
+                except Exception as e:
+                    violations.append(
+                        TrustViolation(
+                            violation_type=ViolationType.ANOMALOUS_BEHAVIOR,
+                            severity="HIGH",
+                            description=f"Malformed timestamp format detected: {e}",
+                            evidence={"provided_timestamp": capsule.timestamp},
+                            timestamp=datetime.now(timezone.utc),
+                            agent_id=agent_profile.agent_id,
+                            capsule_id=capsule.capsule_id,
+                        )
+                    )
+                    capsule_time = None
 
-            if capsule_time > datetime.now(timezone.utc) + timedelta(minutes=5):
+            if capsule_time and capsule_time > datetime.now(timezone.utc) + timedelta(
+                minutes=5
+            ):
                 violations.append(
                     TrustViolation(
                         violation_type=ViolationType.ANOMALOUS_BEHAVIOR,

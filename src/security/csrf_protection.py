@@ -152,11 +152,6 @@ class CSRFProtection:
             except Exception:
                 pass
 
-        # Check query parameters
-        token = request.query_params.get("csrf_token")
-        if token:
-            return token
-
         return None
 
     def require_csrf_token(self, request: Request, session_id: str = None):
@@ -211,8 +206,8 @@ async def csrf_middleware(request: Request, call_next):
         "/api/v1/webhooks/",  # Webhooks typically don't use CSRF
         "/api/v1/live/",  # Live capture API uses API key authentication
         "/live/",  # Live capture API uses API key authentication (actual path)
-        "/capsules",  # Capsule API uses API key authentication
-        "/chain",  # Chain sealing API uses API key authentication
+        "/capsules",  # Uses Bearer Auth (no cookies)
+        "/chain",  # Uses Bearer Auth (no cookies)
     ]
 
     # Check if path should be skipped

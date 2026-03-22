@@ -137,8 +137,8 @@ class UserKeyManager:
         signing_key = SigningKey.generate()
         verify_key = signing_key.verify_key
 
-        # Extract key bytes
-        private_key_bytes = signing_key.encode(encoder=RawEncoder)
+        # Extract key bytes into mutable bytearray
+        private_key_bytes = bytearray(signing_key.encode(encoder=RawEncoder))
         public_key_hex = verify_key.encode(encoder=HexEncoder).decode("utf-8")
 
         # Generate salt for key derivation
@@ -149,7 +149,7 @@ class UserKeyManager:
         fernet = Fernet(encryption_key)
 
         # Encrypt private key
-        encrypted_private_key = fernet.encrypt(private_key_bytes)
+        encrypted_private_key = fernet.encrypt(bytes(private_key_bytes))
 
         # Prepare metadata
         created_at = datetime.now(timezone.utc)
@@ -175,8 +175,8 @@ class UserKeyManager:
             json.dump(metadata, f, indent=2)
 
         # Securely clear private key from memory
-        # (Python doesn't guarantee this, but we try)
-        private_key_bytes = os.urandom(len(private_key_bytes))
+        for i in range(len(private_key_bytes)):
+            private_key_bytes[i] = 0
         del signing_key
 
         self._current_key_id = key_id
@@ -275,14 +275,14 @@ class UserKeyManager:
         fernet = Fernet(decryption_key)
 
         try:
-            # Decrypt private key
-            private_key_bytes = fernet.decrypt(encrypted_private_key)
+            # Decrypt private key into mutable bytearray
+            private_key_bytes = bytearray(fernet.decrypt(encrypted_private_key))
         except Exception as e:
             raise ValueError("Invalid passphrase") from e
 
         try:
             # Create signing key and sign
-            signing_key = SigningKey(private_key_bytes)
+            signing_key = SigningKey(bytes(private_key_bytes))
 
             # Sign the hash (as UTF-8 string, matching existing UATP convention)
             signature = signing_key.sign(data_hash.encode("utf-8")).signature
@@ -292,7 +292,8 @@ class UserKeyManager:
 
         finally:
             # Securely clear private key from memory
-            private_key_bytes = os.urandom(len(private_key_bytes))
+            for i in range(len(private_key_bytes)):
+                private_key_bytes[i] = 0
             del signing_key
 
     def verify(self, data_hash: str, signature_hex: str, public_key_hex: str) -> bool:
@@ -378,7 +379,7 @@ class UserKeyManager:
         fernet = Fernet(decryption_key)
 
         try:
-            private_key_bytes = fernet.decrypt(encrypted_private_key)
+            private_key_bytes = bytearray(fernet.decrypt(encrypted_private_key))
         except Exception as e:
             raise ValueError("Invalid passphrase") from e
 
@@ -409,7 +410,8 @@ class UserKeyManager:
             return json.dumps(backup_package).encode()
 
         finally:
-            private_key_bytes = os.urandom(len(private_key_bytes))
+            for i in range(len(private_key_bytes)):
+                private_key_bytes[i] = 0
 
     def import_backup(
         self, backup_bytes: bytes, backup_passphrase: str, new_passphrase: str
@@ -437,7 +439,7 @@ class UserKeyManager:
         except Exception as e:
             raise ValueError("Invalid backup passphrase") from e
 
-        private_key_bytes = bytes.fromhex(backup_data["private_key"])
+        private_key_bytes = bytearray.fromhex(backup_data["private_key"])
 
         try:
             # Store with new passphrase
@@ -446,7 +448,7 @@ class UserKeyManager:
             encryption_key = self._derive_encryption_key(new_passphrase, salt)
             fernet = Fernet(encryption_key)
 
-            encrypted_private_key = fernet.encrypt(private_key_bytes)
+            encrypted_private_key = fernet.encrypt(bytes(private_key_bytes))
 
             # Save
             key_file = self.key_dir / f"{key_id}.key"
@@ -479,7 +481,8 @@ class UserKeyManager:
             )
 
         finally:
-            private_key_bytes = os.urandom(len(private_key_bytes))
+            for i in range(len(private_key_bytes)):
+                private_key_bytes[i] = 0
 
     def list_keys(self) -> List[UserKeyPair]:
         """List all available key pairs (public info only)."""

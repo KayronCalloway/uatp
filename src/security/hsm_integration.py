@@ -602,7 +602,9 @@ class EnterpriseHSMManager:
             logger.error(f"HSM health check failed: {e}")
             return False
 
-    async def create_secure_session(self, user_id: str, purpose: str) -> str:
+    async def create_secure_session(
+        self, user_id: str, purpose: str, auth_token: str = None
+    ) -> str:
         """Create a new secure HSM session."""
         session_id = f"hsm_session_{secrets.token_hex(16)}"
 
@@ -612,6 +614,7 @@ class EnterpriseHSMManager:
             "purpose": purpose,
             "created_from": "uatp_system",
             "security_level": self.config.security_level.value,
+            "auth_token": auth_token,
         }
 
         # Authenticate session
@@ -637,19 +640,17 @@ class EnterpriseHSMManager:
     async def _authenticate_session(self, session: HSMSession) -> bool:
         """Authenticate HSM session."""
         try:
-            # Generate session authentication challenge
-            secrets.token_bytes(32)
+            # In a real HSM, we would generate a challenge and verify the hardware signature.
+            # Here we enforce that a valid cryptographic auth_token is provided.
+            auth_token = session.security_context.get("auth_token")
 
-            # Simulate authentication process
-            # In real implementation, this would involve:
-            # - Multi-factor authentication
-            # - Hardware token verification
-            # - Biometric authentication (if supported)
-            # - Role-based access control
+            if not auth_token or len(auth_token) < 32:
+                logger.error("HSM Authentication blocked: Missing or weak auth_token.")
+                return False
 
+            # Additional strict cryptographic verifications would go here (e.g. mTLS or JWT checks)
             await asyncio.sleep(0.05)  # Simulate authentication time
 
-            # For simulation, always authenticate successfully
             return True
 
         except Exception as e:
@@ -964,11 +965,11 @@ async def initialize_hsm_system(config: HSMConfiguration) -> bool:
 
 
 # Convenience functions
-async def create_hsm_session(user_id: str, purpose: str) -> str:
+async def create_hsm_session(user_id: str, purpose: str, auth_token: str = None) -> str:
     """Create a new HSM session."""
     if hsm_manager is None:
         raise RuntimeError("HSM system not initialized")
-    return await hsm_manager.create_secure_session(user_id, purpose)
+    return await hsm_manager.create_secure_session(user_id, purpose, auth_token)
 
 
 async def execute_hsm_operation(

@@ -122,11 +122,12 @@ class ConstantTimeOperations:
 
         # Create mask: all 1s if condition True, all 0s if False
         mask = 0xFF if condition else 0x00
+        inv_mask = 0x00 if condition else 0xFF
 
         result = bytearray(len(true_value))
         for i in range(len(true_value)):
             # Constant-time selection using bitwise operations
-            result[i] = (mask & true_value[i]) | ((~mask) & false_value[i])
+            result[i] = (mask & true_value[i]) | (inv_mask & false_value[i])
 
         return bytes(result)
 
@@ -300,11 +301,7 @@ class SecureMemoryManager:
             # Store encrypted data (simplified - would use proper offset handling)
             current_storage = bytearray(self.encrypted_storage[region_id])
 
-            # Pad encrypted data to prevent length leakage
-            max_encrypted_size = len(data) + 100  # Add padding
-            if len(encrypted_data) < max_encrypted_size:
-                padding = secrets.token_bytes(max_encrypted_size - len(encrypted_data))
-                encrypted_data += padding
+            # Removed appended padding that breaks Fernet payload decoding.
 
             # Update storage
             end_offset = min(offset + len(encrypted_data), len(current_storage))
@@ -353,9 +350,12 @@ class SecureMemoryManager:
             ]  # Include padding
 
             try:
-                # Attempt decryption
+                # Attempt decryption without truncating to the co_argcount of the method
+                # Use split to remove trailing random bytes cleanly if padded previously
                 decrypted_data = fernet.decrypt(
-                    encrypted_chunk[: fernet.decrypt_at_time.__code__.co_argcount]
+                    encrypted_chunk.split(b"\x00")[0]
+                    if b"\x00" in encrypted_chunk
+                    else encrypted_chunk
                 )
                 result = decrypted_data[:length]
             except Exception:
