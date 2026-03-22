@@ -33,6 +33,10 @@ paths = [
     '''frontend/src/components/platform/platform-dashboard\.tsx''',
     '''src/security/secrets_manager\.py''',
     '''src/config/secrets\.py''',
+    # Encrypted key files (contents are encrypted, not actual secrets)
+    '''\.uatp_keys/.*\.enc$''',
+    # HSM key label definitions (label names, not secrets)
+    '''src/security/hsm_key_provider\.py''',
 ]
 
 regexes = [
