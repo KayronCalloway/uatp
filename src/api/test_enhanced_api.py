@@ -56,7 +56,18 @@ class UATAPITester:
         """Decompress base64+zlib compressed data"""
         try:
             binary_data = base64.b64decode(compressed_data)
-            decompressed_data = zlib.decompress(binary_data)
+
+            # SECURITY: Bounded decompression
+            max_size = 10 * 1024 * 1024  # 10MB limit
+            decompressor = zlib.decompressobj()
+            decompressed_data = decompressor.decompress(
+                binary_data, max_length=max_size
+            )
+            if decompressor.unconsumed_tail:
+                raise ValueError(
+                    f"Decompressed payload exceeds maximum size of {max_size} bytes"
+                )
+
             return json.loads(decompressed_data.decode("utf-8"))
         except Exception as e:
             print(f"Error decompressing data: {e}")

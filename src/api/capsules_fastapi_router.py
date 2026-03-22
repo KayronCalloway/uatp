@@ -83,14 +83,20 @@ class VerificationRateLimiter:
         self._last_cleanup = time.time()
 
     def _get_client_ip(self, request: Request) -> str:
-        """Get client IP, considering proxy headers."""
-        forwarded_for = request.headers.get("X-Forwarded-For")
-        if forwarded_for:
-            return forwarded_for.split(",")[0].strip()
-        real_ip = request.headers.get("X-Real-IP")
-        if real_ip:
-            return real_ip
-        return request.client.host if request.client else "unknown"
+        """Get client IP securely."""
+        client_host = request.client.host if request.client else "unknown"
+
+        # SECURITY: Only trust X-Forwarded-For from known trusted proxies
+        trusted_proxies = {"127.0.0.1", "::1", "localhost"}
+        if client_host in trusted_proxies:
+            forwarded_for = request.headers.get("X-Forwarded-For")
+            if forwarded_for:
+                return forwarded_for.split(",")[0].strip()
+            real_ip = request.headers.get("X-Real-IP")
+            if real_ip:
+                return real_ip
+
+        return client_host
 
     def is_allowed(self, request: Request) -> tuple[bool, int]:
         """
@@ -697,9 +703,22 @@ async def get_capsule(
                 compressed_data = payload.get("compressed_payload")
                 if compressed_data:
                     import base64
+                    import zlib
 
                     compressed_bytes = base64.b64decode(compressed_data)
-                    decompressed_bytes = zlib.decompress(compressed_bytes)
+
+                    # SECURITY: Bounded decompression to prevent zip bombs (DoS)
+                    max_decompressed_size = 10 * 1024 * 1024  # 10MB limit
+                    decompressor = zlib.decompressobj()
+                    decompressed_bytes = decompressor.decompress(
+                        compressed_bytes, max_length=max_decompressed_size
+                    )
+
+                    if decompressor.unconsumed_tail:
+                        raise ValueError(
+                            f"Decompressed payload exceeds maximum size of {max_decompressed_size} bytes"
+                        )
+
                     payload = json.loads(decompressed_bytes.decode("utf-8"))
                     compression_info = {
                         "was_compressed": True,
@@ -764,6 +783,7 @@ async def get_capsule(
 async def store_presigned_capsule(
     capsule_data: Dict[str, Any],
     request: Request,
+    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
     """
@@ -785,9 +805,12 @@ async def store_presigned_capsule(
     """
     correlation_id = get_correlation_id()
 
-    # Optional auth (capsules can be stored anonymously for now)
-    current_user = get_current_user_optional(request)
-    user_id = current_user.get("user_id") if current_user else None
+    # SECURITY FIX: Authentication now required to store capsules
+    user_id = current_user.get("sub") or current_user.get("user_id")
+    try:
+        user_uuid = uuid.UUID(str(user_id))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
 
     try:
         # Validate that the capsule has a signature
@@ -839,7 +862,7 @@ async def store_presigned_capsule(
             payload=capsule_data.get("payload") or capsule_data.get("content", {}),
             verification=verification,
             timestamp=utc_now(),
-            owner_id=user_id,
+            owner_id=user_uuid,
             content_hash=verification.get("hash"),
         )
 
@@ -896,7 +919,11 @@ async def create_capsule(
     Returns:
         Success response with capsule_id
     """
-    user_id = current_user.get("user_id")
+    user_id = current_user.get("sub") or current_user.get("user_id")
+    try:
+        user_uuid = uuid.UUID(str(user_id))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
 
     # Log deprecation warning
     logger.warning(
@@ -919,7 +946,7 @@ async def create_capsule(
             session=session,
             parent_capsule_id=parent_capsule_id,
             chain_id=chain_id,
-            owner_id=user_id,
+            owner_id=user_uuid,
         )
 
         return {
@@ -1771,6 +1798,7 @@ async def admin_capsule_stats(
 async def create_capsule_from_conversation(
     request: Request,
     data: Dict[str, Any],
+    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
     """Create a capsule from a live conversation session.
@@ -1785,6 +1813,13 @@ async def create_capsule_from_conversation(
 
         if not session_id:
             raise HTTPException(status_code=400, detail="session_id is required")
+
+        # Extract user ID
+        user_id = current_user.get("sub") or current_user.get("user_id")
+        try:
+            user_uuid = uuid.UUID(str(user_id))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid user ID format")
 
         # Generate capsule ID
         capsule_id = f"caps_{utc_now().strftime('%Y_%m_%d')}_{uuid.uuid4().hex[:16]}"
@@ -1826,6 +1861,7 @@ async def create_capsule_from_conversation(
             payload=envelope,
             verification=capsule_data["verification"],
             timestamp=utc_now(),
+            owner_id=user_uuid,
         )
 
         session.add(capsule)
@@ -1877,6 +1913,7 @@ async def get_ethics_status():
 async def create_generic_capsule(
     request: Request,
     capsule_data: Dict[str, Any],
+    current_user: Dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ):
     """Create a generic capsule with custom payload.
@@ -1886,6 +1923,13 @@ async def create_generic_capsule(
     correlation_id = get_correlation_id()
 
     try:
+        # Extract user ID
+        user_id = current_user.get("sub") or current_user.get("user_id")
+        try:
+            user_uuid = uuid.UUID(str(user_id))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid user ID format")
+
         # Generate capsule ID if not provided
         capsule_id = capsule_data.get(
             "capsule_id",
@@ -1918,6 +1962,7 @@ async def create_generic_capsule(
             payload=capsule_data.get("payload", {}),
             verification=verification,
             timestamp=utc_now(),
+            owner_id=user_uuid,
         )
 
         session.add(capsule)

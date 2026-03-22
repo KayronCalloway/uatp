@@ -273,7 +273,8 @@ class JWTManager:
 
         now = datetime.now(timezone.utc)
         payload = {
-            "user_id": user_id,
+            "sub": str(user_id),
+            "user_id": str(user_id),  # keeping for backward compatibility
             "email": email,
             "username": username,
             "scopes": scopes,
@@ -289,7 +290,8 @@ class JWTManager:
         """Generate refresh token"""
         now = datetime.now(timezone.utc)
         payload = {
-            "user_id": user_id,
+            "sub": str(user_id),
+            "user_id": str(user_id),
             "exp": now + self.refresh_token_expire,
             "iat": now,
             "jti": secrets.token_urlsafe(32),
@@ -298,11 +300,11 @@ class JWTManager:
 
         return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
 
-    def generate_password_reset_token(self, user_id: str, email: str) -> str:
+    def generate_password_reset_token(self, email: str) -> str:
         """Generate password reset token"""
         now = datetime.now(timezone.utc)
         payload = {
-            "user_id": user_id,
+            "sub": email,
             "email": email,
             "exp": now + self.password_reset_expire,
             "iat": now,
@@ -327,7 +329,7 @@ class JWTManager:
                 return None
 
             # SECURITY: Check if all user tokens were revoked after this token was issued
-            user_id = payload.get("user_id")
+            user_id = payload.get("sub") or payload.get("user_id")
             iat = payload.get("iat")
             if user_id and iat:
                 # Convert iat to timestamp if it's a datetime
@@ -393,7 +395,7 @@ class JWTManager:
             # Decode without verification to get JTI and user_id
             payload = jwt.decode(token, options={"verify_signature": False})
             jti = payload.get("jti")
-            user_id = payload.get("user_id", "unknown")
+            user_id = payload.get("sub") or payload.get("user_id", "unknown")
             exp = payload.get("exp")
 
             if not jti:
@@ -443,19 +445,28 @@ jwt_manager = JWTManager()
 
 
 # Helper functions for FastAPI dependencies
-def create_access_token(user_data: Dict[str, Any]) -> str:
-    """Create access token for user"""
-    return jwt_manager.generate_access_token(
-        user_id=user_data["user_id"],
-        email=user_data["email"],
-        username=user_data["username"],
-        scopes=user_data.get("scopes", ["read", "write"]),
+def create_access_token(
+    user_id: str, email: str = "", username: str = "", scopes: list = None
+) -> tuple[str, int]:
+    """Create access token for user and return (token, expires_in)"""
+    token = jwt_manager.generate_access_token(
+        user_id=str(user_id),
+        email=email,
+        username=username,
+        scopes=scopes if scopes is not None else ["read", "write"],
     )
+    expires_in = int(jwt_manager.access_token_expire.total_seconds())
+    return token, expires_in
 
 
 def create_refresh_token(user_id: str) -> str:
     """Create refresh token for user"""
-    return jwt_manager.generate_refresh_token(user_id)
+    return jwt_manager.generate_refresh_token(str(user_id))
+
+
+def create_reset_token(email: str) -> str:
+    """Create password reset token"""
+    return jwt_manager.generate_password_reset_token(email)
 
 
 def verify_access_token(token: str) -> Optional[Dict[str, Any]]:

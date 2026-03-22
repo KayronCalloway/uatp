@@ -5,8 +5,15 @@ Provides common fixtures, test configuration, and utilities for
 comprehensive testing of the UATP Capsule Engine architecture.
 """
 
-import asyncio
 import os
+
+# SECURITY: Set test JWT secret BEFORE any imports that trigger jwt_manager
+# This ensures consistent token signing/verification across all tests
+os.environ.setdefault(
+    "JWT_SECRET", "test-jwt-secret-for-integration-tests-minimum-32-bytes"
+)
+
+import asyncio
 import tempfile
 from pathlib import Path
 from typing import Any

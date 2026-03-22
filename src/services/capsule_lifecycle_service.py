@@ -156,7 +156,11 @@ class CapsuleLifecycleService:
         owner_uuid = None
         if owner_id:
             try:
-                owner_uuid = uuid_module.UUID(owner_id)
+                # Handle both UUID objects and strings
+                if isinstance(owner_id, uuid_module.UUID):
+                    owner_uuid = owner_id
+                else:
+                    owner_uuid = uuid_module.UUID(str(owner_id))
             except (ValueError, TypeError):
                 logger.warning(f"Invalid owner_id format: {owner_id}")
                 owner_uuid = None

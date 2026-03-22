@@ -281,7 +281,18 @@ class UATCapsuleEngineClient:
 
             # Decompress the data
             compressed_data = base64.b64decode(capsule_data["data"])
-            decompressed_data = zlib.decompress(compressed_data)
+
+            # SECURITY: Bounded decompression
+            max_size = 10 * 1024 * 1024  # 10MB limit
+            decompressor = zlib.decompressobj()
+            decompressed_data = decompressor.decompress(
+                compressed_data, max_length=max_size
+            )
+            if decompressor.unconsumed_tail:
+                raise ValueError(
+                    f"Decompressed payload exceeds maximum size of {max_size} bytes"
+                )
+
             return json.loads(decompressed_data)
         return capsule_data
 

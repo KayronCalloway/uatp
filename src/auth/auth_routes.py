@@ -161,7 +161,9 @@ async def register_user(
         logger.info(f"New user registered: {new_user.email}")
 
         # Generate tokens
-        access_token, expires_in = create_access_token(user_id=str(new_user.id))
+        access_token, expires_in = create_access_token(
+            user_id=str(new_user.id), email=new_user.email, username=new_user.username
+        )
         refresh_token = create_refresh_token(user_id=str(new_user.id))
 
         return TokenResponse(
@@ -215,7 +217,9 @@ async def login_user(
         logger.info(f"User logged in: {user.email}")
 
         # Generate tokens
-        access_token, expires_in = create_access_token(user_id=str(user.id))
+        access_token, expires_in = create_access_token(
+            user_id=str(user.id), email=user.email, username=user.username
+        )
         refresh_token = create_refresh_token(user_id=str(user.id))
 
         return TokenResponse(
@@ -267,7 +271,9 @@ async def refresh_token(
             )
 
         # Generate new tokens
-        access_token, expires_in = create_access_token(user_id=str(user.id))
+        access_token, expires_in = create_access_token(
+            user_id=str(user.id), email=user.email, username=user.username
+        )
         new_refresh_token = create_refresh_token(user_id=str(user.id))
 
         return TokenResponse(
@@ -325,7 +331,7 @@ async def forgot_password(
             return {"message": "Password reset email sent if user exists"}
 
         # Generate password reset token
-        reset_token = jwt_manager.create_reset_token(user.email)
+        reset_token = jwt_manager.generate_password_reset_token(user.email)
 
         # Send email with reset link via configured email provider
         try:
@@ -388,7 +394,7 @@ async def reset_password(
     try:
         # Verify reset token
         payload = jwt_manager.verify_token(reset_data.token)
-        if payload["type"] != "reset":
+        if not payload or payload["type"] != "password_reset":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
             )

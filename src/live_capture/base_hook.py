@@ -132,7 +132,7 @@ class BaseHook(ABC):
             use_rich_capture: Enable rich metadata capture (default: True)
         """
         # Detect/validate platform
-        self.platform = self._detect_platform(platform)
+        self.platform, self.is_platform_hint = self._detect_platform(platform)
         self.user_id = user_id or self._detect_user()
         self.session_id = session_id or f"{self.platform}_session_{int(time.time())}"
         self.use_rich_capture = use_rich_capture
@@ -199,7 +199,7 @@ class BaseHook(ABC):
         logger.warning("Could not detect user, using 'unknown_user'")
         return "unknown_user"
 
-    def _detect_platform(self, provided_platform: str) -> str:
+    def _detect_platform(self, provided_platform: str) -> tuple[str, bool]:
         """
         Detect and validate platform identifier.
 
@@ -214,7 +214,7 @@ class BaseHook(ABC):
             provided_platform: Platform name provided to constructor
 
         Returns:
-            Validated platform name from VALID_PLATFORMS
+            Tuple of (Validated platform name from VALID_PLATFORMS, is_hint boolean)
         """
         # If provided platform is valid and not 'unknown', use it
         if (
@@ -223,7 +223,7 @@ class BaseHook(ABC):
             and provided_platform != "unknown"
         ):
             logger.debug(f"Using provided platform: {provided_platform}")
-            return provided_platform
+            return provided_platform, False
 
         # Check environment variables
         platform_env_vars = {
@@ -241,9 +241,9 @@ class BaseHook(ABC):
                 logger.debug(
                     f"Platform detected from env var {env_var}: {platform_name}"
                 )
-                return platform_name
+                return platform_name, False
 
-        # Check process name
+        # Check process name (This is a WEAK heuristic, so we flag it as a hint)
         try:
             import psutil
 
@@ -265,9 +265,9 @@ class BaseHook(ABC):
                 for process_keyword, platform_name in process_mappings.items():
                     if platform_name and process_keyword in parent_name:
                         logger.debug(
-                            f"Platform detected from process name: {platform_name}"
+                            f"Platform detected from process name hint: {platform_name}"
                         )
-                        return platform_name
+                        return platform_name, True
 
         except ImportError:
             logger.debug("psutil not available for process detection")
@@ -279,16 +279,16 @@ class BaseHook(ABC):
             detected = self.platform_name
             if detected in self.VALID_PLATFORMS:
                 logger.debug(f"Platform detected from class attribute: {detected}")
-                return detected
+                return detected, False
 
         # If provided platform was 'unknown', use 'legacy_unknown' for backfill tracking
         if provided_platform == "unknown":
             logger.debug("Marking unknown platform as 'legacy_unknown'")
-            return "legacy_unknown"
+            return "legacy_unknown", False
 
         # Final fallback: 'custom' (not 'unknown')
         logger.info("Could not detect platform, using 'custom'")
-        return "custom"
+        return "custom", False
 
     @abstractmethod
     def get_platform_specific_metadata(self, **kwargs) -> Dict[str, Any]:
@@ -368,10 +368,16 @@ class BaseHook(ABC):
             metadata = {
                 "interaction_type": interaction_type,
                 "model": model,
-                "platform": self.platform,
                 **platform_metadata,
                 **platform_kwargs,  # Include any additional kwargs
             }
+
+            # Use agent_hint for unverified platform provenance (e.g. process name heuristics)
+            if getattr(self, "is_platform_hint", False):
+                metadata["platform"] = "unknown"
+                metadata["agent_hint"] = self.platform
+            else:
+                metadata["platform"] = self.platform
 
             # Choose capture path based on rich_capture flag
             if self.use_rich_capture:

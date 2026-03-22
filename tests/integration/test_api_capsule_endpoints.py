@@ -10,6 +10,8 @@ Tests the main capsule API endpoints to ensure they work correctly:
 Run with: pytest tests/integration/test_api_capsule_endpoints.py -v
 """
 
+import importlib
+import os
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -18,16 +20,27 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
+# SECURITY: Set a fixed JWT secret for tests BEFORE importing jwt_manager
+# This ensures consistent token signing/verification across test fixtures and app
+TEST_JWT_SECRET = "test-jwt-secret-for-integration-tests-minimum-32-bytes"
+os.environ["JWT_SECRET"] = TEST_JWT_SECRET
+
 # Ensure src is in path
 sys.path.insert(0, ".")
 
-# Import JWT manager for test token generation
+# Force reload jwt_manager to pick up the JWT_SECRET we just set
+import src.auth.jwt_manager as jwt_manager_module
+
+importlib.reload(jwt_manager_module)
 from src.auth.jwt_manager import create_access_token
 
 
 @pytest_asyncio.fixture(scope="function")
 async def client():
     """Create async test client with proper database initialization."""
+    # Ensure JWT_SECRET is set before app creation
+    os.environ["JWT_SECRET"] = TEST_JWT_SECRET
+
     from src.app_factory import create_app
     from src.core.database import db
 
@@ -52,7 +65,12 @@ def auth_headers():
         "username": "testuser",
         "scopes": ["read", "write"],
     }
-    token = create_access_token(test_user)
+    token, _ = create_access_token(
+        user_id=test_user["user_id"],
+        email=test_user["email"],
+        username=test_user["username"],
+        scopes=test_user["scopes"],
+    )
     return {"Authorization": f"Bearer {token}"}
 
 

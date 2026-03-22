@@ -320,8 +320,7 @@ class SecurityManager:
         elif algorithm == "sha512":
             return hashlib.sha512(data.encode()).hexdigest()
         elif algorithm == "md5":
-            logger.warning("MD5 is deprecated and insecure")
-            return hashlib.md5(data.encode()).hexdigest()
+            raise ValueError("MD5 is insecure and no longer supported")
         else:
             raise ValueError(f"Unsupported hash algorithm: {algorithm}")
 

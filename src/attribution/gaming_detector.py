@@ -1065,7 +1065,7 @@ class AttributionGamingDetector:
             context.get("domain", "unknown"),
         ]
 
-        signature = hashlib.md5("|".join(signature_components).encode()).hexdigest()
+        signature = hashlib.sha256("|".join(signature_components).encode()).hexdigest()
 
         # Check against known gaming signatures
         return signature in self.known_gaming_signatures

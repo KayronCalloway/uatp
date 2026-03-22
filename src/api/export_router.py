@@ -21,6 +21,7 @@ Usage:
 
 import json
 import logging
+import uuid
 from datetime import datetime
 from io import StringIO
 from typing import Any, Dict, Optional
@@ -30,7 +31,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.auth_middleware import get_current_user, is_admin_user
+from ..auth.auth_middleware import get_current_user, is_admin_user, require_admin
 from ..core.database import db
 from ..models.capsule import CapsuleModel
 
@@ -225,6 +226,7 @@ async def export_training_data(
         False, description="Only include capsules with outcomes"
     ),
     session: AsyncSession = Depends(get_db_session),
+    admin_user: Dict = Depends(require_admin),
 ):
     """
     Export capsules as training data for LLM fine-tuning.
@@ -325,6 +327,7 @@ async def export_outcomes(
         None, description="Filter by outcome: success, failure, partial"
     ),
     session: AsyncSession = Depends(get_db_session),
+    admin_user: Dict = Depends(require_admin),
 ):
     """
     Export capsules with outcomes for calibration analysis.
@@ -401,6 +404,7 @@ async def export_outcomes(
 @router.get("/stats")
 async def export_stats(
     session: AsyncSession = Depends(get_db_session),
+    admin_user: Dict = Depends(require_admin),
 ):
     """
     Get statistics about exportable training data.
@@ -482,15 +486,20 @@ async def export_my_capsules(
     Privacy-first: users can only export their own capsules.
     Encrypted capsules will include the encrypted_payload field for client-side decryption.
     """
-    user_id = current_user.get("user_id")
+    user_id = current_user.get("sub") or current_user.get("user_id")
     if not user_id:
         raise HTTPException(status_code=401, detail="User ID not found in token")
+
+    try:
+        user_uuid = uuid.UUID(str(user_id))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
 
     try:
         # Query only user's capsules
         query = (
             select(CapsuleModel)
-            .where(CapsuleModel.owner_id == user_id)
+            .where(CapsuleModel.owner_id == user_uuid)
             .order_by(CapsuleModel.timestamp.desc())
         )
 
@@ -581,7 +590,7 @@ async def get_verification_bundle(
 
     Users can only get bundles for their own capsules.
     """
-    user_id = current_user.get("user_id")
+    user_id = current_user.get("sub") or current_user.get("user_id")
     user_is_admin = is_admin_user(current_user)
 
     try:
