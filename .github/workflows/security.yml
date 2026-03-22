@@ -52,7 +52,6 @@ jobs:
 
   gitleaks:
     runs-on: ubuntu-latest
-    continue-on-error: true  # Don't fail workflow on historical false positives
 
     steps:
     - uses: actions/checkout@v4

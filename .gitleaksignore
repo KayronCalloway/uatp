@@ -1,0 +1,120 @@
+# Gitleaks Baseline - Known Historical False Positives
+# =====================================================
+# These fingerprints are from deleted files in git history:
+# - Demo scripts with placeholder API keys (create_*_capsule.py)
+# - Backup files with test data (capsule_chain.jsonl.bak)
+# - K8s manifests with example secrets (k8s/secret.yaml)
+# - Hypothesis test cache (.hypothesis/)
+# - Build artifacts (uatp_capsule_engine.egg-info/)
+#
+# All files have been deleted from current tree.
+# Generated: 2026-03-22
+# Commits: 8093618, b35c7a0
+
+8093618cc9c1df5152418481971abfa5f087c931:capsule_chain.jsonl.backup.1764891453:generic-api-key:23
+8093618cc9c1df5152418481971abfa5f087c931:capsule_chain.jsonl.backup.1764891453:generic-api-key:46
+8093618cc9c1df5152418481971abfa5f087c931:capsule_chain.jsonl.backup.1764891453:generic-api-key:47
+8093618cc9c1df5152418481971abfa5f087c931:capsule_chain.jsonl.backup.1764891453:generic-api-key:48
+8093618cc9c1df5152418481971abfa5f087c931:capsule_chain.jsonl.backup.1764891453:generic-api-key:49
+8093618cc9c1df5152418481971abfa5f087c931:capsule_chain.jsonl.backup.1764891453:generic-api-key:50
+b35c7a0775c08a633824dccf77d0647c3810b2e7:.hypothesis/constants/510b69eb2e92985a:generic-api-key:4
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl:generic-api-key:23
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl:generic-api-key:46
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl:generic-api-key:47
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl:generic-api-key:48
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl:generic-api-key:49
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl:generic-api-key:50
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.backup.1752626923:generic-api-key:23
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.backup.1752710663:generic-api-key:23
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.backup.1753641518:generic-api-key:23
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.backup.1763502878:generic-api-key:23
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.backup.1763502878:generic-api-key:46
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.backup.1763502878:generic-api-key:47
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.backup.1763502878:generic-api-key:48
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.backup.1763502878:generic-api-key:49
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.backup.1763502878:generic-api-key:50
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:10
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:11
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:12
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:13
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:14
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:15
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:16
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:17
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:18
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:19
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:20
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:21
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:22
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:23
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:24
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:25
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:26
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:27
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:28
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:29
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:30
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:31
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:32
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:33
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:34
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:35
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:36
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:37
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:38
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:39
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:40
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:41
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:42
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:43
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:44
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:45
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:46
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:47
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:48
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:49
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:5
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:6
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:7
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:8
+b35c7a0775c08a633824dccf77d0647c3810b2e7:capsule_chain.jsonl.bak:generic-api-key:9
+b35c7a0775c08a633824dccf77d0647c3810b2e7:create_bypass_verified_capsule.py:curl-auth-header:208
+b35c7a0775c08a633824dccf77d0647c3810b2e7:create_first_use_verified.py:curl-auth-header:201
+b35c7a0775c08a633824dccf77d0647c3810b2e7:create_fresh_verified_capsule.py:curl-auth-header:226
+b35c7a0775c08a633824dccf77d0647c3810b2e7:create_official_verified_capsule.py:curl-auth-header:176
+b35c7a0775c08a633824dccf77d0647c3810b2e7:create_rich_live_capture.py:generic-api-key:29
+b35c7a0775c08a633824dccf77d0647c3810b2e7:create_secure_comprehensive_capsule.py:curl-auth-header:343
+b35c7a0775c08a633824dccf77d0647c3810b2e7:create_simple_verified_capsule.py:generic-api-key:31
+b35c7a0775c08a633824dccf77d0647c3810b2e7:create_system_verified_capsule.py:curl-auth-header:199
+b35c7a0775c08a633824dccf77d0647c3810b2e7:create_truly_verified_capsule.py:curl-auth-header:200
+b35c7a0775c08a633824dccf77d0647c3810b2e7:federation_data/member_org1.json:generic-api-key:5
+b35c7a0775c08a633824dccf77d0647c3810b2e7:fix_verification.py:curl-auth-header:162
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/backup-recovery.yaml:generic-api-key:11
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/backup-recovery.yaml:generic-api-key:14
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/backup-recovery.yaml:kubernetes-secret-yaml:3
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/monitoring.yaml:generic-api-key:324
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/secret.yaml:generic-api-key:14
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/secret.yaml:generic-api-key:15
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/secret.yaml:generic-api-key:16
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/secret.yaml:generic-api-key:30
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/secret.yaml:generic-api-key:31
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/secret.yaml:generic-api-key:32
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/secret.yaml:generic-api-key:33
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/secret.yaml:generic-api-key:47
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/secret.yaml:generic-api-key:48
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/secret.yaml:generic-api-key:49
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/secret.yaml:generic-api-key:50
+b35c7a0775c08a633824dccf77d0647c3810b2e7:k8s/secret.yaml:kubernetes-secret-yaml:20
+b35c7a0775c08a633824dccf77d0647c3810b2e7:observability/kubernetes/auto-instrumentation.yaml:kubernetes-secret-yaml:116
+b35c7a0775c08a633824dccf77d0647c3810b2e7:observability/kubernetes/jaeger-deployment.yaml:generic-api-key:226
+b35c7a0775c08a633824dccf77d0647c3810b2e7:observability/kubernetes/jaeger-deployment.yaml:kubernetes-secret-yaml:220
+b35c7a0775c08a633824dccf77d0647c3810b2e7:openai_capsule_fixed.py:generic-api-key:33
+b35c7a0775c08a633824dccf77d0647c3810b2e7:openai_capsule_fixed.py:generic-api-key:36
+b35c7a0775c08a633824dccf77d0647c3810b2e7:openai_capsule.py:generic-api-key:25
+b35c7a0775c08a633824dccf77d0647c3810b2e7:openai_capsule.py:generic-api-key:28
+b35c7a0775c08a633824dccf77d0647c3810b2e7:src/security/signature_validator.py:generic-api-key:333
+b35c7a0775c08a633824dccf77d0647c3810b2e7:src/verifier/verifier.py:generic-api-key:26
+b35c7a0775c08a633824dccf77d0647c3810b2e7:uatp_capsule_engine.egg-info/PKG-INFO:curl-auth-header:246
+b35c7a0775c08a633824dccf77d0647c3810b2e7:uatp_capsule_engine.egg-info/PKG-INFO:curl-auth-header:252
+b35c7a0775c08a633824dccf77d0647c3810b2e7:uatp_capsule_engine.egg-info/PKG-INFO:curl-auth-header:255
+b35c7a0775c08a633824dccf77d0647c3810b2e7:uatp_capsule_engine.egg-info/PKG-INFO:curl-auth-header:258
