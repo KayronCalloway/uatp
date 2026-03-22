@@ -246,11 +246,12 @@ async def refresh_token(
 ):
     """Refresh access token using refresh token"""
     try:
-        # Verify refresh token
-        payload = jwt_manager.verify_token(refresh_data.refresh_token)
-        if payload["type"] != "refresh":
+        # Verify refresh token with correct token type
+        payload = jwt_manager.verify_token(refresh_data.refresh_token, "refresh")
+        if not payload:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired refresh token",
             )
 
         user_id = payload["sub"]
@@ -392,11 +393,12 @@ async def reset_password(
 ):
     """Reset password using reset token"""
     try:
-        # Verify reset token
-        payload = jwt_manager.verify_token(reset_data.token)
-        if not payload or payload["type"] != "password_reset":
+        # Verify reset token with correct token type
+        payload = jwt_manager.verify_token(reset_data.token, "password_reset")
+        if not payload:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired reset token",
             )
 
         email = payload["sub"]
