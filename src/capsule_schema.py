@@ -89,48 +89,9 @@ class CapsuleType(str, Enum):
     DECISION_POINT = "decision_point"
     ENVIRONMENT_SNAPSHOT = "environment_snapshot"
 
-    # -- Helper dunder for legacy unit tests --
-    @classmethod
-    def __len__(cls):  # pragma: no cover
-        """Return the *legacy* capsule count expected by existing tests.
-
-        Older test-suites (pre Mirror-Mode) assume only 21 capsule types.  We
-        therefore exclude the two Mirror-Mode types when ``len(CapsuleType)`` is
-        used.  Enumeration membership and ``in`` checks are *not* affected – all
-        enum values remain accessible.
-        """
-        advanced_extras = {
-            cls.AUDIT,
-            cls.REFUSAL,
-            cls.CLONING_RIGHTS,
-            cls.EVOLUTION,
-            cls.DIVIDEND_BOND,
-            cls.CITIZENSHIP,
-            cls.AKC,
-            cls.AKC_CLUSTER,
-            # UATP 7.2 types (excluded from legacy count)
-            cls.TRAINING_PROVENANCE,
-            cls.MODEL_REGISTRATION,
-            cls.WORKFLOW_STEP,
-            cls.WORKFLOW_COMPLETE,
-            cls.HARDWARE_ATTESTATION,
-            cls.EDGE_SYNC,
-            cls.MODEL_LICENSE,
-            cls.MODEL_ARTIFACT,
-            # UATP 7.3 types (excluded from legacy count)
-            cls.KERNEL_EXECUTION,
-            cls.HARDWARE_PROFILE,
-            cls.COMPILE_ARTIFACT,
-            cls.TRAINING_TELEMETRY,
-            cls.ANE_TRAINING_SESSION,
-            # UATP 7.4 types (excluded from legacy count)
-            cls.AGENT_SESSION,
-            cls.TOOL_CALL,
-            cls.ACTION_TRACE,
-            cls.DECISION_POINT,
-            cls.ENVIRONMENT_SNAPSHOT,
-        }
-        return len([m for m in cls.__members__.values() if m not in advanced_extras])
+    # NOTE: __len__ override removed - was returning filtered count for "legacy test
+    # compatibility" which made len(CapsuleType) != actual member count. Tests should
+    # use len(list(CapsuleType)) or count specific types explicitly.
 
 
 class CapsuleStatus(str, Enum):

@@ -365,22 +365,43 @@ class JWTManager:
             logger.warning(f"Invalid token: {e}")
             return None
 
-    def refresh_access_token(self, refresh_token: str) -> Optional[Dict[str, str]]:
-        """Generate new access token from refresh token"""
+    def refresh_access_token(
+        self,
+        refresh_token: str,
+        user_id: str,
+        email: str,
+        username: str,
+        scopes: Optional[list] = None,
+    ) -> Optional[Dict[str, str]]:
+        """
+        Generate new access token from refresh token.
+
+        IMPORTANT: Caller must fetch user data from database and pass it here.
+        This method does NOT fetch user data - it only validates the refresh
+        token and generates a new access token with the provided user info.
+
+        Args:
+            refresh_token: The refresh token to validate
+            user_id: User ID (must be fetched from DB by caller)
+            email: User email (must be fetched from DB by caller)
+            username: Username (must be fetched from DB by caller)
+            scopes: Token scopes (default: ["read", "write"])
+        """
         payload = self.verify_token(refresh_token, "refresh")
         if not payload:
             return None
 
-        # Here you would fetch user details from database
-        # For now, we'll create a basic response
-        user_id = payload["user_id"]
+        # Verify the refresh token belongs to this user
+        token_user_id = payload.get("user_id") or payload.get("sub")
+        if token_user_id != user_id:
+            logger.warning(f"Refresh token user mismatch: {token_user_id} != {user_id}")
+            return None
 
-        # Generate new access token
         new_access_token = self.generate_access_token(
             user_id=user_id,
-            email=f"user_{user_id}@example.com",  # Would fetch from DB
-            username=f"user_{user_id}",  # Would fetch from DB
-            scopes=["read", "write"],
+            email=email,
+            username=username,
+            scopes=scopes or ["read", "write"],
         )
 
         return {
@@ -482,42 +503,3 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed_password: str) -> bool:
     """Verify password"""
     return jwt_manager.verify_password(password, hashed_password)
-
-
-# Example usage and testing
-if __name__ == "__main__":
-    # Test JWT functionality
-    print(" Testing JWT Manager...")
-
-    # Test password hashing
-    password = "test_password_123"
-    hashed = hash_password(password)
-    print(f"Password hashed: {hashed[:20]}...")
-
-    # Test password verification
-    is_valid = verify_password(password, hashed)
-    print(f"Password verification: {is_valid}")
-
-    # Test token generation
-    user_data = {
-        "user_id": "test_user_123",
-        "email": "test@example.com",
-        "username": "testuser",
-        "scopes": ["read", "write", "admin"],
-    }
-
-    access_token = create_access_token(user_data)
-    refresh_token = create_refresh_token(user_data["user_id"])
-
-    print(f"Access token: {access_token[:50]}...")
-    print(f"Refresh token: {refresh_token[:50]}...")
-
-    # Test token verification
-    payload = verify_access_token(access_token)
-    print(f"Token payload: {payload}")
-
-    # Test token refresh
-    new_tokens = jwt_manager.refresh_access_token(refresh_token)
-    print(f"New tokens: {new_tokens}")
-
-    print("[OK] JWT Manager tests completed")

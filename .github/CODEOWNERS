@@ -1,26 +1,3 @@
 # UATP Codeowners
-# These owners will be requested for review when someone opens a pull request.
-
-# Default owner for everything
+# Default owner for all files (single maintainer project)
 * @KayronCalloway
-
-# Core cryptography - requires careful review
-/src/security/ @KayronCalloway
-/src/crypto/ @KayronCalloway
-/src/attestation/ @KayronCalloway
-/src/export/ @KayronCalloway
-
-# API changes
-/src/api/ @KayronCalloway
-
-# SDK changes
-/sdk/ @KayronCalloway
-
-# Infrastructure and deployment
-/infra/ @KayronCalloway
-/.github/workflows/ @KayronCalloway
-
-# Security-sensitive files
-SECURITY.md @KayronCalloway
-THREAT_MODEL.md @KayronCalloway
-TRUST_MODEL.md @KayronCalloway

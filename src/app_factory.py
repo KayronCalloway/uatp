@@ -75,57 +75,18 @@ def configure_logging():
 
 
 def create_metrics():
-    """Get Prometheus metrics from monitoring module to prevent duplicates."""
-    from prometheus_client import REGISTRY
-
-    # Import metrics from monitoring module (which handles deduplication)
+    """Get Prometheus metrics from monitoring module."""
     from .middleware.monitoring import REQUEST_COUNT, REQUEST_DURATION
 
-    # Create attribution metric if not exists (use try/except to avoid private API)
-    attribution_metric = None
-
-    # First, check if metric already exists in registry
-    for collector in list(REGISTRY._names_to_collectors.values()):
-        if hasattr(collector, "_name") and collector._name in (
+    # Attribution metric - create once, catch if already exists
+    try:
+        attribution_metric = Histogram(
             "attribution_processing_duration_seconds",
-            "attribution_processing_duration_seconds_v2",
-        ):
-            attribution_metric = collector
-            break
-
-    # If not found, try to create it
-    if attribution_metric is None:
-        try:
-            attribution_metric = Histogram(
-                "attribution_processing_duration_seconds",
-                "Attribution processing time",
-            )
-        except ValueError:
-            # Metric registered by another thread/process, try to find it again
-            for collector in list(REGISTRY._names_to_collectors.values()):
-                if (
-                    hasattr(collector, "_name")
-                    and collector._name == "attribution_processing_duration_seconds"
-                ):
-                    attribution_metric = collector
-                    break
-
-    # Final fallback: create a no-op metric to avoid None errors
-    if attribution_metric is None:
-        try:
-            attribution_metric = Histogram(
-                "attribution_processing_duration_seconds_v2",
-                "Attribution processing time",
-            )
-        except ValueError:
-            # Even fallback exists - find it
-            for collector in list(REGISTRY._names_to_collectors.values()):
-                if (
-                    hasattr(collector, "_name")
-                    and collector._name == "attribution_processing_duration_seconds_v2"
-                ):
-                    attribution_metric = collector
-                    break
+            "Attribution processing time",
+        )
+    except ValueError:
+        # Already registered - this is fine, just means another import path hit it first
+        attribution_metric = None
 
     return {
         "REQUEST_COUNT": REQUEST_COUNT,
