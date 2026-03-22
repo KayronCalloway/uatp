@@ -9,7 +9,15 @@
 #
 # All files have been deleted from current tree.
 # Generated: 2026-03-22
-# Commits: 8093618, b35c7a0
+# Commits: 63534e4, c567f4c, 8093618, b35c7a0
+
+# Encrypted key files (not actual secrets - files are encrypted)
+63534e41e7806cf0e514f8fc1935e378dbde2902:.uatp_keys/ed25519_private.pem.enc:private-key:1
+63534e41e7806cf0e514f8fc1935e378dbde2902:.uatp_keys/uatp_private.pem.enc:private-key:1
+
+# HSM key label definitions (label names, not secrets)
+c567f4c4bea1af7e18ecf5d98dc531095d635405:src/security/hsm_key_provider.py:generic-api-key:91
+c567f4c4bea1af7e18ecf5d98dc531095d635405:src/security/hsm_key_provider.py:generic-api-key:94
 
 8093618cc9c1df5152418481971abfa5f087c931:capsule_chain.jsonl.backup.1764891453:generic-api-key:23
 8093618cc9c1df5152418481971abfa5f087c931:capsule_chain.jsonl.backup.1764891453:generic-api-key:46
