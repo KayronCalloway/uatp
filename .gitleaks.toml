@@ -41,9 +41,29 @@ regexes = [
     '''password''',
     '''uatp_password''',
     '''uatp_user''',
-    # Test keys
+    # Test keys and mock data
     '''sk-[0]+''',
+    '''sk-proj-\.\.\.''',
+    '''sk-test\d*''',
     '''test.*key''',
     '''demo.*key''',
     '''placeholder''',
+    '''mypassword\d*''',
+    '''abcdef\d*''',
+    # Environment variable names (not values)
+    '''ENV_\w+_KEY''',
+    '''OPENAI_API_KEY''',
 ]
+
+# Additional path-specific allowlists
+[[allowlist.commits]]
+description = "Allow mock data in platform dashboard"
+paths = ['''frontend/src/components/platform/platform-dashboard\.tsx''']
+
+[[allowlist.commits]]
+description = "Allow test code in secrets manager"
+paths = ['''src/security/secrets_manager\.py''']
+
+[[allowlist.commits]]
+description = "Allow config definitions in secrets.py"
+paths = ['''src/config/secrets\.py''']
