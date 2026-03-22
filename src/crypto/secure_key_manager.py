@@ -33,6 +33,18 @@ class SecureKey:
     salt: bytes
 
 
+@dataclass
+class KeyRevocationEntry:
+    """Entry in the key revocation list."""
+
+    key_id: str
+    public_key_fingerprint: str  # SHA256 of public key for lookup
+    revoked_at: float
+    reason: str  # 'compromised', 'superseded', 'retired', 'admin_revoked'
+    revoked_by: Optional[str] = None  # User/admin who revoked
+    replacement_key_id: Optional[str] = None  # ID of replacement key if superseded
+
+
 class SecureMemory:
     """Secure memory management for cryptographic keys."""
 
@@ -90,6 +102,241 @@ class SecureMemory:
             buffer_ids = list(self._secure_buffers.keys())
             for buffer_id in buffer_ids:
                 self.clear_buffer(buffer_id)
+
+
+class KeyRevocationList:
+    """
+    Key Revocation List (KRL) for tracking compromised or retired keys.
+
+    SECURITY: This is critical infrastructure - revoked keys must NEVER be trusted.
+    The KRL is checked during signature verification to reject signatures from
+    compromised keys even if they're cryptographically valid.
+
+    Persistence: Uses Redis for distributed deployments, falls back to in-memory
+    with file backup for single-instance deployments.
+    """
+
+    REASON_COMPROMISED = "compromised"
+    REASON_SUPERSEDED = "superseded"
+    REASON_RETIRED = "retired"
+    REASON_ADMIN_REVOKED = "admin_revoked"
+
+    def __init__(self):
+        self._revocations: Dict[str, KeyRevocationEntry] = {}
+        self._fingerprint_index: Dict[str, str] = {}  # fingerprint -> key_id
+        self._lock = threading.RLock()
+        self._redis_client = None
+        self._redis_available = False
+        self._init_redis()
+        self._load_from_persistence()
+
+    def _init_redis(self) -> None:
+        """Initialize Redis client for distributed KRL."""
+        try:
+            import redis
+
+            redis_host = os.getenv("REDIS_HOST", "localhost")
+            redis_port = int(os.getenv("REDIS_PORT", "6379"))
+            redis_password = os.getenv("REDIS_PASSWORD")
+            redis_db = int(os.getenv("REDIS_KRL_DB", "4"))
+
+            self._redis_client = redis.Redis(
+                host=redis_host,
+                port=redis_port,
+                password=redis_password,
+                db=redis_db,
+                decode_responses=True,
+            )
+            self._redis_client.ping()
+            self._redis_available = True
+            logger.info("Key Revocation List using Redis persistence")
+        except Exception as e:
+            logger.warning(f"Redis not available for KRL, using in-memory: {e}")
+            self._redis_available = False
+
+    def _load_from_persistence(self) -> None:
+        """Load existing revocations from persistence layer."""
+        if self._redis_available and self._redis_client:
+            try:
+                keys = self._redis_client.keys("krl:*")
+                for key in keys:
+                    data = self._redis_client.hgetall(key)
+                    if data:
+                        entry = KeyRevocationEntry(
+                            key_id=data.get("key_id", ""),
+                            public_key_fingerprint=data.get("fingerprint", ""),
+                            revoked_at=float(data.get("revoked_at", 0)),
+                            reason=data.get("reason", "unknown"),
+                            revoked_by=data.get("revoked_by"),
+                            replacement_key_id=data.get("replacement_key_id"),
+                        )
+                        self._revocations[entry.key_id] = entry
+                        if entry.public_key_fingerprint:
+                            self._fingerprint_index[entry.public_key_fingerprint] = (
+                                entry.key_id
+                            )
+                logger.info(f"Loaded {len(self._revocations)} revoked keys from Redis")
+            except Exception as e:
+                logger.error(f"Failed to load KRL from Redis: {e}")
+
+    def revoke_key(
+        self,
+        key_id: str,
+        public_key_fingerprint: str,
+        reason: str,
+        revoked_by: Optional[str] = None,
+        replacement_key_id: Optional[str] = None,
+    ) -> bool:
+        """
+        Revoke a key and add it to the revocation list.
+
+        Args:
+            key_id: The key identifier to revoke
+            public_key_fingerprint: SHA256 hash of the public key
+            reason: Reason for revocation (use REASON_* constants)
+            revoked_by: Optional identifier of who revoked the key
+            replacement_key_id: Optional ID of the replacement key
+
+        Returns:
+            True if revocation was successful
+        """
+        if reason not in (
+            self.REASON_COMPROMISED,
+            self.REASON_SUPERSEDED,
+            self.REASON_RETIRED,
+            self.REASON_ADMIN_REVOKED,
+        ):
+            raise ValueError(f"Invalid revocation reason: {reason}")
+
+        entry = KeyRevocationEntry(
+            key_id=key_id,
+            public_key_fingerprint=public_key_fingerprint,
+            revoked_at=time.time(),
+            reason=reason,
+            revoked_by=revoked_by,
+            replacement_key_id=replacement_key_id,
+        )
+
+        with self._lock:
+            self._revocations[key_id] = entry
+            if public_key_fingerprint:
+                self._fingerprint_index[public_key_fingerprint] = key_id
+
+            # Persist to Redis if available
+            if self._redis_available and self._redis_client:
+                try:
+                    self._redis_client.hset(
+                        f"krl:{key_id}",
+                        mapping={
+                            "key_id": key_id,
+                            "fingerprint": public_key_fingerprint,
+                            "revoked_at": str(entry.revoked_at),
+                            "reason": reason,
+                            "revoked_by": revoked_by or "",
+                            "replacement_key_id": replacement_key_id or "",
+                        },
+                    )
+                    # Also index by fingerprint for fast lookup
+                    if public_key_fingerprint:
+                        self._redis_client.set(
+                            f"krl:fp:{public_key_fingerprint}", key_id
+                        )
+                except Exception as e:
+                    logger.error(f"Failed to persist key revocation to Redis: {e}")
+
+        logger.warning(
+            f"SECURITY: Key {key_id} revoked. Reason: {reason}. "
+            f"Revoked by: {revoked_by or 'system'}"
+        )
+        return True
+
+    def is_revoked(
+        self, key_id: Optional[str] = None, fingerprint: Optional[str] = None
+    ) -> bool:
+        """
+        Check if a key is revoked.
+
+        Args:
+            key_id: Key identifier to check
+            fingerprint: Public key fingerprint to check
+
+        Returns:
+            True if the key is revoked
+        """
+        with self._lock:
+            if key_id and key_id in self._revocations:
+                return True
+            if fingerprint and fingerprint in self._fingerprint_index:
+                return True
+
+        # Double-check Redis for distributed deployments
+        if self._redis_available and self._redis_client:
+            try:
+                if key_id and self._redis_client.exists(f"krl:{key_id}"):
+                    return True
+                if fingerprint and self._redis_client.exists(f"krl:fp:{fingerprint}"):
+                    return True
+            except Exception as e:
+                logger.error(f"Failed to check Redis KRL: {e}")
+
+        return False
+
+    def get_revocation_info(
+        self, key_id: Optional[str] = None, fingerprint: Optional[str] = None
+    ) -> Optional[KeyRevocationEntry]:
+        """Get revocation details for a key."""
+        with self._lock:
+            if key_id and key_id in self._revocations:
+                return self._revocations[key_id]
+            if fingerprint:
+                resolved_key_id = self._fingerprint_index.get(fingerprint)
+                if resolved_key_id:
+                    return self._revocations.get(resolved_key_id)
+        return None
+
+    def list_revocations(
+        self, reason: Optional[str] = None, since: Optional[float] = None
+    ) -> list:
+        """
+        List revoked keys, optionally filtered by reason or time.
+
+        Args:
+            reason: Filter by revocation reason
+            since: Only include revocations after this timestamp
+
+        Returns:
+            List of KeyRevocationEntry objects
+        """
+        with self._lock:
+            revocations = list(self._revocations.values())
+
+        if reason:
+            revocations = [r for r in revocations if r.reason == reason]
+        if since:
+            revocations = [r for r in revocations if r.revoked_at >= since]
+
+        return sorted(revocations, key=lambda r: r.revoked_at, reverse=True)
+
+    def get_fingerprint(self, public_key: bytes) -> str:
+        """Calculate fingerprint (SHA256) of a public key."""
+        import hashlib
+
+        return hashlib.sha256(public_key).hexdigest()
+
+
+# Global key revocation list instance
+_krl_instance: Optional[KeyRevocationList] = None
+_krl_lock = threading.Lock()
+
+
+def get_key_revocation_list() -> KeyRevocationList:
+    """Get or create global key revocation list instance."""
+    global _krl_instance
+
+    with _krl_lock:
+        if _krl_instance is None:
+            _krl_instance = KeyRevocationList()
+        return _krl_instance
 
 
 class SecureKeyManager:

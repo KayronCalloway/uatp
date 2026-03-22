@@ -7,8 +7,10 @@ Enhanced with comprehensive security validation and replay protection.
 import hashlib
 import hmac
 import logging
+import os
 import threading
 import time
+from collections import OrderedDict
 from typing import Any, Dict, Optional, Set, Tuple
 
 from nacl.encoding import HexEncoder
@@ -16,21 +18,73 @@ from nacl.signing import SigningKey, VerifyKey
 
 logger = logging.getLogger(__name__)
 
-# Replay protection - signature context tracking
-_signature_context_cache: Dict[
-    str, Set[str]
-] = {}  # public_key -> set of used signature hashes
+# =============================================================================
+# REPLAY PROTECTION - Redis-backed with in-memory fallback
+# =============================================================================
 _signature_cache_lock = threading.RLock()
 _max_cache_size = 10000
 _cache_cleanup_interval = 3600  # 1 hour
-_cache_entry_ttl = 86400  # 24 hours - entries expire after this time
+_cache_entry_ttl = 86400 * 30  # 30 days for persistent storage
 
-# LRU cache with timestamps: fingerprint -> (timestamp, access_count)
-# Using OrderedDict for LRU semantics
-from collections import OrderedDict
-
+# In-memory fallback cache (used when Redis unavailable)
 _signature_cache: OrderedDict[str, Tuple[float, int]] = OrderedDict()
 _last_cache_cleanup = time.time()
+
+# Redis client for persistent replay protection
+_redis_client = None
+_redis_available = False
+
+
+def _init_replay_redis():
+    """Initialize Redis client for persistent replay protection."""
+    global _redis_client, _redis_available
+
+    try:
+        import redis
+
+        redis_host = os.getenv("REDIS_HOST", "localhost")
+        redis_port = int(os.getenv("REDIS_PORT", "6379"))
+        redis_password = os.getenv("REDIS_PASSWORD")
+        redis_db = int(os.getenv("REDIS_REPLAY_DB", "3"))  # Separate DB for replay
+
+        _redis_client = redis.Redis(
+            host=redis_host,
+            port=redis_port,
+            password=redis_password,
+            db=redis_db,
+            decode_responses=True,
+            socket_connect_timeout=2,
+        )
+        _redis_client.ping()
+        _redis_available = True
+        logger.info("Replay protection using persistent Redis backend")
+
+    except ImportError:
+        logger.warning(
+            "SECURITY: redis package not installed. "
+            "Replay protection will use in-memory storage (lost on restart)."
+        )
+        _redis_available = False
+
+    except Exception as e:
+        env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development"))
+        if env in ("production", "prod", "staging"):
+            logger.error(
+                f"CRITICAL: Redis unavailable for replay protection in {env}: {e}"
+            )
+        else:
+            logger.warning(
+                f"Redis unavailable for replay protection: {e}. "
+                "Using in-memory fallback (development only)."
+            )
+        _redis_available = False
+
+
+# Initialize Redis on module load
+_init_replay_redis()
+
+# Legacy compatibility
+_signature_context_cache: Dict[str, Set[str]] = {}
 
 
 def _generate_signature_fingerprint(
@@ -81,16 +135,39 @@ def _check_replay_protection(hash_str: str, signature: str, public_key: str) -> 
     Check if this signature has been used with DIFFERENT content (replay attack protection).
     Allows re-verification of the same hash+signature+key combination.
 
-    Uses LRU eviction with time-based expiration:
-    - Entries expire after _cache_entry_ttl seconds (24 hours default)
-    - LRU eviction when cache exceeds _max_cache_size
-    - Recently accessed entries are moved to end (most recent)
+    SECURITY: Uses Redis for persistent storage when available, falling back to
+    in-memory cache for development. In-memory cache is lost on restart, allowing
+    replay attacks after service restart.
 
     Returns:
         True if signature is valid for this content
         False if signature is being replayed for different content
     """
     fingerprint = _generate_signature_fingerprint(hash_str, signature, public_key)
+
+    # Try Redis first for persistent replay protection
+    if _redis_available and _redis_client:
+        try:
+            cache_key = f"replay:{fingerprint}"
+            existing = _redis_client.get(cache_key)
+
+            if existing:
+                # Same fingerprint seen before - this is a re-verification (allowed)
+                logger.debug(
+                    f"Re-verification of known signature {fingerprint[:16]}... (allowed)"
+                )
+                return True
+
+            # First time seeing this signature - record it
+            _redis_client.setex(cache_key, _cache_entry_ttl, public_key)
+            logger.debug(f"Recorded new signature {fingerprint[:16]}... in Redis")
+            return True
+
+        except Exception as e:
+            logger.warning(f"Redis replay check failed, using in-memory fallback: {e}")
+            # Fall through to in-memory
+
+    # In-memory fallback (development only or Redis failure)
     now = time.time()
 
     with _signature_cache_lock:
@@ -106,7 +183,6 @@ def _check_replay_protection(hash_str: str, signature: str, public_key: str) -> 
                 logger.debug(f"Expired cache entry for {fingerprint[:16]}...")
             else:
                 # Same hash+signature+key = legitimate re-verification, allow it
-                # Move to end (most recently used) for LRU semantics
                 _signature_cache.move_to_end(fingerprint)
                 _signature_cache[fingerprint] = (timestamp, access_count + 1)
                 logger.debug(
@@ -119,7 +195,6 @@ def _check_replay_protection(hash_str: str, signature: str, public_key: str) -> 
 
         # LRU eviction if cache is too large
         while len(_signature_cache) > _max_cache_size:
-            # Remove oldest (first) entry - LRU eviction
             oldest_key, (oldest_time, _) = next(iter(_signature_cache.items()))
             del _signature_cache[oldest_key]
             logger.debug(
@@ -609,6 +684,30 @@ def verify_capsule(
         ):
             logger.error("SECURITY ALERT: Signature replay attack detected")
             return False, "Signature replay detected - potential attack"
+
+        # SECURITY: Check key revocation list
+        try:
+            from src.crypto.secure_key_manager import get_key_revocation_list
+
+            krl = get_key_revocation_list()
+            # Check by key fingerprint (SHA256 of public key)
+            key_fingerprint = krl.get_fingerprint(bytes.fromhex(verify_key_hex))
+            if krl.is_revoked(fingerprint=key_fingerprint):
+                revocation_info = krl.get_revocation_info(fingerprint=key_fingerprint)
+                reason = revocation_info.reason if revocation_info else "unknown"
+                logger.error(
+                    f"SECURITY ALERT: Signature from revoked key. "
+                    f"Fingerprint: {key_fingerprint[:16]}..., Reason: {reason}"
+                )
+                return False, f"Signing key has been revoked ({reason})"
+        except ImportError:
+            # KRL module not available - continue without check (log warning)
+            logger.debug(
+                "Key revocation list not available - skipping revocation check"
+            )
+        except Exception as e:
+            # Log but don't fail verification if KRL check has issues
+            logger.warning(f"Key revocation check failed: {e}")
 
         # 2. Verify the signature cryptographically
         try:

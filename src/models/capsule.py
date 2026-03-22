@@ -27,6 +27,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    event,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -243,3 +244,62 @@ class CapsuleModel(db.Base):
 # NOTE: All 26 subclasses (ReasoningTraceCapsuleModel, EconomicTransactionCapsuleModel, etc.)
 # were removed on 2026-01-13. They added no value - just empty classes with polymorphic_identity.
 # See docs/incidents/2026-01-13_ORM_POLYMORPHISM_INCIDENT.md for details.
+
+
+# --- Immutability Constraint ---
+# SECURITY: Sealed capsules are cryptographically signed and must never be modified.
+# This event listener enforces immutability at the ORM level.
+
+# Fields that can be modified on sealed capsules (metadata, not content)
+MUTABLE_FIELDS_ON_SEALED = frozenset(
+    {
+        "outcome_status",
+        "outcome_timestamp",
+        "outcome_notes",
+        "outcome_metrics",
+        "user_feedback_rating",
+        "user_feedback_text",
+        "follow_up_capsule_ids",
+        "embedding",
+        "embedding_model",
+        "embedding_created_at",
+    }
+)
+
+
+@event.listens_for(CapsuleModel, "before_update")
+def enforce_capsule_immutability(mapper, connection, target):
+    """
+    Prevent modification of sealed capsules except for allowed metadata fields.
+
+    Sealed capsules have cryptographic signatures that would be invalidated
+    by any content changes. This constraint ensures data integrity.
+    """
+    from sqlalchemy import inspect
+
+    # Check if capsule is sealed (case-insensitive)
+    if target.status and target.status.lower() == "sealed":
+        state = inspect(target)
+
+        # Check each attribute for modifications
+        for attr in state.attrs:
+            hist = attr.load_history()
+
+            # If attribute was modified (has changes)
+            if hist.has_changes():
+                attr_name = attr.key
+
+                # Allow status changes (e.g., unsealing for admin operations)
+                if attr_name == "status":
+                    continue
+
+                # Allow mutable metadata fields
+                if attr_name in MUTABLE_FIELDS_ON_SEALED:
+                    continue
+
+                # Block modification of immutable fields
+                raise ValueError(
+                    f"Cannot modify '{attr_name}' on sealed capsule {target.capsule_id}. "
+                    f"Sealed capsules are cryptographically signed and immutable. "
+                    f"Only metadata fields can be updated: {sorted(MUTABLE_FIELDS_ON_SEALED)}"
+                )

@@ -318,6 +318,15 @@ async def forgot_password(
     request: Request, reset_request: PasswordResetRequest, db: Session = Depends(get_db)
 ):
     """Request password reset"""
+    import asyncio
+    import random
+    import time
+
+    # SECURITY: Normalize response timing to prevent user enumeration
+    # Track start time to ensure consistent response timing
+    start_time = time.monotonic()
+    MIN_RESPONSE_TIME = 0.5  # Minimum 500ms response time
+
     try:
         # Find user
         user = (
@@ -325,10 +334,18 @@ async def forgot_password(
         )
 
         if not user:
-            # To prevent user enumeration, don't reveal if the user exists
+            # SECURITY: To prevent user enumeration via timing:
+            # 1. Don't reveal if user exists in response
+            # 2. Add random delay to mask timing difference
             logger.warning(
-                f"Password reset requested for non-existent user: {reset_request.email}"
+                "Password reset requested for non-existent user"  # Don't log email
             )
+            # Add jitter matching typical email send time (200-800ms)
+            await asyncio.sleep(random.uniform(0.2, 0.8))
+            # Ensure minimum response time
+            elapsed = time.monotonic() - start_time
+            if elapsed < MIN_RESPONSE_TIME:
+                await asyncio.sleep(MIN_RESPONSE_TIME - elapsed)
             return {"message": "Password reset email sent if user exists"}
 
         # Generate password reset token
@@ -376,6 +393,11 @@ async def forgot_password(
             logger.error("SendGrid library not installed. Run: pip install sendgrid")
         except Exception as e:
             logger.error(f"Failed to send reset email: {e}")
+
+        # SECURITY: Ensure consistent response timing for enumeration prevention
+        elapsed = time.monotonic() - start_time
+        if elapsed < MIN_RESPONSE_TIME:
+            await asyncio.sleep(MIN_RESPONSE_TIME - elapsed)
 
         return {"message": "Password reset email sent if user exists"}
 

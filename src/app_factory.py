@@ -436,10 +436,12 @@ def setup_exception_handlers(app: FastAPI):
 
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
-        """Handle general exceptions with structured logging and correlation ID"""
+        """Handle general exceptions with structured logging and sanitized responses"""
+        from src.security.error_sanitizer import is_production, sanitize_error_message
+
         correlation_id = str(uuid.uuid4())
 
-        # Log with full context for debugging
+        # Log with full context for debugging (always log full details)
         logger.error(
             "Unhandled exception",
             correlation_id=correlation_id,
@@ -452,21 +454,24 @@ def setup_exception_handlers(app: FastAPI):
             user_agent=request.headers.get("user-agent", "unknown"),
         )
 
-        # Return sanitized error response (don't expose internal details in production)
-        is_production = os.getenv("ENVIRONMENT") == "production"
+        # SECURITY: Sanitize error message to prevent information leakage
+        error_type = type(exc).__name__
+        sanitized_message = sanitize_error_message(str(exc), error_type)
 
         response_content = {
             "error": "Internal server error",
-            "detail": "An unexpected error occurred. Please try again later.",
+            "detail": sanitized_message,
             "correlation_id": correlation_id,
             "timestamp": utc_now().isoformat(),
         }
 
-        # Add debug info in non-production environments
-        if not is_production:
+        # Add debug info in non-production environments (still sanitized)
+        if not is_production():
             response_content["debug"] = {
-                "error_type": type(exc).__name__,
-                "error_message": str(exc),
+                "error_type": error_type,
+                "error_message": sanitize_error_message(
+                    str(exc), error_type, allow_original_in_dev=True
+                ),
             }
 
         return JSONResponse(
