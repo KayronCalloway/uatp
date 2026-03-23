@@ -51,15 +51,6 @@ Your private key was just generated locally and never transmitted anywhere.
 
 ---
 
-## Install
-
-| Language | Command |
-|----------|---------|
-| **Python** | `pip install uatp` |
-| **TypeScript** | `npm install @coolwithakay/uatp` |
-
----
-
 ## Packages
 
 | Package | Install | Purpose |
@@ -163,10 +154,10 @@ More examples: [examples/](examples/)
 
 | Goal | Path |
 |------|------|
-| **Try it locally** | [Quick Start](#quick-start) → [Examples](examples/) |
+| **Try it locally** | [Try It Now](#try-it-now) → [Examples](examples/) |
 | **Inspect the crypto** | [Trust Model](TRUST_MODEL.md) → [src/crypto/](src/crypto/) |
 | **Integrate the SDK** | [SDK Docs](sdk/python/README.md) → [API Reference](docs/api-documentation.md) |
-| **Understand the vision** | [Vision](docs/vision.md) → [Complete Vision](docs/UATP_COMPLETE_VISION.md) |
+| **Understand the vision** | [Vision](docs/vision.md) |
 | **Navigate the codebase** | [Repository Map](docs/repository-map.md) |
 
 ---
@@ -175,24 +166,30 @@ More examples: [examples/](examples/)
 
 ```
 uatp/
-├── src/
-│   ├── api/            # FastAPI backend
-│   ├── attestation/    # Workflow attestation (in-toto style)
-│   ├── cli/            # CLI tools (verify, export, inspect)
-│   ├── crypto/         # Key management
-│   ├── export/         # DSSE bundle export (Sigstore style)
-│   ├── live_capture/   # Real-time capture with feedback signal detection
-│   ├── schema/         # Schema definitions and facets
-│   ├── security/       # Ed25519/ML-DSA signatures, RFC 3161
-│   └── services/       # Search, lifecycle services
-├── sdk/python/         # Python SDK
-├── sdk/typescript/     # TypeScript SDK (npm: @coolwithakay/uatp)
-├── frontend/           # Next.js dashboard (beta)
-├── tests/              # 1400+ tests
-└── infra/              # Docker, Kubernetes configs
+├── src/                    # ~30 modules
+│   ├── api/                # FastAPI backend
+│   ├── auth/               # JWT, RBAC, middleware
+│   ├── attestation/        # Workflow attestation (in-toto style)
+│   ├── capsules/           # Core capsule logic
+│   ├── cli/                # CLI tools (verify, export, inspect)
+│   ├── crypto/             # Key management (UserKeyManager, LocalSigner)
+│   ├── database/           # SQLite/PostgreSQL adapters
+│   ├── export/             # DSSE bundle export (Sigstore style)
+│   ├── live_capture/       # Real-time capture + signal detection
+│   ├── models/             # SQLAlchemy models
+│   ├── schema/             # Capsule schema, facets
+│   ├── security/           # Ed25519/ML-DSA signatures, RFC 3161
+│   ├── services/           # Search, lifecycle
+│   └── ...                 # +17 more (middleware, observability, etc.)
+├── sdk/
+│   ├── python/             # Python SDK (pip install uatp)
+│   └── typescript/         # TypeScript SDK (npm @coolwithakay/uatp)
+├── frontend/               # Next.js dashboard (beta)
+├── tests/                  # 1500+ tests
+└── infra/                  # Docker, Kubernetes configs
 ```
 
-Full structure with audit priorities: [Repository Map](docs/repository-map.md)
+Full module list: [Repository Map](docs/repository-map.md)
 
 **Security documentation:**
 - [TRUST_MODEL.md](TRUST_MODEL.md) — What UATP can and cannot do
@@ -316,9 +313,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: [SECURITY.md](SECURITY.
 
 ## Vision
 
-UATP begins as a cryptographic audit trail for AI decisions. Over time, that same proof infrastructure can support broader accountability: provenance, attribution, consent, auditability, and eventually fairer economic participation in AI systems. The core idea is simple: systems that shape the world should leave verifiable memory behind.
+AI systems that shape outcomes should leave verifiable memory behind. UATP provides the cryptographic foundation—starting with audit trails, extensible to attribution and accountability.
 
-Read the full vision → [docs/vision.md](docs/vision.md)
+[Full vision →](docs/vision.md)
 
 ---
 
