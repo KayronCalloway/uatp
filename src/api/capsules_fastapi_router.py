@@ -83,20 +83,40 @@ class VerificationRateLimiter:
         self._last_cleanup = time.time()
 
     def _get_client_ip(self, request: Request) -> str:
-        """Get client IP securely."""
-        client_host = request.client.host if request.client else "unknown"
+        """
+        Get client IP securely.
 
-        # SECURITY: Only trust X-Forwarded-For from known trusted proxies
-        trusted_proxies = {"127.0.0.1", "::1", "localhost"}
-        if client_host in trusted_proxies:
-            forwarded_for = request.headers.get("X-Forwarded-For")
-            if forwarded_for:
-                return forwarded_for.split(",")[0].strip()
-            real_ip = request.headers.get("X-Real-IP")
-            if real_ip:
-                return real_ip
+        SECURITY: Only trust forwarded headers from explicitly configured proxy IPs.
+        Without this check, attackers can spoof X-Forwarded-For to bypass rate limiting.
+        """
+        import os
 
-        return client_host
+        direct_ip = request.client.host if request.client else "unknown"
+
+        # SECURITY: Only trust forwarded headers from configured trusted proxies
+        # Set TRUSTED_PROXY_IPS env var to comma-separated list of proxy IPs
+        trusted_proxies_env = os.getenv("TRUSTED_PROXY_IPS", "")
+        trusted_proxies = {
+            ip.strip() for ip in trusted_proxies_env.split(",") if ip.strip()
+        }
+
+        # Always trust loopback for local development
+        trusted_proxies.update({"127.0.0.1", "::1"})
+
+        if direct_ip not in trusted_proxies:
+            # Direct connection from untrusted source - use connection IP
+            return direct_ip
+
+        # Request is from trusted proxy - check forwarded headers
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            return forwarded_for.split(",")[0].strip()
+
+        real_ip = request.headers.get("X-Real-IP")
+        if real_ip:
+            return real_ip
+
+        return direct_ip
 
     def is_allowed(self, request: Request) -> tuple[bool, int]:
         """
@@ -1603,10 +1623,13 @@ async def get_capsule_ancestors(
     depth: Optional[int] = Query(
         None, ge=1, le=50, description="Max depth to traverse"
     ),
-    request: Request = None,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
 ):
     """
     Get ancestor capsules in the lineage graph.
+
+    SECURITY: Authentication required. Users can only query lineage for their own capsules.
 
     Args:
         capsule_id: Capsule to query ancestors for
@@ -1615,7 +1638,26 @@ async def get_capsule_ancestors(
     Returns:
         List of ancestor capsule IDs
     """
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
+
     try:
+        # Verify ownership of the capsule being queried
+        query = select(CapsuleModel).where(CapsuleModel.capsule_id == capsule_id)
+        result = await session.execute(query)
+        capsule = result.scalars().first()
+
+        if not capsule:
+            raise HTTPException(status_code=404, detail="Capsule not found")
+
+        if not user_is_admin:
+            if capsule.owner_id is None:
+                raise HTTPException(
+                    status_code=403, detail="Access denied: legacy capsule (admin-only)"
+                )
+            if str(capsule.owner_id) != user_id:
+                raise HTTPException(status_code=403, detail="Access denied")
+
         ancestors = await capsule_lifecycle_service.get_ancestors(capsule_id, depth)
         return {
             "capsule_id": capsule_id,
@@ -1623,6 +1665,8 @@ async def get_capsule_ancestors(
             "count": len(ancestors),
             "depth": depth,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting ancestors for {capsule_id}: {e}")
         return {
@@ -1639,10 +1683,13 @@ async def get_capsule_descendants(
     depth: Optional[int] = Query(
         None, ge=1, le=50, description="Max depth to traverse"
     ),
-    request: Request = None,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
 ):
     """
     Get descendant capsules in the lineage graph.
+
+    SECURITY: Authentication required. Users can only query lineage for their own capsules.
 
     Args:
         capsule_id: Capsule to query descendants for
@@ -1651,7 +1698,26 @@ async def get_capsule_descendants(
     Returns:
         List of descendant capsule IDs
     """
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
+
     try:
+        # Verify ownership of the capsule being queried
+        query = select(CapsuleModel).where(CapsuleModel.capsule_id == capsule_id)
+        result = await session.execute(query)
+        capsule = result.scalars().first()
+
+        if not capsule:
+            raise HTTPException(status_code=404, detail="Capsule not found")
+
+        if not user_is_admin:
+            if capsule.owner_id is None:
+                raise HTTPException(
+                    status_code=403, detail="Access denied: legacy capsule (admin-only)"
+                )
+            if str(capsule.owner_id) != user_id:
+                raise HTTPException(status_code=403, detail="Access denied")
+
         descendants = await capsule_lifecycle_service.get_descendants(capsule_id, depth)
         return {
             "capsule_id": capsule_id,
@@ -1659,6 +1725,8 @@ async def get_capsule_descendants(
             "count": len(descendants),
             "depth": depth,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting descendants for {capsule_id}: {e}")
         return {
@@ -1672,10 +1740,13 @@ async def get_capsule_descendants(
 @router.get("/{capsule_id}/lineage")
 async def get_capsule_lineage(
     capsule_id: str,
-    request: Request = None,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
 ):
     """
     Get the full lineage path from genesis to this capsule.
+
+    SECURITY: Authentication required. Users can only query lineage for their own capsules.
 
     Args:
         capsule_id: Capsule to query lineage for
@@ -1683,13 +1754,34 @@ async def get_capsule_lineage(
     Returns:
         Ordered list of capsule IDs from genesis to target
     """
+    user_is_admin = is_admin_user(current_user)
+    user_id = current_user.get("user_id")
+
     try:
+        # Verify ownership of the capsule being queried
+        query = select(CapsuleModel).where(CapsuleModel.capsule_id == capsule_id)
+        result = await session.execute(query)
+        capsule = result.scalars().first()
+
+        if not capsule:
+            raise HTTPException(status_code=404, detail="Capsule not found")
+
+        if not user_is_admin:
+            if capsule.owner_id is None:
+                raise HTTPException(
+                    status_code=403, detail="Access denied: legacy capsule (admin-only)"
+                )
+            if str(capsule.owner_id) != user_id:
+                raise HTTPException(status_code=403, detail="Access denied")
+
         lineage = await capsule_lifecycle_service.get_lineage(capsule_id)
         return {
             "capsule_id": capsule_id,
             "lineage": lineage,
             "depth": len(lineage),
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting lineage for {capsule_id}: {e}")
         return {
@@ -1894,8 +1986,14 @@ async def create_capsule_from_conversation(
 
 
 @router.get("/ethics")
-async def get_ethics_status():
-    """Get ethics compliance status for capsule system."""
+async def get_ethics_status(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    Get ethics compliance status for capsule system.
+
+    SECURITY: Authentication required.
+    """
     return {
         "ethics_enabled": True,
         "compliance_score": 0.94,

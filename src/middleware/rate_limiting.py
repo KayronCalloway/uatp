@@ -315,10 +315,33 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return f"ip:{client_ip}"
 
     def _get_client_ip(self, request: Request) -> str:
-        """Get client IP address, considering proxy headers."""
-        # Check for forwarded headers
+        """
+        Get client IP address securely.
+
+        SECURITY: Only trust forwarded headers from explicitly configured proxy IPs.
+        Without this check, attackers can spoof X-Forwarded-For to bypass rate limiting.
+        """
+        direct_ip = request.client.host if request.client else "unknown"
+
+        # SECURITY: Only trust forwarded headers from configured trusted proxies
+        # Set TRUSTED_PROXY_IPS env var to comma-separated list of proxy IPs
+        # Example: TRUSTED_PROXY_IPS=10.0.0.1,10.0.0.2,172.16.0.1
+        trusted_proxies_env = os.getenv("TRUSTED_PROXY_IPS", "")
+        trusted_proxies = {
+            ip.strip() for ip in trusted_proxies_env.split(",") if ip.strip()
+        }
+
+        # Always trust loopback for local development
+        trusted_proxies.update({"127.0.0.1", "::1"})
+
+        if direct_ip not in trusted_proxies:
+            # Direct connection from untrusted source - use connection IP
+            return direct_ip
+
+        # Request is from trusted proxy - check forwarded headers
         forwarded_for = request.headers.get("X-Forwarded-For")
         if forwarded_for:
+            # Take the first (client) IP from the chain
             return forwarded_for.split(",")[0].strip()
 
         real_ip = request.headers.get("X-Real-IP")
@@ -326,7 +349,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return real_ip
 
         # Fallback to direct connection
-        return request.client.host if request.client else "unknown"
+        return direct_ip
 
     def _get_endpoint_limit(self, path: str) -> Optional[int]:
         """Get endpoint-specific rate limit."""
