@@ -1,9 +1,9 @@
 # UATP Capsule Engine Dependencies - Security Hardened 2025
 
 # Web Framework - Updated for security patches
-fastapi==0.135.1
+fastapi==0.135.2
 uvicorn[standard]==0.34.0
-starlette==0.52.1
+starlette==1.0.0
 werkzeug>=3.1.6  # CVE-2024-49767 fix
 
 # Database - Latest secure versions
