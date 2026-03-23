@@ -124,8 +124,23 @@ class SlidingWindowRateLimiter:
 
         await self.init_redis()
 
-        # If Redis is not available, allow all requests
+        # SECURITY: Fail closed in production when Redis unavailable
         if self.redis_client is None:
+            env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development")).lower()
+            if env in ("production", "prod", "staging"):
+                logger.error(
+                    "CRITICAL: Redis unavailable for rate limiting in production - "
+                    "blocking request to prevent bypass"
+                )
+                from fastapi import HTTPException
+
+                raise HTTPException(
+                    status_code=503, detail="Service temporarily unavailable"
+                )
+            # Development only - allow with warning
+            logger.warning(
+                "Redis unavailable for rate limiting (dev mode) - allowing request"
+            )
             return True, {
                 "limit": limit,
                 "remaining": limit,
@@ -179,7 +194,20 @@ class SlidingWindowRateLimiter:
 
         except Exception as e:
             logger.error(f"Rate limiting error: {e}")
-            # Fail open - allow request if Redis is down
+            # SECURITY: Fail closed in production when Redis errors occur
+            env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development")).lower()
+            if env in ("production", "prod", "staging"):
+                logger.error(
+                    "CRITICAL: Redis error in production rate limiting - "
+                    "blocking request to prevent bypass"
+                )
+                from fastapi import HTTPException
+
+                raise HTTPException(
+                    status_code=503, detail="Service temporarily unavailable"
+                )
+            # Development only - fail open with warning
+            logger.warning("Rate limiting error (dev mode) - allowing request")
             return True, {
                 "limit": limit,
                 "remaining": limit,

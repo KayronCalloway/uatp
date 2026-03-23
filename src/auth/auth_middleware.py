@@ -142,10 +142,11 @@ class RateLimiter:
 
         env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development")).lower()
         if env in ("production", "prod", "staging"):
-            logger.warning(
-                "SECURITY: In-memory RateLimiter instantiated in %s environment. "
-                "This is NOT recommended - use Redis-backed rate limiting instead.",
-                env,
+            # SECURITY: Hard fail in production - in-memory rate limiting is not safe
+            raise RuntimeError(
+                "CRITICAL: In-memory RateLimiter cannot be used in production. "
+                "Use Redis-backed rate limiting from src/middleware/rate_limiting.py. "
+                "Set RATE_LIMIT_USE_REDIS=true and configure REDIS_HOST."
             )
         self.attempts = {}  # SECURITY: In-memory only - use Redis in production
 

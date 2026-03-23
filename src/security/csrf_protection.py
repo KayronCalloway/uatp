@@ -6,6 +6,7 @@ Cross-Site Request Forgery protection for FastAPI applications
 import hashlib
 import hmac
 import logging
+import os
 import secrets
 import time
 from typing import Optional
@@ -15,18 +16,116 @@ from fastapi import HTTPException, Request, status
 logger = logging.getLogger(__name__)
 
 
+class CSRFTokenStore:
+    """
+    Redis-backed CSRF token store with in-memory fallback for development.
+
+    SECURITY: In production, Redis is REQUIRED. This prevents:
+    - Token bypass by restarting the service
+    - State loss in multi-worker/multi-instance deployments
+    - Session fixation attacks
+
+    In development, falls back to in-memory storage with a warning.
+    """
+
+    def __init__(self):
+        self._redis_client = None
+        self._in_memory_fallback = {}
+        self._init_redis()
+
+    def _init_redis(self):
+        """Initialize Redis connection with production enforcement."""
+        env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development")).lower()
+
+        try:
+            import redis
+
+            self._redis_client = redis.Redis(
+                host=os.getenv("REDIS_HOST", "localhost"),
+                port=int(os.getenv("REDIS_PORT", "6379")),
+                password=os.getenv("REDIS_PASSWORD"),
+                db=int(os.getenv("REDIS_CSRF_DB", "3")),
+                decode_responses=True,
+            )
+            # Test connection
+            self._redis_client.ping()
+            logger.info("CSRF token store: Redis connection established")
+        except Exception as e:
+            # SECURITY: Hard fail in production - Redis is required
+            if env in ("production", "prod", "staging"):
+                raise RuntimeError(
+                    f"CRITICAL: Redis required for CSRF in production but unavailable: {e}. "
+                    f"Set REDIS_HOST and ensure Redis is running."
+                )
+            # Development only - allow in-memory fallback with warning
+            logger.warning(
+                f"CSRF token store: Redis unavailable ({e}), "
+                f"using in-memory fallback (development only)"
+            )
+            self._redis_client = None
+
+    def store(self, token: str, token_info: dict, ttl: int = 3600):
+        """Store a CSRF token with expiry."""
+        import json
+
+        if self._redis_client:
+            self._redis_client.setex(
+                f"csrf:{token}",
+                ttl,
+                json.dumps(token_info),
+            )
+        else:
+            self._in_memory_fallback[token] = token_info
+
+    def get(self, token: str) -> Optional[dict]:
+        """Retrieve a CSRF token's info."""
+        import json
+
+        if self._redis_client:
+            data = self._redis_client.get(f"csrf:{token}")
+            if data:
+                return json.loads(data)
+            return None
+        else:
+            return self._in_memory_fallback.get(token)
+
+    def delete(self, token: str):
+        """Delete a CSRF token."""
+        if self._redis_client:
+            self._redis_client.delete(f"csrf:{token}")
+        else:
+            self._in_memory_fallback.pop(token, None)
+
+    def cleanup_expired(self):
+        """Clean up expired tokens (only needed for in-memory store)."""
+        if self._redis_client:
+            # Redis handles expiry automatically via TTL
+            return
+
+        current_time = int(time.time())
+        expired_tokens = [
+            token
+            for token, info in self._in_memory_fallback.items()
+            if current_time > info.get("expires_at", 0)
+        ]
+
+        for token in expired_tokens:
+            self._in_memory_fallback.pop(token, None)
+
+        if expired_tokens:
+            logger.info(f"Cleaned up {len(expired_tokens)} expired CSRF tokens")
+
+
 class CSRFProtection:
-    """CSRF protection implementation"""
+    """CSRF protection implementation with Redis-backed token storage."""
 
     def __init__(self, secret_key: str = None, token_expiry: int = 3600):
-        # Load from environment variable if not provided
-        import os
-
         self.secret_key = (
             secret_key or os.getenv("CSRF_SECRET_KEY") or secrets.token_urlsafe(32)
         )
         self.token_expiry = token_expiry  # seconds
-        self.token_store = {}  # In production, use Redis
+        # SECURITY: Use Redis-backed store (fails hard in production if unavailable)
+        self.token_store = CSRFTokenStore()
 
         if not secret_key and not os.getenv("CSRF_SECRET_KEY"):
             logger.warning(
@@ -54,14 +153,15 @@ class CSRFProtection:
         # Combine data and signature
         token = f"{token_data}:{signature}"
 
-        # Store token with expiry
-        self.token_store[token] = {
+        # Store token with expiry (Redis-backed in production)
+        token_info = {
             "session_id": session_id,
             "created_at": timestamp,
             "expires_at": timestamp + self.token_expiry,
         }
+        self.token_store.store(token, token_info, ttl=self.token_expiry)
 
-        # Clean up expired tokens
+        # Clean up expired tokens (only affects in-memory fallback)
         self._cleanup_expired_tokens()
 
         return token
@@ -73,7 +173,7 @@ class CSRFProtection:
             if not token:
                 return False
 
-            # Check if token exists in store
+            # Check if token exists in store (Redis-backed in production)
             token_info = self.token_store.get(token)
             if not token_info:
                 logger.warning("CSRF token not found in store")
@@ -116,23 +216,12 @@ class CSRFProtection:
             return False
 
     def _remove_token(self, token: str):
-        """Remove token from store"""
-        self.token_store.pop(token, None)
+        """Remove token from store (Redis-backed in production)"""
+        self.token_store.delete(token)
 
     def _cleanup_expired_tokens(self):
-        """Clean up expired tokens"""
-        current_time = int(time.time())
-        expired_tokens = [
-            token
-            for token, info in self.token_store.items()
-            if current_time > info["expires_at"]
-        ]
-
-        for token in expired_tokens:
-            self._remove_token(token)
-
-        if expired_tokens:
-            logger.info(f"Cleaned up {len(expired_tokens)} expired CSRF tokens")
+        """Clean up expired tokens (delegated to store)"""
+        self.token_store.cleanup_expired()
 
     def get_token_from_request(self, request: Request) -> Optional[str]:
         """Extract CSRF token from request"""

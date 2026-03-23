@@ -921,8 +921,8 @@ def create_app() -> FastAPI:
     # Include authentication routes
     app.include_router(auth_router)
 
-    # Include real database-backed capsules router
-    from .api.capsules_fastapi_router import router as capsules_router
+    # Include real database-backed capsules router (split into focused modules)
+    from .api.capsules import router as capsules_router
 
     app.include_router(capsules_router)
 
