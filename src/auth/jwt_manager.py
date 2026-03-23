@@ -274,7 +274,6 @@ class JWTManager:
         now = datetime.now(timezone.utc)
         payload = {
             "sub": str(user_id),
-            "user_id": str(user_id),  # keeping for backward compatibility
             "email": email,
             "username": username,
             "scopes": scopes,
@@ -291,7 +290,6 @@ class JWTManager:
         now = datetime.now(timezone.utc)
         payload = {
             "sub": str(user_id),
-            "user_id": str(user_id),
             "exp": now + self.refresh_token_expire,
             "iat": now,
             "jti": secrets.token_urlsafe(32),
@@ -329,7 +327,7 @@ class JWTManager:
                 return None
 
             # SECURITY: Check if all user tokens were revoked after this token was issued
-            user_id = payload.get("sub") or payload.get("user_id")
+            user_id = payload.get("sub")
             iat = payload.get("iat")
             if user_id and iat:
                 # Convert iat to timestamp if it's a datetime
@@ -392,7 +390,7 @@ class JWTManager:
             return None
 
         # Verify the refresh token belongs to this user
-        token_user_id = payload.get("user_id") or payload.get("sub")
+        token_user_id = payload.get("sub")
         if token_user_id != user_id:
             logger.warning(f"Refresh token user mismatch: {token_user_id} != {user_id}")
             return None
@@ -416,7 +414,7 @@ class JWTManager:
             # Decode without verification to get JTI and user_id
             payload = jwt.decode(token, options={"verify_signature": False})
             jti = payload.get("jti")
-            user_id = payload.get("sub") or payload.get("user_id", "unknown")
+            user_id = payload.get("sub", "unknown")
             exp = payload.get("exp")
 
             if not jti:
@@ -483,11 +481,6 @@ def create_access_token(
 def create_refresh_token(user_id: str) -> str:
     """Create refresh token for user"""
     return jwt_manager.generate_refresh_token(str(user_id))
-
-
-def create_reset_token(email: str) -> str:
-    """Create password reset token"""
-    return jwt_manager.generate_password_reset_token(email)
 
 
 def verify_access_token(token: str) -> Optional[Dict[str, Any]]:

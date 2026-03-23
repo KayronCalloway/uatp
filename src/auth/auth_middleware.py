@@ -62,6 +62,8 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # Normalize: JWT standard uses 'sub', internal code uses 'user_id'
+    payload["user_id"] = payload.get("sub")
     return payload
 
 
@@ -72,6 +74,9 @@ def get_current_user_optional(request: Request) -> Optional[Dict[str, Any]]:
         return None
 
     payload = verify_access_token(token)
+    if payload:
+        # Normalize: JWT standard uses 'sub', internal code uses 'user_id'
+        payload["user_id"] = payload.get("sub")
     return payload
 
 
@@ -404,7 +409,7 @@ def setup_auth_middleware(app):
 def get_user_id_from_token(token: str) -> Optional[str]:
     """Extract user ID from JWT token"""
     payload = verify_access_token(token)
-    return payload.get("user_id") if payload else None
+    return payload.get("sub") if payload else None
 
 
 def is_admin_user(current_user: Dict[str, Any]) -> bool:
