@@ -52,7 +52,7 @@ pytz==2023.3
 click==8.1.7
 python-dotenv==1.2.2
 python-multipart==0.0.22
-cbor2==5.8.0
+cbor2==5.9.0
 
 # Production Server - Security hardened
 gunicorn==23.0.0
