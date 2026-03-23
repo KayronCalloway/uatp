@@ -2,10 +2,11 @@
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 7.2.x   | :white_check_mark: |
-| < 7.2   | :x:                |
+| Component | Version | Supported |
+|-----------|---------|-----------|
+| SDK (PyPI/npm) | 1.0.x | :white_check_mark: |
+| Capsule Schema | 7.2 | :white_check_mark: |
+| Capsule Schema | < 7.2 | :x: |
 
 ## Reporting a Vulnerability
 
@@ -24,11 +25,20 @@ Please include the following information in your report:
 - Proof-of-concept or exploit code (if possible)
 - Impact assessment of the vulnerability
 
+### Severity Levels
+
+| Severity | Definition | Examples |
+|----------|------------|----------|
+| **Critical** | Remote code execution, key compromise, signature bypass | Private key extraction, forged signatures accepted |
+| **High** | Authentication bypass, data exposure | JWT bypass, unauthorized capsule access |
+| **Medium** | Limited security impact | Information disclosure, DoS vectors |
+| **Low** | Minimal security impact | Minor information leaks, hardening issues |
+
 ### Response Timeline
 
 - **Initial Response**: Within 48 hours
 - **Status Update**: Within 7 days
-- **Resolution Target**: Within 30 days for critical issues
+- **Resolution Target**: Critical (7 days), High (14 days), Medium/Low (30 days)
 
 ### What to Expect
 

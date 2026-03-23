@@ -1,6 +1,8 @@
 # UATP Development Roadmap
 
-## Current Status: Beta (v7.3.0)
+## Current Status: Beta
+
+**Versions:** SDK 1.0.1 (PyPI) | Capsule Schema 7.2 | See [STATUS.md](STATUS.md)
 
 Core cryptographic proof infrastructure is complete. See [STATUS.md](STATUS.md) for detailed component status.
 
@@ -26,7 +28,7 @@ Core cryptographic proof infrastructure is complete. See [STATUS.md](STATUS.md) 
 - **Ed25519 Signatures** - FIPS 186-5 compliant signing
 - **ML-DSA-65 Signatures** - Post-quantum (FIPS 204), beta
 - **RFC 3161 Timestamps** - DigiCert TSA integration, beta
-- **Python SDK** - `pip install uatp` (v0.2.1 on PyPI)
+- **Python SDK** - `pip install uatp` (v1.0.1 on PyPI)
 - **FastAPI Backend** - Capsule creation, verification, search
 - **DSSE Bundle Export** - Sigstore-compatible portable proofs
 - **Workflow Attestation** - in-toto style chain-of-custody

@@ -41,11 +41,18 @@ The "Shipped" items below refer to the **core protocol only**. The platform modu
 | Next.js Frontend | **Beta** | Dashboard functional, needs polish |
 | Claude Code Integration | **Beta** | Hook-based capture functional |
 
+## Working (TypeScript Path)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| TypeScript SDK | **Working** | `npm install @coolwithakay/uatp` |
+| Ed25519 Signatures | **Working** | Same algorithm as Python SDK |
+| Local Key Management | **Working** | Browser and Node.js |
+
 ## Planned (Not Yet Built)
 
 | Component | Target | Notes |
 |-----------|--------|-------|
-| JavaScript/TypeScript SDK | Q2 2026 | Design complete |
 | Hosted SaaS | Q3 2026 | Architecture designed |
 | External Security Audit | Q2 2026 | Seeking auditors |
 

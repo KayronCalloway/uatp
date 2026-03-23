@@ -111,9 +111,11 @@ UATP creates verifiable capsules for AI reasoning: cryptographically signed reco
 
 **What's working today:**
 - **Ed25519 signatures** — tamper-evident, locally-signed, keys never leave your device
-- **RFC 3161 timestamps** — external time authority (DigiCert) - beta
+- **RFC 3161 timestamps** — external time authority (DigiCert) - beta*
 - **Standalone verification** — verify capsules without trusting UATP servers
 - **DSSE bundles** — Sigstore-compatible export
+
+*\*RFC 3161: Timestamp presence is verified; full TSA signature verification requires optional `rfc3161ng` library. See [TRUST_MODEL.md](TRUST_MODEL.md).*
 
 **What's experimental:**
 - ML-DSA-65 post-quantum signatures (beta, not audited)
