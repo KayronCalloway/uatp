@@ -7,7 +7,7 @@ starlette==1.0.0
 werkzeug>=3.1.6  # CVE-2024-49767 fix
 
 # Database - Latest secure versions
-asyncpg==0.30.0
+asyncpg==0.31.0
 psycopg2-binary==2.9.11
 SQLAlchemy==2.0.36
 alembic==1.14.0
