@@ -42,7 +42,7 @@ sentry-sdk==2.19.2
 
 # Task Queue - Security patches
 celery==5.4.0
-kombu==5.4.2
+kombu==5.6.2
 
 # Date/Time
 python-dateutil==2.9.0.post0
