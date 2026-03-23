@@ -115,6 +115,31 @@ class CSRFTokenStore:
         if expired_tokens:
             logger.info(f"Cleaned up {len(expired_tokens)} expired CSRF tokens")
 
+    # Dict-like interface for backward compatibility with tests
+    def __getitem__(self, token: str) -> dict:
+        """Allow dict-style access: store[token]"""
+        result = self.get(token)
+        if result is None:
+            raise KeyError(token)
+        return result
+
+    def __setitem__(self, token: str, token_info: dict):
+        """Allow dict-style assignment: store[token] = info"""
+        self.store(token, token_info)
+
+    def __contains__(self, token: str) -> bool:
+        """Allow 'in' operator: token in store"""
+        return self.get(token) is not None
+
+    def __len__(self) -> int:
+        """Allow len(store)"""
+        if self._redis_client:
+            # Count csrf:* keys in Redis
+            keys = self._redis_client.keys("csrf:*")
+            return len(keys) if keys else 0
+        else:
+            return len(self._in_memory_fallback)
+
 
 class CSRFProtection:
     """CSRF protection implementation with Redis-backed token storage."""
