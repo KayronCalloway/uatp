@@ -3,6 +3,24 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { apiClient, api } from '@/lib/api-client';
 
+// SECURITY: Only log in development mode
+const isDevelopment = process.env.NODE_ENV === 'development';
+const debugLog = (...args: unknown[]) => {
+  if (isDevelopment) {
+    console.log(...args);
+  }
+};
+const debugWarn = (...args: unknown[]) => {
+  if (isDevelopment) {
+    console.warn(...args);
+  }
+};
+const debugError = (...args: unknown[]) => {
+  if (isDevelopment) {
+    console.error(...args);
+  }
+};
+
 interface AuthContextType {
   apiKey: string | null;
   authToken: string | null;
@@ -16,6 +34,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * SECURITY NOTES:
+ * - JWT tokens stored in sessionStorage (cleared on tab close)
+ * - API keys stored in sessionStorage, NOT localStorage (reduces XSS risk window)
+ * - All sensitive data cleared on logout
+ * - For maximum security, consider HTTP-only cookies instead
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [authToken, setAuthTokenState] = useState<string | null>(null);
@@ -23,39 +48,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
-      console.log('Initializing auth...');
+      debugLog('Initializing auth...');
 
       try {
         // Check for stored JWT token (sessionStorage for security)
         const storedToken = sessionStorage.getItem('uatp-auth-token');
         if (storedToken) {
-          console.log('Found stored auth token - restoring session');
+          debugLog('Found stored auth token - restoring session');
           api.setAuthToken(storedToken);
           setAuthTokenState(storedToken);
         }
 
-        // Since the backend doesn't require authentication for some endpoints, set a default state
-        console.log('Setting default API key');
-        setApiKey('no-auth-required');
-        localStorage.setItem('uatp-api-key', 'no-auth-required');
+        // Check for stored API key (sessionStorage for security)
+        const storedApiKey = sessionStorage.getItem('uatp-api-key');
+        if (storedApiKey) {
+          debugLog('Found stored API key - restoring');
+          apiClient.setApiKey(storedApiKey);
+          setApiKey(storedApiKey);
+        }
 
         // Quick health check with short timeout (non-blocking)
         setTimeout(async () => {
           try {
             await apiClient.healthCheck();
-            console.log('Background health check passed - backend accessible');
-          } catch (error) {
-            console.warn('Background health check failed - using mock data mode');
+            debugLog('Background health check passed - backend accessible');
+          } catch {
+            debugWarn('Background health check failed - some features may be unavailable');
           }
         }, 100);
 
       } catch (error) {
-        console.error('Auth initialization error:', error);
-        setApiKey('no-auth-required');
-        localStorage.setItem('uatp-api-key', 'no-auth-required');
+        debugError('Auth initialization error:', error);
       }
 
-      console.log('Auth initialization complete');
+      debugLog('Auth initialization complete');
       setIsLoading(false);
     };
 
@@ -70,15 +96,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       apiClient.setApiKey(newApiKey);
       await apiClient.healthCheck();
 
-      // If successful, store the API key
-      localStorage.setItem('uatp-api-key', newApiKey);
+      // SECURITY: Store in sessionStorage (not localStorage) to limit XSS exposure
+      sessionStorage.setItem('uatp-api-key', newApiKey);
       setApiKey(newApiKey);
 
       return true;
-    } catch (error) {
+    } catch {
       // If failed, remove the API key
       apiClient.removeApiKey();
-      localStorage.removeItem('uatp-api-key');
+      sessionStorage.removeItem('uatp-api-key');
       setApiKey(null);
 
       return false;
@@ -88,7 +114,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('uatp-api-key');
+    // SECURITY: Clear all stored credentials
+    sessionStorage.removeItem('uatp-api-key');
     sessionStorage.removeItem('uatp-auth-token');
     setApiKey(null);
     setAuthTokenState(null);
@@ -124,7 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return true;
     } catch (error) {
-      console.error('Login with token failed:', error);
+      debugError('Login with token failed:', error);
       return false;
     } finally {
       setIsLoading(false);

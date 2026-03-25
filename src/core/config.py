@@ -10,19 +10,22 @@ API_V1_STR: str = "/api/v1"
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 
 # Database Settings
+# Supports both naming conventions for flexibility:
+#   - DB_* (docker-compose convention, takes precedence)
+#   - POSTGRES_* (legacy/alternative convention)
 if ENVIRONMENT == "production":
     # In production, connect to a PostgreSQL database using environment variables.
-    POSTGRES_USER = os.getenv("POSTGRES_USER")
-    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-    POSTGRES_HOST = os.getenv(
-        "POSTGRES_HOST", "db"
-    )  # 'db' is a common Docker Compose service name
-    POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
-    POSTGRES_DB = os.getenv("POSTGRES_DB")
+    # Accept both DB_* (docker-compose) and POSTGRES_* (legacy) naming
+    POSTGRES_USER = os.getenv("DB_USERNAME") or os.getenv("POSTGRES_USER")
+    POSTGRES_PASSWORD = os.getenv("DB_PASSWORD") or os.getenv("POSTGRES_PASSWORD")
+    POSTGRES_HOST = os.getenv("DB_HOST") or os.getenv("POSTGRES_HOST", "postgres")
+    POSTGRES_PORT = os.getenv("DB_PORT") or os.getenv("POSTGRES_PORT", "5432")
+    POSTGRES_DB = os.getenv("DB_NAME") or os.getenv("POSTGRES_DB")
 
     if not all([POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB]):
         raise ValueError(
-            "In production, POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB must be set."
+            "In production, database credentials must be set. "
+            "Use either DB_USERNAME/DB_PASSWORD/DB_NAME or POSTGRES_USER/POSTGRES_PASSWORD/POSTGRES_DB."
         )
 
     DATABASE_URL = (

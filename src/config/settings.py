@@ -42,8 +42,9 @@ class Settings:
     MAX_CHAIN_SIZE: int = 10000
 
     # API settings - configured via environment variables in production
+    # Canonical port is 8000 (matches Docker, run.py, and docker-compose)
     API_HOST: str = os.getenv("UATP_API_HOST", "0.0.0.0")
-    API_PORT: int = int(os.getenv("UATP_API_PORT", "5000"))
+    API_PORT: int = int(os.getenv("UATP_API_PORT") or os.getenv("API_PORT", "8000"))
     RATE_LIMIT: int = 100  # Requests per minute
     CORS_ORIGINS: List[str] = (
         os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else []
@@ -189,7 +190,7 @@ class Settings:
             logger.warning(
                 "Invalid API_PORT, must be between 1-65535. Using default value."
             )
-            self.API_PORT = 5000
+            self.API_PORT = 8000
 
         if self.RATE_LIMIT <= 0:
             logger.warning("Invalid RATE_LIMIT, must be positive. Using default value.")

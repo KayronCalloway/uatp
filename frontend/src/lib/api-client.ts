@@ -40,14 +40,28 @@ import {
 export class UATCapsuleEngineClient {
   private client: AxiosInstance;
   private authToken: string | null = null;
+  private static readonly isDevelopment = process.env.NODE_ENV === 'development';
 
-  constructor(baseURL: string = process.env.NEXT_PUBLIC_UATP_API_URL || 'http://localhost:8000', apiKey: string = process.env.NEXT_PUBLIC_UATP_API_KEY || 'test-api-key') {
+  /**
+   * Create API client.
+   *
+   * SECURITY: No hardcoded fallback API keys. In production, NEXT_PUBLIC_UATP_API_KEY
+   * must be set or requests will fail authentication.
+   */
+  constructor(
+    baseURL: string = process.env.NEXT_PUBLIC_UATP_API_URL || 'http://localhost:8000',
+    apiKey?: string
+  ) {
+    // SECURITY: Only use API key if explicitly provided or from environment
+    // Never use hardcoded fallback keys
+    const effectiveApiKey = apiKey || process.env.NEXT_PUBLIC_UATP_API_KEY;
+
     this.client = axios.create({
       baseURL,
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
-        ...(apiKey && { 'X-API-Key': apiKey }),
+        ...(effectiveApiKey && { 'X-API-Key': effectiveApiKey }),
       },
     });
 
@@ -55,7 +69,10 @@ export class UATCapsuleEngineClient {
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
-        console.error('API request failed:', error.config?.url, error.response?.status || error.code);
+        // SECURITY: Only log detailed errors in development
+        if (UATCapsuleEngineClient.isDevelopment) {
+          console.error('API request failed:', error.config?.url, error.response?.status || error.code);
+        }
 
         if (error.response?.data?.error) {
           throw new Error(error.response.data.error);
@@ -812,9 +829,11 @@ export class UATCapsuleEngineClient {
 }
 
 // Default client instance
+// SECURITY: API key is only used if explicitly set in environment
+// No hardcoded fallback keys - authentication will fail if not configured
 export const apiClient = new UATCapsuleEngineClient(
   process.env.NEXT_PUBLIC_UATP_API_URL || 'http://localhost:8000',
-  process.env.NEXT_PUBLIC_UATP_API_KEY || 'test-api-key'
+  process.env.NEXT_PUBLIC_UATP_API_KEY // No fallback - undefined if not set
 );
 
 // Hook-friendly wrapper functions

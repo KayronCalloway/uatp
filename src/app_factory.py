@@ -112,12 +112,20 @@ async def lifespan(app: FastAPI):
 
         validate_production_secrets()
 
-        # Initialize SQLAlchemy database (needed for migrations)
+        # DATABASE ARCHITECTURE NOTE:
+        # We use two database access layers intentionally:
+        # 1. SQLAlchemy (db) - ORM for models, migrations, and complex queries
+        # 2. asyncpg (db_manager) - Raw async queries for performance-critical paths
+        #
+        # SQLAlchemy is always initialized. asyncpg is optional (PostgreSQL only).
+        # In development with SQLite, only SQLAlchemy is used.
+
+        # Initialize SQLAlchemy database (primary ORM layer)
         logger.info("Initializing SQLAlchemy database...")
         db.init_app(app)
 
-        # Initialize asyncpg database manager (PostgreSQL - optional in development)
-        logger.info("Initializing database connection...")
+        # Initialize asyncpg database manager (PostgreSQL high-performance layer - optional)
+        logger.info("Initializing asyncpg connection pool...")
         try:
             await db_manager.connect()
             # Run migrations
@@ -214,11 +222,14 @@ def setup_middleware(app: FastAPI, limiter: RateLimitConfig, metrics: Dict[str, 
     logger = structlog.get_logger(__name__)
 
     # CORS - Production-safe configuration
-    # Get allowed origins from environment or use secure defaults
-    allowed_origins = os.getenv(
+    # Accept both CORS_ORIGINS (docker-compose) and CORS_ALLOWED_ORIGINS (legacy)
+    cors_env = os.getenv("CORS_ORIGINS") or os.getenv(
         "CORS_ALLOWED_ORIGINS",
         "https://uatp.app,https://api.uatp.app,https://dashboard.uatp.app",
-    ).split(",")
+    )
+    allowed_origins = [
+        origin.strip() for origin in cors_env.split(",") if origin.strip()
+    ]
 
     # Add localhost for development only (controlled by environment variable)
     if os.getenv("ENVIRONMENT") == "development":
@@ -458,15 +469,41 @@ def setup_health_routes(app: FastAPI):
 
     @app.get("/ready", tags=["Monitoring"])
     async def readiness_check():
-        """Readiness check endpoint"""
+        """
+        Readiness check endpoint with cascading health checks.
+
+        Checks all critical dependencies and returns detailed status.
+        Returns 200 if system is ready, 503 if any critical dependency is unhealthy.
+        """
         try:
-            # Check Redis connection
-            health = db_manager.health_check()
-            if not health["database"]:
-                raise HTTPException(status_code=503, detail="Database not ready")
+            from src.observability.health_checks import (
+                HealthStatus,
+                get_health_service,
+            )
 
-            return {"status": "ready", "checks": health}
+            health_service = get_health_service()
+            result = await health_service.check_all()
 
+            # Determine HTTP status based on overall health
+            if result.overall_status == HealthStatus.UNHEALTHY:
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "status": "not_ready",
+                        "reason": "One or more critical dependencies unhealthy",
+                        **result.to_dict(),
+                    },
+                )
+
+            return {
+                "status": "ready"
+                if result.overall_status == HealthStatus.HEALTHY
+                else "degraded",
+                **result.to_dict(),
+            }
+
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error("Readiness check failed", error=str(e))
             raise HTTPException(status_code=503, detail="Service not ready") from e
@@ -779,8 +816,32 @@ def setup_api_routes(app: FastAPI, rate_config: RateLimitConfig):
 
     @app.get("/api/v1/users/{user_id}", tags=["Authentication"])
     async def get_user(request: Request, user_id: str):
-        """Get user profile"""
+        """Get user profile - requires authentication and authorization.
+
+        Users can only access their own profile unless they have admin scope.
+        """
         try:
+            # SECURITY: Enforce authorization - users can only access their own profile
+            # Admin users can access any profile
+            current_user = getattr(request.state, "user", None)
+            if not current_user:
+                raise HTTPException(status_code=401, detail="Authentication required")
+
+            current_user_id = current_user.get("sub") or current_user.get("user_id")
+            user_scopes = current_user.get("scopes", [])
+
+            # Check if user is accessing their own profile or is admin
+            if current_user_id != user_id and "admin" not in user_scopes:
+                logger.warning(
+                    "Unauthorized profile access attempt",
+                    requester=current_user_id,
+                    target=user_id,
+                )
+                raise HTTPException(
+                    status_code=403,
+                    detail="Access denied. You can only access your own profile.",
+                )
+
             user_service = app.state.user_service
             user = await user_service.get_user_profile(user_id)
 
@@ -795,6 +856,8 @@ def setup_api_routes(app: FastAPI, rate_config: RateLimitConfig):
             else:
                 raise HTTPException(status_code=404, detail="User not found")
 
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error("Get user error", user_id=user_id, error=str(e))
             raise HTTPException(status_code=500, detail="Failed to get user") from e

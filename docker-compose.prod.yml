@@ -59,9 +59,9 @@ services:
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8000}:8000"
-    # SECURITY: Health and metrics only via internal network or explicit exposure
+    # SECURITY: Metrics only via internal network or explicit exposure
+    # Note: Health checks are served on the main port (8000), not a separate port
     expose:
-      - "8080"  # Health checks - internal only
       - "9090"  # Metrics - internal only (expose via reverse proxy if needed)
     environment:
       # Database - SECURITY: All credentials required, no defaults
@@ -98,7 +98,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3

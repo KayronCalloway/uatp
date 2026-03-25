@@ -79,15 +79,21 @@ ENV PYTHONPATH=/app/src \
 # Switch to non-root user
 USER uatp
 
-# Expose ports (FastAPI main, health check, metrics)
-EXPOSE 8000 8080 9090
+# Expose ports (FastAPI main on 8000, metrics on 9090)
+# Note: Health endpoints are served on the main port (8000), not a separate port
+EXPOSE 8000 9090
 
 # Health check with proper timeout and retries
+# IMPORTANT: Health endpoint is on the main application port (8000)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
+  CMD curl -f http://localhost:8000/health || exit 1
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
 # Default command with production settings
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker"]
+# Use gunicorn with uvicorn workers for production multi-worker deployment
+# - gunicorn manages worker processes and handles restarts
+# - uvicorn.workers.UvicornWorker provides async ASGI support
+# - Workers scaled based on CPU cores: typically 2-4 workers per core
+CMD ["gunicorn", "src.main:app", "--bind", "0.0.0.0:8000", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--access-logfile", "-", "--error-logfile", "-", "--capture-output"]
