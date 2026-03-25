@@ -67,25 +67,51 @@ export function HallucinationDetector() {
     }
   };
 
-  const highlightText = (text: string, detections: HallucinationDetection[]) => {
+  /**
+   * SECURITY: Build highlighted text using React elements instead of HTML strings.
+   * This prevents XSS attacks from malicious detection descriptions.
+   */
+  const highlightText = (text: string, detections: HallucinationDetection[]): React.ReactNode => {
     if (!detections.length) return text;
 
-    let result = text;
-    let offset = 0;
+    // Sort detections by start position
+    const sorted = [...detections].sort((a, b) => a.location.start - b.location.start);
 
-    detections
-      .sort((a, b) => a.location.start - b.location.start)
-      .forEach((detection) => {
-        const start = detection.location.start + offset;
-        const end = detection.location.end + offset;
-        const originalText = result.substring(start, end);
-        const highlightedText = `<span class="bg-red-200 px-1 rounded" title="${detection.description}">${originalText}</span>`;
+    const elements: React.ReactNode[] = [];
+    let lastEnd = 0;
 
-        result = result.substring(0, start) + highlightedText + result.substring(end);
-        offset += highlightedText.length - originalText.length;
-      });
+    sorted.forEach((detection, index) => {
+      const { start, end } = detection.location;
 
-    return result;
+      // Add text before this detection
+      if (start > lastEnd) {
+        elements.push(
+          <span key={`text-${index}`}>{text.substring(lastEnd, start)}</span>
+        );
+      }
+
+      // Add highlighted detection (React handles escaping automatically)
+      elements.push(
+        <span
+          key={`highlight-${index}`}
+          className="bg-red-200 px-1 rounded cursor-help"
+          title={detection.description}
+        >
+          {text.substring(start, end)}
+        </span>
+      );
+
+      lastEnd = end;
+    });
+
+    // Add remaining text after last detection
+    if (lastEnd < text.length) {
+      elements.push(
+        <span key="text-final">{text.substring(lastEnd)}</span>
+      );
+    }
+
+    return <>{elements}</>;
   };
 
   return (
@@ -177,15 +203,12 @@ export function HallucinationDetector() {
               </div>
             </div>
 
-            {/* Highlighted Text */}
+            {/* Highlighted Text - SECURITY: Uses React elements, not dangerouslySetInnerHTML */}
             <div className="border rounded-lg p-4 bg-gray-50">
               <h4 className="font-medium mb-2">Analyzed Text:</h4>
-              <div
-                className="text-sm leading-relaxed"
-                dangerouslySetInnerHTML={{
-                  __html: highlightText(lastResult.text, lastResult.detections)
-                }}
-              />
+              <div className="text-sm leading-relaxed">
+                {highlightText(lastResult.text, lastResult.detections)}
+              </div>
             </div>
 
             {/* Detections */}

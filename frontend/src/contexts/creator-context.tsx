@@ -1,137 +1,166 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+
+/**
+ * SECURITY: Creator/Admin privileges context
+ *
+ * IMPORTANT: All privileges MUST come from the backend JWT token.
+ * The frontend NEVER determines authorization - it only reflects
+ * what the backend has authorized via the JWT claims.
+ *
+ * Flow:
+ * 1. User logs in via auth-context
+ * 2. Backend returns JWT with 'scopes' or 'roles' claim
+ * 3. This context reads privileges from the verified JWT
+ * 4. UI conditionally renders based on these privileges
+ *
+ * NEVER:
+ * - Store privileges in localStorage
+ * - Hardcode creator keys or IDs
+ * - Auto-enable privileges based on health checks
+ * - Trust any client-side privilege escalation
+ */
+
+interface CreatorPrivileges {
+  adminAccess: boolean;
+  bulkOperations: boolean;
+  systemDebug: boolean;
+  rawDataAccess: boolean;
+  advancedTools: boolean;
+}
 
 interface CreatorState {
   isCreator: boolean;
   creatorId: string | null;
-  privileges: {
-    adminAccess: boolean;
-    bulkOperations: boolean;
-    systemDebug: boolean;
-    rawDataAccess: boolean;
-    advancedTools: boolean;
-  };
+  privileges: CreatorPrivileges;
 }
 
 interface CreatorContextValue {
   state: CreatorState;
-  enableCreatorMode: (creatorId?: string) => void;
-  disableCreatorMode: () => void;
+  refreshPrivileges: () => Promise<void>;
 }
+
+const NO_PRIVILEGES: CreatorPrivileges = {
+  adminAccess: false,
+  bulkOperations: false,
+  systemDebug: false,
+  rawDataAccess: false,
+  advancedTools: false,
+};
 
 const initialState: CreatorState = {
   isCreator: false,
   creatorId: null,
-  privileges: {
-    adminAccess: false,
-    bulkOperations: false,
-    systemDebug: false,
-    rawDataAccess: false,
-    advancedTools: false,
-  }
+  privileges: NO_PRIVILEGES,
 };
 
 const CreatorContext = createContext<CreatorContextValue>({
   state: initialState,
-  enableCreatorMode: () => {},
-  disableCreatorMode: () => {},
+  refreshPrivileges: async () => {},
 });
 
-const CREATOR_KEYS = [
-  'kay-creator-key',
-  'uatp-system-creator',
-  'dev-creator-001'
-];
+/**
+ * Map JWT scopes/roles to privilege flags
+ * SECURITY: This mapping should match backend authorization logic
+ */
+function mapScopesToPrivileges(scopes: string[]): CreatorPrivileges {
+  const scopeSet = new Set(scopes.map(s => s.toLowerCase()));
 
-const CREATOR_IDS = [
-  'kay',
-  'kay-user',
-  'kay-live-agent',
-  'system-creator'
-];
+  return {
+    // Only 'admin' scope grants admin access
+    adminAccess: scopeSet.has('admin'),
+    // Bulk operations require explicit scope
+    bulkOperations: scopeSet.has('admin') || scopeSet.has('bulk'),
+    // Debug access is admin-only
+    systemDebug: scopeSet.has('admin') || scopeSet.has('debug'),
+    // Raw data access requires explicit scope
+    rawDataAccess: scopeSet.has('admin') || scopeSet.has('raw_data'),
+    // Advanced tools require creator or admin scope
+    advancedTools: scopeSet.has('admin') || scopeSet.has('creator') || scopeSet.has('advanced'),
+  };
+}
+
+/**
+ * Decode JWT payload (without verification - that's the backend's job)
+ * SECURITY: We only decode to read claims, NOT to verify authenticity
+ */
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    const payload = parts[1];
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+}
 
 export function CreatorProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<CreatorState>(initialState);
 
+  const refreshPrivileges = useCallback(async () => {
+    // Get auth token from sessionStorage (set by auth-context)
+    const token = sessionStorage.getItem('uatp-auth-token');
+
+    if (!token) {
+      // No token = no privileges
+      setState(initialState);
+      return;
+    }
+
+    // Decode JWT to read claims
+    const payload = decodeJwtPayload(token);
+
+    if (!payload) {
+      setState(initialState);
+      return;
+    }
+
+    // Check token expiration
+    const exp = payload.exp as number | undefined;
+    if (exp && Date.now() >= exp * 1000) {
+      // Token expired - clear privileges
+      setState(initialState);
+      return;
+    }
+
+    // Extract user info and scopes from JWT claims
+    const userId = (payload.sub || payload.user_id) as string | undefined;
+    const scopes = (payload.scopes || payload.roles || []) as string[];
+
+    // Map scopes to privileges
+    const privileges = mapScopesToPrivileges(scopes);
+
+    // Determine if user has any elevated privileges
+    const isCreator = Object.values(privileges).some(v => v);
+
+    setState({
+      isCreator,
+      creatorId: userId || null,
+      privileges,
+    });
+  }, []);
+
+  // Refresh privileges on mount and when storage changes
   useEffect(() => {
-    const checkCreatorStatus = async () => {
-      // Check for creator key in localStorage first
-      const creatorKey = localStorage.getItem('uatp_creator_key');
-      const creatorId = localStorage.getItem('uatp_creator_id');
+    refreshPrivileges();
 
-      // Auto-detect Kay as creator based on existing data patterns
-      const isKayCreator = creatorId === 'kay' || creatorKey === 'kay-creator-key';
-
-      // Check backend for creator status via the API client
-      let backendCreatorCheck = false;
-      try {
-        // Import API client dynamically to avoid circular deps
-        const { apiClient } = await import('@/lib/api-client');
-        const response = await apiClient.healthCheck();
-
-        // For now, we'll consider anyone who can reach the backend as a creator
-        // In production, this would be a proper creator-check endpoint
-        if (response) {
-          backendCreatorCheck = true;
-
-          // If backend confirms creator status, auto-enable creator mode
-          if (backendCreatorCheck && !isKayCreator) {
-            localStorage.setItem('uatp_creator_key', 'kay-creator-key');
-            localStorage.setItem('uatp_creator_id', 'kay');
-          }
-        }
-      } catch (error) {
-        console.log('Could not check creator status from backend - API not available');
-      }
-
-      // Enable creator mode if local keys OR backend confirms creator status
-      if ((creatorKey && CREATOR_KEYS.includes(creatorKey)) || isKayCreator || backendCreatorCheck) {
-        setState({
-          isCreator: true,
-          creatorId: creatorId || creatorKey || 'kay',
-          privileges: {
-            adminAccess: true,
-            bulkOperations: true,
-            systemDebug: true,
-            rawDataAccess: true,
-            advancedTools: true,
-          }
-        });
+    // Listen for storage changes (e.g., login/logout in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'uatp-auth-token') {
+        refreshPrivileges();
       }
     };
 
-    checkCreatorStatus();
-  }, []);
-
-  const enableCreatorMode = (creatorId: string = 'kay') => {
-    const creatorKey = 'kay-creator-key';
-
-    localStorage.setItem('uatp_creator_key', creatorKey);
-    localStorage.setItem('uatp_creator_id', creatorId);
-
-    setState({
-      isCreator: true,
-      creatorId,
-      privileges: {
-        adminAccess: true,
-        bulkOperations: true,
-        systemDebug: true,
-        rawDataAccess: true,
-        advancedTools: true,
-      }
-    });
-  };
-
-  const disableCreatorMode = () => {
-    localStorage.removeItem('uatp_creator_key');
-    localStorage.removeItem('uatp_creator_id');
-
-    setState(initialState);
-  };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [refreshPrivileges]);
 
   return (
-    <CreatorContext.Provider value={{ state, enableCreatorMode, disableCreatorMode }}>
+    <CreatorContext.Provider value={{ state, refreshPrivileges }}>
       {children}
     </CreatorContext.Provider>
   );

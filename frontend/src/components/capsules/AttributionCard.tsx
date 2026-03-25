@@ -1,14 +1,31 @@
 'use client';
 
+import { useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Users, DollarSign, Share2, Award, Clock } from 'lucide-react';
 import { Attribution } from '@/types/api';
+import { isValidCapsuleId } from '@/lib/validation';
 
 interface AttributionCardProps {
   attribution: Attribution;
 }
 
 export function AttributionCard({ attribution }: AttributionCardProps) {
+  const router = useRouter();
+
+  /**
+   * SECURITY: Safe navigation to another capsule.
+   * Validates the capsule ID before navigation to prevent open redirect attacks.
+   */
+  const navigateToCapsule = useCallback((capsuleId: string) => {
+    if (!isValidCapsuleId(capsuleId)) {
+      console.warn('Invalid capsule ID for navigation');
+      return;
+    }
+    router.push(`/capsules/${capsuleId}`);
+  }, [router]);
+
   if (!attribution || !attribution.contributors || attribution.contributors.length === 0) {
     return null;
   }
@@ -140,7 +157,10 @@ export function AttributionCard({ attribution }: AttributionCardProps) {
                   <div
                     key={i}
                     className="p-3 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors cursor-pointer"
-                    onClick={() => window.location.href = `/capsules/${capsuleId}`}
+                    onClick={() => navigateToCapsule(capsuleId)}
+                    onKeyDown={(e) => e.key === 'Enter' && navigateToCapsule(capsuleId)}
+                    role="button"
+                    tabIndex={0}
                   >
                     <span className="text-sm font-mono text-gray-800">{capsuleId}</span>
                   </div>

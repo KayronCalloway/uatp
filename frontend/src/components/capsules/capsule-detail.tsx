@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ import { AnyCapsule, GetCapsuleQuery } from '@/types/api';
 import { OutcomeRecorder } from './outcome-recorder';
 import { QualityBadge } from '@/components/capsules/quality-badge';
 import { QualityDetailsModal } from '@/components/capsules/quality-details-modal';
+import { isValidCapsuleId } from '@/lib/validation';
 import { DataSourcesCard } from '@/components/capsules/DataSourcesCard';
 import { RiskAssessmentCard } from '@/components/capsules/RiskAssessmentCard';
 import { AlternativesCard } from '@/components/capsules/AlternativesCard';
@@ -47,6 +49,7 @@ interface CapsuleDetailProps {
 }
 
 export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
+  const router = useRouter();
   const [includeRaw, setIncludeRaw] = useState(false);
   const [showRawData, setShowRawData] = useState(false);
   const [showOutcomeRecorder, setShowOutcomeRecorder] = useState(false);
@@ -54,6 +57,18 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
   const [decryptedPayload, setDecryptedPayload] = useState<any>(null);
   const [decryptionError, setDecryptionError] = useState<string | null>(null);
   const [isDecrypting, setIsDecrypting] = useState(false);
+
+  /**
+   * SECURITY: Safe navigation to another capsule.
+   * Validates the capsule ID before navigation to prevent open redirect attacks.
+   */
+  const navigateToCapsule = useCallback((targetCapsuleId: string | undefined) => {
+    if (!targetCapsuleId || !isValidCapsuleId(targetCapsuleId)) {
+      console.warn('Invalid capsule ID for navigation');
+      return;
+    }
+    router.push(`/capsules/${targetCapsuleId}`);
+  }, [router]);
 
   // Encryption hook for decrypting payloads
   const {
@@ -471,7 +486,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
               </label>
               <div className="flex items-center gap-2 text-sm">
                 <button
-                  onClick={() => window.location.href = `/capsules/${capsule.previous_capsule_id}`}
+                  onClick={() => navigateToCapsule(capsule.previous_capsule_id)}
                   className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg transition-colors"
                 >
                   <ArrowLeft className="h-3 w-3" />

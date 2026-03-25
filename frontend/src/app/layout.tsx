@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/auth-context-simple";
 import { OnboardingProvider } from "@/contexts/onboarding-context";
 import { CreatorProvider } from "@/contexts/creator-context";
 import { DemoModeProvider } from "@/contexts/demo-mode-context";
+import { ErrorBoundaryWrapper } from "@/components/error-boundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,15 +34,17 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReactQueryProvider>
-          <DemoModeProvider>
-            <AuthProvider>
-              <CreatorProvider>
-                <OnboardingProvider>
-                  {children}
-                </OnboardingProvider>
-              </CreatorProvider>
-            </AuthProvider>
-          </DemoModeProvider>
+          <ErrorBoundaryWrapper>
+            <DemoModeProvider>
+              <AuthProvider>
+                <CreatorProvider>
+                  <OnboardingProvider>
+                    {children}
+                  </OnboardingProvider>
+                </CreatorProvider>
+              </AuthProvider>
+            </DemoModeProvider>
+          </ErrorBoundaryWrapper>
         </ReactQueryProvider>
       </body>
     </html>
