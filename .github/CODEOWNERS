@@ -1,3 +1,48 @@
-# UATP Codeowners
-# Default owner for all files (single maintainer project)
+# CODEOWNERS - Defines code ownership for automatic review requests
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything
 * @KayronCalloway
+
+# =============================================================================
+# SECURITY-CRITICAL (require extra scrutiny)
+# =============================================================================
+/src/security/         @KayronCalloway
+/src/crypto/           @KayronCalloway
+/src/auth/             @KayronCalloway
+/SECURITY.md           @KayronCalloway
+/THREAT_MODEL.md       @KayronCalloway
+/TRUST_MODEL.md        @KayronCalloway
+
+# =============================================================================
+# API SURFACE (breaking changes need review)
+# =============================================================================
+/src/api/              @KayronCalloway
+/sdk/                  @KayronCalloway
+
+# =============================================================================
+# FRONTEND
+# =============================================================================
+/frontend/             @KayronCalloway
+
+# =============================================================================
+# INFRASTRUCTURE & DEVOPS
+# =============================================================================
+/infra/                @KayronCalloway
+/.github/              @KayronCalloway
+/Dockerfile            @KayronCalloway
+/docker-compose*.yml   @KayronCalloway
+/Makefile              @KayronCalloway
+
+# =============================================================================
+# DEPENDENCIES (security sensitive)
+# =============================================================================
+/requirements*.txt     @KayronCalloway
+/pyproject.toml        @KayronCalloway
+/frontend/package*.json @KayronCalloway
+
+# =============================================================================
+# DOCUMENTATION
+# =============================================================================
+/docs/                 @KayronCalloway
+/*.md                  @KayronCalloway
