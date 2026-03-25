@@ -181,9 +181,17 @@ class RateLimiter:
         self.attempts[identifier].append(time.time())
 
 
-# Global rate limiter instance
+# Global rate limiter instance (lazy initialization)
 # SECURITY: This is for local development only. Production uses Redis-backed limiter.
-rate_limiter = RateLimiter()
+_rate_limiter: Optional[RateLimiter] = None
+
+
+def _get_rate_limiter() -> RateLimiter:
+    """Lazy initialization of rate limiter to prevent import-time crashes in production."""
+    global _rate_limiter
+    if _rate_limiter is None:
+        _rate_limiter = RateLimiter()
+    return _rate_limiter
 
 
 def check_rate_limit(request: Request, identifier: str = None):
@@ -197,13 +205,13 @@ def check_rate_limit(request: Request, identifier: str = None):
     if identifier is None:
         identifier = request.client.host
 
-    if rate_limiter.is_rate_limited(identifier):
+    if _get_rate_limiter().is_rate_limited(identifier):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many authentication attempts. Please try again later.",
         )
 
-    rate_limiter.record_attempt(identifier)
+    _get_rate_limiter().record_attempt(identifier)
 
 
 # Authentication middleware for FastAPI
@@ -378,15 +386,27 @@ async def security_headers_middleware(request: Request, call_next):
 
 # CORS security middleware
 async def cors_security_middleware(request: Request, call_next):
-    """Enhanced CORS security"""
+    """
+    Enhanced CORS security.
+
+    SECURITY: CORS origins are controlled via CORS_ORIGINS environment variable.
+    In production, this MUST be set to your actual frontend domain(s).
+    Format: comma-separated list (e.g., "https://app.example.com,https://admin.example.com")
+    """
+    import os
+
     response = await call_next(request)
 
-    # Only allow specific origins in production
+    # SECURITY: Get allowed origins from environment - no hardcoded defaults
+    cors_origins_env = os.getenv("CORS_ORIGINS", "")
     allowed_origins = [
-        "https://uatp.example.com",
-        "https://app.uatp.example.com",
-        "https://api.uatp.example.com",
+        origin.strip() for origin in cors_origins_env.split(",") if origin.strip()
     ]
+
+    # Development fallback: allow localhost if no origins configured and not in production
+    env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development")).lower()
+    if not allowed_origins and env not in ("production", "prod", "staging"):
+        allowed_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     origin = request.headers.get("origin")
     if origin and origin in allowed_origins:
@@ -429,9 +449,10 @@ if __name__ == "__main__":
 
     # Test rate limiter
     print("Testing rate limiter...")
+    limiter = _get_rate_limiter()
     for i in range(7):
-        is_limited = rate_limiter.is_rate_limited(f"test_user_{i}")
-        rate_limiter.record_attempt(f"test_user_{i}")
+        is_limited = limiter.is_rate_limited(f"test_user_{i}")
+        limiter.record_attempt(f"test_user_{i}")
         print(f"Attempt {i + 1}: Rate limited: {is_limited}")
 
     print("[OK] Authentication Middleware tests completed")

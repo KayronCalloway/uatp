@@ -83,6 +83,7 @@ services:
       # Security - SECURITY: All secrets required, no defaults
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required - generate with: python -c "import secrets; print(secrets.token_urlsafe(64))"}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY is required - generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"}
+      CSRF_SECRET_KEY: ${CSRF_SECRET_KEY:?CSRF_SECRET_KEY is required - generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:?ALLOWED_HOSTS is required - set to your domain(s)}
 
       # API Configuration - SECURITY: No localhost defaults in production
