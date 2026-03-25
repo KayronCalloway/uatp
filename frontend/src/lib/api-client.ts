@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { logger } from './logger';
 import {
   CapsuleListResponse,
   CompressedCapsuleListResponse,
@@ -69,10 +70,12 @@ export class UATCapsuleEngineClient {
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
-        // SECURITY: Only log detailed errors in development
-        if (UATCapsuleEngineClient.isDevelopment) {
-          console.error('API request failed:', error.config?.url, error.response?.status || error.code);
-        }
+        // SECURITY: Logger handles dev-only output
+        logger.apiError(
+          error.config?.url || 'unknown',
+          error.response?.status || error.code || 'unknown',
+          error
+        );
 
         if (error.response?.data?.error) {
           throw new Error(error.response.data.error);

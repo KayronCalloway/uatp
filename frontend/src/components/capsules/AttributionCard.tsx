@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Users, DollarSign, Share2, Award, Clock } from 'lucide-react';
 import { Attribution } from '@/types/api';
 import { isValidCapsuleId } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 
 interface AttributionCardProps {
   attribution: Attribution;
@@ -20,7 +21,7 @@ export function AttributionCard({ attribution }: AttributionCardProps) {
    */
   const navigateToCapsule = useCallback((capsuleId: string) => {
     if (!isValidCapsuleId(capsuleId)) {
-      console.warn('Invalid capsule ID for navigation');
+      logger.warn('Invalid capsule ID for navigation');
       return;
     }
     router.push(`/capsules/${capsuleId}`);

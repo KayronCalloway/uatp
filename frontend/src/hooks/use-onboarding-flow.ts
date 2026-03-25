@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useOnboarding } from '@/contexts/onboarding-context';
+import { logger } from '@/lib/logger';
 
 export function useOnboardingFlow() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export function useOnboardingFlow() {
             return;
           }
         } catch (error) {
-          console.log('Could not check user status, showing onboarding banner');
+          logger.debug('Could not check user status, showing onboarding banner');
         }
       }
 
@@ -71,7 +72,7 @@ export function useOnboardingFlow() {
     try {
       const userId = localStorage.getItem('uatp_onboarding_user_id');
       if (!userId) {
-        console.error('No user ID found for onboarding completion');
+        logger.error('No user ID found for onboarding completion');
         return;
       }
 
@@ -88,10 +89,10 @@ export function useOnboardingFlow() {
         localStorage.removeItem('uatp_onboarding_dismissed_session');
         setShouldShowOnboarding(false);
       } else {
-        console.error('Failed to complete onboarding:', result.error);
+        logger.error('Failed to complete onboarding:', result.error);
       }
     } catch (error) {
-      console.error('Failed to complete onboarding:', error);
+      logger.error('Failed to complete onboarding:', error);
     }
   };
 

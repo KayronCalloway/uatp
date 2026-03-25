@@ -127,7 +127,11 @@ export async function decryptPayload<T = object>(
 
   // Parse JSON payload
   const decoded = new TextDecoder().decode(plaintext);
-  return JSON.parse(decoded) as T;
+  try {
+    return JSON.parse(decoded) as T;
+  } catch {
+    throw new Error('Failed to parse decrypted payload as JSON');
+  }
 }
 
 /**

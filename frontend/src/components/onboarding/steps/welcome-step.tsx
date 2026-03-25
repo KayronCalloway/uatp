@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { UserType, UserPreferences } from '@/types/onboarding';
 import { useOnboarding } from '@/contexts/onboarding-context';
 import { Button } from '@/components/ui/button';
+import { logger } from '@/lib/logger';
 
 interface WelcomeStepProps {
   onComplete: (data?: Record<string, any>) => void;
@@ -66,13 +67,13 @@ export function WelcomeStep({ onComplete, isLoading, error }: WelcomeStepProps) 
       ...additionalPreferences,
     };
 
-    console.log('Starting onboarding with preferences:', preferences);
+    logger.debug('Starting onboarding with preferences:', preferences);
 
     try {
       await actions.startOnboarding(preferences);
-      console.log('Onboarding started successfully');
+      logger.debug('Onboarding started successfully');
     } catch (error) {
-      console.error('Failed to start onboarding:', error);
+      logger.error('Failed to start onboarding:', error);
     }
   };
 

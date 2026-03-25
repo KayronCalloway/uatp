@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useDemoMode } from '@/contexts/demo-mode-context';
+import { logger } from '@/lib/logger';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -200,13 +201,13 @@ export function OrganizationDashboard() {
   const handleSaveChanges = () => {
     // TODO: Implement settings save via API
     // api.updateOrganizationSettings(organization.id, updatedSettings);
-    console.log('Saving organization settings...');
+    logger.debug('Saving organization settings...');
   };
 
   const handleEditMember = (memberId: string) => {
     // TODO: Implement member editing functionality
     // This could open a modal or navigate to an edit page
-    console.log('Editing member:', memberId);
+    logger.debug('Editing member:', memberId);
   };
 
   const renderOverview = () => (

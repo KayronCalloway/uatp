@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 
 export function ConnectionTest() {
   const [testResult, setTestResult] = useState<string>('');
@@ -20,7 +21,7 @@ export function ConnectionTest() {
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setTestResult(`Connection failed: ${errorMessage}`);
-      console.error('Connection test error:', error);
+      logger.error('Connection test error:', error);
     } finally {
       setIsLoading(false);
     }

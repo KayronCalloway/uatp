@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/lib/logger';
 
 interface WebSocketMessage {
   type: string;
@@ -77,7 +78,7 @@ export function useWebSocket({
       };
 
       wsRef.current.onerror = (error) => {
-        console.warn('WebSocket error (this is expected if no WebSocket server is running):', error);
+        logger.warn('WebSocket error (this is expected if no WebSocket server is running)');
         if (onError) {
           onError(error);
         }

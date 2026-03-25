@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { formatDate, truncateText } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 export function TrustDashboard() {
   const { isDemoMode } = useDemoMode();
@@ -46,16 +47,16 @@ export function TrustDashboard() {
     queryKey: ['trust-metrics', isDemoMode],
     queryFn: async () => {
       if (isDemoMode) {
-        console.log('Trust: Using mock trust metrics (demo mode)');
+        logger.debug('Trust: Using mock trust metrics (demo mode)');
         return mockApiCall(getMockTrustMetricsData());
       }
       try {
-        console.log('Trust: Fetching trust metrics...');
+        logger.debug('Trust: Fetching trust metrics...');
         const result = await api.getTrustMetrics();
-        console.log('Trust: Trust metrics response:', result);
+        logger.debug('Trust: Trust metrics response:', result);
         return result;
       } catch (error) {
-        console.error('Trust: Trust metrics error:', error);
+        logger.error('Trust: Trust metrics error:', error);
         throw error;
       }
     },
@@ -69,16 +70,16 @@ export function TrustDashboard() {
     queryKey: ['trust-policies', isDemoMode],
     queryFn: async () => {
       if (isDemoMode) {
-        console.log('Trust: Using mock trust policies (demo mode)');
+        logger.debug('Trust: Using mock trust policies (demo mode)');
         return mockApiCall(getMockTrustPolicies());
       }
       try {
-        console.log('Trust: Fetching trust policies...');
+        logger.debug('Trust: Fetching trust policies...');
         const result = await api.getTrustPolicies();
-        console.log('Trust: Trust policies response:', result);
+        logger.debug('Trust: Trust policies response:', result);
         return result;
       } catch (error) {
-        console.error('Trust: Trust policies error:', error);
+        logger.error('Trust: Trust policies error:', error);
         throw error;
       }
     },
@@ -91,16 +92,16 @@ export function TrustDashboard() {
     queryKey: ['trust-violations', isDemoMode],
     queryFn: async () => {
       if (isDemoMode) {
-        console.log('Trust: Using mock violations (demo mode)');
+        logger.debug('Trust: Using mock violations (demo mode)');
         return mockApiCall(getMockRecentViolations());
       }
       try {
-        console.log('Trust: Fetching recent violations...');
+        logger.debug('Trust: Fetching recent violations...');
         const result = await api.getRecentViolations();
-        console.log('Trust: Recent violations response:', result);
+        logger.debug('Trust: Recent violations response:', result);
         return result;
       } catch (error) {
-        console.error('Trust: Recent violations error:', error);
+        logger.error('Trust: Recent violations error:', error);
         throw error;
       }
     },
@@ -113,16 +114,16 @@ export function TrustDashboard() {
     queryKey: ['quarantined-agents', isDemoMode],
     queryFn: async () => {
       if (isDemoMode) {
-        console.log('Trust: Using mock quarantined agents (demo mode)');
+        logger.debug('Trust: Using mock quarantined agents (demo mode)');
         return mockApiCall(getMockQuarantinedAgents());
       }
       try {
-        console.log('Trust: Fetching quarantined agents...');
+        logger.debug('Trust: Fetching quarantined agents...');
         const result = await api.getQuarantinedAgents();
-        console.log('Trust: Quarantined agents response:', result);
+        logger.debug('Trust: Quarantined agents response:', result);
         return result;
       } catch (error) {
-        console.error('Trust: Quarantined agents error:', error);
+        logger.error('Trust: Quarantined agents error:', error);
         throw error;
       }
     },

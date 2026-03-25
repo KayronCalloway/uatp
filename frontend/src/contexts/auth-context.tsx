@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { apiClient, api } from '@/lib/api-client';
 
 // SECURITY: Only log in development mode
@@ -46,7 +46,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authToken, setAuthTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // SECURITY: Prevent race conditions with refs
+  const isInitialized = useRef(false);
+  const loginInProgress = useRef(false);
+
   useEffect(() => {
+    // Prevent double-initialization (React StrictMode in dev)
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+
     const initAuth = async () => {
       debugLog('Initializing auth...');
 
@@ -88,7 +96,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
   }, []);
 
-  const login = async (newApiKey: string): Promise<boolean> => {
+  const login = useCallback(async (newApiKey: string): Promise<boolean> => {
+    // Prevent concurrent login attempts
+    if (loginInProgress.current) {
+      debugWarn('Login already in progress, ignoring duplicate request');
+      return false;
+    }
+
+    loginInProgress.current = true;
+
     try {
       setIsLoading(true);
 
@@ -110,8 +126,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false;
     } finally {
       setIsLoading(false);
+      loginInProgress.current = false;
     }
-  };
+  }, []);
 
   const logout = () => {
     // SECURITY: Clear all stored credentials
@@ -125,6 +142,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Login with JWT token (email/password)
   const loginWithToken = useCallback(async (email: string, password: string): Promise<boolean> => {
+    // Prevent concurrent login attempts
+    if (loginInProgress.current) {
+      debugWarn('Login already in progress, ignoring duplicate request');
+      return false;
+    }
+
+    loginInProgress.current = true;
+
     try {
       setIsLoading(true);
 
@@ -155,6 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false;
     } finally {
       setIsLoading(false);
+      loginInProgress.current = false;
     }
   }, []);
 

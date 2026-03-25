@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useOnboardingFlow } from '@/hooks/use-onboarding-flow';
+import { logger } from '@/lib/logger';
 
 interface RegistrationStepProps {
   onComplete: () => void;
@@ -82,7 +83,7 @@ export function RegistrationStep({ onComplete, onSkip }: RegistrationStepProps) 
         await completeOnboarding();
         onSkip();
       } catch (error) {
-        console.error('Failed to complete onboarding:', error);
+        logger.error('Failed to complete onboarding:', error);
         onSkip(); // Still proceed even if backend fails
       }
     }

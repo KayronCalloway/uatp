@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { CapsuleSearchParams, SearchPreset, AnyCapsule, FullTextSearchHit, FullTextSearchResponse } from '@/types/api';
 import { api } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 
 // Default search presets for common queries
 const DEFAULT_PRESETS: SearchPreset[] = [
@@ -225,7 +226,7 @@ export function CapsuleSearch({
             onFullTextResults(response.results, response.total_count);
           }
         } catch (err) {
-          console.error('Search error:', err);
+          logger.error('Search error:', err);
           setSearchError(err instanceof Error ? err.message : 'Search failed');
           setLastSearchResponse(null);
         } finally {

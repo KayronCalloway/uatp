@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { logger } from '@/lib/logger';
 
 interface ApiKeySetupProps {
   platform: string;
@@ -40,7 +41,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
       if (typeof window !== 'undefined') {
         for (const envVar of envVarNames) {
           // In development, check if key exists in localStorage from previous sessions
-          const savedKey = localStorage.getItem(`uatp_${platform}_api_key`);
+          const savedKey = sessionStorage.getItem(`uatp_${platform}_api_key`);
           if (savedKey) {
             setStatus({
               detected: true,
@@ -76,7 +77,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
           }
         }
       } catch (error) {
-        console.log('Backend platform check failed, continuing with manual input');
+        logger.debug('Backend platform check failed, continuing with manual input');
       }
 
       // No key detected, show manual input
@@ -84,7 +85,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
       setStatus({ detected: false, valid: false });
 
     } catch (error) {
-      console.error('Failed to detect API key:', error);
+      logger.error('Failed to detect API key:', error);
       setShowManualInput(true);
     }
   };
@@ -104,7 +105,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
         setStatus(prev => ({ ...prev, valid: true }));
 
         // Save key for future use
-        localStorage.setItem(`uatp_${platform}_api_key`, key);
+        sessionStorage.setItem(`uatp_${platform}_api_key`, key);
 
         // Auto-complete after validation
         setTimeout(() => onComplete(key), 1000);
@@ -307,7 +308,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
         <div className="bg-blue-50 p-4 rounded-lg text-sm">
           <h4 className="font-medium text-blue-900 mb-2"> Pro Tips:</h4>
           <ul className="text-blue-800 space-y-1">
-            <li>• API keys are stored locally and never sent to our servers</li>
+            <li>• API keys are stored in session only and cleared when you close the browser</li>
             <li>• You can set environment variables for automatic detection</li>
             <li>• Free tiers are available for most platforms</li>
           </ul>

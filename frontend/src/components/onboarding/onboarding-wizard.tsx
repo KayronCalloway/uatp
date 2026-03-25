@@ -14,6 +14,7 @@ import { ApiKeySetup } from './api-key-setup';
 import { SystemHealthIndicator } from './system-health-indicator';
 import { SupportButton } from './support-button';
 import { Card } from '@/components/ui/card';
+import { logger } from '@/lib/logger';
 
 const STEP_ORDER = [
   OnboardingStage.WELCOME,
@@ -31,11 +32,11 @@ export function OnboardingWizard() {
   // Update current step based on progress
   useEffect(() => {
     if (state.progress) {
-      console.log('Onboarding progress updated:', state.progress);
+      logger.debug('Onboarding progress updated:', state.progress);
       const stageIndex = STEP_ORDER.indexOf(state.progress.current_stage);
-      console.log('Current stage:', state.progress.current_stage, 'Stage index:', stageIndex);
+      logger.debug('Current stage:', state.progress.current_stage, 'Stage index:', stageIndex);
       if (stageIndex !== -1) {
-        console.log('Setting current step index to:', stageIndex);
+        logger.debug('Setting current step index to:', stageIndex);
         setCurrentStepIndex(stageIndex);
       }
 

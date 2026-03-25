@@ -27,6 +27,7 @@ import { formatDate, truncateText, getCapsuleTypeColor } from '@/lib/utils';
 import { ListCapsulesQuery, AnyCapsule, CapsuleSearchParams } from '@/types/api';
 import { useDemoMode } from '@/contexts/demo-mode-context';
 import { getMockCapsules, mockApiCall } from '@/lib/mock-data';
+import { logger } from '@/lib/logger';
 import { QualityBadgeInline } from '@/components/capsules/quality-badge';
 import { CapsuleSearch } from '@/components/capsules/capsule-search';
 
@@ -62,7 +63,7 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
         onCapsuleSelect(response.capsule);
       }
     } catch (err) {
-      console.error('Failed to fetch capsule:', err);
+      logger.error('Failed to fetch capsule', { error: err instanceof Error ? err.message : String(err) });
     }
   }, [onCapsuleSelect]);
 
@@ -77,10 +78,10 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
     queryKey: ['capsules', queryParams, isDemoMode],
     queryFn: async () => {
       if (isDemoMode) {
-        console.log('Capsules: Using mock capsule data (demo mode)');
+        logger.debug('Capsules: Using mock capsule data (demo mode)');
         return mockApiCall(getMockCapsules());
       }
-      console.log('Capsules: Fetching real capsule data...');
+      logger.debug('Capsules: Fetching real capsule data...');
       return api.getCapsules(queryParams);
     },
     staleTime: 1000 * 30, // 30 seconds

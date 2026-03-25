@@ -13,6 +13,7 @@ import {
   SupportResponse
 } from '@/types/onboarding';
 import { api } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 
 // Initial state
 const initialState: OnboardingState = {
@@ -104,7 +105,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         const response = await api.startOnboarding(userId, preferences);
 
         if (response.success && response.progress) {
-          console.log('Setting onboarding progress:', response.progress);
+          logger.debug('Setting onboarding progress:', response.progress);
           dispatch({ type: 'SET_PROGRESS', payload: response.progress });
 
           // Store onboarding state in localStorage
@@ -115,7 +116,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         dispatch({ type: 'SET_ERROR', payload: errorMessage });
-        console.error('Failed to start onboarding:', error);
+        logger.error('Failed to start onboarding:', error);
       }
     },
 
@@ -138,7 +139,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         dispatch({ type: 'SET_ERROR', payload: errorMessage });
-        console.error('Failed to continue onboarding:', error);
+        logger.error('Failed to continue onboarding:', error);
       }
     },
 
@@ -163,7 +164,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           throw new Error(response.error || 'Failed to get support');
         }
       } catch (error) {
-        console.error('Failed to get support:', error);
+        logger.error('Failed to get support:', error);
         // Return fallback support response
         return {
           message: 'Support is temporarily unavailable. Please check our documentation or try again later.',
@@ -210,7 +211,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           dispatch({ type: 'SET_SYSTEM_HEALTH', payload: healthResponse.data });
         }
       } catch (error) {
-        console.error('Failed to load onboarding data:', error);
+        logger.error('Failed to load onboarding data:', error);
       }
     };
 
@@ -226,7 +227,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           dispatch({ type: 'SET_SYSTEM_HEALTH', payload: response.data });
         }
       } catch (error) {
-        console.error('Health check failed:', error);
+        logger.error('Health check failed:', error);
       }
     }, 30000); // Check every 30 seconds
 

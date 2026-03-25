@@ -32,6 +32,7 @@ import { OutcomeRecorder } from './outcome-recorder';
 import { QualityBadge } from '@/components/capsules/quality-badge';
 import { QualityDetailsModal } from '@/components/capsules/quality-details-modal';
 import { isValidCapsuleId } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 import { DataSourcesCard } from '@/components/capsules/DataSourcesCard';
 import { RiskAssessmentCard } from '@/components/capsules/RiskAssessmentCard';
 import { AlternativesCard } from '@/components/capsules/AlternativesCard';
@@ -64,7 +65,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
    */
   const navigateToCapsule = useCallback((targetCapsuleId: string | undefined) => {
     if (!targetCapsuleId || !isValidCapsuleId(targetCapsuleId)) {
-      console.warn('Invalid capsule ID for navigation');
+      logger.warn('Invalid capsule ID for navigation');
       return;
     }
     router.push(`/capsules/${targetCapsuleId}`);
@@ -120,7 +121,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
         );
         setDecryptedPayload(decrypted);
       } catch (err) {
-        console.error('Failed to decrypt capsule payload:', err);
+        logger.error('Failed to decrypt capsule payload:', err);
         setDecryptionError(
           err instanceof Error ? err.message : 'Failed to decrypt payload'
         );

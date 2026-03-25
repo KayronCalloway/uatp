@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react"
+import { logger } from "@/lib/logger"
 
 interface OutcomeRecorderProps {
   capsuleId: string
@@ -105,7 +106,7 @@ export function OutcomeRecorder({
         onSuccess?.()
       }, 2000)
     } catch (error) {
-      console.error("Error recording outcome:", error)
+      logger.error("Error recording outcome:", error)
       setErrorMessage(error instanceof Error ? error.message : "Unknown error occurred")
       setSubmitStatus("error")
     } finally {

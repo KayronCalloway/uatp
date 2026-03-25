@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useOnboarding } from '@/contexts/onboarding-context';
 import { Button } from '@/components/ui/button';
+import { logger } from '@/lib/logger';
 
 export function SupportButton() {
   const { actions } = useOnboarding();
@@ -16,7 +17,7 @@ export function SupportButton() {
       const response = await actions.getSupport(issueType, 'I need help with onboarding');
       setSupportResponse(response);
     } catch (error) {
-      console.error('Failed to get support:', error);
+      logger.error('Failed to get support:', error);
     } finally {
       setIsLoading(false);
     }
