@@ -47,7 +47,7 @@ export default function AnalyticsOverviewPage() {
             change="Latest insights"
             icon={<Target className="h-6 w-6" />}
             color="green"
-            href="/analytics/outcomes"
+            href="/analytics"
           />
           <MetricCard
             label="Patterns Discovered"
@@ -69,7 +69,7 @@ export default function AnalyticsOverviewPage() {
             change="Quality trending up"
             icon={<BarChart3 className="h-6 w-6" />}
             color="amber"
-            href="/analytics/calibration"
+            href="/analytics"
           />
         </div>
 
@@ -127,7 +127,7 @@ export default function AnalyticsOverviewPage() {
           <QuickAccessCard
             title="System Intelligence Health"
             description="Key performance indicators"
-            href="/analytics/calibration"
+            href="/analytics"
             icon={<BarChart3 className="h-5 w-5" />}
           >
             <div className="space-y-4">
@@ -200,7 +200,7 @@ export default function AnalyticsOverviewPage() {
           <FeatureCard
             title="Causal Analysis"
             description="Explore causal relationships between variables"
-            href="/analytics/causal"
+            href="/analytics"
             icon={<TrendingUp className="h-6 w-6 text-indigo-600" />}
             badge="Advanced"
             badgeColor="indigo"

@@ -27,6 +27,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (apiKey: string) => Promise<boolean>;
   loginWithToken: (email: string, password: string) => Promise<boolean>;
+  register: (email: string, username: string, fullName: string, password: string) => Promise<{ success: boolean; error?: string }>;
   setAuthToken: (token: string) => void;
   logout: () => void;
   isLoading: boolean;
@@ -237,6 +238,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Register new user
+  const register = useCallback(async (
+    email: string,
+    username: string,
+    fullName: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (loginInProgress.current) {
+      return { success: false, error: 'Registration already in progress' };
+    }
+
+    loginInProgress.current = true;
+
+    try {
+      setIsLoading(true);
+
+      const response = await fetch(
+        `${getApiBaseUrl()}/api/v1/auth/register`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            email,
+            username,
+            full_name: fullName,
+            password,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        return { success: false, error: data.detail || 'Registration failed' };
+      }
+
+      // Registration successful - user is now logged in via cookies
+      setHasCookieSession(true);
+      setAuthTokenState('cookie-session');
+
+      return { success: true };
+    } catch (error) {
+      debugError('Registration failed:', error);
+      return { success: false, error: 'Registration failed. Please try again.' };
+    } finally {
+      setIsLoading(false);
+      loginInProgress.current = false;
+    }
+  }, []);
+
   // Set auth token directly (for SSO, external auth, etc.)
   // SECURITY: This should only be used for tokens received via secure channels
   // Prefer cookie-based auth when possible
@@ -257,6 +308,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: hasCookieSession || (isDevelopment && !!apiKey) || !!authToken,
     login,
     loginWithToken,
+    register,
     setAuthToken,
     logout,
     isLoading,

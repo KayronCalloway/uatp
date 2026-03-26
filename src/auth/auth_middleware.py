@@ -54,10 +54,25 @@ def extract_token_from_request(request: Request) -> Optional[str]:
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(
+        HTTPBearer(auto_error=False)
+    ),
 ) -> Dict[str, Any]:
-    """Get current authenticated user from JWT token"""
-    token = credentials.credentials
+    """
+    Get current authenticated user from JWT token.
+
+    Checks in order:
+    1. Authorization header (Bearer token)
+    2. HTTP-only cookie (access_token)
+    """
+    # First try Authorization header
+    token = None
+    if credentials and credentials.credentials:
+        token = credentials.credentials
+    else:
+        # Fall back to cookie
+        token = extract_token_from_request(request)
 
     if not token:
         raise HTTPException(

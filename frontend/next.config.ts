@@ -29,6 +29,29 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'standalone',
 
+  // API proxy for development - makes API calls same-origin so cookies work
+  async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_UATP_API_URL || 'http://localhost:8000';
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${apiUrl}/api/:path*`,
+      },
+      {
+        source: '/health',
+        destination: `${apiUrl}/health`,
+      },
+      {
+        source: '/onboarding/:path*',
+        destination: `${apiUrl}/onboarding/:path*`,
+      },
+      {
+        source: '/capsules/:path*',
+        destination: `${apiUrl}/capsules/:path*`,
+      },
+    ];
+  },
+
   // PRODUCTION QUALITY: Enable strict checking
   // Set to false only if you have a critical deployment blocker and
   // understand the security implications

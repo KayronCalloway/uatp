@@ -129,36 +129,6 @@ export function AppLayoutWithNav({ children, currentView, onViewChange }: AppLay
               })}
             </div>
 
-            {/* Analytics Section */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <div className="px-3 mb-2">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Analytics
-                </span>
-              </div>
-              <div className="space-y-1">
-                <Link
-                  href="/ml-dashboard"
-                  className="w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-purple-50 hover:text-purple-700"
-                >
-                  <Brain className="mr-3 h-5 w-5 flex-shrink-0 text-purple-500" />
-                  <div className="text-left min-w-0">
-                    <div className="font-medium">ML Dashboard</div>
-                    <div className="text-xs text-gray-500 truncate">Calibration & learning loop</div>
-                  </div>
-                </Link>
-                <Link
-                  href="/analytics/outcomes"
-                  className="w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                >
-                  <BarChart3 className="mr-3 h-5 w-5 flex-shrink-0 text-blue-500" />
-                  <div className="text-left min-w-0">
-                    <div className="font-medium">Outcomes</div>
-                    <div className="text-xs text-gray-500 truncate">Track capsule outcomes</div>
-                  </div>
-                </Link>
-              </div>
-            </div>
           </nav>
 
           <div className="p-4 border-t bg-gray-50">

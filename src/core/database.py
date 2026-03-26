@@ -100,6 +100,15 @@ class SQLAlchemyDB:
         async with self.engine.begin() as conn:
             await conn.run_sync(self.Base.metadata.create_all)
 
+    @property
+    def SessionLocal(self):
+        """Alias for session_factory for backwards compatibility with FastAPI dependencies."""
+        if not self.session_factory:
+            raise RuntimeError(
+                "Database has not been initialized. Call init_app first."
+            )
+        return self.session_factory
+
     def get_session(self) -> AsyncSession:
         if not self.session_factory:
             raise RuntimeError(

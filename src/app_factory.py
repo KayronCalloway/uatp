@@ -1081,6 +1081,10 @@ def create_app() -> FastAPI:
 
         app.include_router(reasoning_router)
 
+        from .api.onboarding_fastapi_router import router as onboarding_router
+
+        app.include_router(onboarding_router)
+
     # Setup routes
     setup_health_routes(app)
     setup_api_routes(app, limiter)

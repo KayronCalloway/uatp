@@ -17,8 +17,9 @@ class UserModel(db.Base):
     full_name = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
 
-    status = Column(String, default="pending")
+    status = Column(String, default="active")
     verification_status = Column(String, default="unverified")
+    role = Column(String, default="user")  # user, admin
 
     # Relationships
     sessions = relationship(

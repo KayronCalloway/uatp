@@ -6,9 +6,7 @@ import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
   TrendingUp,
-  Target,
   BarChart3,
-  Network,
 } from "lucide-react"
 
 const NAV_ITEMS = [
@@ -21,21 +19,6 @@ const NAV_ITEMS = [
     label: "Patterns",
     href: "/analytics/patterns",
     icon: TrendingUp,
-  },
-  {
-    label: "Outcomes",
-    href: "/analytics/outcomes",
-    icon: Target,
-  },
-  {
-    label: "Calibration",
-    href: "/analytics/calibration",
-    icon: BarChart3,
-  },
-  {
-    label: "Causal Analysis",
-    href: "/analytics/causal",
-    icon: Network,
   },
 ]
 

@@ -41,19 +41,26 @@ import {
 /**
  * SECURITY: Get API base URL with strict production checks.
  *
+ * In development (browser): Uses empty string so requests go through Next.js proxy
+ * In development (server): Falls back to localhost:8000
  * In production: NEXT_PUBLIC_UATP_API_URL must be set, or this throws.
- * In development: Falls back to localhost:8000 for convenience.
  */
 export function getApiBaseUrl(): string {
   const configuredUrl = process.env.NEXT_PUBLIC_UATP_API_URL;
   const isDev = process.env.NODE_ENV === 'development';
+  const isBrowser = typeof window !== 'undefined';
 
   if (configuredUrl) {
     return configuredUrl;
   }
 
   if (isDev) {
-    // Development fallback is OK
+    // In browser during development, use relative URLs for Next.js proxy
+    // This makes API calls same-origin so cookies work
+    if (isBrowser) {
+      return '';
+    }
+    // Server-side still needs the full URL
     return 'http://localhost:8000';
   }
 

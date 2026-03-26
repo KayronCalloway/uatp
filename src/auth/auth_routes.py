@@ -285,9 +285,17 @@ async def login_user(
 
         logger.info(f"User logged in: {user.email}")
 
+        # Determine scopes based on user role
+        scopes = ["read", "write"]
+        if getattr(user, "role", None) == "admin":
+            scopes.append("admin")
+
         # Generate tokens
         access_token, expires_in = create_access_token(
-            user_id=str(user.id), email=user.email, username=user.username
+            user_id=str(user.id),
+            email=user.email,
+            username=user.username,
+            scopes=scopes,
         )
         refresh_token = create_refresh_token(user_id=str(user.id))
 

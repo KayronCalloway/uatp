@@ -10,7 +10,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from src.api.auth_middleware import get_current_user
+from src.auth.auth_middleware import get_current_user
 
 router = APIRouter(prefix="/onboarding/api", tags=["Onboarding"])
 
