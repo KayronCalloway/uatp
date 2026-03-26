@@ -53,10 +53,10 @@ export function TrustDashboard() {
       try {
         logger.debug('Trust: Fetching trust metrics...');
         const result = await api.getTrustMetrics();
-        logger.debug('Trust: Trust metrics response:', result);
+        logger.debug('Trust: Trust metrics response:', { result });
         return result;
       } catch (error) {
-        logger.error('Trust: Trust metrics error:', error);
+        logger.error('Trust: Trust metrics error:', { error });
         throw error;
       }
     },
@@ -76,10 +76,10 @@ export function TrustDashboard() {
       try {
         logger.debug('Trust: Fetching trust policies...');
         const result = await api.getTrustPolicies();
-        logger.debug('Trust: Trust policies response:', result);
+        logger.debug('Trust: Trust policies response:', { result });
         return result;
       } catch (error) {
-        logger.error('Trust: Trust policies error:', error);
+        logger.error('Trust: Trust policies error:', { error });
         throw error;
       }
     },
@@ -98,10 +98,10 @@ export function TrustDashboard() {
       try {
         logger.debug('Trust: Fetching recent violations...');
         const result = await api.getRecentViolations();
-        logger.debug('Trust: Recent violations response:', result);
+        logger.debug('Trust: Recent violations response:', { result });
         return result;
       } catch (error) {
-        logger.error('Trust: Recent violations error:', error);
+        logger.error('Trust: Recent violations error:', { error });
         throw error;
       }
     },
@@ -120,10 +120,10 @@ export function TrustDashboard() {
       try {
         logger.debug('Trust: Fetching quarantined agents...');
         const result = await api.getQuarantinedAgents();
-        logger.debug('Trust: Quarantined agents response:', result);
+        logger.debug('Trust: Quarantined agents response:', { result });
         return result;
       } catch (error) {
-        logger.error('Trust: Quarantined agents error:', error);
+        logger.error('Trust: Quarantined agents error:', { error });
         throw error;
       }
     },
@@ -149,22 +149,24 @@ export function TrustDashboard() {
 
     // Handle the actual API response structure
     if (typeof trustMetrics === 'object' && 'trust_distribution' in trustMetrics) {
+      const metrics = trustMetrics as any;
       return {
-        trustDistribution: trustMetrics.trust_distribution || {},
-        avgTrust: trustMetrics.average_trust || 0, // Use actual average, not hardcoded
-        trustTrend: trustMetrics.trust_trend || 0,
-        totalAgents: trustMetrics.total_agents || 0,
-        activeAgents: trustMetrics.total_agents || 0
+        trustDistribution: metrics.trust_distribution || {},
+        avgTrust: metrics.average_trust || 0, // Use actual average, not hardcoded
+        trustTrend: metrics.trust_trend || 0,
+        totalAgents: metrics.total_agents || 0,
+        activeAgents: metrics.total_agents || 0
       };
     }
 
     // Handle array structure (if it changes in future)
     if (Array.isArray(trustMetrics)) {
+      const metricsArray = trustMetrics as any[];
       const now = new Date();
       const cutoff = new Date(now.getTime() - (timeRange === '24h' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000));
 
       // Filter metrics by time range
-      const filteredMetrics = trustMetrics.filter(metric =>
+      const filteredMetrics = metricsArray.filter(metric =>
         new Date(metric.timestamp) >= cutoff
       );
 
@@ -243,18 +245,19 @@ export function TrustDashboard() {
 
     // Handle demo mode mock data structure
     if (isDemoMode && typeof trustMetrics === 'object' && 'overall_score' in trustMetrics) {
-      return Math.round(trustMetrics.overall_score || 0);
+      return Math.round((trustMetrics as any).overall_score || 0);
     }
 
     // Handle the actual API response structure
     if (typeof trustMetrics === 'object' && 'average_trust_score' in trustMetrics) {
-      return Math.round(trustMetrics.average_trust_score || 0);
+      return Math.round((trustMetrics as any).average_trust_score || 0);
     }
 
     // Handle array structure (if it changes in future)
     if (Array.isArray(trustMetrics) && trustMetrics.length > 0) {
-      const total = trustMetrics.reduce((sum, metric) => sum + metric.trust_score, 0);
-      return Math.round((total / trustMetrics.length) * 100); // Convert to 0-100 scale
+      const metricsArr = trustMetrics as any[];
+      const total = metricsArr.reduce((sum, metric) => sum + metric.trust_score, 0);
+      return Math.round((total / metricsArr.length) * 100); // Convert to 0-100 scale
     }
 
     return 0;
@@ -377,7 +380,7 @@ export function TrustDashboard() {
             <CardContent>
               <div className="text-2xl font-bold">
                 {metricsLoading ? '...' : (
-                  trustMetrics?.total_agents !== undefined ? trustMetrics.total_agents :
+                  (trustMetrics as any)?.total_agents !== undefined ? (trustMetrics as any).total_agents :
                   Array.isArray(trustMetrics) ? trustMetrics.length : 0
                 )}
               </div>
@@ -439,7 +442,7 @@ export function TrustDashboard() {
             <div className="text-center py-8 text-gray-500">
               <div className="mb-2">No individual agent trust metrics available</div>
               <div className="text-sm">
-                {trustMetrics?.system_health === 'healthy'
+                {(trustMetrics as any)?.system_health === 'healthy'
                   ? 'System is healthy with no agents being tracked yet'
                   : 'System status shows aggregated trust metrics only'}
               </div>
@@ -511,7 +514,7 @@ export function TrustDashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                {recentViolations.violations.map((violation, index) => (
+                {recentViolations.violations.map((violation: any, index: number) => (
                   <div
                     key={index}
                     className="flex items-start space-x-3 p-3 bg-red-50 rounded-lg border border-red-200"
@@ -559,7 +562,7 @@ export function TrustDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {quarantinedAgents.quarantined_agents.map((agent, index) => (
+              {quarantinedAgents.quarantined_agents.map((agent: any, index: number) => (
                 <div
                   key={index}
                   className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200"

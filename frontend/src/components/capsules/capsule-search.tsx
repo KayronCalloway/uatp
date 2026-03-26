@@ -226,7 +226,7 @@ export function CapsuleSearch({
             onFullTextResults(response.results, response.total_count);
           }
         } catch (err) {
-          logger.error('Search error:', err);
+          logger.error('Search error:', { error: String(err) });
           setSearchError(err instanceof Error ? err.message : 'Search failed');
           setLastSearchResponse(null);
         } finally {
@@ -370,7 +370,7 @@ export function CapsuleSearch({
               {query && (
                 <Badge variant="outline" className="flex items-center gap-1">
                   <Search className="h-3 w-3" />
-                  "{query}"
+                  &quot;{query}&quot;
                   <button onClick={() => setQuery('')} className="ml-1 hover:text-red-500">
                     <X className="h-3 w-3" />
                   </button>

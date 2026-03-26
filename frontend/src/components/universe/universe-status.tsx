@@ -165,13 +165,13 @@ export function UniverseStatus() {
               Live Data
             </Badge>
           </div>
-          {healthData?.services && (
+          {(healthData as any)?.services && (
             <div className="mt-3 text-xs text-gray-600">
               <div className="grid grid-cols-2 gap-1">
-                {Object.entries(healthData.services).map(([service, status]) => (
+                {Object.entries((healthData as any).services).map(([service, status]) => (
                   <div key={service} className="flex items-center space-x-1">
                     <span>{service}:</span>
-                    <span className="text-green-600">{status}</span>
+                    <span className="text-green-600">{String(status)}</span>
                   </div>
                 ))}
               </div>

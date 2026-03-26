@@ -207,6 +207,23 @@ export function getMockEconomicData() {
       { agent_id: 'claude-code-001', contribution: 4250.00, capsules: 89 },
       { agent_id: 'cursor-ai-002', contribution: 3180.50, capsules: 67 },
       { agent_id: 'windsurf-003', contribution: 2890.25, capsules: 58 }
+    ],
+    // Additional properties expected by EconomicDashboard
+    totalAttributionValue: 15420.50,
+    monthlyGrowth: 12.5,
+    activeDividends: 8,
+    commonFundBalance: 45780.25,
+    payoutsThisMonth: 8340.50,
+    topEarners: [
+      { agent_id: 'claude-code-001', contributions: 89, earnings: 4250.00, percentageOfTotal: 27.6 },
+      { agent_id: 'cursor-ai-002', contributions: 67, earnings: 3180.50, percentageOfTotal: 20.6 },
+      { agent_id: 'windsurf-003', contributions: 58, earnings: 2890.25, percentageOfTotal: 18.8 },
+      { agent_id: 'copilot-004', contributions: 45, earnings: 2100.75, percentageOfTotal: 13.6 }
+    ],
+    recentTransactions: [
+      { id: 'tx-001', type: 'dividend', description: 'Quarterly dividend payout', amount: 125.50, agent_id: 'claude-code-001', timestamp: new Date(Date.now() - 3600000).toISOString() },
+      { id: 'tx-002', type: 'attribution', description: 'Attribution reward for capsule contributions', amount: 89.25, agent_id: 'cursor-ai-002', timestamp: new Date(Date.now() - 7200000).toISOString() },
+      { id: 'tx-003', type: 'common_fund', description: 'Common fund contribution', amount: 250.00, agent_id: 'system', timestamp: new Date(Date.now() - 10800000).toISOString() }
     ]
   };
 }
@@ -400,8 +417,8 @@ export function getMockRecentActivity() {
     activities: [
       {
         id: '1',
-        type: 'capsule_created',
-        status: 'success',
+        type: 'capsule_created' as const,
+        status: 'success' as const,
         timestamp: new Date(Date.now() - 2 * 60 * 1000),
         title: 'Chat capsule created',
         description: 'Agent_A via OpenAI',
@@ -409,8 +426,8 @@ export function getMockRecentActivity() {
       },
       {
         id: '2',
-        type: 'trust_verified',
-        status: 'success',
+        type: 'trust_verified' as const,
+        status: 'success' as const,
         timestamp: new Date(Date.now() - 5 * 60 * 1000),
         title: 'Trust score verified',
         description: 'Agent_B score +2.1',
@@ -418,8 +435,8 @@ export function getMockRecentActivity() {
       },
       {
         id: '3',
-        type: 'chain_sealed',
-        status: 'warning',
+        type: 'chain_sealed' as const,
+        status: 'warning' as const,
         timestamp: new Date(Date.now() - 7 * 60 * 1000),
         title: 'Chain seal pending',
         description: 'chain-7d4bec awaiting confirmation',
@@ -427,8 +444,8 @@ export function getMockRecentActivity() {
       },
       {
         id: '4',
-        type: 'attribution_paid',
-        status: 'success',
+        type: 'attribution_paid' as const,
+        status: 'success' as const,
         timestamp: new Date(Date.now() - 10 * 60 * 1000),
         title: 'Attribution paid',
         description: 'Agent_A earned $127.50',
@@ -436,8 +453,8 @@ export function getMockRecentActivity() {
       },
       {
         id: '5',
-        type: 'reasoning_verified',
-        status: 'success',
+        type: 'reasoning_verified' as const,
+        status: 'success' as const,
         timestamp: new Date(Date.now() - 12 * 60 * 1000),
         title: 'Reasoning verified',
         description: 'Agent_C via Dilithium signature',
@@ -445,8 +462,8 @@ export function getMockRecentActivity() {
       },
       {
         id: '6',
-        type: 'federation_sync',
-        status: 'success',
+        type: 'federation_sync' as const,
+        status: 'success' as const,
         timestamp: new Date(Date.now() - 15 * 60 * 1000),
         title: 'Federation sync complete',
         description: 'EU-Node synchronized 245 items',
@@ -454,8 +471,8 @@ export function getMockRecentActivity() {
       },
       {
         id: '7',
-        type: 'spatial_capture',
-        status: 'success',
+        type: 'spatial_capture' as const,
+        status: 'success' as const,
         timestamp: new Date(Date.now() - 18 * 60 * 1000),
         title: 'Spatial capsule created',
         description: 'ZED_Camera_01 perception data',
@@ -472,11 +489,11 @@ export function getMockRecentActivity() {
 export function getMockHealthMetrics() {
   return {
     metrics: [
-      { name: 'capture', label: 'Capture', value: 100, status: 'healthy', icon: 'Radio' },
-      { name: 'trust', label: 'Trust', value: 82, status: 'warning', icon: 'Shield' },
-      { name: 'economics', label: 'Economics', value: 100, status: 'healthy', icon: 'DollarSign' },
-      { name: 'federation', label: 'Federation', value: 85, status: 'healthy', icon: 'Globe' },
-      { name: 'governance', label: 'Governance', value: 100, status: 'healthy', icon: 'Scale' },
+      { name: 'capture', label: 'Capture', value: 100, status: 'healthy' as const, icon: 'Radio' },
+      { name: 'trust', label: 'Trust', value: 82, status: 'warning' as const, icon: 'Shield' },
+      { name: 'economics', label: 'Economics', value: 100, status: 'healthy' as const, icon: 'DollarSign' },
+      { name: 'federation', label: 'Federation', value: 85, status: 'healthy' as const, icon: 'Globe' },
+      { name: 'governance', label: 'Governance', value: 100, status: 'healthy' as const, icon: 'Scale' },
     ]
   };
 }

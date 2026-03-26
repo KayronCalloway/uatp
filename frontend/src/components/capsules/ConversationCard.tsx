@@ -248,33 +248,33 @@ function MessageItem({ message, index, isExpanded, onToggle }: {
                 <div className="bg-white/50 rounded-lg p-3 space-y-2">
                   <div className="text-xs font-semibold text-gray-700">Confidence Analysis</div>
 
-                  {message.confidence_explanation.boosting_factors?.length > 0 && (
+                  {(message.confidence_explanation.boosting_factors?.length ?? 0) > 0 && (
                     <div>
                       <div className="text-xs text-green-700 font-medium">Boosting Factors:</div>
                       <ul className="text-xs text-green-600 space-y-0.5 ml-3">
-                        {message.confidence_explanation.boosting_factors.map((f, i) => (
+                        {(message.confidence_explanation.boosting_factors ?? []).map((f, i) => (
                           <li key={i}>+ {f}</li>
                         ))}
                       </ul>
                     </div>
                   )}
 
-                  {message.confidence_explanation.limiting_factors?.length > 0 && (
+                  {(message.confidence_explanation.limiting_factors?.length ?? 0) > 0 && (
                     <div>
                       <div className="text-xs text-red-700 font-medium">Limiting Factors:</div>
                       <ul className="text-xs text-red-600 space-y-0.5 ml-3">
-                        {message.confidence_explanation.limiting_factors.map((f, i) => (
+                        {(message.confidence_explanation.limiting_factors ?? []).map((f, i) => (
                           <li key={i}>- {f}</li>
                         ))}
                       </ul>
                     </div>
                   )}
 
-                  {message.confidence_explanation.improvement_suggestions?.length > 0 && (
+                  {(message.confidence_explanation.improvement_suggestions?.length ?? 0) > 0 && (
                     <div>
                       <div className="text-xs text-blue-700 font-medium">Suggestions:</div>
                       <ul className="text-xs text-blue-600 space-y-0.5 ml-3">
-                        {message.confidence_explanation.improvement_suggestions.map((s, i) => (
+                        {(message.confidence_explanation.improvement_suggestions ?? []).map((s, i) => (
                           <li key={i}>* {s}</li>
                         ))}
                       </ul>

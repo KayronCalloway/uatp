@@ -49,8 +49,10 @@ export function CapsuleOverview({ onViewList }: CapsuleOverviewProps) {
   }
 
   const totalCapsules = stats?.total_capsules || 0;
-  const byType = stats?.by_type || {};
-  const recentActivity = stats?.recent_activity || {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const statsAny = stats as any;
+  const byType = statsAny?.by_type as Record<string, number> || {};
+  const recentActivity = statsAny?.recent_activity as Record<string, number> || {};
 
   return (
     <div className="w-full space-y-6">

@@ -164,8 +164,8 @@ export function QualityDetailsModal({
 }
 
 function QualityHeader({ assessment }: { assessment: any }) {
-  const grade = assessment.quality_grade
-  const colors = GRADE_COLORS[grade]
+  const grade = assessment.quality_grade as keyof typeof GRADE_COLORS
+  const colors = GRADE_COLORS[grade] || GRADE_COLORS.F
   const percentage = (assessment.overall_quality * 100).toFixed(0)
 
   return (
@@ -424,10 +424,10 @@ function ImprovementSuggestions({ assessment }: { assessment: any }) {
   )
 
   // Sort by improvement priority
-  const priorityMap = new Map(assessment.improvement_priority || [])
+  const priorityMap = new Map<string, number>(assessment.improvement_priority || [])
   const sortedSuggestions = allSuggestions.sort((a, b) => {
-    const priorityA = priorityMap.get(a.dimension) || 0
-    const priorityB = priorityMap.get(b.dimension) || 0
+    const priorityA = priorityMap.get(a.dimension) ?? 0
+    const priorityB = priorityMap.get(b.dimension) ?? 0
     return priorityB - priorityA
   })
 

@@ -148,7 +148,7 @@ export function Dashboard({ onViewChange }: DashboardProps) {
           </Card>
 
           {/* Trust Score - Only show in demo mode or with valid data */}
-          {(isDemoMode || (trustMetrics && trustMetrics.length > 0)) && (
+          {(isDemoMode || (trustMetrics && Array.isArray(trustMetrics) && trustMetrics.length > 0)) && (
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Trust Score</CardTitle>
@@ -157,10 +157,10 @@ export function Dashboard({ onViewChange }: DashboardProps) {
               <CardContent>
                 <div className="text-2xl font-bold">
                   {trustLoading ? '...' :
-                    isDemoMode ?
-                      trustMetrics?.overall_score?.toFixed(1) || 'N/A' :
-                      trustMetrics?.length ?
-                        Math.round(trustMetrics.reduce((acc: any, m: any) => acc + m.trust_score, 0) / trustMetrics.length) :
+                    isDemoMode && trustMetrics && !Array.isArray(trustMetrics) ?
+                      trustMetrics.overall_score?.toFixed(1) || 'N/A' :
+                      Array.isArray(trustMetrics) && trustMetrics.length ?
+                        Math.round(trustMetrics.reduce((acc: number, m: any) => acc + m.trust_score, 0) / trustMetrics.length) :
                         'N/A'
                   }
                 </div>

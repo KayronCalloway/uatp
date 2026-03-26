@@ -117,7 +117,6 @@ export function ChainSealingDashboard() {
     try {
       const response = await api.sealChain({
         chain_id: 'current-chain-' + Date.now(),
-        force: false
       });
       await fetchSeals(); // Refresh the list
       setError(null);
@@ -131,15 +130,14 @@ export function ChainSealingDashboard() {
   const verifyChainSeal = async (chainId: string) => {
     try {
       const response = await api.verifySeal(chainId, {
-        check_integrity: true,
-        verify_capsules: true
+        verify_key: '', // Will use server's default key
       });
 
-      if (response.valid) {
+      if (response.verified) {
         setError(null);
         await fetchSeals(); // Refresh to show updated status
       } else {
-        setError(`Chain verification failed: ${response.message || 'Unknown error'}`);
+        setError('Chain verification failed');
       }
     } catch (err: any) {
       setError('Failed to verify chain: ' + (err.message || 'Unknown error'));

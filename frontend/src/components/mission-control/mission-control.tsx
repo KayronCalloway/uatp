@@ -67,9 +67,11 @@ export function MissionControl() {
       if (isDemoMode) {
         return mockApiCall(getMockRecentActivity());
       }
-      return api.getRecentActivity();
+      // API method not yet implemented - return empty for non-demo mode
+      return null;
     },
     refetchInterval: 5000, // Poll every 5 seconds
+    enabled: isDemoMode, // Only fetch in demo mode until API is implemented
   });
 
   // Fetch system health metrics
@@ -80,9 +82,11 @@ export function MissionControl() {
       if (isDemoMode) {
         return mockApiCall(getMockHealthMetrics());
       }
-      return api.getHealthMetrics();
+      // API method not yet implemented - return empty for non-demo mode
+      return null;
     },
     refetchInterval: 30000, // Refresh every 30 seconds
+    enabled: isDemoMode, // Only fetch in demo mode until API is implemented
   });
 
   // Fetch economic metrics
@@ -104,7 +108,7 @@ export function MissionControl() {
   // Calculate summary stats
   const totalCapsules = statsData?.total_capsules || 0;
   const todayCount = Math.floor(totalCapsules * 0.07); // Approximate: 7% created today
-  const trustScore = trustMetrics?.overall_score || 0;
+  const trustScore = trustMetrics && !Array.isArray(trustMetrics) ? trustMetrics.overall_score || 0 : 0;
   const totalValue = economicData?.total_value_distributed || 0;
 
   return (

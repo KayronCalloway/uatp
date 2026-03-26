@@ -229,7 +229,7 @@ export function FeedbackSignalsCard({ feedbackSignals }: FeedbackSignalsCardProp
                 <h4 className="text-sm font-semibold text-red-900">Abandonment Detected</h4>
                 <p className="text-xs text-red-700 mt-1">
                   The user indicated giving up or moving on from this task. This may indicate
-                  the responses weren't meeting their needs.
+                  the responses were not meeting their needs.
                 </p>
               </div>
             </div>

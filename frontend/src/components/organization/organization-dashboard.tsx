@@ -207,7 +207,7 @@ export function OrganizationDashboard() {
   const handleEditMember = (memberId: string) => {
     // TODO: Implement member editing functionality
     // This could open a modal or navigate to an edit page
-    logger.debug('Editing member:', memberId);
+    logger.debug('Editing member', { memberId });
   };
 
   const renderOverview = () => (
@@ -222,7 +222,7 @@ export function OrganizationDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{organization.memberCount}</div>
+            <div className="text-2xl font-bold">{organization?.memberCount ?? 0}</div>
             <p className="text-xs text-gray-500">Active contributors</p>
           </CardContent>
         </Card>
@@ -235,7 +235,7 @@ export function OrganizationDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{organization.metrics.totalCapsules}</div>
+            <div className="text-2xl font-bold">{organization?.metrics?.totalCapsules ?? 0}</div>
             <p className="text-xs text-gray-500">Total contributions</p>
           </CardContent>
         </Card>
@@ -248,7 +248,7 @@ export function OrganizationDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(organization.metrics.averageTrustScore * 100).toFixed(1)}%</div>
+            <div className="text-2xl font-bold">{((organization?.metrics?.averageTrustScore ?? 0) * 100).toFixed(1)}%</div>
             <p className="text-xs text-gray-500">Average team trust</p>
           </CardContent>
         </Card>
@@ -261,7 +261,7 @@ export function OrganizationDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${organization.metrics.economicValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">${(organization?.metrics?.economicValue ?? 0).toLocaleString()}</div>
             <p className="text-xs text-gray-500">Total attribution value</p>
           </CardContent>
         </Card>
@@ -282,21 +282,21 @@ export function OrganizationDashboard() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Name:</span>
-                  <span>{organization.name}</span>
+                  <span>{organization?.name ?? ''}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Type:</span>
-                  <span className="capitalize">{organization.type}</span>
+                  <span className="capitalize">{organization?.type ?? ''}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Tier:</span>
-                  <Badge className={getTierColor(organization.tier)}>
-                    {organization.tier}
+                  <Badge className={getTierColor((organization?.tier ?? 'basic'))}>
+                    {(organization?.tier ?? 'basic')}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Created:</span>
-                  <span>{new Date(organization.createdAt).toLocaleDateString()}</span>
+                  <span>{new Date((organization?.createdAt ?? '')).toLocaleDateString()}</span>
                 </div>
               </div>
             </div>
@@ -306,19 +306,19 @@ export function OrganizationDashboard() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Public Profile:</span>
-                  <span>{organization.settings.publicProfile ? 'Yes' : 'No'}</span>
+                  <span>{(organization?.settings?.publicProfile ?? false) ? 'Yes' : 'No'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Allow Invites:</span>
-                  <span>{organization.settings.allowInvites ? 'Yes' : 'No'}</span>
+                  <span>{(organization?.settings?.allowInvites ?? false) ? 'Yes' : 'No'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Require Approval:</span>
-                  <span>{organization.settings.requireApproval ? 'Yes' : 'No'}</span>
+                  <span>{(organization?.settings?.requireApproval ?? false) ? 'Yes' : 'No'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Trust Threshold:</span>
-                  <span>{(organization.settings.trustThreshold * 100).toFixed(0)}%</span>
+                  <span>{((organization?.settings?.trustThreshold ?? 0) * 100).toFixed(0)}%</span>
                 </div>
               </div>
             </div>
@@ -326,7 +326,7 @@ export function OrganizationDashboard() {
 
           <div className="mt-4 pt-4 border-t">
             <h4 className="font-medium mb-2">Description</h4>
-            <p className="text-sm text-gray-600">{organization.description}</p>
+            <p className="text-sm text-gray-600">{(organization?.description ?? '')}</p>
           </div>
         </CardContent>
       </Card>
@@ -445,11 +445,11 @@ export function OrganizationDashboard() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">Organization Name</label>
-              <Input defaultValue={organization.name} />
+              <Input defaultValue={organization?.name ?? ''} />
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Description</label>
-              <Textarea defaultValue={organization.description} rows={3} />
+              <Textarea defaultValue={(organization?.description ?? '')} rows={3} />
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Trust Threshold</label>
@@ -458,14 +458,14 @@ export function OrganizationDashboard() {
                 min="0"
                 max="1"
                 step="0.01"
-                defaultValue={organization.settings.trustThreshold}
+                defaultValue={(organization?.settings?.trustThreshold ?? 0)}
               />
             </div>
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
                 id="publicProfile"
-                defaultChecked={organization.settings.publicProfile}
+                defaultChecked={(organization?.settings?.publicProfile ?? false)}
               />
               <label htmlFor="publicProfile" className="text-sm">Public Profile</label>
             </div>
@@ -473,7 +473,7 @@ export function OrganizationDashboard() {
               <input
                 type="checkbox"
                 id="allowInvites"
-                defaultChecked={organization.settings.allowInvites}
+                defaultChecked={(organization?.settings?.allowInvites ?? false)}
               />
               <label htmlFor="allowInvites" className="text-sm">Allow Member Invites</label>
             </div>
@@ -481,7 +481,7 @@ export function OrganizationDashboard() {
               <input
                 type="checkbox"
                 id="requireApproval"
-                defaultChecked={organization.settings.requireApproval}
+                defaultChecked={(organization?.settings?.requireApproval ?? false)}
               />
               <label htmlFor="requireApproval" className="text-sm">Require Approval for New Members</label>
             </div>
@@ -521,8 +521,8 @@ export function OrganizationDashboard() {
               )}
             </div>
             {organization && (
-              <Badge className={getTierColor(organization.tier)}>
-                {organization.tier.toUpperCase()}
+              <Badge className={getTierColor((organization?.tier ?? 'basic'))}>
+                {(organization?.tier ?? 'basic').toUpperCase()}
               </Badge>
             )}
           </div>

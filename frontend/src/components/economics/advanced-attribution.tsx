@@ -73,11 +73,11 @@ export function AdvancedAttribution() {
   const [timeRange, setTimeRange] = useState<string>('30d');
 
   // Attribution models - only shown in demo mode
-  const models = isDemoMode ? [
+  const models: AttributionModel[] = isDemoMode ? [
     {
       id: 'direct',
       name: 'Direct Contribution',
-      type: 'direct',
+      type: 'direct' as const,
       description: 'Simple attribution based on direct capsule contributions',
       weight: 0.3,
       active: true,
@@ -87,7 +87,7 @@ export function AdvancedAttribution() {
     {
       id: 'collaborative',
       name: 'Collaborative Impact',
-      type: 'collaborative',
+      type: 'collaborative' as const,
       description: 'Attribution based on joint capsule creation and cross-references',
       weight: 0.25,
       active: true,
@@ -97,7 +97,7 @@ export function AdvancedAttribution() {
     {
       id: 'temporal',
       name: 'Temporal Dynamics',
-      type: 'temporal',
+      type: 'temporal' as const,
       description: 'Time-weighted attribution with recency bias and momentum',
       weight: 0.2,
       active: true,
@@ -107,7 +107,7 @@ export function AdvancedAttribution() {
     {
       id: 'network',
       name: 'Network Effects',
-      type: 'network',
+      type: 'network' as const,
       description: 'Attribution based on network position and influence',
       weight: 0.15,
       active: true,
@@ -117,7 +117,7 @@ export function AdvancedAttribution() {
     {
       id: 'impact',
       name: 'Impact Measurement',
-      type: 'impact',
+      type: 'impact' as const,
       description: 'Attribution based on downstream usage and citation impact',
       weight: 0.1,
       active: true,
@@ -298,7 +298,7 @@ export function AdvancedAttribution() {
         <div className="mt-4 pt-4 border-t">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">
-              Model convergence: {(analysis.convergence * 100).toFixed(1)}%
+              Model convergence: {((analysis?.convergence ?? 0) * 100).toFixed(1)}%
             </span>
             <Button variant="outline" size="sm">
               <Calculator className="h-4 w-4 mr-2" />
@@ -320,7 +320,7 @@ export function AdvancedAttribution() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {analysis.results.map((result) => (
+          {(analysis?.results ?? []).map((result) => (
             <div
               key={result.agentId}
               className={`p-4 border rounded-lg cursor-pointer transition-colors ${
@@ -407,7 +407,7 @@ export function AdvancedAttribution() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {Object.entries(analysis.modelWeights).map(([model, weight]) => (
+            {Object.entries(analysis?.modelWeights ?? {}).map(([model, weight]) => (
               <div key={model} className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   {getModelIcon(model as AttributionModel['type'])}
@@ -439,19 +439,19 @@ export function AdvancedAttribution() {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-500">Total Value:</span>
-              <span className="font-medium">${analysis.totalValue.toLocaleString()}</span>
+              <span className="font-medium">${(analysis?.totalValue ?? 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Participants:</span>
-              <span className="font-medium">{analysis.participants.toLocaleString()}</span>
+              <span className="font-medium">{(analysis?.participants ?? 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Convergence:</span>
-              <span className="font-medium">{(analysis.convergence * 100).toFixed(1)}%</span>
+              <span className="font-medium">{((analysis?.convergence ?? 0) * 100).toFixed(1)}%</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Last Updated:</span>
-              <span className="font-medium">{new Date(analysis.timestamp).toLocaleTimeString()}</span>
+              <span className="font-medium">{analysis?.timestamp ? new Date(analysis.timestamp).toLocaleTimeString() : 'N/A'}</span>
             </div>
           </div>
         </CardContent>
@@ -536,7 +536,7 @@ export function AdvancedAttribution() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${analysis.totalValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">${(analysis?.totalValue ?? 0).toLocaleString()}</div>
             <p className="text-xs text-gray-500">Distributed value</p>
           </CardContent>
         </Card>
@@ -549,7 +549,7 @@ export function AdvancedAttribution() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analysis.participants.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{(analysis?.participants ?? 0).toLocaleString()}</div>
             <p className="text-xs text-gray-500">Active contributors</p>
           </CardContent>
         </Card>
@@ -562,7 +562,7 @@ export function AdvancedAttribution() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(analysis.convergence * 100).toFixed(1)}%</div>
+            <div className="text-2xl font-bold">{((analysis?.convergence ?? 0) * 100).toFixed(1)}%</div>
             <p className="text-xs text-gray-500">Model stability</p>
           </CardContent>
         </Card>

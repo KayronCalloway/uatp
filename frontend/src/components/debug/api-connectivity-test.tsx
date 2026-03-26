@@ -22,7 +22,7 @@ export function APIConnectivityTest() {
   // Test capsules endpoint
   const { data: capsulesData, isLoading: capsulesLoading, error: capsulesError } = useQuery({
     queryKey: ['capsules-test'],
-    queryFn: () => api.getCapsules({ limit: 5 }),
+    queryFn: () => api.getCapsules({ per_page: 5 }),
     enabled: testEndpoints,
     retry: 1
   });

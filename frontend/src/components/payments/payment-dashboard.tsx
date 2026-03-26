@@ -137,7 +137,7 @@ export function PaymentDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">Total Earned</p>
                   <h3 className="text-2xl font-bold text-green-900">
-                    ${mockSummary.total_earned.toLocaleString()}
+                    ${(mockSummary?.total_earned ?? 0).toLocaleString()}
                   </h3>
                 </div>
               </div>
@@ -158,7 +158,7 @@ export function PaymentDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">Total Paid Out</p>
                   <h3 className="text-2xl font-bold text-blue-900">
-                    ${mockSummary.total_paid.toLocaleString()}
+                    ${(mockSummary?.total_paid ?? 0).toLocaleString()}
                   </h3>
                 </div>
               </div>
@@ -179,7 +179,7 @@ export function PaymentDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">Pending Payouts</p>
                   <h3 className="text-2xl font-bold text-amber-900">
-                    ${mockSummary.pending_payouts.toLocaleString()}
+                    ${(mockSummary?.pending_payouts ?? 0).toLocaleString()}
                   </h3>
                 </div>
               </div>
@@ -200,7 +200,7 @@ export function PaymentDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">This Month</p>
                   <h3 className="text-2xl font-bold text-purple-900">
-                    ${mockSummary.this_month_earnings.toLocaleString()}
+                    ${(mockSummary?.this_month_earnings ?? 0).toLocaleString()}
                   </h3>
                 </div>
               </div>

@@ -181,7 +181,7 @@ export function OutcomeRecorder({
               <span>1.0 (Perfect)</span>
             </div>
             <p className="text-xs text-gray-500">
-              Rate how well the capsule's reasoning led to a successful outcome
+              Rate how well the capsule&apos;s reasoning led to a successful outcome
             </p>
           </div>
 

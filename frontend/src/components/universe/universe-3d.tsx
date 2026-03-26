@@ -52,7 +52,7 @@ interface Universe3DState {
 
 export function Universe3D() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
   const [isAnimating, setIsAnimating] = useState(true);
   const [selectedNode, setSelectedNode] = useState<CapsuleNode3D | null>(null);
   const [universe, setUniverse] = useState<Universe3DState>({

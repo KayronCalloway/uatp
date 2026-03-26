@@ -184,14 +184,14 @@ export function HomeView() {
 
               <div className="text-center p-4 bg-green-50 rounded-lg">
                 <div className="text-3xl font-bold text-green-600 mb-1">
-                  {Object.keys(stats?.by_type || {}).length}
+                  {Object.keys(stats?.types || {}).length}
                 </div>
                 <div className="text-sm text-gray-600">Capsule Types</div>
               </div>
 
               <div className="text-center p-4 bg-purple-50 rounded-lg">
                 <div className="text-3xl font-bold text-purple-600 mb-1">
-                  {stats?.recent_activity?.last_24h || 0}
+                  {(stats as any)?.recent_activity?.last_24h || 0}
                 </div>
                 <div className="text-sm text-gray-600">Last 24 Hours</div>
               </div>

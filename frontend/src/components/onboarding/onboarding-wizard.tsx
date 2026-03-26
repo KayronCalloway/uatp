@@ -32,11 +32,11 @@ export function OnboardingWizard() {
   // Update current step based on progress
   useEffect(() => {
     if (state.progress) {
-      logger.debug('Onboarding progress updated:', state.progress);
+      logger.debug('Onboarding progress updated:', { ...state.progress });
       const stageIndex = STEP_ORDER.indexOf(state.progress.current_stage);
-      logger.debug('Current stage:', state.progress.current_stage, 'Stage index:', stageIndex);
+      logger.debug('Current stage', { stage: state.progress.current_stage, stageIndex });
       if (stageIndex !== -1) {
-        logger.debug('Setting current step index to:', stageIndex);
+        logger.debug('Setting current step index', { stageIndex });
         setCurrentStepIndex(stageIndex);
       }
 
@@ -119,24 +119,30 @@ export function OnboardingWizard() {
   };
 
   const getStepTitle = () => {
-    const titles = {
+    const titles: Record<OnboardingStage, string> = {
       [OnboardingStage.WELCOME]: 'Welcome to UATP',
       [OnboardingStage.ENVIRONMENT_DETECTION]: 'Detecting Environment',
+      [OnboardingStage.QUICK_SETUP]: 'Quick Setup',
       [OnboardingStage.AI_INTEGRATION]: 'Connect AI Platform',
       [OnboardingStage.FIRST_CAPSULE]: 'Create First Capsule',
       [OnboardingStage.SUCCESS_MILESTONE]: 'Success!',
+      [OnboardingStage.ADVANCED_FEATURES]: 'Advanced Features',
+      [OnboardingStage.COMPLETE]: 'Complete',
     };
 
     return titles[STEP_ORDER[currentStepIndex]] || 'Setting Up...';
   };
 
   const getStepDescription = () => {
-    const descriptions = {
+    const descriptions: Record<OnboardingStage, string> = {
       [OnboardingStage.WELCOME]: 'Let\'s get you started with AI trust and attribution',
       [OnboardingStage.ENVIRONMENT_DETECTION]: 'We\'re optimizing the setup for your environment',
+      [OnboardingStage.QUICK_SETUP]: 'Setting up your environment quickly',
       [OnboardingStage.AI_INTEGRATION]: 'Connect to your preferred AI platform',
       [OnboardingStage.FIRST_CAPSULE]: 'Creating your first attributed capsule',
       [OnboardingStage.SUCCESS_MILESTONE]: 'Your UATP system is ready to use!',
+      [OnboardingStage.ADVANCED_FEATURES]: 'Explore advanced features',
+      [OnboardingStage.COMPLETE]: 'Onboarding complete!',
     };
 
     return descriptions[STEP_ORDER[currentStepIndex]] || 'Processing...';

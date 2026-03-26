@@ -209,7 +209,7 @@ export function PlatformDashboard() {
     }
   ] : [];
 
-  const mockUsage: PlatformUsage[] = DEMO_MODE ? [
+  const mockUsage: PlatformUsage[] = isDemoMode ? [
     {
       platform_id: 'openai',
       requests_today: 1247,
@@ -299,13 +299,13 @@ export function PlatformDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">API Keys</p>
                   <h3 className="text-2xl font-bold text-blue-900">
-                    {mockStats.active_keys}/{mockStats.total_keys}
+                    {mockStats?.active_keys ?? 0}/{mockStats?.total_keys ?? 0}
                   </h3>
                 </div>
               </div>
             </div>
             <div className="mt-4 text-sm text-gray-500">
-              {mockStats.keys_used_today} keys used today
+              {mockStats?.keys_used_today ?? 0} keys used today
             </div>
           </CardContent>
         </Card>
@@ -341,7 +341,7 @@ export function PlatformDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">Requests Today</p>
                   <h3 className="text-2xl font-bold text-purple-900">
-                    {mockStats.total_requests_today.toLocaleString()}
+                    {(mockStats?.total_requests_today ?? 0).toLocaleString()}
                   </h3>
                 </div>
               </div>
@@ -362,7 +362,7 @@ export function PlatformDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">Cost This Month</p>
                   <h3 className="text-2xl font-bold text-amber-900">
-                    ${mockStats.total_cost_this_month}
+                    ${mockStats?.total_cost_this_month ?? 0}
                   </h3>
                 </div>
               </div>

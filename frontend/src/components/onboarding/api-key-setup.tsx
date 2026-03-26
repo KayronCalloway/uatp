@@ -61,7 +61,7 @@ export function ApiKeySetup({ platform, onComplete, onSkip }: ApiKeySetupProps) 
         const { apiClient } = await import('@/lib/api-client');
         const platformsData = await apiClient.getAvailablePlatforms();
 
-        if (platformsData.success && platformsData.data[platform]) {
+        if (platformsData.success && platformsData.data?.[platform]) {
           const platformInfo = platformsData.data[platform];
           if (platformInfo.available) {
             setStatus({

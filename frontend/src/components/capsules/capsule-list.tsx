@@ -90,11 +90,11 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
     enabled: true, // Always enabled, but uses mock in demo mode
   });
 
-  const capsules = data?.capsules || [];
+  const capsules: AnyCapsule[] = (data && 'capsules' in data ? data.capsules : Array.isArray(data) ? data : []) as AnyCapsule[] || [];
 
   // Comprehensive filtering using CapsuleSearchParams
   const filteredCapsules = useMemo(() => {
-    let filtered = capsules.filter(capsule => {
+    const filtered = capsules.filter(capsule => {
       // Text search across multiple fields
       if (searchParams.query) {
         const q = searchParams.query.toLowerCase();

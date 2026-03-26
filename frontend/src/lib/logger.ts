@@ -104,8 +104,17 @@ class Logger {
    * Log error message (development only)
    * In production, consider sending to error tracking service instead
    */
-  error(message: string, context?: LogContext): void {
+  error(message: string, contextOrError?: LogContext | unknown): void {
     if (this.isDevelopment) {
+      // Handle Error objects or unknown types from catch blocks
+      let context: LogContext | undefined;
+      if (contextOrError instanceof Error) {
+        context = { error: contextOrError.message, stack: contextOrError.stack };
+      } else if (contextOrError && typeof contextOrError === 'object') {
+        context = contextOrError as LogContext;
+      } else if (contextOrError !== undefined) {
+        context = { error: String(contextOrError) };
+      }
       console.error(this.format('error', message, context));
     }
     // TODO: In production, send to error tracking service (Sentry, etc.)

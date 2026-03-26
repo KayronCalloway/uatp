@@ -280,13 +280,13 @@ export function ReasoningDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">Reasoning Chains</p>
                   <h3 className="text-2xl font-bold text-blue-900">
-                    {mockStats.active_chains}/{mockStats.total_chains}
+                    {(mockStats?.active_chains ?? 0)}/{(mockStats?.total_chains ?? 0)}
                   </h3>
                 </div>
               </div>
             </div>
             <div className="mt-4 text-sm text-gray-500">
-              {mockStats.chains_today} created today
+              {(mockStats?.chains_today ?? 0)} created today
             </div>
           </CardContent>
         </Card>
@@ -301,13 +301,13 @@ export function ReasoningDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">Avg Confidence</p>
                   <h3 className="text-2xl font-bold text-green-900">
-                    {(mockStats.avg_confidence * 100).toFixed(0)}%
+                    {((mockStats?.avg_confidence ?? 0) * 100).toFixed(0)}%
                   </h3>
                 </div>
               </div>
             </div>
             <div className="mt-4 text-sm text-gray-500">
-              {(mockStats.success_rate * 100).toFixed(0)}% success rate
+              {((mockStats?.success_rate ?? 0) * 100).toFixed(0)}% success rate
             </div>
           </CardContent>
         </Card>
@@ -322,13 +322,13 @@ export function ReasoningDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">Avg Execution</p>
                   <h3 className="text-2xl font-bold text-purple-900">
-                    {(mockStats.avg_execution_time / 1000).toFixed(1)}s
+                    {((mockStats?.avg_execution_time ?? 0) / 1000).toFixed(1)}s
                   </h3>
                 </div>
               </div>
             </div>
             <div className="mt-4 text-sm text-gray-500">
-              {(mockStats.memory_efficiency * 100).toFixed(0)}% efficiency
+              {((mockStats?.memory_efficiency ?? 0) * 100).toFixed(0)}% efficiency
             </div>
           </CardContent>
         </Card>
@@ -343,7 +343,7 @@ export function ReasoningDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">Error Rate</p>
                   <h3 className="text-2xl font-bold text-amber-900">
-                    {(mockStats.error_rate * 100).toFixed(1)}%
+                    {((mockStats?.error_rate ?? 0) * 100).toFixed(1)}%
                   </h3>
                 </div>
               </div>

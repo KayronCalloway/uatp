@@ -13,7 +13,7 @@ export function SystemGraphView() {
     // Define nodes
     const nodes = [
       // Core Engine
-      { id: 'capsule_engine', label: 'UATP\nCapsule Engine', shape: 'star', color: '#ff6b6b', size: 50, font: { color: 'white', size: 14, bold: true } },
+      { id: 'capsule_engine', label: 'UATP\nCapsule Engine', shape: 'star', color: '#ff6b6b', size: 50, font: { color: 'white', size: 16 } },
 
       // LLM Providers
       { id: 'openai', label: 'OpenAI', shape: 'dot', color: '#10a37f', size: 30, font: { color: 'white' } },
@@ -150,6 +150,7 @@ export function SystemGraphView() {
       edges: {
         width: 2,
         smooth: {
+          enabled: true,
           type: 'continuous',
           roundness: 0.5,
         },

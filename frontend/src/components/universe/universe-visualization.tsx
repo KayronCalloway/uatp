@@ -41,7 +41,7 @@ interface UniverseState {
 
 export function UniverseVisualization() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
   const [isAnimating, setIsAnimating] = useState(true);
   const [selectedNode, setSelectedNode] = useState<CapsuleNode | null>(null);
   const [universe, setUniverse] = useState<UniverseState>({

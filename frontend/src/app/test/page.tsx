@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BackendIntegrationTest } from '@/components/debug/backend-integration-test';
 
@@ -28,8 +29,8 @@ export default function TestPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-semibold text-blue-800">Available Routes:</h3>
                 <ul className="text-sm text-blue-700 mt-2 space-y-1">
-                  <li><a href="/" className="underline hover:text-blue-900">/ - Main Application</a></li>
-                  <li><a href="/test" className="underline hover:text-blue-900">/test - This Test Page</a></li>
+                  <li><Link href="/" className="underline hover:text-blue-900">/ - Main Application</Link></li>
+                  <li><Link href="/test" className="underline hover:text-blue-900">/test - This Test Page</Link></li>
                 </ul>
               </div>
 

@@ -526,7 +526,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                   {decryptionError}
                 </p>
                 <p className="text-xs text-red-600 mt-2">
-                  This capsule's payload is encrypted. You need the correct encryption key to view its contents.
+                  This capsule&apos;s payload is encrypted. You need the correct encryption key to view its contents.
                 </p>
               </div>
             </div>
@@ -544,7 +544,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                   Encrypted Capsule
                 </h4>
                 <p className="text-sm text-blue-700 mt-1">
-                  Please log in to decrypt and view this capsule's payload.
+                  Please log in to decrypt and view this capsule&apos;s payload.
                 </p>
               </div>
             </div>
@@ -763,7 +763,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
         </CardHeader>
         <CardContent>
           {/* SEE: At-a-glance summary if reasoning steps exist */}
-          {(capsule.payload?.reasoning_steps?.length > 0 || capsule.reasoning_trace?.reasoning_steps?.length > 0) && (
+          {((capsule.payload?.reasoning_steps?.length ?? 0) > 0 || (capsule.reasoning_trace?.reasoning_steps?.length ?? 0) > 0) && (
             <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
               {/* Total Steps */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -831,7 +831,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                   ? JSON.stringify(capsule.content || capsule.payload?.content, null, 2)
                   : (capsule.content || capsule.payload?.content)
               }</pre>
-            ) : (capsule.payload?.reasoning_steps?.length > 0 || capsule.reasoning_trace?.reasoning_steps?.length > 0 || capsule.reasoning?.length > 0) ? (
+            ) : ((capsule.payload?.reasoning_steps?.length ?? 0) > 0 || (capsule.reasoning_trace?.reasoning_steps?.length ?? 0) > 0 || (capsule.reasoning?.length ?? 0) > 0) ? (
               <div className="space-y-6">
                 {(capsule.reasoning || capsule.payload?.reasoning_steps || capsule.reasoning_trace?.reasoning_steps || []).map((step: any, index: number) => {
                   const isCritical = capsule.payload?.critical_path_analysis?.critical_steps?.includes(step.step_id || index + 1);
@@ -1130,7 +1130,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                           {' '}({(capsule.payload.critical_path_analysis.weakest_link.confidence * 100).toFixed(1)}% confidence)
                         </div>
                         <div className="text-xs text-red-600 mt-1 italic">
-                          "{capsule.payload.critical_path_analysis.weakest_link.reasoning}"
+                          &quot;{capsule.payload.critical_path_analysis.weakest_link.reasoning}&quot;
                         </div>
                       </div>
                     )}

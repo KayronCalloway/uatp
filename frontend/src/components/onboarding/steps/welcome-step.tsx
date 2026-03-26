@@ -67,7 +67,7 @@ export function WelcomeStep({ onComplete, isLoading, error }: WelcomeStepProps) 
       ...additionalPreferences,
     };
 
-    logger.debug('Starting onboarding with preferences:', preferences);
+    logger.debug('Starting onboarding with preferences', { ...preferences });
 
     try {
       await actions.startOnboarding(preferences);

@@ -39,7 +39,7 @@ export function SystemView() {
   });
 
   const isHealthy = health?.status === 'healthy';
-  const dbConnected = stats?.database_connected !== false;
+  const dbConnected = (stats as any)?.database_connected !== false;
 
   const handleRefresh = () => {
     refetchHealth();
@@ -230,14 +230,14 @@ export function SystemView() {
 
                 <div className="bg-green-50 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-green-600">
-                    {stats?.recent_activity?.last_24h || 0}
+                    {(stats as any)?.recent_activity?.last_24h || 0}
                   </div>
                   <div className="text-sm text-gray-600">Last 24 Hours</div>
                 </div>
 
                 <div className="bg-purple-50 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600">
-                    {Object.keys(stats?.by_type || {}).length}
+                    {Object.keys((stats as any)?.by_type || {}).length}
                   </div>
                   <div className="text-sm text-gray-600">Capsule Types</div>
                 </div>
@@ -251,16 +251,16 @@ export function SystemView() {
               </div>
 
               {/* Capsule Types Breakdown */}
-              {stats?.by_type && Object.keys(stats.by_type).length > 0 && (
+              {(stats as any)?.by_type && Object.keys((stats as any).by_type).length > 0 && (
                 <div className="pt-4 border-t">
                   <h4 className="text-sm font-semibold mb-3">Capsule Distribution</h4>
                   <div className="space-y-2">
-                    {Object.entries(stats.by_type)
+                    {Object.entries((stats as any).by_type)
                       .sort(([, a], [, b]) => (b as number) - (a as number))
                       .slice(0, 5)
                       .map(([type, count]) => {
-                        const percentage = stats.total_capsules > 0
-                          ? ((count as number) / stats.total_capsules) * 100
+                        const percentage = (stats?.total_capsules ?? 0) > 0
+                          ? ((count as number) / (stats?.total_capsules ?? 1)) * 100
                           : 0;
                         return (
                           <div key={type} className="flex items-center space-x-3">

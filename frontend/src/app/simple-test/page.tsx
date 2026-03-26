@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function SimpleTest() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
@@ -50,18 +52,18 @@ export default function SimpleTest() {
         <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 mb-6">
           <h2 className="text-xl font-semibold text-purple-600 mb-4"> Quick Actions</h2>
           <div className="flex flex-wrap gap-3">
-            <a
+            <Link
               href="/"
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
                Main Dashboard
-            </a>
-            <a
+            </Link>
+            <Link
               href="/onboarding"
               className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
                Try Onboarding
-            </a>
+            </Link>
             <button
               onClick={() => window.location.reload()}
               className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"

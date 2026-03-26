@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function SimplePage() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -18,9 +20,9 @@ export default function SimplePage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h2 className="font-semibold text-blue-800">Available Pages</h2>
             <ul className="text-sm text-blue-700 mt-2 space-y-1">
-              <li>• <a href="/simple" className="underline hover:text-blue-900">/simple</a> - This minimal page</li>
-              <li>• <a href="/test" className="underline hover:text-blue-900">/test</a> - Feature test page</li>
-              <li>• <a href="/" className="underline hover:text-blue-900">/</a> - Full UATP application</li>
+              <li>• <Link href="/simple" className="underline hover:text-blue-900">/simple</Link> - This minimal page</li>
+              <li>• <Link href="/test" className="underline hover:text-blue-900">/test</Link> - Feature test page</li>
+              <li>• <Link href="/" className="underline hover:text-blue-900">/</Link> - Full UATP application</li>
             </ul>
           </div>
 
