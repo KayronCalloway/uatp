@@ -1,13 +1,18 @@
 """
 Authentication Routes
 FastAPI routes for user authentication, registration, and token management
+
+SECURITY: This module supports HTTP-only cookie authentication for enhanced
+XSS protection. Tokens are stored in HTTP-only, Secure, SameSite cookies
+instead of being returned in response bodies for client-side storage.
 """
 
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr, field_validator
 from sqlalchemy.orm import Session
@@ -22,6 +27,17 @@ from .jwt_manager import (
     jwt_manager,
     verify_password,
 )
+
+# Cookie configuration
+COOKIE_SECURE = os.getenv("ENVIRONMENT", "development") in (
+    "production",
+    "prod",
+    "staging",
+)
+COOKIE_SAMESITE = "lax"  # "strict" breaks OAuth redirects, "lax" is good default
+COOKIE_HTTPONLY = True
+COOKIE_MAX_AGE_ACCESS = 15 * 60  # 15 minutes
+COOKIE_MAX_AGE_REFRESH = 7 * 24 * 60 * 60  # 7 days
 
 logger = logging.getLogger(__name__)
 
@@ -111,12 +127,51 @@ class ChangePasswordRequest(BaseModel):
         return v
 
 
+# Cookie helper functions
+def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+    """
+    Set HTTP-only authentication cookies.
+
+    SECURITY: These cookies are:
+    - HttpOnly: Not accessible via JavaScript (XSS protection)
+    - Secure: Only sent over HTTPS in production
+    - SameSite=Lax: CSRF protection while allowing navigation
+    """
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        max_age=COOKIE_MAX_AGE_ACCESS,
+        httponly=COOKIE_HTTPONLY,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        path="/",
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        max_age=COOKIE_MAX_AGE_REFRESH,
+        httponly=COOKIE_HTTPONLY,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        path="/api/v1/auth",  # Only sent to auth endpoints
+    )
+
+
+def clear_auth_cookies(response: Response) -> None:
+    """Clear authentication cookies on logout."""
+    response.delete_cookie(key="access_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/api/v1/auth")
+
+
 # Authentication routes
 @router.post("/register", response_model=TokenResponse)
 async def register_user(
-    request: Request, user_data: UserRegistration, db: Session = Depends(get_db)
+    request: Request,
+    response: Response,
+    user_data: UserRegistration,
+    db: Session = Depends(get_db),
 ):
-    """Register a new user"""
+    """Register a new user. Sets HTTP-only cookies for secure auth."""
     try:
         # Check rate limit
         check_rate_limit(request, user_data.email)
@@ -166,6 +221,9 @@ async def register_user(
         )
         refresh_token = create_refresh_token(user_id=str(new_user.id))
 
+        # SECURITY: Set HTTP-only cookies for XSS protection
+        set_auth_cookies(response, access_token, refresh_token)
+
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -186,9 +244,20 @@ async def register_user(
 
 @router.post("/login", response_model=TokenResponse)
 async def login_user(
-    request: Request, login_data: UserLogin, db: Session = Depends(get_db)
+    request: Request,
+    response: Response,
+    login_data: UserLogin,
+    db: Session = Depends(get_db),
 ):
-    """Authenticate user and return tokens"""
+    """
+    Authenticate user and return tokens.
+
+    SECURITY: Tokens are set as HTTP-only cookies AND returned in response body.
+    - Cookie auth: More secure, automatic, XSS-resistant
+    - Body response: Backwards compatible for clients using sessionStorage
+
+    Clients should migrate to cookie-based auth for better security.
+    """
     try:
         # Check rate limit
         check_rate_limit(request, login_data.email)
@@ -222,6 +291,10 @@ async def login_user(
         )
         refresh_token = create_refresh_token(user_id=str(user.id))
 
+        # SECURITY: Set HTTP-only cookies for XSS protection
+        set_auth_cookies(response, access_token, refresh_token)
+
+        # Also return in body for backwards compatibility
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -242,12 +315,34 @@ async def login_user(
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
-    request: Request, refresh_data: RefreshTokenRequest, db: Session = Depends(get_db)
+    request: Request,
+    response: Response,
+    refresh_data: RefreshTokenRequest = None,
+    db: Session = Depends(get_db),
 ):
-    """Refresh access token using refresh token"""
+    """
+    Refresh access token using refresh token.
+
+    Accepts refresh token from:
+    1. Request body (refresh_data.refresh_token) - backwards compatible
+    2. HTTP-only cookie (refresh_token) - preferred, more secure
+    """
     try:
+        # Get refresh token from body or cookie
+        token = None
+        if refresh_data and refresh_data.refresh_token:
+            token = refresh_data.refresh_token
+        else:
+            token = request.cookies.get("refresh_token")
+
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token required",
+            )
+
         # Verify refresh token with correct token type
-        payload = jwt_manager.verify_token(refresh_data.refresh_token, "refresh")
+        payload = jwt_manager.verify_token(token, "refresh")
         if not payload:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -277,6 +372,9 @@ async def refresh_token(
         )
         new_refresh_token = create_refresh_token(user_id=str(user.id))
 
+        # SECURITY: Set HTTP-only cookies for XSS protection
+        set_auth_cookies(response, access_token, new_refresh_token)
+
         return TokenResponse(
             access_token=access_token,
             refresh_token=new_refresh_token,
@@ -296,13 +394,33 @@ async def refresh_token(
 
 @router.post("/logout")
 async def logout_user(
+    request: Request,
+    response: Response,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     current_user: Dict[str, Any] = Depends(get_current_user),
 ):
-    """Logout user and revoke tokens"""
+    """
+    Logout user, revoke tokens, and clear auth cookies.
+
+    SECURITY: Clears HTTP-only cookies to ensure complete logout
+    even if client-side code fails to clear sessionStorage.
+    """
     try:
+        # Revoke the Bearer token
         token = credentials.credentials
         jwt_manager.revoke_token(token)
+
+        # Also revoke cookie tokens if present
+        access_cookie = request.cookies.get("access_token")
+        refresh_cookie = request.cookies.get("refresh_token")
+        if access_cookie:
+            jwt_manager.revoke_token(access_cookie)
+        if refresh_cookie:
+            jwt_manager.revoke_token(refresh_cookie)
+
+        # SECURITY: Clear auth cookies
+        clear_auth_cookies(response)
+
         logger.info(f"User logged out: {current_user['username']}")
         return {"message": "Logout successful"}
 

@@ -30,15 +30,27 @@ class AuthorizationError(Exception):
 
 
 def extract_token_from_request(request: Request) -> Optional[str]:
-    """Extract JWT token from request headers"""
+    """
+    Extract JWT token from request.
+
+    Checks in order:
+    1. Authorization header (Bearer token) - explicit auth
+    2. access_token cookie (HTTP-only) - automatic, more secure
+
+    SECURITY: Cookie auth is preferred for browser clients as it's
+    not accessible to JavaScript (XSS protection).
+    """
+    # Check Authorization header first (explicit takes precedence)
     authorization = request.headers.get("Authorization")
-    if not authorization:
-        return None
+    if authorization and authorization.startswith("Bearer "):
+        return authorization.split(" ")[1]
 
-    if not authorization.startswith("Bearer "):
-        return None
+    # Fall back to HTTP-only cookie
+    cookie_token = request.cookies.get("access_token")
+    if cookie_token:
+        return cookie_token
 
-    return authorization.split(" ")[1]
+    return None
 
 
 def get_current_user(

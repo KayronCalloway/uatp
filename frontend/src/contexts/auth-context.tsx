@@ -154,11 +154,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
 
       // Call auth login endpoint
+      // SECURITY: credentials: 'include' enables HTTP-only cookie auth
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_UATP_API_URL || 'http://localhost:8000'}/api/v1/auth/login`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // Enable cookie auth
           body: JSON.stringify({ email, password }),
         }
       );
@@ -169,7 +171,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json();
 
-      // Set token in API client and state
+      // Set token in API client and state (backwards compatibility)
+      // NOTE: HTTP-only cookies are now set automatically by backend
+      // sessionStorage is kept for backwards compatibility but cookies are preferred
       api.setAuthToken(data.access_token);
       sessionStorage.setItem('uatp-auth-token', data.access_token);
       setAuthTokenState(data.access_token);

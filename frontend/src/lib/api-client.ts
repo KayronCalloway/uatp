@@ -60,6 +60,9 @@ export class UATCapsuleEngineClient {
     this.client = axios.create({
       baseURL,
       timeout: 30000,
+      // SECURITY: withCredentials enables HTTP-only cookie auth
+      // Cookies are set by backend login and sent automatically
+      withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
         ...(effectiveApiKey && { 'X-API-Key': effectiveApiKey }),
@@ -410,20 +413,14 @@ export class UATCapsuleEngineClient {
     const response = await this.client.get('/live/monitor/status');
     const backendData = response.data;
 
-    // Transform backend response to frontend expected format
+    // Return backend data as-is, only extract known fields
+    // NOTE: Frontend should handle missing fields gracefully
     if (backendData.success && backendData.status) {
       return {
         status: 'active',
         active_sessions: backendData.status.active_conversations || 0,
-        total_captured: 0, // Backend doesn't track this yet
-        capture_rate: 0.0, // Backend doesn't track this yet
-        sources: {
-          'live-monitor': {
-            active: true,
-            captures: 0
-          }
-        },
-        last_capture: new Date().toISOString()
+        // Only return fields that backend actually provides
+        ...backendData.status,
       };
     }
 
@@ -537,24 +534,13 @@ export class UATCapsuleEngineClient {
   }
 
   // Mirror Mode endpoints
-  // Note: Mirror mode uses demo data in frontend; backend endpoints not in FastAPI app
+  // NOTE: Backend endpoints not implemented. These throw to prevent silent failures.
   async getMirrorModeConfig(): Promise<any> {
-    // Return mock config when endpoint not available
-    return {
-      enabled: false,
-      sample_rate: 0,
-      strict_mode: false,
-      message: "Mirror mode uses demo data"
-    };
+    throw new Error('Mirror mode API not implemented. Use demo mode toggle instead.');
   }
 
   async getMirrorModeAudits(): Promise<any> {
-    // Return empty audits when endpoint not available
-    return {
-      audits: [],
-      total: 0,
-      message: "Mirror mode uses demo data"
-    };
+    throw new Error('Mirror mode API not implemented. Use demo mode toggle instead.');
   }
 
   // Payment endpoints
@@ -615,16 +601,8 @@ export class UATCapsuleEngineClient {
   }
 
   async getOnboardingSupport(userId?: string, issueType?: string, message?: string): Promise<OnboardingApiResponse<SupportResponse>> {
-    // Support endpoint not implemented in backend - return mock response
-    return {
-      success: true,
-      data: {
-        ticket_id: `support_${Date.now()}`,
-        status: 'received',
-        message: 'Support request received. A team member will respond shortly.',
-        estimated_response_time: '24 hours'
-      } as unknown as SupportResponse
-    };
+    // NOTE: Backend endpoint not implemented
+    throw new Error('Support API not implemented. Contact support directly.');
   }
 
   async getAvailablePlatforms(): Promise<OnboardingApiResponse<Record<string, PlatformInfo>>> {
