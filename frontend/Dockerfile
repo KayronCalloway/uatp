@@ -17,7 +17,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NEXT_PUBLIC_API_URL=http://localhost:8000
+# IMPORTANT: Must match the variable name used in code (api-client.ts, auth-context.tsx)
+ENV NEXT_PUBLIC_UATP_API_URL=http://localhost:8000
 
 RUN npm run build
 
