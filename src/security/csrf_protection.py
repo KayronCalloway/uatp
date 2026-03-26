@@ -318,6 +318,7 @@ async def csrf_middleware(request: Request, call_next):
         "/api/v1/auth/login",
         "/api/v1/auth/register",
         "/api/v1/auth/refresh",  # Protected by refresh token cookie, access token may be expired
+        "/api/v1/auth/logout",  # Protected by valid session, frontend doesn't send CSRF yet
         "/api/v1/webhooks/",  # Webhooks typically don't use CSRF
         "/api/v1/live/",  # Live capture API uses API key authentication
         "/live/",  # Live capture API uses API key authentication (actual path)
