@@ -280,6 +280,14 @@ async def register_user(
             path="/",
         )
 
+        # DEPRECATION: Tokens in response body will be removed in v8.0
+        # Use HTTP-only cookies (already set above) for secure authentication.
+        response.headers["Deprecation"] = "true"
+        response.headers["Sunset"] = "2026-09-01"
+        response.headers["X-Deprecation-Notice"] = (
+            "Token response body deprecated. Use cookie auth instead."
+        )
+
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -372,7 +380,15 @@ async def login_user(
             path="/",
         )
 
-        # Also return in body for backwards compatibility
+        # DEPRECATION: Tokens in response body will be removed in v8.0
+        # Use HTTP-only cookies (already set above) for secure authentication.
+        # Set deprecation header to warn API consumers
+        response.headers["Deprecation"] = "true"
+        response.headers["Sunset"] = "2026-09-01"  # 6 months notice
+        response.headers["X-Deprecation-Notice"] = (
+            "Token response body deprecated. Use cookie auth instead."
+        )
+
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -452,6 +468,13 @@ async def refresh_token(
 
         # SECURITY: Set HTTP-only cookies for XSS protection
         set_auth_cookies(response, access_token, new_refresh_token)
+
+        # DEPRECATION: Tokens in response body will be removed in v8.0
+        response.headers["Deprecation"] = "true"
+        response.headers["Sunset"] = "2026-09-01"
+        response.headers["X-Deprecation-Notice"] = (
+            "Token response body deprecated. Use cookie auth instead."
+        )
 
         return TokenResponse(
             access_token=access_token,

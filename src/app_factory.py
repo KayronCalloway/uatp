@@ -459,13 +459,41 @@ def setup_health_routes(app: FastAPI):
 
     @app.get("/health", tags=["Monitoring"])
     async def health_check():
-        """Health check endpoint"""
+        """
+        Health check endpoint with actual dependency verification.
+
+        Returns 200 only if critical dependencies are reachable.
+        Returns 503 if any critical dependency fails.
+        """
+        import time
         from datetime import datetime, timezone
 
-        return {
-            "status": "healthy",
+        checks = {}
+        overall_healthy = True
+
+        # Check database connectivity (critical)
+        try:
+            start = time.time()
+            async with db.get_session() as session:
+                from sqlalchemy import text
+
+                await session.execute(text("SELECT 1"))
+            checks["database"] = {
+                "status": "healthy",
+                "latency_ms": round((time.time() - start) * 1000, 2),
+            }
+        except Exception as e:
+            checks["database"] = {"status": "unhealthy", "error": str(e)}
+            overall_healthy = False
+
+        status_code = 200 if overall_healthy else 503
+        response_data = {
+            "status": "healthy" if overall_healthy else "unhealthy",
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "checks": checks,
         }
+
+        return JSONResponse(content=response_data, status_code=status_code)
 
     @app.get("/ready", tags=["Monitoring"])
     async def readiness_check():
@@ -576,7 +604,9 @@ def setup_health_routes(app: FastAPI):
 
             metrics = []
 
-            # Database health
+            # Database health (SQLAlchemy ORM layer - primary)
+            # Note: UATP uses SQLAlchemy for ORM operations (always available)
+            # and optionally asyncpg for high-performance PostgreSQL queries
             db_health = 95
             try:
                 async with db.get_session() as session:
@@ -598,7 +628,7 @@ def setup_health_routes(app: FastAPI):
             metrics.append(
                 {
                     "name": "database",
-                    "label": "Database",
+                    "label": "Database (SQLAlchemy)",
                     "value": db_health,
                     "status": "healthy" if db_health >= 90 else "degraded",
                 }
