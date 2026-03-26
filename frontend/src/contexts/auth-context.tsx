@@ -35,11 +35,21 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /**
+ * AUTH MODEL: Dual-track authentication (intentional design)
+ *
+ * 1. JWT Auth (loginWithToken) - PREFERRED for browser-based sessions
+ *    - HTTP-only cookies set automatically by backend (XSS-resistant)
+ *    - sessionStorage fallback for backwards compatibility
+ *    - Use for: User login flows, production deployments
+ *
+ * 2. API Key Auth (login) - For programmatic/development access
+ *    - Stored in sessionStorage (cleared on tab close)
+ *    - Use for: API testing, development, CI/CD pipelines
+ *
  * SECURITY NOTES:
- * - JWT tokens stored in sessionStorage (cleared on tab close)
- * - API keys stored in sessionStorage, NOT localStorage (reduces XSS risk window)
  * - All sensitive data cleared on logout
- * - For maximum security, consider HTTP-only cookies instead
+ * - isAuthenticated = true if EITHER auth method succeeds
+ * - Backend validates both Bearer tokens and cookies
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [apiKey, setApiKey] = useState<string | null>(null);

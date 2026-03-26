@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { Network } from 'vis-network/standalone';
+import { Network, Data, Options } from 'vis-network/standalone';
 
 export default function SystemGraphPage() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -112,9 +112,11 @@ export default function SystemGraphPage() {
       { from: 'reasoning', to: 'joint', label: 'chains_to', color: '#4ade80', arrows: 'to', width: 3 },
     ];
 
-    const data = { nodes, edges };
+    // Type assertion needed due to vis-network's strict Font type
+    // (font.bold expects string|FontStyles, not boolean)
+    const data = { nodes, edges } as Data;
 
-    const options = {
+    const options: Options = {
       layout: {
         randomSeed: 42,
         improvedLayout: true,
@@ -150,6 +152,7 @@ export default function SystemGraphPage() {
       edges: {
         width: 2,
         smooth: {
+          enabled: true,
           type: 'continuous',
           roundness: 0.5,
         },

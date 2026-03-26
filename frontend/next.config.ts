@@ -11,10 +11,17 @@ import type { NextConfig } from "next";
  * If you encounter build failures, fix the underlying issues rather than
  * disabling these checks.
  *
- * Known type issues to fix (as of 2026-03-25):
- * - src/components/capsules/capsule-detail.tsx: 'confidence' property access
- * - src/components/akc/akc-dashboard.tsx: null check for mockStats
- * - src/app/system/page.tsx: vis-network types
+ * TypeScript Status (as of 2026-03-25):
+ * - FIXED: capsule-detail.tsx 'confidence' property access
+ * - FIXED: akc-dashboard.tsx null check for mockStats
+ * - FIXED: system/page.tsx vis-network types
+ *
+ * Remaining issues (~155 errors) are spread across multiple files:
+ * - capsule-list.tsx: type inference issues with demo data
+ * - capsule-overview.tsx: missing CapsuleStatsResponse properties
+ * - compliance-dashboard.tsx: mockStats null checks
+ * - dashboard.tsx: TrustMetrics type union issues
+ * - Various logger error context typing issues
  *
  * To check TypeScript errors locally: npx tsc --noEmit
  * To check ESLint errors locally: npx eslint src/

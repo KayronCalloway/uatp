@@ -159,7 +159,11 @@ export function AKCDashboard() {
     }
   ] : [];
 
-  const renderOverview = () => (
+  const renderOverview = () => {
+    // Guard against null mockStats - should not happen given caller checks, but TypeScript needs this
+    if (!mockStats) return null;
+
+    return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -339,7 +343,8 @@ export function AKCDashboard() {
         </Card>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderSources = () => (
     <div className="space-y-6">

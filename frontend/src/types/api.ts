@@ -204,6 +204,7 @@ export interface VerificationResponse {
   metadata_has_verify_key?: boolean;
   verification_error?: string;
   error?: string;
+  message?: string;
 }
 
 export interface HealthCheckResponse {
@@ -442,10 +443,31 @@ export interface AnyCapsule {
   // Encrypted payload fields
   encrypted_payload?: string;
   encryption_metadata?: EncryptionMetadata;
+  // Top-level capsule properties (may also exist in payload)
+  confidence?: number;
+  epistemic_uncertainty?: number;
+  aleatoric_uncertainty?: number;
+  total_uncertainty?: number;
+  risk_score?: number;
+  trust_score?: number;
+  previous_capsule_id?: string;
+  signature?: string | { proofValue?: string; [key: string]: any };
+  verification?: {
+    signer?: string;
+    message?: string;
+    [key: string]: any;
+  };
+  reasoning?: any[];
+  reasoning_trace?: {
+    reasoning_steps?: any[];
+    confidence_methodology?: any;
+    [key: string]: any;
+  };
   payload?: {
     task?: string;
     decision?: string;
     reasoning_chain?: EnhancedReasoningStep[];
+    reasoning_steps?: any[];
     confidence?: number;
     risk_assessment?: RiskAssessment;
     alternatives_considered?: Alternative[];
@@ -455,6 +477,19 @@ export interface AnyCapsule {
     attribution?: Attribution;
     lineage?: Lineage;
     chain_context?: ChainContext;
+    uncertainty_analysis?: {
+      epistemic_uncertainty?: number;
+      aleatoric_uncertainty?: number;
+      total_uncertainty?: number;
+      risk_score?: number;
+      confidence_interval?: [number, number];
+      [key: string]: any;
+    };
+    critical_path_analysis?: any;
+    improvement_recommendations?: string[];
+    confidence_methodology?: any;
+    ai_enrichment?: any;
+    session_metadata?: any;
     [key: string]: any;
   };
   [key: string]: any;

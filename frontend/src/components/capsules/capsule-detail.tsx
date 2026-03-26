@@ -115,13 +115,17 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
       setDecryptionError(null);
 
       try {
+        // Type guard: encrypted_payload and encryption_metadata must exist if capsuleIsEncrypted
+        if (!rawCapsule.encrypted_payload || !rawCapsule.encryption_metadata) {
+          throw new Error('Missing encrypted payload or metadata');
+        }
         const decrypted = await decryptPayload(
           rawCapsule.encrypted_payload,
           rawCapsule.encryption_metadata
         );
         setDecryptedPayload(decrypted);
-      } catch (err) {
-        logger.error('Failed to decrypt capsule payload:', err);
+      } catch (err: unknown) {
+        logger.error('Failed to decrypt capsule payload:', err instanceof Error ? { error: err.message } : undefined);
         setDecryptionError(
           err instanceof Error ? err.message : 'Failed to decrypt payload'
         );
