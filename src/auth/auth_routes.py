@@ -182,13 +182,13 @@ async def get_csrf_token(request: Request, response: Response):
     cookie for the double-submit pattern.
     """
     from ..security.csrf_protection import csrf_protection
+    from .auth_middleware import get_current_user_optional
 
-    # Generate token (optionally tied to session)
-    session_id = (
-        request.cookies.get("access_token", "")[:32]
-        if request.cookies.get("access_token")
-        else None
-    )
+    # Get current user if authenticated (for session binding)
+    # IMPORTANT: Must use user_id for consistency with login/register issuance
+    # and csrf_middleware validation (which checks request.state.user.get("user_id"))
+    current_user = get_current_user_optional(request)
+    session_id = str(current_user.get("user_id", ""))[:32] if current_user else None
     token = csrf_protection.generate_token(session_id=session_id)
 
     # Set as cookie for double-submit pattern (NOT HTTP-only so JS can read it)
