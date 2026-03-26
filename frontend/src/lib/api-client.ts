@@ -1,5 +1,6 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { logger } from './logger';
+import { getCsrfToken, requiresCsrf } from './csrf';
 import {
   CapsuleListResponse,
   CompressedCapsuleListResponse,
@@ -116,6 +117,22 @@ export class UATCapsuleEngineClient {
         ...(effectiveApiKey && { 'X-API-Key': effectiveApiKey }),
       },
     });
+
+    // Add request interceptor for CSRF token
+    this.client.interceptors.request.use(
+      (config: InternalAxiosRequestConfig) => {
+        // Add CSRF token to mutation requests (POST, PUT, DELETE, PATCH)
+        if (config.method && requiresCsrf(config.method)) {
+          const csrfToken = getCsrfToken();
+          if (csrfToken) {
+            config.headers = config.headers || {};
+            config.headers['X-CSRF-Token'] = csrfToken;
+          }
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
 
     // Add response interceptor for error handling
     this.client.interceptors.response.use(

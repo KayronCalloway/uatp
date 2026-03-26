@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { apiClient, api, getApiBaseUrl } from '@/lib/api-client';
+import { fetchCsrfToken, clearCsrfToken } from '@/lib/csrf';
 
 // SECURITY: Only log in development mode
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -108,6 +109,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setHasCookieSession(true);
             // Set a placeholder to indicate authenticated state
             setAuthTokenState('cookie-session');
+            // CSRF: Fetch fresh CSRF token for existing session
+            await fetchCsrfToken();
           }
         } catch {
           debugLog('No active cookie session');
@@ -190,6 +193,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setHasCookieSession(false);
     apiClient.removeApiKey();
     api.removeAuthToken();
+
+    // CSRF: Clear CSRF token on logout
+    clearCsrfToken();
   }, []);
 
   // Login with JWT token (email/password) - PREFERRED for browser auth
@@ -227,6 +233,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // We just track that we have an active session for UI purposes
       setHasCookieSession(true);
       setAuthTokenState('cookie-session');
+
+      // CSRF: Fetch CSRF token for subsequent mutation requests
+      // Backend also sets csrf_token cookie, but we fetch to ensure it's fresh
+      await fetchCsrfToken();
 
       return true;
     } catch (error) {
@@ -277,6 +287,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Registration successful - user is now logged in via cookies
       setHasCookieSession(true);
       setAuthTokenState('cookie-session');
+
+      // CSRF: Fetch CSRF token for subsequent mutation requests
+      await fetchCsrfToken();
 
       return { success: true };
     } catch (error) {
