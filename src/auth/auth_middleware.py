@@ -411,46 +411,20 @@ async def security_headers_middleware(request: Request, call_next):
     return response
 
 
-# CORS security middleware
-async def cors_security_middleware(request: Request, call_next):
-    """
-    Enhanced CORS security.
-
-    SECURITY: CORS origins are controlled via CORS_ORIGINS environment variable.
-    In production, this MUST be set to your actual frontend domain(s).
-    Format: comma-separated list (e.g., "https://app.example.com,https://admin.example.com")
-    """
-    import os
-
-    response = await call_next(request)
-
-    # SECURITY: Get allowed origins from environment - no hardcoded defaults
-    cors_origins_env = os.getenv("CORS_ORIGINS", "")
-    allowed_origins = [
-        origin.strip() for origin in cors_origins_env.split(",") if origin.strip()
-    ]
-
-    # Development fallback: allow localhost if no origins configured and not in production
-    env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development")).lower()
-    if not allowed_origins and env not in ("production", "prod", "staging"):
-        allowed_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
-
-    origin = request.headers.get("origin")
-    if origin and origin in allowed_origins:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-
-    return response
+# NOTE: CORS is handled by FastAPI's CORSMiddleware in app_factory.py
+# Do not add a second CORS layer here - it causes duplicate headers and drift
 
 
-# Example usage in FastAPI
 def setup_auth_middleware(app):
-    """Setup authentication middleware for FastAPI app"""
+    """Setup authentication middleware for FastAPI app.
+
+    NOTE: CORS is NOT configured here - it's handled by CORSMiddleware in app_factory.py
+    to avoid duplicate CORS layers causing header conflicts.
+    """
     app.middleware("http")(authentication_middleware)
     app.middleware("http")(security_headers_middleware)
-    app.middleware("http")(cors_security_middleware)
 
-    logger.info("Authentication middleware configured")
+    logger.info("Authentication middleware configured (CORS handled separately)")
 
 
 # Helper functions for common operations
