@@ -15,7 +15,7 @@ import base64
 import json
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 # cryptography library is required
 try:
@@ -29,53 +29,11 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def _get_key_password() -> Optional[bytes]:
-    """
-    Get the key encryption password from environment.
-
-    The password is read from UATP_KEY_PASSWORD environment variable.
-    If not set, returns None (unencrypted keys will be used).
-
-    Returns:
-        Password bytes or None
-    """
-    password = os.environ.get("UATP_KEY_PASSWORD")
-    if password:
-        return password.encode("utf-8")
-    return None
-
-
 def _derive_key_password() -> bytes:
-    """
-    Derive a secure password for key encryption.
+    """Get key password. Delegates to uatp_crypto_v7 for consistency."""
+    from src.security.uatp_crypto_v7 import _get_key_password
 
-    Uses UATP_KEY_PASSWORD if set, otherwise generates a machine-specific
-    password based on a combination of factors for development use.
-
-    Returns:
-        Password bytes
-    """
-    env_password = _get_key_password()
-    if env_password:
-        return env_password
-
-    # For development: derive from machine-specific data
-    # WARNING: This is less secure than using UATP_KEY_PASSWORD
-    import hashlib
-
-    # Combine multiple factors for a development password
-    factors = [
-        os.environ.get("USER", ""),
-        os.environ.get("HOME", ""),
-        "uatp-capsule-engine-dev-key",  # Salt
-    ]
-    combined = ":".join(factors).encode("utf-8")
-    derived = hashlib.pbkdf2_hmac("sha256", combined, b"uatp-salt", 480_000)
-
-    logger.warning(
-        "[WARN] Using derived key password. Set UATP_KEY_PASSWORD for production."
-    )
-    return derived
+    return _get_key_password()
 
 
 class CryptoSealer:

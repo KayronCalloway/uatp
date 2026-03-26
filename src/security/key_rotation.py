@@ -368,23 +368,10 @@ class KeyRotationManager:
         return f"{ed_hash}:{pq_hash}"
 
     def _get_key_password(self) -> bytes:
-        """Get password for key encryption."""
-        password = os.environ.get("UATP_KEY_PASSWORD")
-        if password:
-            return password.encode("utf-8")
+        """Get password for key encryption. Delegates to canonical implementation."""
+        from src.security.uatp_crypto_v7 import _get_key_password
 
-        # Derive from machine-specific data (development only)
-        factors = [
-            os.environ.get("USER", ""),
-            os.environ.get("HOME", ""),
-            "uatp-key-rotation-v1",
-        ]
-        return hashlib.pbkdf2_hmac(
-            "sha256",
-            ":".join(factors).encode("utf-8"),
-            b"key-rotation-salt",
-            480_000,
-        )
+        return _get_key_password()
 
     def _encrypt_key(self, key_data: bytes) -> bytes:
         """Encrypt key data using AES-256-GCM."""

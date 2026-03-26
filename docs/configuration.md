@@ -93,6 +93,10 @@ pytest tests/ -v
 ## Production Considerations
 
 ### Security
+- **`UATP_KEY_PASSWORD`** - Required in production for signing key encryption
+  - Generate with: `python3 -c "import secrets; print(secrets.token_urlsafe(32))"`
+  - Keys are encrypted at rest with this password
+  - In development, a fixed dev password is used automatically
 - Use a strong, randomly generated `UATP_SIGNING_KEY`
 - Store API keys securely (environment variables, not in code)
 - Use PostgreSQL for production databases

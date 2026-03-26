@@ -26,8 +26,6 @@ import hashlib
 import json
 import logging
 import os
-import platform
-import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -55,128 +53,42 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def _get_key_password() -> Optional[bytes]:
+def _get_key_password() -> bytes:
     """
-    Get the key encryption password from environment.
+    Get the key encryption password.
 
-    The password is read from UATP_KEY_PASSWORD environment variable.
-    If not set, returns None.
-
-    Returns:
-        Password bytes or None
-    """
-    password = os.environ.get("UATP_KEY_PASSWORD")
-    if password:
-        return password.encode("utf-8")
-    return None
-
-
-def _get_machine_uuid() -> str:
-    """
-    Get platform-specific machine UUID for device binding.
-
-    This provides a unique hardware identifier that binds keys to a specific device,
-    making key extraction more difficult even if file system is compromised.
-
-    Returns:
-        Machine UUID string (never empty - falls back to composite identifier)
-    """
-    system = platform.system()
-
-    try:
-        if system == "Darwin":  # macOS
-            result = subprocess.run(
-                ["ioreg", "-rd1", "-c", "IOPlatformExpertDevice"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            for line in result.stdout.split("\n"):
-                if "IOPlatformUUID" in line:
-                    # Extract UUID from line like: "IOPlatformUUID" = "UUID-HERE"
-                    return line.split('"')[-2]
-
-        elif system == "Linux":
-            # Try machine-id first (most reliable on Linux)
-            machine_id_path = "/etc/machine-id"
-            if os.path.exists(machine_id_path):
-                with open(machine_id_path) as f:
-                    machine_id = f.read().strip()
-                    if machine_id:
-                        return machine_id
-
-            # Fallback to product_uuid (requires root on some systems)
-            product_uuid_path = "/sys/class/dmi/id/product_uuid"
-            if os.path.exists(product_uuid_path):
-                try:
-                    with open(product_uuid_path) as f:
-                        return f.read().strip()
-                except PermissionError:
-                    pass
-
-        elif system == "Windows":
-            # Use WMIC to get machine GUID
-            result = subprocess.run(
-                ["wmic", "csproduct", "get", "UUID"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            lines = result.stdout.strip().split("\n")
-            if len(lines) > 1:
-                uuid_line = lines[1].strip()
-                if uuid_line:
-                    return uuid_line
-
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
-        logger.debug(f"Machine UUID detection failed: {e}")
-
-    # Fallback: create a composite identifier from available system info
-    fallback_parts = [
-        platform.node(),  # hostname
-        platform.machine(),  # architecture
-        os.environ.get("USER", "unknown"),
-    ]
-    return "-".join(fallback_parts)
-
-
-def _derive_key_password() -> bytes:
-    """
-    Derive a secure password for key encryption.
-
-    Uses UATP_KEY_PASSWORD if set, otherwise generates a machine-specific
-    password based on hardware UUID and other factors for development use.
-
-    Security: The derived password is bound to the specific machine, making
-    key extraction more difficult even if the key file is copied elsewhere.
+    Production: UATP_KEY_PASSWORD environment variable is REQUIRED.
+    Development: Uses a fixed development password (keys are not portable).
 
     Returns:
         Password bytes
+
+    Raises:
+        ValueError: If UATP_KEY_PASSWORD is not set in production
     """
-    env_password = _get_key_password()
-    if env_password:
-        return env_password
+    from src.core.config import ENVIRONMENT
 
-    # For development: derive from machine-specific hardware UUID
-    # WARNING: This is less secure than using UATP_KEY_PASSWORD
-    machine_uuid = _get_machine_uuid()
+    password = os.environ.get("UATP_KEY_PASSWORD")
 
-    factors = [
-        machine_uuid,  # Hardware-bound identifier
-        os.environ.get("USER", ""),
-        platform.node(),  # hostname for additional binding
-        "uatp-capsule-engine-v7-key",  # Application-specific salt
-    ]
-    combined = ":".join(factors).encode("utf-8")
+    if password:
+        return password.encode("utf-8")
 
-    # Use machine UUID in salt for additional device binding
-    salt = hashlib.sha256(f"uatp-v7-{machine_uuid}".encode()).digest()[:16]
-    derived = hashlib.pbkdf2_hmac("sha256", combined, salt, 480_000)
+    if ENVIRONMENT == "production":
+        raise ValueError(
+            "UATP_KEY_PASSWORD environment variable is required in production. "
+            'Generate one with: python3 -c "import secrets; print(secrets.token_urlsafe(32))"'
+        )
 
+    # Development only: fixed password. Keys created in dev are not portable.
     logger.warning(
-        "[WARN] Using derived key password. Set UATP_KEY_PASSWORD for production."
+        "Using development key password. Set UATP_KEY_PASSWORD for production."
     )
-    return derived
+    return b"uatp-dev-key-not-for-production"
+
+
+def _derive_key_password() -> bytes:
+    """Alias for _get_key_password for backward compatibility."""
+    return _get_key_password()
 
 
 class UATPCryptoV7:
