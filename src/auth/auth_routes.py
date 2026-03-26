@@ -10,7 +10,7 @@ instead of being returned in response bodies for client-side storage.
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials
@@ -19,7 +19,12 @@ from sqlalchemy.orm import Session
 
 from ..api.dependencies import get_db
 from ..models.user import UserModel
-from .auth_middleware import check_rate_limit, get_current_user, security
+from .auth_middleware import (
+    check_rate_limit,
+    get_current_user,
+    security,
+    security_optional,
+)
 from .jwt_manager import (
     create_access_token,
     create_refresh_token,
@@ -163,6 +168,43 @@ def clear_auth_cookies(response: Response) -> None:
     response.delete_cookie(key="refresh_token", path="/api/v1/auth")
 
 
+# CSRF Token endpoint
+@router.get("/csrf-token")
+async def get_csrf_token(request: Request, response: Response):
+    """
+    Get a CSRF token for use in subsequent mutation requests.
+
+    SECURITY: This endpoint issues CSRF tokens that must be included in the
+    X-CSRF-Token header for all non-safe (POST, PUT, DELETE) requests when
+    using cookie-based authentication.
+
+    The token is returned in the response body and also set as a non-HTTP-only
+    cookie for the double-submit pattern.
+    """
+    from ..security.csrf_protection import csrf_protection
+
+    # Generate token (optionally tied to session)
+    session_id = (
+        request.cookies.get("access_token", "")[:32]
+        if request.cookies.get("access_token")
+        else None
+    )
+    token = csrf_protection.generate_token(session_id=session_id)
+
+    # Set as cookie for double-submit pattern (NOT HTTP-only so JS can read it)
+    response.set_cookie(
+        key="csrf_token",
+        value=token,
+        max_age=3600,  # 1 hour
+        httponly=False,  # Must be readable by JavaScript
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        path="/",
+    )
+
+    return {"csrf_token": token, "expires_in": 3600}
+
+
 # Authentication routes
 @router.post("/register", response_model=TokenResponse)
 async def register_user(
@@ -223,6 +265,20 @@ async def register_user(
 
         # SECURITY: Set HTTP-only cookies for XSS protection
         set_auth_cookies(response, access_token, refresh_token)
+
+        # Issue CSRF token for cookie-based auth
+        from ..security.csrf_protection import csrf_protection
+
+        csrf_token = csrf_protection.generate_token(session_id=str(new_user.id)[:32])
+        response.set_cookie(
+            key="csrf_token",
+            value=csrf_token,
+            max_age=3600,
+            httponly=False,  # Must be readable by JavaScript
+            secure=COOKIE_SECURE,
+            samesite=COOKIE_SAMESITE,
+            path="/",
+        )
 
         return TokenResponse(
             access_token=access_token,
@@ -301,6 +357,20 @@ async def login_user(
 
         # SECURITY: Set HTTP-only cookies for XSS protection
         set_auth_cookies(response, access_token, refresh_token)
+
+        # Issue CSRF token for cookie-based auth
+        from ..security.csrf_protection import csrf_protection
+
+        csrf_token = csrf_protection.generate_token(session_id=str(user.id)[:32])
+        response.set_cookie(
+            key="csrf_token",
+            value=csrf_token,
+            max_age=3600,
+            httponly=False,  # Must be readable by JavaScript
+            secure=COOKIE_SECURE,
+            samesite=COOKIE_SAMESITE,
+            path="/",
+        )
 
         # Also return in body for backwards compatibility
         return TokenResponse(
@@ -404,19 +474,20 @@ async def refresh_token(
 async def logout_user(
     request: Request,
     response: Response,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional),
     current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
     Logout user, revoke tokens, and clear auth cookies.
 
-    SECURITY: Clears HTTP-only cookies to ensure complete logout
-    even if client-side code fails to clear sessionStorage.
+    SECURITY: Supports both Bearer token and cookie-only authentication.
+    Clears HTTP-only cookies to ensure complete logout even if client-side
+    code fails to clear sessionStorage.
     """
     try:
-        # Revoke the Bearer token
-        token = credentials.credentials
-        jwt_manager.revoke_token(token)
+        # Revoke the Bearer token if provided
+        if credentials and credentials.credentials:
+            jwt_manager.revoke_token(credentials.credentials)
 
         # Also revoke cookie tokens if present
         access_cookie = request.cookies.get("access_token")
@@ -429,7 +500,7 @@ async def logout_user(
         # SECURITY: Clear auth cookies
         clear_auth_cookies(response)
 
-        logger.info(f"User logged out: {current_user['username']}")
+        logger.info(f"User logged out: {current_user.get('username', 'unknown')}")
         return {"message": "Logout successful"}
 
     except Exception as e:

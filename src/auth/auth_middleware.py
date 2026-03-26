@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 # OAuth2 scheme for Swagger documentation
 security = HTTPBearer()
+# Optional auth for routes that also support cookie auth (e.g., logout)
+security_optional = HTTPBearer(auto_error=False)
 
 
 class AuthenticationError(Exception):
