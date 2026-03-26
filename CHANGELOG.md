@@ -8,6 +8,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- User signup page (`/signup`) with email/username/password registration
+- Dedicated login page (`/login`) with cookie-based authentication
+- User roles (admin vs regular user) with role-based capsule visibility
+- `register()` function in auth context for frontend registration
+- Web dashboard section in README
+
+### Changed
+- New users auto-activate on signup (no admin approval required)
+- Authentication model switched to HTTP-only cookies (XSS-resistant)
+- Regular users see only their own capsules; admins see all
+- Archived ML dashboard and outcomes pages (not production-ready)
+
+### Fixed
+- Cookie authentication in `get_current_user` dependency
+- Cross-origin cookie handling via Next.js API proxy
+
+### Security
+- HTTP-only cookies prevent JavaScript access to auth tokens
+- User isolation enforced at API level (owner_id filtering)
+
+---
+
+## [7.2.1] - 2026-03-26
+
+### Added
 - `docs/vision.md` - Accessible vision document covering three horizons
 - `docs/repository-map.md` - Full repository structure with audit priorities
 - `CHANGELOG.md` - Proper changelog following Keep a Changelog format
@@ -86,13 +111,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 7.2.1 | 2026-03-26 | User signup, cookie auth, role-based access |
 | 7.2.0 | 2026-03-08 | Claude Code integration, RFC 3161, post-quantum |
 | 7.1.0 | 2026-02-15 | Capsule chains, ethics breaker, FastAPI migration |
 | 7.0.0 | 2026-01-20 | Architecture rewrite, Ed25519, Python SDK |
 
 ---
 
-[Unreleased]: https://github.com/KayronCalloway/uatp/compare/v7.2.0...HEAD
+[Unreleased]: https://github.com/KayronCalloway/uatp/compare/v7.2.1...HEAD
+[7.2.1]: https://github.com/KayronCalloway/uatp/compare/v7.2.0...v7.2.1
 [7.2.0]: https://github.com/KayronCalloway/uatp/releases/tag/v7.2.0
 [7.1.0]: https://github.com/KayronCalloway/uatp/releases/tag/v7.1.0
 [7.0.0]: https://github.com/KayronCalloway/uatp/releases/tag/v7.0.0

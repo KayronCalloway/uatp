@@ -103,6 +103,18 @@ docker compose up
 
 Open http://localhost:3000
 
+### Web Dashboard
+
+Once running, go to http://localhost:3000:
+
+1. **Sign up** — Create account with email/username/password
+2. **Login** — Cookie-based auth (HTTP-only, XSS-resistant)
+3. **Browse capsules** — View your cryptographically signed audit trails
+
+**Access model:**
+- Regular users see only their own capsules
+- Admin users see all capsules system-wide
+
 ---
 
 ## What It Does
