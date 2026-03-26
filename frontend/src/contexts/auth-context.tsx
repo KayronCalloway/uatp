@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { apiClient, api } from '@/lib/api-client';
+import { apiClient, api, getApiBaseUrl } from '@/lib/api-client';
 
 // SECURITY: Only log in development mode
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -35,26 +35,30 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /**
- * AUTH MODEL: Dual-track authentication (intentional design)
+ * AUTH MODEL: Cookie-first authentication
  *
- * 1. JWT Auth (loginWithToken) - PREFERRED for browser-based sessions
- *    - HTTP-only cookies set automatically by backend (XSS-resistant)
- *    - sessionStorage fallback for backwards compatibility
- *    - Use for: User login flows, production deployments
+ * PRIMARY: JWT via HTTP-only cookies (browser sessions)
+ * - Cookies set automatically by backend on login
+ * - XSS-resistant: JavaScript cannot access HTTP-only cookies
+ * - Sent automatically with credentials: 'include'
  *
- * 2. API Key Auth (login) - For programmatic/development access
- *    - Stored in sessionStorage (cleared on tab close)
- *    - Use for: API testing, development, CI/CD pipelines
+ * SECONDARY: API Key auth (development/programmatic only)
+ * - For local development and API testing
+ * - Stored in sessionStorage (dev mode only)
+ * - NOT recommended for production browser use
  *
- * SECURITY NOTES:
- * - All sensitive data cleared on logout
- * - isAuthenticated = true if EITHER auth method succeeds
- * - Backend validates both Bearer tokens and cookies
+ * SECURITY:
+ * - No tokens stored in sessionStorage in production
+ * - Backend validates cookies automatically via withCredentials
+ * - isAuthenticated reflects cookie-based session validity
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [apiKey, setApiKey] = useState<string | null>(null);
+  // SECURITY: authToken state is for UI feedback only, not for actual auth
+  // Real auth happens via HTTP-only cookies
   const [authToken, setAuthTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasCookieSession, setHasCookieSession] = useState(false);
 
   // SECURITY: Prevent race conditions with refs
   const isInitialized = useRef(false);
@@ -69,31 +73,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       debugLog('Initializing auth...');
 
       try {
-        // Check for stored JWT token (sessionStorage for security)
-        const storedToken = sessionStorage.getItem('uatp-auth-token');
-        if (storedToken) {
-          debugLog('Found stored auth token - restoring session');
-          api.setAuthToken(storedToken);
-          setAuthTokenState(storedToken);
+        // MIGRATION: Clear legacy sessionStorage tokens (they're now in cookies)
+        // This is a one-time cleanup for existing sessions
+        const legacyToken = sessionStorage.getItem('uatp-auth-token');
+        if (legacyToken) {
+          debugLog('Clearing legacy sessionStorage token (now using cookies)');
+          sessionStorage.removeItem('uatp-auth-token');
         }
 
-        // Check for stored API key (sessionStorage for security)
-        const storedApiKey = sessionStorage.getItem('uatp-api-key');
-        if (storedApiKey) {
-          debugLog('Found stored API key - restoring');
-          apiClient.setApiKey(storedApiKey);
-          setApiKey(storedApiKey);
-        }
-
-        // Quick health check with short timeout (non-blocking)
-        setTimeout(async () => {
-          try {
-            await apiClient.healthCheck();
-            debugLog('Background health check passed - backend accessible');
-          } catch {
-            debugWarn('Background health check failed - some features may be unavailable');
+        // DEV ONLY: Check for stored API key
+        // In production, API keys should not be stored in browser
+        if (isDevelopment) {
+          const storedApiKey = sessionStorage.getItem('uatp-api-key');
+          if (storedApiKey) {
+            debugLog('Found stored API key (dev mode) - restoring');
+            apiClient.setApiKey(storedApiKey);
+            setApiKey(storedApiKey);
           }
-        }, 100);
+        }
+
+        // Check if we have a valid cookie session by making an authenticated request
+        // The backend will validate the HTTP-only cookie automatically
+        try {
+          const response = await fetch(
+            `${getApiBaseUrl()}/api/v1/auth/me`,
+            {
+              method: 'GET',
+              credentials: 'include', // Send cookies
+            }
+          );
+          if (response.ok) {
+            debugLog('Valid cookie session detected');
+            setHasCookieSession(true);
+            // Set a placeholder to indicate authenticated state
+            setAuthTokenState('cookie-session');
+          }
+        } catch {
+          debugLog('No active cookie session');
+        }
 
       } catch (error) {
         debugError('Auth initialization error:', error);
@@ -113,6 +130,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false;
     }
 
+    // SECURITY: API key auth in browser is dev-only
+    if (!isDevelopment) {
+      debugWarn('API key auth is only available in development mode. Use loginWithToken for production.');
+      return false;
+    }
+
     loginInProgress.current = true;
 
     try {
@@ -122,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       apiClient.setApiKey(newApiKey);
       await apiClient.healthCheck();
 
-      // SECURITY: Store in sessionStorage (not localStorage) to limit XSS exposure
+      // DEV ONLY: Store in sessionStorage for convenience
       sessionStorage.setItem('uatp-api-key', newApiKey);
       setApiKey(newApiKey);
 
@@ -140,17 +163,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const logout = () => {
-    // SECURITY: Clear all stored credentials
-    sessionStorage.removeItem('uatp-api-key');
-    sessionStorage.removeItem('uatp-auth-token');
+  const logout = useCallback(async () => {
+    // SECURITY: Clear all stored credentials and server-side session
+
+    // Call backend logout to clear HTTP-only cookies
+    try {
+      await fetch(
+        `${getApiBaseUrl()}/api/v1/auth/logout`,
+        {
+          method: 'POST',
+          credentials: 'include', // Send cookies to be cleared
+        }
+      );
+    } catch {
+      debugWarn('Backend logout failed - clearing local state anyway');
+    }
+
+    // Clear local state
+    if (isDevelopment) {
+      sessionStorage.removeItem('uatp-api-key');
+    }
+    sessionStorage.removeItem('uatp-auth-token'); // Clean up any legacy storage
     setApiKey(null);
     setAuthTokenState(null);
+    setHasCookieSession(false);
     apiClient.removeApiKey();
     api.removeAuthToken();
-  };
+  }, []);
 
-  // Login with JWT token (email/password)
+  // Login with JWT token (email/password) - PREFERRED for browser auth
   const loginWithToken = useCallback(async (email: string, password: string): Promise<boolean> => {
     // Prevent concurrent login attempts
     if (loginInProgress.current) {
@@ -165,8 +206,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Call auth login endpoint
       // SECURITY: credentials: 'include' enables HTTP-only cookie auth
+      // The backend sets the cookie, we don't store anything in sessionStorage
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_UATP_API_URL || 'http://localhost:8000'}/api/v1/auth/login`,
+        `${getApiBaseUrl()}/api/v1/auth/login`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -179,14 +221,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Login failed');
       }
 
-      const data = await response.json();
-
-      // Set token in API client and state (backwards compatibility)
-      // NOTE: HTTP-only cookies are now set automatically by backend
-      // sessionStorage is kept for backwards compatibility but cookies are preferred
-      api.setAuthToken(data.access_token);
-      sessionStorage.setItem('uatp-auth-token', data.access_token);
-      setAuthTokenState(data.access_token);
+      // SECURITY: We don't store the token in sessionStorage
+      // The HTTP-only cookie is set automatically by the backend
+      // We just track that we have an active session for UI purposes
+      setHasCookieSession(true);
+      setAuthTokenState('cookie-session');
 
       return true;
     } catch (error) {
@@ -199,16 +238,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Set auth token directly (for SSO, external auth, etc.)
+  // SECURITY: This should only be used for tokens received via secure channels
+  // Prefer cookie-based auth when possible
   const setAuthToken = useCallback((token: string) => {
+    if (!isDevelopment) {
+      debugWarn('Direct token setting is discouraged in production. Use loginWithToken instead.');
+    }
     api.setAuthToken(token);
-    sessionStorage.setItem('uatp-auth-token', token);
     setAuthTokenState(token);
+    // Don't store in sessionStorage - rely on the token being set in the API client
   }, []);
 
   const value: AuthContextType = {
     apiKey,
     authToken,
-    isAuthenticated: !!apiKey || !!authToken,
+    // SECURITY: In production, primarily rely on cookie session
+    // In development, also allow API key auth
+    isAuthenticated: hasCookieSession || (isDevelopment && !!apiKey) || !!authToken,
     login,
     loginWithToken,
     setAuthToken,

@@ -14,10 +14,10 @@ import type {
   Strategy,
   StrategyRecommendation,
 } from '@/types/analytics';
+import { getApiBaseUrl } from './api-client';
 
-// IMPORTANT: Use canonical env var name NEXT_PUBLIC_UATP_API_URL
-// Falls back to NEXT_PUBLIC_API_URL for backwards compatibility
-const API_BASE = process.env.NEXT_PUBLIC_UATP_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// SECURITY: Use getApiBaseUrl which enforces config in production
+const API_BASE = getApiBaseUrl();
 
 // Generic fetch wrapper with error handling
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {

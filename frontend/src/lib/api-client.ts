@@ -38,6 +38,32 @@ import {
   SupportResponse
 } from '@/types/onboarding';
 
+/**
+ * SECURITY: Get API base URL with strict production checks.
+ *
+ * In production: NEXT_PUBLIC_UATP_API_URL must be set, or this throws.
+ * In development: Falls back to localhost:8000 for convenience.
+ */
+export function getApiBaseUrl(): string {
+  const configuredUrl = process.env.NEXT_PUBLIC_UATP_API_URL;
+  const isDev = process.env.NODE_ENV === 'development';
+
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+
+  if (isDev) {
+    // Development fallback is OK
+    return 'http://localhost:8000';
+  }
+
+  // SECURITY: In production, missing config should fail loudly
+  throw new Error(
+    'NEXT_PUBLIC_UATP_API_URL is not configured. ' +
+    'This is required in production. Set it in your deployment environment.'
+  );
+}
+
 export class UATCapsuleEngineClient {
   private client: AxiosInstance;
   private authToken: string | null = null;
@@ -46,19 +72,34 @@ export class UATCapsuleEngineClient {
   /**
    * Create API client.
    *
-   * SECURITY: No hardcoded fallback API keys. In production, NEXT_PUBLIC_UATP_API_KEY
-   * must be set or requests will fail authentication.
+   * SECURITY:
+   * - Uses getApiBaseUrl() which fails in production if URL not configured
+   * - API keys from NEXT_PUBLIC_UATP_API_KEY are only for development/demo
+   * - Production browser auth should use HTTP-only cookies, not API keys
    */
   constructor(
-    baseURL: string = process.env.NEXT_PUBLIC_UATP_API_URL || 'http://localhost:8000',
+    baseURL?: string,
     apiKey?: string
   ) {
+    // Use provided baseURL or get from environment with strict checks
+    const effectiveBaseUrl = baseURL || getApiBaseUrl();
+
+    // SECURITY: Warn if using bundled API key in production
+    const envApiKey = process.env.NEXT_PUBLIC_UATP_API_KEY;
+    if (envApiKey && !UATCapsuleEngineClient.isDevelopment) {
+      console.warn(
+        '[SECURITY] NEXT_PUBLIC_UATP_API_KEY is set in production. ' +
+        'This key is bundled into the client and visible to users. ' +
+        'Ensure this is only a low-privilege demo/public key.'
+      );
+    }
+
     // SECURITY: Only use API key if explicitly provided or from environment
-    // Never use hardcoded fallback keys
-    const effectiveApiKey = apiKey || process.env.NEXT_PUBLIC_UATP_API_KEY;
+    // In production, prefer cookie-based auth over API keys in browser
+    const effectiveApiKey = apiKey || envApiKey;
 
     this.client = axios.create({
-      baseURL,
+      baseURL: effectiveBaseUrl,
       timeout: 30000,
       // SECURITY: withCredentials enables HTTP-only cookie auth
       // Cookies are set by backend login and sent automatically
@@ -815,12 +856,9 @@ export class UATCapsuleEngineClient {
 }
 
 // Default client instance
-// SECURITY: API key is only used if explicitly set in environment
-// No hardcoded fallback keys - authentication will fail if not configured
-export const apiClient = new UATCapsuleEngineClient(
-  process.env.NEXT_PUBLIC_UATP_API_URL || 'http://localhost:8000',
-  process.env.NEXT_PUBLIC_UATP_API_KEY // No fallback - undefined if not set
-);
+// SECURITY: Uses getApiBaseUrl() which enforces configuration in production
+// API key only used if NEXT_PUBLIC_UATP_API_KEY is set (dev/demo only)
+export const apiClient = new UATCapsuleEngineClient();
 
 // Hook-friendly wrapper functions
 export const api = {
