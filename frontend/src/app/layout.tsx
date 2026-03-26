@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReactQueryProvider } from "@/lib/react-query";
-import { AuthProvider } from "@/contexts/auth-context-simple";
+import { AuthProvider } from "@/contexts/auth-context";
 import { OnboardingProvider } from "@/contexts/onboarding-context";
 import { CreatorProvider } from "@/contexts/creator-context";
 import { DemoModeProvider } from "@/contexts/demo-mode-context";

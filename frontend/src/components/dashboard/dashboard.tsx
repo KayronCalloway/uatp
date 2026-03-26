@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/auth-context-simple';
+import { useAuth } from '@/contexts/auth-context';
 import { useDemoMode } from '@/contexts/demo-mode-context';
 import { api } from '@/lib/api-client';
 import {

@@ -132,9 +132,14 @@ export class UATCapsuleEngineClient {
     return response.data;
   }
 
+  /**
+   * @deprecated Use healthCheck() instead - /health/detailed endpoint does not exist
+   * Kept for backwards compatibility, delegates to /health
+   */
   async healthCheckDetailed(): Promise<HealthCheckResponse> {
-    const response = await this.client.get('/health/detailed');
-    return response.data;
+    // NOTE: /health/detailed does not exist in backend
+    // Delegate to /health to prevent 404 errors
+    return this.healthCheck();
   }
 
   async getRecentActivity(): Promise<any> {

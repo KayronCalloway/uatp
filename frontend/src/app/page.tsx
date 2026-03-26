@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/contexts/auth-context-simple';
+import { useAuth } from '@/contexts/auth-context';
 import { LoginForm } from '@/components/auth/login-form';
 import { MainApp } from '@/components/app/main-app';
 

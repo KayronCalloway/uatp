@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context-simple';
+import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { NotificationSystem } from '@/components/notifications/notification-system';
 import { OnboardingBanner } from '@/components/onboarding/onboarding-banner';
