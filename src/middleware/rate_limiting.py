@@ -88,9 +88,15 @@ class SlidingWindowRateLimiter:
         self.config = config
         self.redis_client: Optional[redis.Redis] = None
         self._last_cleanup = time.time()
+        self._redis_unavailable = False
+        self._redis_retry_after = 0.0
 
     async def init_redis(self):
         """Initialize Redis connection."""
+        # Skip if we recently failed (60 second cooldown)
+        if self._redis_unavailable and time.time() < self._redis_retry_after:
+            return
+
         if self.redis_client is None:
             try:
                 self.redis_client = redis.Redis(
@@ -104,11 +110,13 @@ class SlidingWindowRateLimiter:
                 # Test connection
                 await self.redis_client.ping()
                 logger.info("Rate limiter Redis connection established")
+                self._redis_unavailable = False
             except Exception as e:
-                logger.warning(
-                    f"Redis not available for rate limiting (allowing all requests): {e}"
-                )
-                self.redis_client = None  # Mark as unavailable
+                if not self._redis_unavailable:
+                    logger.warning(f"Redis unavailable for rate limiting: {e}")
+                self.redis_client = None
+                self._redis_unavailable = True
+                self._redis_retry_after = time.time() + 60  # Retry in 60 seconds
 
     async def is_allowed(
         self, key: str, limit: int, window: int = None
