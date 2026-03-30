@@ -34,6 +34,7 @@ from .router_crud import (
     list_capsules,
     store_presigned_capsule,
 )
+from .router_layers import router as layers_router
 from .router_lineage import router as lineage_router
 from .router_outcomes import router as outcomes_router
 from .router_search import router as search_router
@@ -59,6 +60,9 @@ router.include_router(verify_router)
 
 # Lineage routes (/{capsule_id}/ancestors, /descendants, /lineage)
 router.include_router(lineage_router)
+
+# Layers routes (/{capsule_id}/layers, /self-inspection, /compliance)
+router.include_router(layers_router)
 
 # Add CRUD routes directly to main router with explicit paths
 # This avoids the trailing slash issue with sub-router inclusion

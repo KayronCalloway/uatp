@@ -10,7 +10,7 @@ import logging
 import os
 import time
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, HTTPException, Query, Request
 from sqlalchemy import func, select, text
@@ -205,5 +205,6 @@ __all__ = [
     "uuid",
     "Dict",
     "Any",
+    "List",
     "Optional",
 ]
