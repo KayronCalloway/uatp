@@ -15,10 +15,12 @@ from ._shared import (
     Depends,
     Dict,
     HTTPException,
+    Optional,
     Query,
     Request,
     func,
     get_current_user,
+    get_current_user_optional,
     get_db_session,
     is_admin_user,
     logger,
@@ -42,17 +44,16 @@ async def get_capsule_stats(
     include_test: bool = Query(
         False, description="Include test data in results (default: exclude)"
     ),
-    current_user: Dict = Depends(get_current_user),
+    current_user: Optional[Dict] = Depends(get_current_user_optional),
     session: AsyncSession = Depends(get_db_session),
 ):
-    """Get comprehensive capsule statistics.
+    """Get capsule statistics.
 
-    SECURITY: Authentication required. Non-admin users only see their own capsule stats.
+    Public stats available without auth. Authenticated users see their own stats.
     """
     try:
-        # SECURITY FIX: Authentication now required (was optional)
-        user_is_admin = is_admin_user(current_user)
-        user_id = current_user.get("user_id")
+        user_is_admin = is_admin_user(current_user) if current_user else False
+        user_id = current_user.get("user_id") if current_user else None
 
         # Build base query with demo filtering
         base_query = select(CapsuleModel)
