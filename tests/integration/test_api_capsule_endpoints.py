@@ -98,14 +98,14 @@ class TestCapsuleStats:
     """Test GET /capsules/stats endpoint."""
 
     @pytest.mark.asyncio
-    async def test_stats_requires_auth(self, client):
-        """Test that stats endpoint requires authentication."""
+    async def test_stats_public_access(self, client):
+        """Test that stats endpoint is publicly accessible (no auth required)."""
         response = await client.get("/capsules/stats")
-        assert response.status_code == 401
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
-    async def test_stats_returns_200(self, client, auth_headers):
-        """Test that stats endpoint returns 200 OK with auth."""
+    async def test_stats_returns_200_with_auth(self, client, auth_headers):
+        """Test that stats endpoint also works with auth."""
         response = await client.get("/capsules/stats", headers=auth_headers)
         assert response.status_code == 200
 

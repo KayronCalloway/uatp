@@ -1,0 +1,1231 @@
+#!/usr/bin/env python3
+"""
+Court-Admissible Data Enrichment for Live Capture
+===================================================
+
+Adds court-admissible rich data format to captured capsules:
+- Data provenance (DataSource objects with API endpoints, timestamps, verification)
+- Risk assessment (quantitative probabilities, financial impacts, safeguards)
+- Alternatives considered (scored options with "why_not_chosen")
+- Plain language summaries (EU AI Act Article 13 compliance)
+- Outcome tracking (ground truth for ML and insurance)
+
+This module enriches existing capsules to meet:
+- Daubert Standard (court admissibility)
+- Insurance actuarial requirements
+- EU AI Act Articles 9, 12, 13
+"""
+
+import logging
+import os
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+# LLM summarization support
+try:
+    import anthropic
+
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
+    anthropic = None
+
+logger = logging.getLogger(__name__)
+
+# Config: Enable LLM summarization (disabled by default - heuristics work well)
+# Set UATP_LLM_SUMMARIZATION=true to enable if you have a valid ANTHROPIC_API_KEY
+USE_LLM_SUMMARIZATION = os.getenv("UATP_LLM_SUMMARIZATION", "false").lower() == "true"
+
+# Technical jargon to plain language mappings
+PLAIN_LANGUAGE_MAP = {
+    # Security terms
+    "buffer overflow": "a security weakness where data can leak",
+    "memory safety": "protection against data corruption",
+    "attack surface": "ways the system could be vulnerable",
+    "supply chain": "where the software components come from",
+    "prompt injection": "attempts to trick the AI",
+    "model tampering": "someone modifying the AI inappropriately",
+    "vulnerability": "security weakness",
+    "exploit": "security attack",
+    "malicious": "harmful",
+    # Technical terms
+    "llama-cpp": "the AI software",
+    "c++": "programming language",
+    "pypi": "software library source",
+    "huggingface": "AI model source",
+    "api": "connection point",
+    "dependency": "required component",
+    "runtime": "when the software runs",
+    "latency": "response time",
+    "throughput": "processing speed",
+    # Severity terms
+    "high severity": "important concern",
+    "medium severity": "moderate concern",
+    "low severity": "minor concern",
+}
+
+
+def simplify_to_plain_language(text: str) -> str:
+    """
+    Convert technical jargon to simple, mom-approved language.
+    Removes markdown tables and complex formatting.
+    """
+    if not text:
+        return text
+
+    result = text
+
+    # Remove markdown tables entirely - summarize what they contained
+    if "|" in result and "---" in result:
+        # Check if it's a risk/concern table
+        text_lower = result.lower()
+        if "risk" in text_lower or "severity" in text_lower or "concern" in text_lower:
+            # Count severity mentions
+            high_count = text_lower.count("high")
+            medium_count = text_lower.count("medium")
+            low_count = text_lower.count("low")
+
+            # Generate simple summary
+            concerns = []
+            if high_count:
+                concerns.append(
+                    f"{high_count} important concern{'s' if high_count > 1 else ''}"
+                )
+            if medium_count:
+                concerns.append(
+                    f"{medium_count} moderate concern{'s' if medium_count > 1 else ''}"
+                )
+            if low_count:
+                concerns.append(
+                    f"{low_count} minor concern{'s' if low_count > 1 else ''}"
+                )
+
+            if concerns:
+                result = f"Analysis found {', '.join(concerns)} to consider before proceeding."
+            else:
+                # Extract prose before/after table
+                lines = result.split("\n")
+                prose = [ln for ln in lines if "|" not in ln and ln.strip()]
+                result = (
+                    " ".join(prose[:2])
+                    if prose
+                    else "Analysis completed with recommendations."
+                )
+        else:
+            # Generic table removal
+            lines = result.split("\n")
+            prose = [
+                ln for ln in lines if "|" not in ln and "---" not in ln and ln.strip()
+            ]
+            result = " ".join(prose[:3]) if prose else text[:200]
+
+    # Remove markdown formatting
+    result = re.sub(r"\*\*([^*]+)\*\*", r"\1", result)  # bold
+    result = re.sub(r"\*([^*]+)\*", r"\1", result)  # italic
+    result = re.sub(r"`([^`]+)`", r"\1", result)  # code
+    result = re.sub(r"#{1,6}\s+", "", result)  # headers
+    result = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", result)  # links
+
+    # Remove technical parentheticals like "(buffer overflows)" or "(e.g., Redis)"
+    result = re.sub(
+        r"\s*\([^)]*(?:overflow|injection|e\.g\.|i\.e\.)[^)]*\)", "", result
+    )
+
+    # Simplify common technical phrases to plain language
+    simplifications = [
+        (r"attack surface", "potential security concerns"),
+        (r"supply chain risk", "concerns about where components come from"),
+        (r"buffer overflow", "data handling issue"),
+        (r"memory safety", "data protection"),
+        (r"prompt injection", "input manipulation"),
+        (r"model tampering", "unauthorized changes"),
+        (r"llama-cpp|llama\.cpp", "the AI system"),
+        (r"C\+\+\s*code", "the underlying software"),
+        (r"PyPI|HuggingFace", "external sources"),
+        (r"HIGH\s*\|", "Important: "),
+        (r"MEDIUM\s*\|", "Note: "),
+        (r"LOW\s*\|", "Minor: "),
+    ]
+
+    for pattern, replacement in simplifications:
+        result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+
+    # Clean up extra whitespace and pipes
+    result = re.sub(r"\|+", " ", result)
+    result = re.sub(r"\s+", " ", result).strip()
+
+    # If still too long, take first 2-3 meaningful sentences
+    if len(result) > 400:
+        sentences = re.split(r"[.!?]\s+", result)
+        meaningful = [s for s in sentences if len(s) > 20][:3]
+        if meaningful:
+            result = ". ".join(meaningful) + "."
+
+    return result
+
+
+def summarize_decision_with_llm_sync(
+    messages: List[Any], user_question: str
+) -> Optional[Dict[str, str]]:
+    """
+    Use Claude Haiku to generate a proper decision summary (sync version).
+
+    Returns:
+        Dict with 'decision' and 'why' keys, or None if failed
+    """
+    if not ANTHROPIC_AVAILABLE or not USE_LLM_SUMMARIZATION:
+        return None
+
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        return None
+
+    # Build conversation context
+    conversation_text = []
+    for msg in messages[-10:]:  # Last 10 messages for context
+        role = getattr(msg, "role", "unknown")
+        content = getattr(msg, "content", str(msg))[:1000]
+        conversation_text.append(f"{role.upper()}: {content}")
+
+    conversation_str = "\n\n".join(conversation_text)
+
+    prompt = f"""Analyze this AI conversation and extract a clear decision summary.
+
+CONVERSATION:
+{conversation_str}
+
+USER'S ORIGINAL QUESTION: {user_question[:500]}
+
+Respond in this exact JSON format (no markdown, no code blocks):
+{{"decision": "One sentence describing what action/recommendation was made", "why": "One sentence explaining the reasoning behind this decision"}}
+
+Rules:
+- Be specific and concrete, not generic
+- "decision" should state WHAT was done/recommended
+- "why" should state WHY this approach was chosen
+- Keep each field under 150 characters
+- No markdown formatting"""
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=256,
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        # Parse response
+        import json
+
+        response_text = response.content[0].text.strip()
+        # Clean up any markdown that might have slipped through
+        response_text = response_text.replace("```json", "").replace("```", "").strip()
+        result = json.loads(response_text)
+
+        logger.info(
+            f"LLM summarization succeeded: {result.get('decision', '')[:50]}..."
+        )
+        return {
+            "decision": result.get("decision", "")[:200],
+            "why": result.get("why", "")[:200],
+        }
+
+    except Exception as e:
+        logger.warning(f"LLM summarization failed: {e}")
+        return None
+
+
+async def summarize_decision_with_llm(
+    messages: List[Any], user_question: str
+) -> Optional[Dict[str, str]]:
+    """
+    Async version - wraps sync for now.
+    """
+    return summarize_decision_with_llm_sync(messages, user_question)
+
+
+def strip_markdown(text: str) -> str:
+    """Strip markdown formatting from text for plain language display."""
+    if not text:
+        return text
+
+    # Remove code blocks (```...```)
+    text = re.sub(r"```[\s\S]*?```", "", text)
+    # Remove inline code (`...`)
+    text = re.sub(r"`([^`]+)`", r"\1", text)
+    # Remove bold (**...**)
+    text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
+    # Remove italic (*...*)
+    text = re.sub(r"\*([^*]+)\*", r"\1", text)
+    # Remove headers (# ...)
+    text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
+    # Remove link syntax [text](url)
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    # Remove markdown tables - header separator row (|---|---|)
+    text = re.sub(r"^\|[-:\s|]+\|\s*$", "", text, flags=re.MULTILINE)
+    # Remove table pipes and convert to plain text
+    text = re.sub(
+        r"^\|(.+)\|$",
+        lambda m: m.group(1).replace("|", " - "),
+        text,
+        flags=re.MULTILINE,
+    )
+    # Remove horizontal rules
+    text = re.sub(r"^[-*_]{3,}\s*$", "", text, flags=re.MULTILINE)
+    # Remove bullet point markers at line start
+    text = re.sub(r"^[\-\*•]\s+", "", text, flags=re.MULTILINE)
+    # Clean up multiple newlines
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    # Clean up multiple spaces
+    text = re.sub(r" {2,}", " ", text)
+
+    return text.strip()
+
+
+sys.path.append(str(Path(__file__).parent.parent.parent))
+
+logger = logging.getLogger(__name__)
+
+# Import embedder for historical similarity lookup
+try:
+    from src.embeddings.capsule_embedder import CapsuleEmbedder
+
+    _embedder = CapsuleEmbedder()
+    _EMBEDDER_AVAILABLE = True
+except Exception as e:
+    logger.debug(f"Embedder not available for historical lookup: {e}")
+    _embedder = None
+    _EMBEDDER_AVAILABLE = False
+
+
+class CourtAdmissibleEnricher:
+    """Enriches captured capsules with court-admissible data."""
+
+    @staticmethod
+    def get_historical_accuracy(
+        session_content: str, min_similarity: float = 0.3, limit: int = 10
+    ) -> Tuple[int, Optional[float], List[Dict[str, Any]]]:
+        """
+        Find similar historical capsules and calculate accuracy from outcomes.
+
+        Args:
+            session_content: Text content to find similar capsules for
+            min_similarity: Minimum similarity threshold (0.0-1.0)
+            limit: Maximum similar capsules to consider
+
+        Returns:
+            Tuple of (similar_count, historical_accuracy, similar_capsules_info)
+            - similar_count: Number of similar capsules with outcomes
+            - historical_accuracy: Percentage of successful outcomes (0.0-1.0)
+            - similar_capsules_info: List of similar capsule details
+        """
+        if not _EMBEDDER_AVAILABLE or not _embedder:
+            return 0, None, []
+
+        try:
+            # Find similar capsules using embeddings
+            similar = _embedder.find_similar(
+                session_content, limit=limit, min_similarity=min_similarity
+            )
+
+            if not similar:
+                return 0, None, []
+
+            # Query outcomes for similar capsules
+            import psycopg2
+
+            conn = psycopg2.connect(
+                host="localhost", database="uatp_capsule_engine", user="uatp_user"
+            )
+
+            similar_with_outcomes = []
+            success_count = 0
+            total_with_outcomes = 0
+
+            with conn.cursor() as cur:
+                for capsule_id, similarity, _ in similar:
+                    cur.execute(
+                        """
+                        SELECT outcome_status, outcome_notes,
+                               payload->>'prompt' as prompt
+                        FROM capsules
+                        WHERE capsule_id = %s
+                    """,
+                        (capsule_id,),
+                    )
+                    row = cur.fetchone()
+
+                    if row and row[0]:  # Has outcome
+                        outcome_status, outcome_notes, prompt = row
+                        total_with_outcomes += 1
+                        if outcome_status == "success":
+                            success_count += 1
+
+                        similar_with_outcomes.append(
+                            {
+                                "capsule_id": capsule_id,
+                                "similarity": round(similarity, 3),
+                                "outcome": outcome_status,
+                                "notes": outcome_notes,
+                                "prompt_preview": (prompt[:50] + "...")
+                                if prompt and len(prompt) > 50
+                                else prompt,
+                            }
+                        )
+
+            conn.close()
+
+            # Calculate historical accuracy
+            historical_accuracy = None
+            if total_with_outcomes > 0:
+                historical_accuracy = round(success_count / total_with_outcomes, 3)
+
+            return total_with_outcomes, historical_accuracy, similar_with_outcomes
+
+        except Exception as e:
+            logger.debug(f"Historical accuracy lookup failed: {e}")
+            return 0, None, []
+
+    @staticmethod
+    def infer_data_sources_from_session(
+        session: Any, messages: List[Any]
+    ) -> List[Dict[str, Any]]:
+        """
+        Infer data sources from session context and messages.
+
+        Args:
+            session: Conversation session
+            messages: List of conversation messages
+
+        Returns:
+            List of DataSource dictionaries
+        """
+        data_sources = []
+
+        # Session metadata as a data source
+        data_sources.append(
+            {
+                "source": f"{session.platform}_session",
+                "value": session.session_id,
+                "timestamp": session.start_time.isoformat(),
+                "api_endpoint": None,
+                "api_version": None,
+                "verification": {"cross_checked": [], "values": [], "consensus": True},
+                "audit_trail": f"session_id:{session.session_id}",
+                "query": None,
+            }
+        )
+
+        # Model as a data source (for each unique model used)
+        models_used = set()
+        for msg in messages:
+            if hasattr(msg, "model_info") and msg.model_info:
+                models_used.add(msg.model_info)
+
+        for model in models_used:
+            data_sources.append(
+                {
+                    "source": "ai_model",
+                    "value": model,
+                    "timestamp": messages[0].timestamp.isoformat()
+                    if messages
+                    else None,
+                    "api_endpoint": "anthropic_api"
+                    if "claude" in model.lower()
+                    else "gemini_api",
+                    "api_version": "2024-12",
+                    "verification": None,
+                    "audit_trail": f"model:{model}",
+                    "query": None,
+                }
+            )
+
+        # Token counts as measurements
+        if session.total_tokens > 0:
+            data_sources.append(
+                {
+                    "source": "token_usage",
+                    "value": session.total_tokens,
+                    "timestamp": session.end_time.isoformat()
+                    if session.end_time
+                    else None,
+                    "api_endpoint": None,
+                    "api_version": None,
+                    "verification": None,
+                    "audit_trail": "measured_from_api_response",
+                    "query": None,
+                }
+            )
+
+        return data_sources
+
+    @staticmethod
+    def calculate_risk_assessment_from_session(
+        session: Any, messages: List[Any], overall_confidence: float
+    ) -> Dict[str, Any]:
+        """
+        Calculate quantitative risk assessment from session data.
+
+        Args:
+            session: Conversation session
+            messages: List of messages
+            overall_confidence: Overall confidence score
+
+        Returns:
+            RiskAssessment dictionary
+        """
+        # Calculate probabilities
+        probability_correct = overall_confidence
+        probability_wrong = 1.0 - overall_confidence
+
+        # Estimate financial impact (conservative estimates for coding tasks)
+        # Average developer time: $100/hour
+        message_count = len(messages)
+        estimated_time_saved = message_count * 0.1  # 6 minutes per message
+        expected_gain = estimated_time_saved * 100
+        expected_loss = estimated_time_saved * 150  # Cost of errors
+
+        expected_value = (probability_correct * expected_gain) - (
+            probability_wrong * expected_loss
+        )
+
+        # VaR 95: 95th percentile of loss distribution
+        # Using parametric VaR with assumption of ~normal loss distribution
+        # VaR = E[Loss] + z_95 * σ, where z_95 ≈ 1.645
+        # For simplicity, estimate σ as proportional to expected_loss * probability_wrong
+        loss_std_dev = expected_loss * probability_wrong * 0.5  # Conservative estimate
+        value_at_risk_95 = (expected_loss * probability_wrong) + (1.645 * loss_std_dev)
+
+        # Identify key risk factors
+        key_risk_factors = []
+        if overall_confidence < 0.7:
+            key_risk_factors.append("Low overall confidence in reasoning chain")
+        if message_count < 3:
+            key_risk_factors.append("Limited context - few conversation turns")
+        if session.total_tokens > 10000:
+            key_risk_factors.append("High complexity - extensive token usage")
+
+        # Identify safeguards
+        safeguards = [
+            "Cryptographic signature on all data",
+            "Timestamped immutable records",
+            "Multi-turn reasoning with confidence tracking",
+        ]
+
+        if message_count > 5:
+            safeguards.append("Extended conversation with context verification")
+
+        # Failure mode analysis
+        failure_modes = []
+
+        if overall_confidence < 0.8:
+            failure_modes.append(
+                {
+                    "scenario": "Incorrect interpretation of requirements",
+                    "probability": round(probability_wrong * 0.4, 3),
+                    "mitigation": "Human review before production deployment",
+                }
+            )
+
+        if session.total_tokens > 5000:
+            failure_modes.append(
+                {
+                    "scenario": "Context window limitations affecting accuracy",
+                    "probability": round(probability_wrong * 0.3, 3),
+                    "mitigation": "Break into smaller focused tasks",
+                }
+            )
+
+        failure_modes.append(
+            {
+                "scenario": "Hallucination or outdated information",
+                "probability": round(probability_wrong * 0.2, 3),
+                "mitigation": "Cross-reference with documentation and testing",
+            }
+        )
+
+        # Historical accuracy from similar capsules (using embeddings + outcomes)
+        session_content = " ".join(
+            [
+                getattr(msg, "content", str(msg))
+                if hasattr(msg, "content")
+                else str(msg)
+                for msg in messages[:10]  # Use first 10 messages for similarity
+            ]
+        )
+
+        similar_decisions_count, historical_accuracy, similar_capsules = (
+            CourtAdmissibleEnricher.get_historical_accuracy(
+                session_content, min_similarity=0.25, limit=20
+            )
+        )
+
+        # Adjust hallucination probability based on historical accuracy
+        if historical_accuracy is not None and similar_decisions_count >= 3:
+            # If we have enough similar data, use it to refine the estimate
+            historical_failure_rate = 1.0 - historical_accuracy
+            # Blend: 50% model estimate, 50% historical data
+            blended_hallucination_prob = (
+                probability_wrong * 0.2 + historical_failure_rate
+            ) / 2
+            failure_modes[-1]["probability"] = round(blended_hallucination_prob, 3)
+            failure_modes[-1]["historical_basis"] = (
+                f"Based on {similar_decisions_count} similar decisions"
+            )
+
+        return {
+            "probability_correct": round(probability_correct, 3),
+            "probability_wrong": round(probability_wrong, 3),
+            "expected_value": round(expected_value, 2),
+            "value_at_risk_95": round(value_at_risk_95, 2),
+            "expected_loss_if_wrong": round(expected_loss, 2),
+            "expected_gain_if_correct": round(expected_gain, 2),
+            "key_risk_factors": key_risk_factors,
+            "safeguards": safeguards,
+            "failure_modes": failure_modes,
+            "similar_decisions_count": similar_decisions_count,
+            "historical_accuracy": historical_accuracy,
+            "similar_capsules": similar_capsules[:5]
+            if similar_capsules
+            else [],  # Top 5 similar
+        }
+
+    @staticmethod
+    def extract_alternatives_from_messages(messages: List[Any]) -> List[Dict[str, Any]]:
+        """
+        Extract alternatives considered from conversation messages.
+
+        Args:
+            messages: List of conversation messages
+
+        Returns:
+            List of Alternative dictionaries
+        """
+        alternatives = []
+
+        # Look for alternative mentions in messages
+        for msg in messages:
+            content = msg.content.lower()
+
+            # Pattern 1: "instead of X, we could Y"
+            if "instead of" in content or "rather than" in content:
+                alternatives.append(
+                    {
+                        "option": "Alternative approach mentioned in conversation",
+                        "score": 0.4,  # Not selected
+                        "why_not_chosen": "Less optimal than selected approach",
+                        "data": {"mentioned_in": f"message_{msg.message_id[:8]}"},
+                    }
+                )
+
+            # Pattern 2: "option A or option B"
+            if "option a" in content and "option b" in content:
+                alternatives.append(
+                    {
+                        "option": "Option A",
+                        "score": 0.45,
+                        "why_not_chosen": "Option B provided better fit for requirements",
+                        "data": {},
+                    }
+                )
+                alternatives.append(
+                    {
+                        "option": "Option B (Selected)",
+                        "score": 0.85,
+                        "why_not_chosen": None,  # This was selected
+                        "data": {},
+                    }
+                )
+
+        # If no explicit alternatives found, create implicit baseline
+        if not alternatives:
+            alternatives.append(
+                {
+                    "option": "No AI assistance (manual implementation)",
+                    "score": 0.3,
+                    "why_not_chosen": "AI assistance provides faster and more reliable results",
+                    "data": {"baseline": True},
+                }
+            )
+            alternatives.append(
+                {
+                    "option": "AI-assisted implementation (Selected)",
+                    "score": 0.85,
+                    "why_not_chosen": None,
+                    "data": {"selected": True},
+                }
+            )
+
+        return alternatives
+
+    @staticmethod
+    def extract_key_recommendation(messages: List[Any]) -> Tuple[str, str, List[str]]:
+        """
+        Extract the actual key recommendation/decision from assistant messages.
+        Uses smart pattern matching to find action + reasoning.
+
+        Returns:
+            Tuple of (decision_text, specific_why, key_points)
+        """
+        assistant_msgs = [m for m in messages if m.role == "assistant"]
+        user_msgs = [m for m in messages if m.role == "user"]
+
+        if not assistant_msgs:
+            return "No recommendation provided", "No assistant response captured", []
+
+        # Use the LAST assistant message (most likely the conclusion)
+        # But also check the longest for context
+        last_msg = assistant_msgs[-1]
+        longest_msg = max(assistant_msgs, key=lambda m: len(m.content))
+
+        # Prefer last message unless it's very short
+        best_msg = last_msg if len(last_msg.content) > 100 else longest_msg
+        content = best_msg.content
+        content_lower = content.lower()
+        content_clean = strip_markdown(content)
+
+        # === DECISION EXTRACTION ===
+        # Strategy 1: Look for action verb patterns at sentence starts
+        action_patterns = [
+            # Past tense actions (completed work)
+            r"(?:^|\. |\n)((?:Added|Created|Fixed|Updated|Implemented|Removed|"
+            r"Configured|Enabled|Disabled|Set up|Built|Wrote|Modified|Changed|"
+            r"Committed|Deployed|Installed|Migrated|Refactored|Resolved|"
+            r"Cleaned|Stripped|Merged|Pushed)[^.!?\n]{10,80}[.!?]?)",
+            # Present perfect (just did)
+            r"(?:^|\. |\n)((?:I've |I have |We've |We have )(?:added|created|fixed|"
+            r"updated|implemented|set up|built|configured)[^.!?\n]{10,80}[.!?]?)",
+            # Done/Complete patterns
+            r"(?:^|\. |\n)((?:Done|Completed|Finished|Ready)[.:] ?[^.!?\n]{5,80}[.!?]?)",
+        ]
+
+        decision_text = None
+        for pattern in action_patterns:
+            match = re.search(pattern, content, re.IGNORECASE | re.MULTILINE)
+            if match:
+                decision_text = strip_markdown(match.group(1).strip())
+                break
+
+        # Strategy 2: Look for summary sections
+        if not decision_text:
+            summary_patterns = [
+                r"(?:Summary|Result|Conclusion|Done|Fixed|Solution)[:\s]+([^\n]{20,150})",
+                r"(?:^|\n)(?:\*\*)?(?:TL;?DR|In short)[:\s]*(?:\*\*)?([^\n]{20,150})",
+            ]
+            for pattern in summary_patterns:
+                match = re.search(pattern, content, re.IGNORECASE)
+                if match:
+                    decision_text = strip_markdown(match.group(1).strip())
+                    break
+
+        # Strategy 3: First meaningful sentence (often states the action)
+        if not decision_text:
+            sentences = re.split(r"[.!?]\s+", content_clean)
+            for sent in sentences[:3]:
+                sent = sent.strip()
+                if len(sent) > 30 and len(sent) < 200:
+                    # Skip meta-sentences
+                    skip_starts = (
+                        "let me",
+                        "i'll",
+                        "i will",
+                        "here's",
+                        "sure",
+                        "okay",
+                        "yes",
+                    )
+                    if not sent.lower().startswith(skip_starts):
+                        decision_text = sent
+                        break
+
+        # Fallback: truncated content
+        if not decision_text:
+            decision_text = (
+                content_clean[:200] + "..."
+                if len(content_clean) > 200
+                else content_clean
+            )
+
+        # === WHY/REASONING EXTRACTION ===
+        # Strategy 1: Look for problem-solution patterns
+        why_patterns = [
+            # Problem was X
+            r"(?:The )?(?:issue|problem|bug|error|root cause) (?:was|is)[:\s]+([^.!?\n]{15,120})",
+            # Because/Since patterns
+            r"(?:because|since|as) ([^.!?\n]{15,100})",
+            # This fixes/solves X
+            r"(?:This |It )(?:fixes|solves|resolves|addresses|prevents|ensures) ([^.!?\n]{10,100})",
+            # To fix/prevent X
+            r"(?:to |in order to )(?:fix|prevent|ensure|handle|support|enable) ([^.!?\n]{10,100})",
+            # Root cause pattern
+            r"(?:caused by|due to|resulted from) ([^.!?\n]{10,100})",
+            # The X was Y pattern (explanatory)
+            r"(?:The table|The schema|The code|The function|The API|The system) (?:was|had|used|contained) ([^.!?\n]{10,100})",
+        ]
+
+        specific_why = None
+        for pattern in why_patterns:
+            match = re.search(pattern, content, re.IGNORECASE)
+            if match:
+                specific_why = strip_markdown(match.group(1).strip().rstrip(".,"))
+                # Capitalize first letter
+                if specific_why:
+                    specific_why = specific_why[0].upper() + specific_why[1:]
+                break
+
+        # Strategy 2: Look for sentences with causal indicators
+        if not specific_why:
+            causal_indicators = [
+                "because",
+                "since",
+                "which caused",
+                "resulting in",
+                "this meant",
+                "the reason",
+                "this was causing",
+            ]
+            for indicator in causal_indicators:
+                idx = content_lower.find(indicator)
+                if idx != -1:
+                    # Extract the clause after the indicator
+                    start = idx + len(indicator)
+                    end = content.find(".", start)
+                    if end == -1:
+                        end = min(start + 100, len(content))
+                    clause = content[start:end].strip().lstrip(": ")
+                    if len(clause) > 15:
+                        specific_why = strip_markdown(clause)
+                        specific_why = (
+                            specific_why[0].upper() + specific_why[1:]
+                            if specific_why
+                            else None
+                        )
+                        break
+
+        # Strategy 3: Use the user's question as context
+        if not specific_why and user_msgs:
+            user_q = user_msgs[-1].content[:80] if user_msgs else "the request"
+            specific_why = f"In response to: {strip_markdown(user_q)}"
+
+        if not specific_why:
+            specific_why = "Action taken based on conversation context"
+
+        # Extract key points (bullet-like items)
+        key_points = []
+        lines = best_msg.content.split("\n")
+        for line in lines:
+            line = line.strip()
+            # Look for numbered or bulleted items
+            if line and (
+                line[0].isdigit()
+                or line.startswith("-")
+                or line.startswith("*")
+                or line.startswith("•")
+            ):
+                # Clean up the line and strip markdown
+                cleaned = line.lstrip("0123456789.-*• ").strip()
+                cleaned = strip_markdown(cleaned)
+                if 10 < len(cleaned) < 200:
+                    key_points.append(cleaned)
+
+        return decision_text, specific_why, key_points[:5]
+
+    @staticmethod
+    async def generate_plain_language_summary_async(
+        session: Any, messages: List[Any], task_description: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate EU AI Act Article 13 compliant plain language summary.
+        Uses LLM summarization for accurate decision/rationale extraction.
+
+        Args:
+            session: Conversation session
+            messages: List of messages
+            task_description: Optional task description
+
+        Returns:
+            PlainLanguageSummary dictionary
+        """
+        # Get the user's original question for context
+        user_questions = [m.content for m in messages if m.role == "user"]
+        original_question = (
+            user_questions[0][:200] if user_questions else "Unknown request"
+        )
+
+        # Try LLM summarization first (best quality)
+        llm_summary = await summarize_decision_with_llm(messages, original_question)
+
+        if llm_summary and llm_summary.get("decision"):
+            decision = llm_summary["decision"]
+            specific_why = llm_summary["why"]
+            extracted_points = []
+        else:
+            # Fallback to heuristic extraction
+            decision, specific_why, extracted_points = (
+                CourtAdmissibleEnricher.extract_key_recommendation(messages)
+            )
+
+        # Build key factors
+        key_factors = [f'User asked: "{original_question}"']
+        for point in extracted_points[:3]:
+            key_factors.append(f"Recommended: {point}")
+        if session.topics:
+            key_factors.append(f"Context: {', '.join(session.topics[:3])}")
+
+        # Standard fields
+        what_if_different = (
+            "This recommendation is specific to your situation. "
+            "Different requirements or constraints could lead to different recommendations."
+        )
+        your_rights = (
+            "You have the right to: (1) Request human review of this decision, "
+            "(2) Provide additional context to refine the output, "
+            "(3) Contest any recommendation you believe is incorrect, "
+            "(4) Access all data used in this decision-making process."
+        )
+        how_to_appeal = (
+            "To request review: Contact your system administrator or the UATP platform "
+            "operator. Provide the capsule ID and explain your concerns."
+        )
+
+        return {
+            "decision": decision,
+            "why": specific_why,
+            "original_question": original_question,
+            "key_factors": key_factors,
+            "what_if_different": what_if_different,
+            "your_rights": your_rights,
+            "how_to_appeal": how_to_appeal,
+            "summarization_method": "llm" if llm_summary else "heuristic",
+        }
+
+    @staticmethod
+    def generate_plain_language_summary(
+        session: Any, messages: List[Any], task_description: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate plain language summary with LLM when available.
+        Falls back to heuristic method if LLM fails.
+        """
+        # Get the user's original question for context
+        user_questions = [m.content for m in messages if m.role == "user"]
+        original_question = (
+            user_questions[0][:200] if user_questions else "Unknown request"
+        )
+
+        # Try LLM summarization first (best quality)
+        llm_summary = summarize_decision_with_llm_sync(messages, original_question)
+        summarization_method = "heuristic"
+
+        if llm_summary and llm_summary.get("decision"):
+            decision = llm_summary["decision"]
+            specific_why = llm_summary["why"]
+            extracted_points = []
+            summarization_method = "llm"
+        else:
+            # Fallback to heuristic extraction
+            decision, specific_why, extracted_points = (
+                CourtAdmissibleEnricher.extract_key_recommendation(messages)
+            )
+
+        # Build specific key factors from extracted content
+        key_factors = []
+
+        # Add the original question
+        key_factors.append(f'User asked: "{original_question}"')
+
+        # Add extracted key points
+        for point in extracted_points[:3]:
+            key_factors.append(f"Recommended: {point}")
+
+        # Add context if available
+        if session.topics:
+            key_factors.append(f"Context: {', '.join(session.topics[:3])}")
+
+        # If no extracted points, fall back to generic but indicate the gap
+        if not extracted_points:
+            key_factors.append("Note: Detailed reasoning steps not fully captured")
+
+        # What if different - make it specific to this conversation
+        what_if_different = (
+            "This recommendation is specific to your situation. "
+            "Different requirements or constraints (e.g., different tech stack, "
+            "different scale, different team expertise) could lead to different recommendations."
+        )
+
+        # Your rights
+        your_rights = (
+            "You have the right to: (1) Request human review of this decision, "
+            "(2) Provide additional context to refine the output, "
+            "(3) Contest any recommendation you believe is incorrect, "
+            "(4) Access all data used in this decision-making process."
+        )
+
+        # How to appeal
+        how_to_appeal = (
+            "To request review: Contact your system administrator or the UATP platform "
+            "operator. Provide the capsule ID and explain your concerns. "
+            "A human expert will review the AI's reasoning and provide clarification."
+        )
+
+        # Apply plain language simplification to remove jargon
+        plain_decision = simplify_to_plain_language(decision)
+        plain_why = simplify_to_plain_language(specific_why) if specific_why else None
+        plain_key_factors = [simplify_to_plain_language(f) for f in key_factors]
+
+        return {
+            "decision": plain_decision,
+            "why": plain_why,
+            "original_question": original_question,
+            "key_factors": plain_key_factors,
+            "what_if_different": what_if_different,
+            "your_rights": your_rights,
+            "how_to_appeal": how_to_appeal,
+            "summarization_method": summarization_method,
+        }
+
+    @classmethod
+    def enrich_capsule_with_court_admissible_data(
+        cls, capsule: Dict[str, Any], session: Any, messages: List[Any]
+    ) -> Dict[str, Any]:
+        """
+        Enrich an existing capsule with court-admissible data.
+
+        Args:
+            capsule: Existing capsule dictionary
+            session: Conversation session
+            messages: List of conversation messages
+
+        Returns:
+            Enriched capsule with court-admissible data
+        """
+        # Get existing confidence
+        overall_confidence = capsule.get("confidence", 0.8)
+
+        # Add data sources
+        data_sources = cls.infer_data_sources_from_session(session, messages)
+
+        # Add data sources to reasoning_chain steps
+        if "payload" in capsule and "reasoning_chain" in capsule["payload"]:
+            # Distribute data sources across steps
+            for i, step in enumerate(capsule["payload"]["reasoning_chain"]):
+                if i == 0:  # First step gets session data sources
+                    step["data_sources"] = data_sources[:2]
+                elif (
+                    i == len(capsule["payload"]["reasoning_chain"]) - 1
+                ):  # Last step gets token data
+                    if len(data_sources) > 2:
+                        step["data_sources"] = data_sources[2:]
+
+        # Calculate risk assessment
+        risk_assessment = cls.calculate_risk_assessment_from_session(
+            session, messages, overall_confidence
+        )
+        capsule["payload"]["risk_assessment"] = risk_assessment
+
+        # Extract alternatives
+        alternatives = cls.extract_alternatives_from_messages(messages)
+        capsule["payload"]["alternatives_considered"] = alternatives
+
+        # Generate plain language summary (sync/heuristic version)
+        task_description = (
+            capsule.get("payload", {}).get("task") or session.topics[0]
+            if session.topics
+            else None
+        )
+        plain_language = cls.generate_plain_language_summary(
+            session, messages, task_description
+        )
+        capsule["payload"]["plain_language_summary"] = plain_language
+
+        # Add metadata flag - HONEST assessment of what's actually verified
+        if "metadata" not in capsule:
+            capsule["metadata"] = {}
+
+        # Check what gates actually pass
+        verification = capsule.get("verification", {})
+        has_signature = bool(verification.get("signature"))
+        has_trusted_timestamp = verification.get("timestamp", {}).get("trusted", False)
+        has_plain_language = bool(plain_language.get("decision"))
+
+        # Determine actual data richness based on verified gates
+        gates_passed = []
+        if has_signature:
+            gates_passed.append("signature_verified")
+        if has_trusted_timestamp:
+            gates_passed.append("timestamp_verified")
+        if has_plain_language:
+            gates_passed.append("plain_language_summary")
+
+        # HONEST labels - only claim what we can prove
+        # Court admissible requires: signature + trusted timestamp + no semantic drift
+        is_court_admissible = has_signature and has_trusted_timestamp
+        # Insurance ready requires: risk assessment + historical accuracy data
+        is_insurance_ready = (
+            bool(risk_assessment.get("historical_accuracy"))
+            and risk_assessment.get("similar_decisions_count", 0) >= 3
+        )
+
+        capsule["metadata"]["data_richness"] = (
+            "court_admissible"
+            if is_court_admissible
+            else "enhanced"
+            if has_signature
+            else "standard"
+        )
+        capsule["metadata"]["enrichment_timestamp"] = datetime.now(
+            timezone.utc
+        ).isoformat()
+        capsule["metadata"]["gates_passed"] = gates_passed
+        capsule["metadata"]["compliance"] = {
+            # HONEST: Only claim what we can actually verify
+            "daubert_standard": is_court_admissible,
+            "insurance_ready": is_insurance_ready,
+            "eu_ai_act_article_13": has_plain_language,
+        }
+
+        # Add blockers if not fully compliant (transparency)
+        blockers = []
+        if not has_signature:
+            blockers.append("Missing cryptographic signature")
+        if not has_trusted_timestamp:
+            blockers.append("Missing trusted RFC 3161 timestamp")
+        if not is_insurance_ready:
+            blockers.append("Insufficient historical accuracy data")
+
+        if blockers:
+            capsule["metadata"]["compliance_blockers"] = blockers
+
+        return capsule
+
+    @classmethod
+    async def enrich_capsule_with_court_admissible_data_async(
+        cls, capsule: Dict[str, Any], session: Any, messages: List[Any]
+    ) -> Dict[str, Any]:
+        """
+        Async version - uses LLM for better decision/rationale extraction.
+
+        Args:
+            capsule: Existing capsule dictionary
+            session: Conversation session
+            messages: List of conversation messages
+
+        Returns:
+            Enriched capsule with court-admissible data and LLM-powered summary
+        """
+        # Get existing confidence
+        overall_confidence = capsule.get("confidence", 0.8)
+
+        # Add data sources
+        data_sources = cls.infer_data_sources_from_session(session, messages)
+
+        # Add data sources to reasoning_chain steps
+        if "payload" in capsule and "reasoning_chain" in capsule["payload"]:
+            for i, step in enumerate(capsule["payload"]["reasoning_chain"]):
+                if i == 0:
+                    step["data_sources"] = data_sources[:2]
+                elif i == len(capsule["payload"]["reasoning_chain"]) - 1:
+                    if len(data_sources) > 2:
+                        step["data_sources"] = data_sources[2:]
+
+        # Calculate risk assessment
+        risk_assessment = cls.calculate_risk_assessment_from_session(
+            session, messages, overall_confidence
+        )
+        capsule["payload"]["risk_assessment"] = risk_assessment
+
+        # Extract alternatives
+        alternatives = cls.extract_alternatives_from_messages(messages)
+        capsule["payload"]["alternatives_considered"] = alternatives
+
+        # Generate plain language summary with LLM
+        task_description = (
+            capsule.get("payload", {}).get("task") or session.topics[0]
+            if session.topics
+            else None
+        )
+        plain_language = await cls.generate_plain_language_summary_async(
+            session, messages, task_description
+        )
+        capsule["payload"]["plain_language_summary"] = plain_language
+
+        # Add metadata flag - HONEST assessment of what's actually verified
+        if "metadata" not in capsule:
+            capsule["metadata"] = {}
+
+        # Check what gates actually pass
+        verification = capsule.get("verification", {})
+        has_signature = bool(verification.get("signature"))
+        has_trusted_timestamp = verification.get("timestamp", {}).get("trusted", False)
+        has_plain_language = bool(plain_language.get("decision"))
+
+        # Determine actual data richness based on verified gates
+        gates_passed = []
+        if has_signature:
+            gates_passed.append("signature_verified")
+        if has_trusted_timestamp:
+            gates_passed.append("timestamp_verified")
+        if has_plain_language:
+            gates_passed.append("plain_language_summary")
+
+        # HONEST labels - only claim what we can prove
+        is_court_admissible = has_signature and has_trusted_timestamp
+        is_insurance_ready = (
+            bool(risk_assessment.get("historical_accuracy"))
+            and risk_assessment.get("similar_decisions_count", 0) >= 3
+        )
+
+        capsule["metadata"]["data_richness"] = (
+            "court_admissible"
+            if is_court_admissible
+            else "enhanced"
+            if has_signature
+            else "standard"
+        )
+        capsule["metadata"]["enrichment_timestamp"] = datetime.now(
+            timezone.utc
+        ).isoformat()
+        capsule["metadata"]["gates_passed"] = gates_passed
+        capsule["metadata"]["compliance"] = {
+            "daubert_standard": is_court_admissible,
+            "insurance_ready": is_insurance_ready,
+            "eu_ai_act_article_13": has_plain_language,
+        }
+        capsule["metadata"]["summarization_method"] = plain_language.get(
+            "summarization_method", "unknown"
+        )
+
+        # Add blockers if not fully compliant
+        blockers = []
+        if not has_signature:
+            blockers.append("Missing cryptographic signature")
+        if not has_trusted_timestamp:
+            blockers.append("Missing trusted RFC 3161 timestamp")
+        if not is_insurance_ready:
+            blockers.append("Insufficient historical accuracy data")
+
+        if blockers:
+            capsule["metadata"]["compliance_blockers"] = blockers
+
+        return capsule
+
+
+# Example usage and testing
+if __name__ == "__main__":
+    print("[OK] Court-Admissible Enrichment Ready")
+    print("\nCapabilities:")
+    print("   Data provenance tracking (Daubert compliance)")
+    print("   Quantitative risk assessment (insurance-ready)")
+    print("   Decision methodology (alternatives with scores)")
+    print("   Plain language summaries (EU AI Act Article 13)")
+    print("   Ground truth tracking (outcome recording)")
+    print("\nUsage:")
+    print(
+        "  from src.live_capture.court_admissible_enrichment import CourtAdmissibleEnricher"
+    )
+    print(
+        "  enriched = CourtAdmissibleEnricher.enrich_capsule_with_court_admissible_data(capsule, session, messages)"
+    )
