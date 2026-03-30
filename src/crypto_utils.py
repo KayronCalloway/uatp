@@ -33,51 +33,46 @@ _last_cache_cleanup = time.time()
 # Redis client for persistent replay protection
 _redis_client = None
 _redis_available = False
+_redis_unavailable = False
+_redis_retry_after = 0.0
 
 
 def _init_replay_redis():
-    """Initialize Redis client for persistent replay protection."""
-    global _redis_client, _redis_available
+    """Initialize Redis client with cooldown on failure."""
+    global _redis_client, _redis_available, _redis_unavailable, _redis_retry_after
+
+    if _redis_unavailable and time.time() < _redis_retry_after:
+        return
 
     try:
         import redis
 
-        redis_host = os.getenv("REDIS_HOST", "localhost")
-        redis_port = int(os.getenv("REDIS_PORT", "6379"))
-        redis_password = os.getenv("REDIS_PASSWORD")
-        redis_db = int(os.getenv("REDIS_REPLAY_DB", "3"))  # Separate DB for replay
-
         _redis_client = redis.Redis(
-            host=redis_host,
-            port=redis_port,
-            password=redis_password,
-            db=redis_db,
+            host=os.getenv("REDIS_HOST", "localhost"),
+            port=int(os.getenv("REDIS_PORT", "6379")),
+            password=os.getenv("REDIS_PASSWORD"),
+            db=int(os.getenv("REDIS_REPLAY_DB", "3")),
             decode_responses=True,
             socket_connect_timeout=2,
         )
         _redis_client.ping()
         _redis_available = True
-        logger.info("Replay protection using persistent Redis backend")
+        _redis_unavailable = False
+        logger.info("Replay protection using Redis backend")
 
     except ImportError:
-        logger.warning(
-            "SECURITY: redis package not installed. "
-            "Replay protection will use in-memory storage (lost on restart)."
-        )
+        logger.warning("redis package not installed - using in-memory fallback")
         _redis_available = False
 
     except Exception as e:
         env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development"))
         if env in ("production", "prod", "staging"):
-            logger.error(
-                f"CRITICAL: Redis unavailable for replay protection in {env}: {e}"
-            )
-        else:
-            logger.warning(
-                f"Redis unavailable for replay protection: {e}. "
-                "Using in-memory fallback (development only)."
-            )
+            logger.error(f"CRITICAL: Redis unavailable for replay protection: {e}")
+        elif not _redis_unavailable:
+            logger.warning(f"Redis unavailable for replay protection: {e}")
         _redis_available = False
+        _redis_unavailable = True
+        _redis_retry_after = time.time() + 60
 
 
 # Initialize Redis on module load

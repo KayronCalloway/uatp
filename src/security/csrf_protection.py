@@ -28,13 +28,23 @@ class CSRFTokenStore:
     In development, falls back to in-memory storage with a warning.
     """
 
+    _redis_unavailable = False
+    _redis_retry_after = 0.0
+
     def __init__(self):
         self._redis_client = None
         self._in_memory_fallback = {}
         self._init_redis()
 
     def _init_redis(self):
-        """Initialize Redis connection with production enforcement."""
+        """Initialize Redis connection with cooldown on failure."""
+        # Skip if in cooldown
+        if (
+            CSRFTokenStore._redis_unavailable
+            and time.time() < CSRFTokenStore._redis_retry_after
+        ):
+            return
+
         env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development")).lower()
 
         try:
@@ -46,23 +56,21 @@ class CSRFTokenStore:
                 password=os.getenv("REDIS_PASSWORD"),
                 db=int(os.getenv("REDIS_CSRF_DB", "3")),
                 decode_responses=True,
+                socket_connect_timeout=2,
             )
-            # Test connection
             self._redis_client.ping()
             logger.info("CSRF token store: Redis connection established")
+            CSRFTokenStore._redis_unavailable = False
         except Exception as e:
-            # SECURITY: Hard fail in production - Redis is required
             if env in ("production", "prod", "staging"):
                 raise RuntimeError(
-                    f"CRITICAL: Redis required for CSRF in production but unavailable: {e}. "
-                    f"Set REDIS_HOST and ensure Redis is running."
+                    f"CRITICAL: Redis required for CSRF in production but unavailable: {e}."
                 )
-            # Development only - allow in-memory fallback with warning
-            logger.warning(
-                f"CSRF token store: Redis unavailable ({e}), "
-                f"using in-memory fallback (development only)"
-            )
+            if not CSRFTokenStore._redis_unavailable:
+                logger.warning("CSRF: Redis unavailable, using in-memory fallback")
             self._redis_client = None
+            CSRFTokenStore._redis_unavailable = True
+            CSRFTokenStore._redis_retry_after = time.time() + 60
 
     def store(self, token: str, token_info: dict, ttl: int = 3600):
         """Store a CSRF token with expiry."""

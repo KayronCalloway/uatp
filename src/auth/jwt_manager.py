@@ -30,6 +30,9 @@ class TokenRevocationList:
     Falls back to in-memory storage when Redis is unavailable (development only).
     """
 
+    _redis_unavailable = False
+    _redis_retry_after = 0.0
+
     def __init__(self):
         self._redis_client = None
         self._redis_available = False
@@ -39,48 +42,42 @@ class TokenRevocationList:
         self._init_redis()
 
     def _init_redis(self):
-        """Initialize Redis connection for token revocation."""
+        """Initialize Redis connection with cooldown on failure."""
+        if (
+            TokenRevocationList._redis_unavailable
+            and time.time() < TokenRevocationList._redis_retry_after
+        ):
+            return
+
         try:
             import redis
 
-            redis_host = os.getenv("REDIS_HOST", "localhost")
-            redis_port = int(os.getenv("REDIS_PORT", "6379"))
-            redis_password = os.getenv("REDIS_PASSWORD")
-            redis_db = int(os.getenv("REDIS_REVOCATION_DB", "2"))
-
             self._redis_client = redis.Redis(
-                host=redis_host,
-                port=redis_port,
-                password=redis_password,
-                db=redis_db,
+                host=os.getenv("REDIS_HOST", "localhost"),
+                port=int(os.getenv("REDIS_PORT", "6379")),
+                password=os.getenv("REDIS_PASSWORD"),
+                db=int(os.getenv("REDIS_REVOCATION_DB", "2")),
                 decode_responses=True,
                 socket_connect_timeout=2,
             )
-
-            # Test connection
             self._redis_client.ping()
             self._redis_available = True
+            TokenRevocationList._redis_unavailable = False
             logger.info("Token revocation list using Redis backend")
 
         except ImportError:
-            logger.warning(
-                "SECURITY: redis package not installed. "
-                "Token revocation will use in-memory storage (development only)."
-            )
+            logger.warning("redis package not installed - using in-memory fallback")
             self._redis_available = False
 
         except Exception as e:
             env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development"))
             if env in ("production", "prod", "staging"):
-                logger.error(
-                    f"CRITICAL: Redis unavailable for token revocation in {env}: {e}"
-                )
-            else:
-                logger.warning(
-                    f"Redis unavailable for token revocation: {e}. "
-                    "Using in-memory fallback (development only)."
-                )
+                logger.error(f"CRITICAL: Redis unavailable for token revocation: {e}")
+            elif not TokenRevocationList._redis_unavailable:
+                logger.warning(f"Redis unavailable for token revocation: {e}")
             self._redis_available = False
+            TokenRevocationList._redis_unavailable = True
+            TokenRevocationList._redis_retry_after = time.time() + 60
 
     def revoke_token(self, jti: str, user_id: str, ttl_seconds: int):
         """
