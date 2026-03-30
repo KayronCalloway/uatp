@@ -284,7 +284,7 @@ jobs:
 
     - name: Test SDK install and sign
       run: |
-        pip install -e .
+        pip install -e sdk/python/
         python -c "from uatp import UATP; r = UATP().certify(task='CI', decision='Test', reasoning=[{'step': 1, 'thought': 'OK', 'confidence': 1.0}]); assert r.signature; print('SDK OK')"
 
     - name: Test frontend install and build
