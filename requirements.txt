@@ -13,7 +13,7 @@ SQLAlchemy==2.0.36
 alembic==1.14.0
 
 # Redis - Updated for security
-redis==5.2.1
+redis==7.4.0
 aioredis==2.0.1
 
 # Authentication & Security - Critical security updates
