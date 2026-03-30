@@ -95,7 +95,7 @@ pyopenssl>=26.0.0  # Supports cryptography 46+
 # trustme removed - test-only
 
 # Analysis & ML
-numpy==1.26.4
+numpy==2.2.6
 
 # Integrations
 openai==1.58.1
