@@ -43,6 +43,9 @@ import { LineageCard } from '@/components/capsules/LineageCard';
 import { ChainContextCard } from '@/components/capsules/ChainContextCard';
 import { ConversationCard } from '@/components/capsules/ConversationCard';
 import { FeedbackSignalsCard } from '@/components/capsules/FeedbackSignalsCard';
+import { SelfInspectionCard } from '@/components/capsules/SelfInspectionCard';
+import { ComplianceStatusCard } from '@/components/capsules/ComplianceStatusCard';
+import { ProofLevelBadge } from '@/components/capsules/ProofLevelBadge';
 
 interface CapsuleDetailProps {
   capsuleId: string;
@@ -753,6 +756,23 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
         </CardContent>
       </Card>
 
+      {/* Self-Inspection Results - Gold Standard */}
+      {capsule.payload?.self_inspection && (
+        <SelfInspectionCard selfInspection={capsule.payload.self_inspection} />
+      )}
+
+      {/* Compliance Status - Honest Labels */}
+      {(capsule.payload?.metadata?.compliance || capsule.payload?.metadata?.data_richness) && (
+        <ComplianceStatusCard
+          dataRichness={capsule.payload.metadata.data_richness}
+          compliance={capsule.payload.metadata.compliance}
+          gatesPassed={capsule.payload.metadata.gates_passed}
+          blockers={capsule.payload.metadata.compliance_blockers}
+          hasSignature={!!capsule.verification?.signature}
+          hasTrustedTimestamp={capsule.verification?.timestamp?.trusted}
+        />
+      )}
+
       {/* Reasoning Process */}
       <Card>
         <CardHeader>
@@ -899,6 +919,10 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                                 {step.measurements.signal_type.replace('_', ' ')}
                               </span>
                             )}
+                            {/* Proof Level Badge - Gold Standard */}
+                            {step.proof_level && (
+                              <ProofLevelBadge proofLevel={step.proof_level} size="sm" />
+                            )}
                             {hasConfidence && (
                               <span className={`px-3 py-1 rounded-full text-xs font-bold ${step.confidence >= 0.9 ? 'bg-green-100 text-green-800' :
                                 step.confidence >= 0.7 ? 'bg-blue-100 text-blue-800' :
@@ -906,6 +930,9 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
                                     'bg-red-100 text-red-800'
                                 }`}>
                                 {(step.confidence * 100).toFixed(0)}%
+                                {step.confidence_proof && (
+                                  <span className="ml-1 opacity-60" title="This confidence is heuristic, not calibrated">*</span>
+                                )}
                               </span>
                             )}
                           </div>
