@@ -104,6 +104,15 @@ from src.utils.rich_capsule_creator import (  # noqa: E402
     create_rich_reasoning_capsule,
 )
 
+# Import LayeredCapsuleBuilder for gold standard v1.1 format
+try:
+    from src.core.layered_capsule_builder import LayeredCapsuleBuilder
+
+    _LAYERED_BUILDER_AVAILABLE = True
+except ImportError:
+    _LAYERED_BUILDER_AVAILABLE = False
+    LayeredCapsuleBuilder = None
+
 # Import contradiction engine for self-inspection
 try:
     from src.core.contradiction_engine import ContradictionEngine, format_contradictions
@@ -964,6 +973,93 @@ class RichCaptureEnhancer:
 
             except Exception as e:
                 logger.debug(f"Proof level marking skipped: {e}")
+
+        # CONVERT TO GOLD STANDARD LAYERED FORMAT (v1.1)
+        # This ensures all new capsules use the layered architecture with:
+        # - Events layer (what happened)
+        # - Evidence layer (what proves it)
+        # - Interpretation layer (what the model thinks - MARKED UNVERIFIED)
+        # - Judgment layer (gated labels - only when earned)
+        if _LAYERED_BUILDER_AVAILABLE and LayeredCapsuleBuilder:
+            try:
+                # Extract verification data for layers
+                verification = capsule.get("verification", {})
+                signature = verification.get("signature", "")
+                if signature.startswith("ed25519:"):
+                    signature = signature[8:]  # Remove prefix for storage
+
+                timestamp_token = verification.get("timestamp", {})
+                if not timestamp_token and verification.get("timestamp_token"):
+                    timestamp_token = {"token": verification.get("timestamp_token")}
+
+                # Build the layered capsule
+                layered = LayeredCapsuleBuilder.build_layered_capsule(
+                    capsule_id=capsule["capsule_id"],
+                    messages=session.messages,
+                    session=session,
+                    tool_calls=capsule.get("payload", {}).get("tool_calls"),
+                    environment=capsule.get("payload", {}).get("environment"),
+                    signature=signature if signature else None,
+                    timestamp_token={
+                        "trusted": timestamp_token.get("trusted", False),
+                        "tsa_url": timestamp_token.get("tsa_url"),
+                        "token": timestamp_token.get("token"),
+                    }
+                    if timestamp_token
+                    else None,
+                    summary=capsule.get("payload", {})
+                    .get("plain_language_summary", {})
+                    .get("decision"),
+                    confidence_scores={
+                        "overall": capsule.get("payload", {}).get(
+                            "confidence", overall_confidence
+                        )
+                    },
+                    quality_assessment=capsule.get("payload", {}).get(
+                        "quality_assessment"
+                    ),
+                )
+
+                # Convert LayeredCapsule to dict for storage
+                layered_dict = layered.to_dict()
+
+                # Merge with enriched payload data (preserve all enrichments)
+                layered_dict["payload"] = capsule.get("payload", {})
+                layered_dict["payload"]["schema_version"] = "2.0_layered"
+                layered_dict["payload"]["layers"] = {
+                    "events": [e.to_dict() for e in layered.events],
+                    "evidence": [e.to_dict() for e in layered.evidence],
+                    "interpretation": layered.interpretation.to_dict(),
+                    "judgment": layered.judgment.to_dict(),
+                }
+                layered_dict["payload"]["trust_posture"] = (
+                    layered.trust_posture.to_dict()
+                )
+
+                # Copy verification from original capsule
+                layered_dict["verification"] = capsule.get("verification", {})
+
+                # Preserve other top-level fields
+                for key in [
+                    "type",
+                    "version",
+                    "status",
+                    "embedding",
+                    "embedding_model",
+                ]:
+                    if key in capsule:
+                        layered_dict[key] = capsule[key]
+
+                logger.info(
+                    f" Capsule {capsule['capsule_id']} converted to gold standard layered format"
+                )
+                return layered_dict
+
+            except Exception as e:
+                logger.warning(
+                    f"[WARN] Layered conversion failed, using legacy format: {e}"
+                )
+                # Fall through to return original capsule
 
         return capsule
 
