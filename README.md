@@ -1,6 +1,6 @@
-# UATP
+# UATP v1.1
 
-**Cryptographic audit trails for AI decisions.**
+**Cryptographic audit trails for AI decisions — with honest truth separation.**
 
 [![CI](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml)
 [![Security](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml)
@@ -12,6 +12,30 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](STATUS.md)
+
+---
+
+## What's New in v1.1
+
+**Gold Standard Architecture** — Honest separation between what's verified and what's interpretation:
+
+| Layer | What It Contains | Proof Level |
+|-------|------------------|-------------|
+| **Events** | What literally happened (tool calls, messages) | `tool_verified` |
+| **Evidence** | What artifacts prove (signatures, hashes) | `crypto_verified` |
+| **Interpretation** | What the model thinks | `model_generated` (unverified) |
+| **Judgment** | Gated labels (court-admissible, insurance-ready) | Only when gates pass |
+
+**Self-Inspection** — A protocol that can accuse itself is closer to truth:
+- Semantic drift detection (summary doesn't address the question)
+- Quality consistency checks (perfect scores with failing grades)
+- Confidence-evidence alignment (high confidence without evidence)
+- Unearned label detection (claiming court-admissible without verification)
+
+**Honest Compliance** — Labels are earned, not claimed:
+- `court_admissible` requires: signature + trusted timestamp + no semantic drift
+- `insurance_ready` requires: historical accuracy data + risk assessment
+- Blockers are shown transparently when gates don't pass
 
 ---
 
@@ -121,9 +145,84 @@ Once running, go to http://localhost:3000:
 
 UATP creates verifiable capsules for AI reasoning: cryptographically signed records that prove what decision was made, with what reasoning, at what time.
 
+### The Problem
+
+Most AI audit systems conflate two different things:
+1. **Provenance** — cryptographic proof that data exists and hasn't been tampered with
+2. **Interpretation** — what the AI thinks, which is valuable but unverified
+
+When a system claims "court-admissible" or "insurance-ready" without separating these layers, it's theater.
+
+### The Solution: Layered Capsules
+
+UATP v1.1 separates truth into layers with explicit proof tags:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  CAPSULE                                                     │
+├─────────────────────────────────────────────────────────────┤
+│  EVENTS (tool_verified)                                      │
+│  - User sent message at 14:32:01                            │
+│  - Tool "Read" executed on config.py                        │
+│  - Git commit abc123 was current                            │
+├─────────────────────────────────────────────────────────────┤
+│  EVIDENCE (crypto_verified)                                  │
+│  - Ed25519 signature: valid                                  │
+│  - RFC 3161 timestamp: DigiCert, trusted                    │
+│  - File hash: sha256:def456...                              │
+├─────────────────────────────────────────────────────────────┤
+│  INTERPRETATION (model_generated — UNVERIFIED)              │
+│  - Summary: "Fixed the authentication bug"                  │
+│  - Confidence: 0.85 (heuristic, not calibrated)            │
+│  - Quality grade: B                                          │
+├─────────────────────────────────────────────────────────────┤
+│  JUDGMENT (gated — must be earned)                          │
+│  - court_admissible: true (all gates passed)                │
+│  - insurance_ready: false (missing historical data)         │
+│  - blockers: ["Insufficient accuracy history"]              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Proof Levels
+
+Every claim carries a proof tag:
+
+| Proof Level | Meaning | Example |
+|-------------|---------|---------|
+| `tool_verified` | Verified by tool execution | Message captured, file read |
+| `artifact_verified` | Verified from artifact | Git commit hash, file hash |
+| `crypto_verified` | Cryptographically verified | Ed25519 signature, RFC 3161 |
+| `derived` | Derived from verified facts | Logical inference from events |
+| `heuristic` | Based on patterns (not calibrated) | Confidence scores |
+| `model_generated` | AI output (unverified) | Summaries, quality assessments |
+| `speculative` | Uncertain | Predictions without evidence |
+| `untested` | Not yet verified | Claims awaiting validation |
+
+### Self-Inspection
+
+Before finalizing a capsule, UATP runs contradiction detection:
+
+```
+[!] SEMANTIC_DRIFT: Summary does not address user request.
+    User asked about: authentication, bug, login
+    Summary covers: database, caching, redis
+    Recommendation: Regenerate summary to address the actual question
+
+[?] EVIDENCE_GAP: High confidence (95%) claimed with no supporting evidence
+    Recommendation: Confidence should be proportional to evidence
+
+[!] UNEARNED_LABEL: Claims 'court_admissible' but missing:
+    - verified timestamp
+    - semantic consistency (drift detected)
+    Recommendation: Remove court_admissible label until gates pass
+```
+
 **What's working today:**
 - **Ed25519 signatures** — tamper-evident, locally-signed, keys never leave your device
 - **RFC 3161 timestamps** — external time authority (DigiCert) - beta*
+- **Layered capsule architecture** — events, evidence, interpretation, judgment
+- **Self-inspection** — contradiction detection before signing
+- **Honest compliance gates** — labels only claimed when earned
 - **Standalone verification** — verify capsules without trusting UATP servers
 - **DSSE bundles** — Sigstore-compatible export
 
@@ -131,7 +230,7 @@ UATP creates verifiable capsules for AI reasoning: cryptographically signed reco
 
 **What's experimental:**
 - ML-DSA-65 post-quantum signatures (beta, not audited)
-- Platform modules (attribution, governance, economics) - not part of core protocol
+- Confidence calibration against historical outcomes
 
 See [TRUST_MODEL.md](TRUST_MODEL.md) for security assumptions. See [STATUS.md](STATUS.md) for what's shipped.
 
@@ -169,6 +268,7 @@ More examples: [examples/](examples/)
 | Goal | Path |
 |------|------|
 | **Try it locally** | [Try It Now](#try-it-now) → [Examples](examples/) |
+| **Understand the layers** | [What It Does](#what-it-does) → [Proof Levels](#proof-levels) |
 | **Inspect the crypto** | [Trust Model](TRUST_MODEL.md) → [src/crypto/](src/crypto/) |
 | **Integrate the SDK** | [SDK Docs](sdk/python/README.md) → [API Reference](docs/api-documentation.md) |
 | **Understand the vision** | [Vision](docs/vision.md) |
@@ -180,9 +280,13 @@ More examples: [examples/](examples/)
 
 ```
 uatp/
-├── src/                    # ~30 modules
+├── src/
 │   ├── api/                # FastAPI backend
 │   ├── auth/               # JWT, RBAC, middleware
+│   ├── core/               # Gold standard modules
+│   │   ├── provenance.py   # Layered capsule architecture
+│   │   ├── contradiction_engine.py  # Self-inspection
+│   │   └── layered_capsule_builder.py
 │   ├── attestation/        # Workflow attestation (in-toto style)
 │   ├── capsules/           # Core capsule logic
 │   ├── cli/                # CLI tools (verify, export, inspect)
@@ -219,10 +323,10 @@ Full module list: [Repository Map](docs/repository-map.md)
 ```
 ┌─────────────────────────────┐
 │  YOUR DEVICE                │
-│  ✓ Private key (encrypted)  │
-│  ✓ ALL signing happens here │
-│  ✓ Ed25519 + PBKDF2 480K    │
-│  ✓ Keys stored ~/.uatp/keys │
+│  - Private key (encrypted)  │
+│  - ALL signing happens here │
+│  - Ed25519 + PBKDF2 480K    │
+│  - Keys stored ~/.uatp/keys │
 └──────────────┬──────────────┘
                │
                ▼
@@ -274,22 +378,25 @@ UATP operators **cannot** sign on behalf of users—the SDK generates and stores
 | Device-bound keys | Working | Convenience mode, see security notes below |
 | DSSE bundle export | Working | Sigstore-compatible |
 
-**Backend (`python run.py`) — less mature:**
+**Backend (`python run.py`) — Gold Standard v1.1:**
 
 | Component | Status | Notes |
 |-----------|--------|-------|
 | Capsule storage API | Working | SQLite/PostgreSQL |
+| Layered capsule architecture | **New in v1.1** | Events → Evidence → Interpretation → Judgment |
+| Self-inspection | **New in v1.1** | Contradiction detection before signing |
+| Honest compliance gates | **New in v1.1** | Labels earned, not claimed |
+| Proof level tags | **New in v1.1** | Every claim carries its proof status |
 | Full-text search | Working | FTS5 / ts_vector |
 | RFC 3161 timestamps | Beta | DigiCert TSA integration |
-| Server-side signing | Legacy | Being deprecated, see TRUST_MODEL.md |
 
 **Experimental (code exists, not stable):**
 
 | Component | Status |
 |-----------|--------|
 | ML-DSA-65 (post-quantum) | Beta, not audited |
+| Confidence calibration | Planned |
 | Workflow attestation | Beta |
-| Platform modules (attribution, governance) | Experimental |
 | Next.js frontend | Beta |
 | Hosted SaaS | Planned Q3 2026 |
 
@@ -308,6 +415,8 @@ Full breakdown: [STATUS.md](STATUS.md)
 | **OpenTelemetry** | Distributed tracing | Tamper-evident, legally defensible records |
 
 UATP is not a replacement for these tools—it adds a cryptographic proof layer for AI decisions that can integrate with existing infrastructure.
+
+**What makes v1.1 different:** Most audit systems claim compliance without earning it. UATP v1.1 separates verified facts from model interpretation, runs self-inspection for contradictions, and only claims labels when verification gates pass.
 
 ---
 
@@ -328,6 +437,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: [SECURITY.md](SECURITY.
 ## Vision
 
 AI systems that shape outcomes should leave verifiable memory behind. UATP provides the cryptographic foundation—starting with audit trails, extensible to attribution and accountability.
+
+**v1.1 Philosophy:** A protocol that can accuse itself is closer to truth. By separating verified facts from interpretation, detecting its own contradictions, and only claiming labels when they're earned, UATP moves beyond "audit theater" toward genuine accountability.
 
 [Full vision →](docs/vision.md)
 
