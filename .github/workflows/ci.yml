@@ -261,9 +261,51 @@ jobs:
         docker stop uatp-test
         docker rm uatp-test
 
+  smoke-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node-version: ["20"]
+        python-version: ["3.11"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Test SDK install and sign
+      run: |
+        pip install -e .
+        python -c "
+from uatp import UATP
+result = UATP().certify(
+    task='CI Test',
+    decision='Smoke test',
+    reasoning=[{'step': 1, 'thought': 'Works', 'confidence': 1.0}]
+)
+assert result.signature, 'No signature'
+print('SDK OK')
+"
+
+    - name: Test frontend install and build
+      run: |
+        cd frontend
+        cp .env.example .env.local
+        npm install
+        npm run build
+
   build:
     runs-on: ubuntu-latest
-    needs: [code-quality, tests, security, docker-build]
+    needs: [code-quality, tests, security, docker-build, smoke-test]
 
     steps:
     - uses: actions/checkout@v4
