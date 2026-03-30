@@ -46,7 +46,7 @@ kombu==5.6.2
 
 # Date/Time
 python-dateutil==2.9.0.post0
-pytz==2023.3
+pytz==2026.1.post1
 
 # Utilities
 click==8.3.1
