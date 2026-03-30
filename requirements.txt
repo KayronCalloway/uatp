@@ -2,7 +2,7 @@
 
 # Web Framework - Updated for security patches
 fastapi==0.135.2
-uvicorn[standard]==0.34.0
+uvicorn[standard]==0.42.0
 starlette==1.0.0
 werkzeug>=3.1.6  # CVE-2024-49767 fix
 
@@ -10,10 +10,10 @@ werkzeug>=3.1.6  # CVE-2024-49767 fix
 asyncpg==0.31.0
 psycopg2-binary==2.9.11
 SQLAlchemy==2.0.36
-alembic==1.14.0
+alembic==1.18.4
 
 # Redis - Updated for security
-redis==5.2.1
+redis==7.4.0
 aioredis==2.0.1
 
 # Authentication & Security - Critical security updates
@@ -23,7 +23,7 @@ cryptography>=46.0.0  # Security updates
 pynacl==1.6.2
 passlib==1.7.4
 bleach==6.2.0
-argon2-cffi==23.1.0  # More secure password hashing
+argon2-cffi==25.1.0  # More secure password hashing
 
 # HTTP Client - Security patches
 httpx==0.28.1
@@ -32,7 +32,7 @@ requests==2.32.5
 
 # Validation & Serialization - Updated
 pydantic==2.12.5
-pydantic-settings==2.7.0
+pydantic-settings==2.13.1
 validators==0.35.0
 
 # Monitoring & Observability - Security updates
@@ -41,12 +41,12 @@ structlog==25.5.0
 sentry-sdk==2.55.0
 
 # Task Queue - Security patches
-celery==5.4.0
+celery==5.6.3
 kombu==5.6.2
 
 # Date/Time
 python-dateutil==2.9.0.post0
-pytz==2023.3
+pytz==2026.1.post1
 
 # Utilities
 click==8.3.1
@@ -74,17 +74,17 @@ email-validator==2.3.0
 
 # Security scanning and validation
 safety==3.7.0
-bandit==1.8.0
+bandit==1.9.4
 
 # Transitive dependencies - let pip resolve these automatically
 # Only pin if there's a specific version requirement
 
 # Circuit Breaker Pattern
 circuit-breaker==0.1.1
-tenacity==9.0.0
+tenacity==9.1.4
 
 # Enhanced Configuration Management
-pydantic-settings==2.7.0
+pydantic-settings==2.13.1
 
 # System Monitoring - Updated
 psutil==7.2.2
@@ -95,7 +95,7 @@ pyopenssl>=26.0.0  # Supports cryptography 46+
 # trustme removed - test-only
 
 # Analysis & ML
-numpy==1.26.4
+numpy==2.2.6
 
 # Integrations
 openai==1.58.1
