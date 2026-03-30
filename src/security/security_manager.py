@@ -12,8 +12,10 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, Optional, Tuple
 
-from ..attribution.cryptographic_lineage import cryptographic_lineage_manager
-from ..attribution.gaming_detector import gaming_detector
+# Stubbed - archived modules
+cryptographic_lineage_manager = None
+gaming_detector = None
+
 from ..crypto.post_quantum import pq_crypto
 from ..privacy.zero_knowledge_proofs import (
     generate_range_proof,
