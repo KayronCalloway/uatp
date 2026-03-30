@@ -74,7 +74,7 @@ email-validator==2.3.0
 
 # Security scanning and validation
 safety==3.7.0
-bandit==1.8.0
+bandit==1.9.4
 
 # Transitive dependencies - let pip resolve these automatically
 # Only pin if there's a specific version requirement
