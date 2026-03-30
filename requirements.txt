@@ -10,7 +10,7 @@ werkzeug>=3.1.6  # CVE-2024-49767 fix
 asyncpg==0.31.0
 psycopg2-binary==2.9.11
 SQLAlchemy==2.0.36
-alembic==1.14.0
+alembic==1.18.4
 
 # Redis - Updated for security
 redis==5.2.1
