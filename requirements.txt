@@ -23,7 +23,7 @@ cryptography>=46.0.0  # Security updates
 pynacl==1.6.2
 passlib==1.7.4
 bleach==6.2.0
-argon2-cffi==23.1.0  # More secure password hashing
+argon2-cffi==25.1.0  # More secure password hashing
 
 # HTTP Client - Security patches
 httpx==0.28.1
