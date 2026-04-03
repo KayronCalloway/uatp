@@ -23,10 +23,7 @@ compliance/
 migrations/
 storage/
 
-# Ollama/Gemma integrations (internal/experimental)
-src/integrations/ollama_*.py
-src/integrations/gemma_*.py
-gemma_test.py
+# Gemma calibration plan (internal doc)
 docs/plans/gemma-*.md
 
 # Internal docs (keep locally, not for public)
@@ -34,6 +31,14 @@ docs/internal/
 docs/evolution_timeline/
 docs/pdf/
 docs/incidents/
+docs/plans/
+
+# Internal frontend docs
+frontend/*_STRATEGY.md
+frontend/*_PLAN.md
+frontend/*_RESULTS.md
+frontend/*_PATTERN.md
+frontend/FIX_*.md
 
 # Specific internal docs
 docs/TECHNICAL_QA_*.md
