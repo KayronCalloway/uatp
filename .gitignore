@@ -132,6 +132,8 @@ federation_data/
 
 # User private keys (CRITICAL - never commit)
 .uatp_keys/
+.uatp_keys_backup_*/
+.uatp_keys_test/
 ~/.uatp/
 *.key
 *.pem
@@ -140,6 +142,17 @@ federation_data/
 # Deployment secrets
 deployment/environments/*.env
 !deployment/environments/*.env.example
+
+# Infrastructure secrets (use external secrets manager in production)
+infra/docker/environments/*.env
+!infra/docker/environments/*.env.example
+infra/docker/kubernetes/secrets.yaml
+infra/kubernetes/manifests/secret.yaml
+infra/kubernetes/manifests/secrets.yaml
+infra/kubernetes/manifests/**/secret.yaml
+infra/kubernetes/manifests/**/secrets.yaml
+!infra/kubernetes/manifests/**/secrets-template.yaml
+!infra/**/*.example
 
 # Any encrypted keys
 *.enc

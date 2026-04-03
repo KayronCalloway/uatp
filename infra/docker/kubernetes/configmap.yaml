@@ -46,43 +46,7 @@ data:
 
   # Monitoring
   SENTRY_ENVIRONMENT: "production"
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: uatp-secrets
-  namespace: uatp-production
-type: Opaque
-stringData:
-  # Database
-  DATABASE_PASSWORD: "your_secure_password_here"
-  DATABASE_URL: "postgresql://uatp_user:your_secure_password_here@postgresql-service:5432/uatp_production"
-
-  # Redis
-  REDIS_URL: "redis://redis-service:6379/0"
-
-  # AI API Keys
-  OPENAI_API_KEY: "sk-your-openai-api-key-here"
-  ANTHROPIC_API_KEY: "sk-ant-your-anthropic-api-key-here"
-  HUGGINGFACE_API_KEY: "hf_your-huggingface-api-key-here"
-  COHERE_API_KEY: "your-cohere-api-key-here"
-
-  # Payment Processors
-  STRIPE_SECRET_KEY: "sk_live_your_stripe_secret_key"
-  STRIPE_PUBLISHABLE_KEY: "pk_live_your_stripe_publishable_key"
-  STRIPE_WEBHOOK_SECRET: "whsec_your_webhook_secret"
-  PAYPAL_CLIENT_ID: "your_paypal_client_id"
-  PAYPAL_CLIENT_SECRET: "your_paypal_client_secret"
-
-  # Security
-  SECRET_KEY: "your-super-secret-key-for-jwt-tokens"
-  JWT_SECRET: "your-jwt-secret-key"
-  ENCRYPTION_KEY: "your-32-character-encryption-key"
-
-  # External Services
-  SMTP_PASSWORD: "your_sendgrid_api_key"
-  SENTRY_DSN: "https://your-sentry-dsn@sentry.io/project-id"
-
-  # AWS
-  AWS_ACCESS_KEY_ID: "your_aws_access_key"
-  AWS_SECRET_ACCESS_KEY: "your_aws_secret_key"
+# ============================================
+# SECRETS: See infra/docker/kubernetes/secrets.yaml.example
+# DO NOT commit actual secrets to this file
+# ============================================
