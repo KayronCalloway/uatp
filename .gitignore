@@ -23,6 +23,12 @@ compliance/
 migrations/
 storage/
 
+# Ollama/Gemma integrations (internal/experimental)
+src/integrations/ollama_*.py
+src/integrations/gemma_*.py
+gemma_test.py
+docs/plans/gemma-*.md
+
 # Internal docs (keep locally, not for public)
 docs/internal/
 docs/evolution_timeline/
