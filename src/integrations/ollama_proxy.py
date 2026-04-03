@@ -57,15 +57,18 @@ logger = logging.getLogger(__name__)
 
 # UATP imports
 try:
+    from src.calibration.metrics import build_calibration_context
     from src.core.layered_capsule_builder import LayeredCapsuleBuilder
     from src.core.provenance import EpistemicClass, Event, Evidence, ProofLevel
     from src.security.rfc3161_timestamps import RFC3161Timestamper
     from src.security.uatp_crypto_v7 import UATPCryptoV7
 
     _UATP_AVAILABLE = True
+    _CALIBRATION_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"UATP modules not available: {e}")
     _UATP_AVAILABLE = False
+    _CALIBRATION_AVAILABLE = False
     EpistemicClass = None
 
 
@@ -97,11 +100,13 @@ class OllamaProxy:
         proxy_port: int = 11435,
         ollama_url: str = "http://localhost:11434",
         db_path: str = "uatp_dev.db",
-        auto_assess: bool = False,
+        auto_assess: bool = True,
+        inject_calibration: bool = True,
         verbose: bool = False,
     ):
         self.proxy_port = proxy_port
         self.ollama_url = ollama_url.rstrip("/")
+        self.inject_calibration = inject_calibration and _CALIBRATION_AVAILABLE
         self.db_path = db_path
         self.auto_assess = auto_assess
         self.verbose = verbose
@@ -126,6 +131,74 @@ class OllamaProxy:
         self.requests_proxied = 0
         self.capsules_created = 0
         self.start_time = None
+
+        # Cache calibration context (refresh periodically)
+        self._calibration_cache: Dict[str, Tuple[str, float]] = {}
+        self._calibration_cache_ttl = 300  # 5 minutes
+
+    def _get_calibration_context(self, model: str) -> Optional[str]:
+        """Get cached calibration context for a model."""
+        if not self.inject_calibration:
+            return None
+
+        now = time.time()
+        if model in self._calibration_cache:
+            context, cached_at = self._calibration_cache[model]
+            if now - cached_at < self._calibration_cache_ttl:
+                return context if context else None
+
+        # Rebuild context
+        try:
+            context = build_calibration_context(
+                model=model,
+                db_path=self.db_path,
+                min_samples=10,
+            )
+            # Cache even empty context to avoid repeated queries
+            self._calibration_cache[model] = (context, now)
+            if "Insufficient" in context:
+                return None  # Don't inject if insufficient data
+            return context
+        except Exception as e:
+            logger.debug(f"Calibration context failed: {e}")
+            return None
+
+    def _inject_calibration(
+        self, req_data: Dict[str, Any], path: str, model: str
+    ) -> Dict[str, Any]:
+        """Inject calibration context into request data."""
+        context = self._get_calibration_context(model)
+        if not context:
+            return req_data
+
+        # Clone to avoid mutating original
+        modified = req_data.copy()
+
+        if path == "/api/generate":
+            # Prefix the prompt
+            original_prompt = modified.get("prompt", "")
+            modified["prompt"] = f"[{context}]\n\n{original_prompt}"
+        else:  # /api/chat
+            # Add as system message if not already present
+            messages = modified.get("messages", [])
+            if messages:
+                messages = list(messages)  # Copy
+                # Check if first message is system
+                if messages[0].get("role") == "system":
+                    # Append to existing system message
+                    messages[0] = {
+                        **messages[0],
+                        "content": messages[0].get("content", "") + f"\n\n{context}",
+                    }
+                else:
+                    # Insert new system message
+                    messages.insert(0, {"role": "system", "content": context})
+                modified["messages"] = messages
+
+        if self.verbose:
+            logger.info(f"[CALIBRATION] Injected context for {model}")
+
+        return modified
 
     async def start(self):
         """Start the proxy server."""
@@ -278,6 +351,12 @@ class OllamaProxy:
             prompt = messages[-1].get("content", "") if messages else ""
             model = req_data.get("model", "unknown")
 
+        # Inject calibration context if available
+        modified_data = self._inject_calibration(req_data, path, model)
+        forward_body = (
+            json.dumps(modified_data).encode() if modified_data != req_data else body
+        )
+
         capture_start = time.time()
 
         # Forward to Ollama
@@ -285,7 +364,7 @@ class OllamaProxy:
             "POST",
             target_url,
             headers=headers,
-            data=body,
+            data=forward_body,
         ) as resp:
             response_body = await resp.read()
             status = resp.status
@@ -369,6 +448,12 @@ class OllamaProxy:
             prompt = messages[-1].get("content", "") if messages else ""
             model = req_data.get("model", "unknown")
 
+        # Inject calibration context if available
+        modified_data = self._inject_calibration(req_data, path, model)
+        forward_body = (
+            json.dumps(modified_data).encode() if modified_data != req_data else body
+        )
+
         # Prepare streaming response
         response = web.StreamResponse(
             status=200, headers={"Content-Type": "application/x-ndjson"}
@@ -384,7 +469,7 @@ class OllamaProxy:
             "POST",
             target_url,
             headers=headers,
-            data=body,
+            data=forward_body,
         ) as resp:
             async for line in resp.content:
                 # Forward to client immediately
@@ -790,10 +875,14 @@ async def main():
         help="Upstream Ollama URL (default: http://localhost:11434)",
     )
     parser.add_argument(
-        "--assess",
-        "-a",
+        "--no-assess",
         action="store_true",
-        help="Auto-trigger self-assessment after each response",
+        help="Disable auto self-assessment (default: enabled for calibration)",
+    )
+    parser.add_argument(
+        "--no-calibration",
+        action="store_true",
+        help="Disable calibration context injection (default: enabled)",
     )
     parser.add_argument(
         "--verbose", "-v", action="store_true", help="Enable verbose logging"
@@ -808,7 +897,8 @@ async def main():
         proxy_port=args.port,
         ollama_url=args.ollama_url,
         db_path=args.db_path,
-        auto_assess=args.assess,
+        auto_assess=not args.no_assess,
+        inject_calibration=not args.no_calibration,
         verbose=args.verbose,
     )
 
