@@ -43,6 +43,7 @@ class TestProofLevel:
             "speculative",
             "user_asserted",
             "untested",
+            "human_verified",
         ]
         actual = [p.value for p in ProofLevel]
         assert set(expected) == set(actual)
