@@ -47,13 +47,66 @@ class ProofLevel(str, Enum):
     # Not yet tested or verified
     UNTESTED = "untested"
 
+    # Verified by human review
+    HUMAN_VERIFIED = "human_verified"
+
+
+class EpistemicClass(str, Enum):
+    """
+    What KIND of claim is this? Determines how it should be trusted.
+
+    ProofLevel tells you HOW something was verified.
+    EpistemicClass tells you WHAT KIND of claim it is.
+
+    Key principle: Model self-assessment is testimony, not proof.
+    A model claiming "I'm 80% confident" is itself a model_claim,
+    not evidence of actual reliability.
+    """
+
+    # === Model outputs - NEVER trust without external verification ===
+
+    # Any assertion made by a model
+    MODEL_CLAIM = "model_claim"
+
+    # Model evaluating its own output (confidence, uncertainty, etc.)
+    # This is testimony about itself - valuable as a hypothesis, not as proof
+    MODEL_SELF_ASSESSMENT = "model_self_assessment"
+
+    # === Verified by tooling/observation ===
+
+    # We directly observed this happen (captured event, tool execution)
+    TOOL_OBSERVED = "tool_observed"
+
+    # Verified from artifact hash (file, git commit, etc.)
+    ARTIFACT_HASH = "artifact_hash"
+
+    # Cryptographically signed (Ed25519, RFC3161)
+    CRYPTO_SIGNED = "crypto_signed"
+
+    # === External verification ===
+
+    # A human confirmed this
+    HUMAN_VERIFIED = "human_verified"
+
+    # An external system verified this (test suite, CI, etc.)
+    SYSTEM_VERIFIED = "system_verified"
+
+    # === Outcomes ===
+
+    # Actual result was observed (tests passed, code worked, etc.)
+    MEASURED_OUTCOME = "measured_outcome"
+
+    # Outcome inferred from signals (user accepted, user refined, etc.)
+    INFERRED_OUTCOME = "inferred_outcome"
+
 
 @dataclass
 class Claim:
-    """A single claim with its proof status."""
+    """A single claim with its proof status and epistemic classification."""
 
     value: Any
     proof: ProofLevel
+    epistemic_class: Optional[EpistemicClass] = None  # What kind of claim is this?
     source: Optional[str] = None  # Where this came from
     timestamp: Optional[datetime] = None
     confidence: Optional[float] = None  # Only meaningful for verified claims
@@ -63,6 +116,8 @@ class Claim:
             "value": self.value,
             "proof": self.proof.value,
         }
+        if self.epistemic_class:
+            result["epistemic_class"] = self.epistemic_class.value
         if self.source:
             result["source"] = self.source
         if self.timestamp:
@@ -80,6 +135,9 @@ class Event:
     timestamp: datetime
     data: Dict[str, Any]
     proof: ProofLevel = ProofLevel.TOOL_VERIFIED
+    epistemic_class: EpistemicClass = (
+        EpistemicClass.TOOL_OBSERVED
+    )  # Events are observed
     source: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -88,6 +146,7 @@ class Event:
             "timestamp": self.timestamp.isoformat(),
             "data": self.data,
             "proof": self.proof.value,
+            "epistemic_class": self.epistemic_class.value,
             "source": self.source,
         }
 
@@ -99,17 +158,37 @@ class Evidence:
     claim: str
     verified: bool
     proof: ProofLevel
+    epistemic_class: Optional[EpistemicClass] = (
+        None  # Determined by verification_method
+    )
     artifact: Optional[str] = None  # File path, commit hash, etc.
     verification_method: Optional[str] = None
 
+    def __post_init__(self):
+        # Auto-set epistemic_class based on verification method if not provided
+        if self.epistemic_class is None and self.verification_method:
+            method_mapping = {
+                "ed25519_signature": EpistemicClass.CRYPTO_SIGNED,
+                "rfc3161_timestamp": EpistemicClass.CRYPTO_SIGNED,
+                "sha256_hash": EpistemicClass.ARTIFACT_HASH,
+                "manual_review": EpistemicClass.HUMAN_VERIFIED,
+                "test_suite": EpistemicClass.SYSTEM_VERIFIED,
+            }
+            self.epistemic_class = method_mapping.get(
+                self.verification_method, EpistemicClass.TOOL_OBSERVED
+            )
+
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        result = {
             "claim": self.claim,
             "verified": self.verified,
             "proof": self.proof.value,
             "artifact": self.artifact,
             "verification_method": self.verification_method,
         }
+        if self.epistemic_class:
+            result["epistemic_class"] = self.epistemic_class.value
+        return result
 
 
 class InterpretationStatus(str, Enum):
@@ -128,6 +207,8 @@ class Interpretation:
     summary: str
     claims: List[Claim]
     status: InterpretationStatus = InterpretationStatus.UNVERIFIED
+    # Interpretations are ALWAYS model claims - this is non-negotiable
+    epistemic_class: EpistemicClass = EpistemicClass.MODEL_CLAIM
     semantic_drift_detected: bool = False
     drift_description: Optional[str] = None
 
@@ -136,6 +217,7 @@ class Interpretation:
             "summary": self.summary,
             "claims": [c.to_dict() for c in self.claims],
             "status": self.status.value,
+            "epistemic_class": self.epistemic_class.value,
             "semantic_drift_detected": self.semantic_drift_detected,
             "drift_description": self.drift_description,
         }

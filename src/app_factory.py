@@ -173,21 +173,29 @@ async def lifespan(app: FastAPI):
         )
 
         if _enable_live_capture or _is_local_dev:
-            logger.info("Initializing live capture conversation monitor...")
-            from .live_capture.conversation_monitor import get_monitor
+            try:
+                from .live_capture.conversation_monitor import get_monitor
 
-            app.state.conversation_monitor = get_monitor(db_manager=db)
+                logger.info("Initializing live capture conversation monitor...")
+                app.state.conversation_monitor = get_monitor(db_manager=db)
 
-            # Start monitoring in background
-            import asyncio
+                # Start monitoring in background
+                import asyncio
 
-            app.state.monitor_task = asyncio.create_task(
-                app.state.conversation_monitor.start_monitoring()
-            )
+                app.state.monitor_task = asyncio.create_task(
+                    app.state.conversation_monitor.start_monitoring()
+                )
 
-            logger.info(
-                f"Live capture enabled with significance threshold: {app.state.conversation_monitor.significance_threshold}"
-            )
+                logger.info(
+                    f"Live capture enabled with significance threshold: {app.state.conversation_monitor.significance_threshold}"
+                )
+            except ImportError:
+                logger.warning(
+                    "Live capture conversation_monitor not available. "
+                    "This is expected when running from a fresh git clone."
+                )
+                app.state.conversation_monitor = None
+                app.state.monitor_task = None
         else:
             logger.info(
                 "Live capture DISABLED. Set UATP_ENABLE_LIVE_CAPTURE=true to enable."
@@ -1114,6 +1122,11 @@ def create_app() -> FastAPI:
         from .api.onboarding_fastapi_router import router as onboarding_router
 
         app.include_router(onboarding_router)
+
+        # Calibration router (Gemma/model calibration metrics)
+        from .api.calibration_router import router as calibration_router
+
+        app.include_router(calibration_router)
 
     # Setup routes
     setup_health_routes(app)
