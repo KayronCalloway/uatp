@@ -500,6 +500,33 @@ class RichCaptureEnhancer:
                 "explanation": "Direct assessment of message characteristics",
             }
 
+        # FULL CONTEXT PRESERVATION (Context Amnesia fix)
+        # Store the complete message history with full content
+        # This is the gold standard: never lose context that was shown to the LLM
+        full_messages_for_storage = []
+        for msg in session.messages:
+            full_messages_for_storage.append(
+                {
+                    "role": msg.role,
+                    "content": msg.content,  # FULL CONTENT - never truncate
+                    "timestamp": msg.timestamp.isoformat()
+                    if hasattr(msg, "timestamp")
+                    else None,
+                    "token_count": msg.token_count,
+                    "model_info": msg.model_info,
+                }
+            )
+
+        prompt_context = {
+            "full_messages": full_messages_for_storage,
+            "message_count": len(session.messages),
+            "has_system_context": any(m.role == "system" for m in session.messages),
+            "system_context_chars": sum(
+                len(m.content) for m in session.messages if m.role == "system"
+            ),
+            "total_context_chars": sum(len(m.content) for m in session.messages),
+        }
+
         # Create capsule with ENHANCED metadata
         capsule = create_rich_reasoning_capsule(
             capsule_id=f"caps_{datetime.now(timezone.utc).strftime('%Y_%m_%d_%H%M%S')}_{session.session_id[:8]}",
@@ -528,6 +555,8 @@ class RichCaptureEnhancer:
                 "significance_score": session.significance_score,
                 # Feedback signals - implicit feedback from conversation
                 "feedback_signals": session_signals.to_dict(),
+                # FULL CONTEXT PRESERVATION - complete message history
+                "prompt_context": prompt_context,
                 # NEW: Enhanced context
                 **enhanced_context.to_dict(),
             },

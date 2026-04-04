@@ -451,6 +451,7 @@ class BaseHook(ABC):
         - Critical path analysis
         - Court-admissible enrichment
         - Improvement recommendations
+        - FULL CONTEXT PRESERVATION (system prompts, conversation history)
 
         Args:
             user_input: User's message
@@ -474,17 +475,61 @@ class BaseHook(ABC):
                 "completion_tokens", len(assistant_response.split())
             )
 
-            # Create conversation messages
-            messages = [
-                ConversationMessage(
-                    role="user",
-                    content=user_input,
-                    timestamp=current_time,
-                    message_id=f"{self.session_id}_msg_{self._interaction_count}_user",
-                    session_id=self.session_id,
-                    token_count=user_tokens,
-                    model_info=None,
-                ),
+            # FULL CONTEXT PRESERVATION (Context Amnesia fix)
+            # Extract conversation_context and system_prompt from kwargs
+            conversation_context = platform_kwargs.get("conversation_context")
+            system_prompt = platform_kwargs.get("system_prompt")
+
+            # Build messages list - include full conversation history if available
+            messages = []
+
+            # Add system prompt as first message if present
+            if system_prompt:
+                messages.append(
+                    ConversationMessage(
+                        role="system",
+                        content=system_prompt,
+                        timestamp=current_time,
+                        message_id=f"{self.session_id}_msg_{self._interaction_count}_system",
+                        session_id=self.session_id,
+                        token_count=len(system_prompt.split()),
+                        model_info=None,
+                    )
+                )
+
+            # Add full conversation history if available
+            if conversation_context:
+                for i, msg in enumerate(conversation_context):
+                    role = msg.get("role", "user")
+                    content = msg.get("content", "")
+                    if role != "system":  # System already added above
+                        messages.append(
+                            ConversationMessage(
+                                role=role,
+                                content=content,
+                                timestamp=current_time,
+                                message_id=f"{self.session_id}_msg_{self._interaction_count}_ctx{i}",
+                                session_id=self.session_id,
+                                token_count=len(content.split()),
+                                model_info=model if role == "assistant" else None,
+                            )
+                        )
+            else:
+                # Fallback: just the current interaction
+                messages.append(
+                    ConversationMessage(
+                        role="user",
+                        content=user_input,
+                        timestamp=current_time,
+                        message_id=f"{self.session_id}_msg_{self._interaction_count}_user",
+                        session_id=self.session_id,
+                        token_count=user_tokens,
+                        model_info=None,
+                    )
+                )
+
+            # Always add the current assistant response
+            messages.append(
                 ConversationMessage(
                     role="assistant",
                     content=assistant_response,
@@ -493,8 +538,8 @@ class BaseHook(ABC):
                     session_id=self.session_id,
                     token_count=assistant_tokens,
                     model_info=model,
-                ),
-            ]
+                )
+            )
 
             # Extract topics from interaction
             topics = self._extract_topics_from_interaction(
@@ -506,6 +551,9 @@ class BaseHook(ABC):
                 user_input, assistant_response, metadata
             )
 
+            # Calculate total tokens including context
+            total_tokens = sum(m.token_count or 0 for m in messages)
+
             # Create conversation session
             session = ConversationSession(
                 session_id=self.session_id,
@@ -515,10 +563,30 @@ class BaseHook(ABC):
                 end_time=current_time,
                 messages=messages,
                 significance_score=significance_score,
-                total_tokens=user_tokens + assistant_tokens,
+                total_tokens=total_tokens,
                 topics=topics,
                 capsule_created=False,
             )
+
+            # FULL CONTEXT PRESERVATION: Build prompt_context for capsule payload
+            # This ensures we never lose the RAG/system context that was shown to the LLM
+            prompt_context = {
+                "has_system_prompt": system_prompt is not None,
+                "system_prompt_chars": len(system_prompt) if system_prompt else 0,
+                "has_conversation_history": conversation_context is not None,
+                "conversation_history_count": len(conversation_context)
+                if conversation_context
+                else 0,
+                "total_messages_captured": len(messages),
+                "total_context_chars": sum(len(m.content) for m in messages),
+            }
+
+            # Store prompt_context in metadata for capsule enrichment
+            metadata["prompt_context"] = prompt_context
+            if system_prompt:
+                metadata["system_prompt"] = system_prompt
+            if conversation_context:
+                metadata["conversation_context"] = conversation_context
 
             # Use RichCaptureEnhancer to create capsule with rich metadata
             if not _RICH_CAPTURE_AVAILABLE or RichCaptureEnhancer is None:

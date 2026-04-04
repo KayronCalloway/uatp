@@ -22,6 +22,7 @@ autoresearch/
 compliance/
 migrations/
 storage/
+knowledge/
 
 # Ollama/Gemma integrations (internal/experimental)
 src/integrations/ollama_*.py
