@@ -193,3 +193,5 @@ src/integrations/knowledge_layer.py
 src/integrations/fast_knowledge.py
 src/integrations/retrieval_backups/
 src/integrations/retrieval_tests.json
+scripts/analysis/*.json
+scripts/analysis/*.jsonl

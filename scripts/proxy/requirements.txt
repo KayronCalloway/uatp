@@ -1,0 +1,2 @@
+aiohttp>=3.9
+pynacl>=1.5  # optional — enables Ed25519 signing; falls back to hash-only without it

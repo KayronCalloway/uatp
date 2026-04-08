@@ -13,6 +13,7 @@ Signal Types:
 - Acceptance: Topic change, "thanks", "perfect" - Positive signal (task completed)
 - Abandonment: Abrupt topic switch, session end - Negative signal
 - Code execution: User runs suggested code - Positive signal
+- Soft rejection: User ignores assistant response entirely - Negative signal
 """
 
 import logging
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 class Signal:
     """Represents a detected signal from a message."""
 
-    signal_type: str  # correction|requery|refinement|acceptance|abandonment|neutral
+    signal_type: str  # correction|requery|refinement|acceptance|abandonment|soft_rejection|neutral
     confidence: float  # 0.0 to 1.0
     references_previous: bool  # Whether message references previous context
     sentiment_delta: float  # -1.0 to 1.0 change from previous
@@ -57,6 +58,7 @@ class SessionSignals:
     refinement_count: int = 0
     acceptance_count: int = 0
     abandonment_detected: bool = False
+    soft_rejection_count: int = 0
     total_signals: int = 0
     correction_rate: float = 0.0
     acceptance_rate: float = 0.0
@@ -71,6 +73,7 @@ class SessionSignals:
             "refinement_count": self.refinement_count,
             "acceptance_count": self.acceptance_count,
             "abandonment_detected": self.abandonment_detected,
+            "soft_rejection_count": self.soft_rejection_count,
             "correction_rate": round(self.correction_rate, 3),
             "acceptance_rate": round(self.acceptance_rate, 3),
             "net_sentiment": round(self.net_sentiment, 3),
@@ -292,7 +295,11 @@ class SignalDetector:
         self.similarity_threshold = similarity_threshold
 
     def detect_signal(
-        self, current_msg: str, previous_msgs: List[str] = None, role: str = "user"
+        self,
+        current_msg: str,
+        previous_msgs: List[str] = None,
+        role: str = "user",
+        previous_assistant_response: Optional[str] = None,
     ) -> Signal:
         """
         Detect the signal from a message.
@@ -437,6 +444,12 @@ class SignalDetector:
                     matched_phrases=["similar to previous query"],
                     similarity_score=similarity,
                 )
+        # Check for soft rejection (user ignores assistant response entirely)
+        soft_rejection = self._detect_soft_rejection(
+            msg_lower, previous_assistant_response
+        )
+        if soft_rejection:
+            return soft_rejection
 
         # Calculate general sentiment
         sentiment = self._calculate_sentiment(msg_lower)
@@ -448,6 +461,124 @@ class SignalDetector:
             references_previous=references_previous,
             sentiment_delta=sentiment,
             matched_phrases=matched_phrases,
+        )
+
+    def _detect_soft_rejection(
+        self, msg: str, previous_assistant_response: Optional[str]
+    ) -> Optional[Signal]:
+        """Detect when user ignores the assistant's response entirely."""
+        if not previous_assistant_response or len(previous_assistant_response) <= 200:
+            return None
+
+        # Must not contain acceptance phrases or patterns
+        acceptance_match, _ = self._check_phrases(msg, self.ACCEPTANCE_PHRASES)
+        if acceptance_match:
+            return None
+        if self._check_acceptance_patterns(msg):
+            return None
+
+        # Must not reference the assistant's response (0 shared content words)
+        stopwords = {
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "must",
+            "shall",
+            "can",
+            "need",
+            "to",
+            "of",
+            "in",
+            "for",
+            "on",
+            "with",
+            "at",
+            "by",
+            "from",
+            "as",
+            "i",
+            "me",
+            "my",
+            "we",
+            "our",
+            "you",
+            "your",
+            "it",
+            "its",
+            "they",
+            "them",
+            "their",
+            "this",
+            "that",
+            "these",
+            "those",
+            "and",
+            "but",
+            "or",
+            "so",
+            "if",
+            "then",
+            "than",
+            "when",
+            "what",
+            "which",
+            "who",
+            "how",
+            "why",
+            "where",
+            "not",
+            "no",
+            "yes",
+            "just",
+            "also",
+            "very",
+            "too",
+            "any",
+            "all",
+        }
+        msg_words = set(re.findall(r"\b\w{3,}\b", msg)) - stopwords
+        resp_words = (
+            set(re.findall(r"\b\w{3,}\b", previous_assistant_response.lower()))
+            - stopwords
+        )
+
+        if msg_words & resp_words:
+            return None
+
+        # Must look like a new directive/question (not a follow-up)
+        follow_up_patterns = [
+            r"^(also|additionally|and\b|furthermore|moreover)",
+            r"^(building on|following up|regarding|about that)",
+        ]
+        for pattern in follow_up_patterns:
+            if re.search(pattern, msg, re.IGNORECASE):
+                return None
+
+        return Signal(
+            signal_type="soft_rejection",
+            confidence=0.55,
+            references_previous=False,
+            sentiment_delta=-0.2,
+            matched_phrases=["no_reference_to_assistant_response"],
         )
 
     def _check_phrases(self, msg: str, phrases: List[str]) -> Tuple[bool, List[str]]:
@@ -849,6 +980,8 @@ class SignalDetector:
                 session.acceptance_count += 1
             elif signal.signal_type == "abandonment":
                 session.abandonment_detected = True
+            elif signal.signal_type == "soft_rejection":
+                session.soft_rejection_count += 1
 
         # Calculate rates
         total_user_msgs = len(signals)
@@ -872,6 +1005,7 @@ class SignalDetector:
             session.correction_count
             + session.requery_count
             + (1 if session.abandonment_detected else 0)
+            + session.soft_rejection_count
         )
 
         if positive_signals + negative_signals > 0:
@@ -890,10 +1024,15 @@ _detector = SignalDetector()
 
 
 def detect_signal(
-    current_msg: str, previous_msgs: List[str] = None, role: str = "user"
+    current_msg: str,
+    previous_msgs: List[str] = None,
+    role: str = "user",
+    previous_assistant_response: str = None,
 ) -> Signal:
     """Convenience function to detect signal using global detector."""
-    return _detector.detect_signal(current_msg, previous_msgs, role)
+    return _detector.detect_signal(
+        current_msg, previous_msgs, role, previous_assistant_response
+    )
 
 
 def aggregate_signals(signals: List[Signal]) -> SessionSignals:
