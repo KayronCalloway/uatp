@@ -613,6 +613,91 @@ class BaseHook(ABC):
             # Store the rich capsule data
             await self._store_rich_capsule(capsule_data)
 
+            # --- Inject enrichments that RichCaptureEnhancer doesn't produce ---
+
+            # Economics: token usage and cost data from platform_kwargs
+            usage_data = platform_kwargs.get("usage_info") or {}
+            if usage_data:
+                input_tok = usage_data.get("prompt_tokens", 0) or usage_data.get(
+                    "input_tokens", 0
+                )
+                output_tok = usage_data.get("completion_tokens", 0) or usage_data.get(
+                    "output_tokens", 0
+                )
+                cache_read = usage_data.get("cache_read_input_tokens", 0)
+                cache_write = usage_data.get("cache_creation_input_tokens", 0)
+                total_input = input_tok + cache_read
+                capsule_data["payload"]["economics"] = {
+                    "input_tokens": input_tok,
+                    "output_tokens": output_tok,
+                    "cache_read_tokens": cache_read,
+                    "cache_write_tokens": cache_write,
+                    "total_tokens": input_tok + output_tok + cache_read,
+                    "cache_hit_rate": round(cache_read / max(1, total_input), 4),
+                    "model": model,
+                    "billing_provider": metadata.get("platform", self.platform),
+                }
+
+            # Extended thinking: if the platform provides raw chain-of-thought
+            thinking = platform_kwargs.get("thinking") or platform_kwargs.get(
+                "reasoning"
+            )
+            if thinking:
+                capsule_data["payload"]["extended_thinking"] = {
+                    "turns": [
+                        {
+                            "thinking": thinking[:10000],
+                            "thinking_length": len(thinking),
+                            "response_length": len(assistant_response),
+                            "had_tool_calls": False,
+                        }
+                    ],
+                    "total_thinking_chars": len(thinking),
+                    "total_response_chars": len(assistant_response),
+                    "thinking_to_response_ratio": round(
+                        len(thinking) / max(1, len(assistant_response)), 2
+                    ),
+                    "turns_with_thinking": 1,
+                    "turns_total": 1,
+                }
+
+            # Tool call graph: if the platform provides structured tool calls
+            tool_calls = platform_kwargs.get("tool_calls")
+            if tool_calls and isinstance(tool_calls, list):
+                from collections import Counter
+
+                tool_counts = Counter(
+                    t.get("name") or t.get("tool") for t in tool_calls
+                )
+                capsule_data["payload"]["tool_call_graph"] = {
+                    "invocations": tool_calls,
+                    "tool_frequency": dict(tool_counts.most_common()),
+                    "total_tool_calls": len(tool_calls),
+                    "unique_tools": len(tool_counts),
+                }
+
+            # Ollama-specific: eval_count, eval_duration, total_duration
+            eval_count = metadata.get("eval_count") or platform_kwargs.get("eval_count")
+            eval_duration = metadata.get("eval_duration") or platform_kwargs.get(
+                "eval_duration"
+            )
+            total_duration = metadata.get("total_duration") or platform_kwargs.get(
+                "total_duration"
+            )
+            if eval_count or eval_duration:
+                econ = capsule_data["payload"].setdefault("economics", {})
+                if eval_count:
+                    econ["eval_tokens"] = eval_count
+                if eval_duration:
+                    econ["eval_duration_ns"] = eval_duration
+                    econ["tokens_per_second"] = (
+                        round((eval_count or 0) / (eval_duration / 1e9), 1)
+                        if eval_duration and eval_count
+                        else None
+                    )
+                if total_duration:
+                    econ["total_duration_ns"] = total_duration
+
             logger.info(f"Rich capsule created: {capsule_id}")
             logger.info(
                 f"   Confidence: {capsule_data['payload'].get('overall_confidence', 'N/A')}"

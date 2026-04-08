@@ -102,6 +102,8 @@ class SignalDetector:
         "that's not correct",
         "i said",
         "i meant",
+        "i asked",
+        "i was asking",
         "you misunderstood",
         "that doesn't work",
         "that didn't work",
@@ -109,6 +111,39 @@ class SignalDetector:
         "still broken",
         "nope",
         "wrong",
+        "not that",
+        "no i",
+        "thats not",
+        "that's not",
+        "fix that",
+        "fix this",
+        "fix it",
+        "change that",
+        "redo that",
+        "try again",
+        "do it again",
+        "not quite",
+        "almost but",
+        "close but",
+    ]
+
+    # Regex patterns for corrections that can't be caught by substring matching.
+    # These detect structural signals: leading negation, restating intent, etc.
+    CORRECTION_PATTERNS = [
+        # Starts with bare "n" or "no" as first word (shorthand negation)
+        r"^n\s",
+        r"^no\s",
+        r"^no$",
+        # "i asked about X" / "i said X" / "i meant X" pattern
+        r"^i\s+(asked|said|meant|was\s+asking|was\s+talking)\b",
+        # "its X" / "it's X" as a flat correction (supplying the right answer)
+        r"^it(?:'?s|s)\s+(?:a|an|the|not)\b",
+        # Starts with "not" as a correction
+        r"^not\s+(?:that|what|the|this)\b",
+        # "X, not Y" correction pattern
+        r"\bnot\s+(?:that|what|the)\b.*\bi\b",
+        # Very short message after context (< 6 words, contains a noun) — likely terse correction
+        # Handled separately in _detect_terse_correction
     ]
 
     # Acceptance phrases indicate the response was helpful
@@ -134,6 +169,28 @@ class SignalDetector:
         "solved",
         "got it",
         "makes sense",
+        "do it",
+        "go ahead",
+        "sounds good",
+        "lets go",
+        "let's go",
+        "go for it",
+        "ship it",
+        "lgtm",
+    ]
+
+    # Acceptance patterns that need word-boundary matching (short words that
+    # would false-positive as substrings — "yes" in "yesterday", etc.)
+    ACCEPTANCE_PATTERNS = [
+        r"^yes\b",
+        r"^yep\b",
+        r"^yeah\b",
+        r"^yea\b",
+        r"^sure\b",
+        r"^ok\b",
+        r"^okay\b",
+        r"^right\b",
+        r"^done\b",
     ]
 
     # Refinement phrases indicate the response was good but user wants more
@@ -261,7 +318,7 @@ class SignalDetector:
         msg_lower = current_msg.lower().strip()
         matched_phrases = []
 
-        # Check for correction
+        # Check for correction (phrases)
         correction_match, correction_phrases = self._check_phrases(
             msg_lower, self.CORRECTION_PHRASES
         )
@@ -273,6 +330,28 @@ class SignalDetector:
                 references_previous=True,
                 sentiment_delta=-0.5,
                 matched_phrases=correction_phrases,
+            )
+
+        # Check for correction (regex patterns)
+        pattern_match = self._check_correction_patterns(msg_lower)
+        if pattern_match:
+            return Signal(
+                signal_type="correction",
+                confidence=0.7,
+                references_previous=True,
+                sentiment_delta=-0.4,
+                matched_phrases=[pattern_match],
+            )
+
+        # Check for terse correction (very short message that restates/redirects)
+        terse = self._detect_terse_correction(msg_lower, previous_msgs or [])
+        if terse:
+            return Signal(
+                signal_type="correction",
+                confidence=0.6,
+                references_previous=True,
+                sentiment_delta=-0.3,
+                matched_phrases=[terse],
             )
 
         # Check for abandonment
@@ -289,7 +368,7 @@ class SignalDetector:
                 matched_phrases=abandonment_phrases,
             )
 
-        # Check for acceptance
+        # Check for acceptance (phrases)
         acceptance_match, acceptance_phrases = self._check_phrases(
             msg_lower, self.ACCEPTANCE_PHRASES
         )
@@ -301,6 +380,17 @@ class SignalDetector:
                 references_previous=True,
                 sentiment_delta=0.6,
                 matched_phrases=acceptance_phrases,
+            )
+
+        # Check for acceptance (regex patterns — short affirmative words)
+        acceptance_pattern = self._check_acceptance_patterns(msg_lower)
+        if acceptance_pattern:
+            return Signal(
+                signal_type="acceptance",
+                confidence=0.75,
+                references_previous=True,
+                sentiment_delta=0.5,
+                matched_phrases=[acceptance_pattern],
             )
 
         # Check for refinement
@@ -367,6 +457,197 @@ class SignalDetector:
             if phrase in msg:
                 matched.append(phrase)
         return len(matched) > 0, matched
+
+    def _check_correction_patterns(self, msg: str) -> Optional[str]:
+        """Check regex-based correction patterns. Returns matched pattern or None."""
+        for pattern in self.CORRECTION_PATTERNS:
+            if re.search(pattern, msg, re.IGNORECASE):
+                return f"pattern:{pattern}"
+        return None
+
+    def _check_acceptance_patterns(self, msg: str) -> Optional[str]:
+        """Check regex-based acceptance patterns. Returns matched pattern or None."""
+        for pattern in self.ACCEPTANCE_PATTERNS:
+            if re.search(pattern, msg, re.IGNORECASE):
+                return f"pattern:{pattern}"
+        return None
+
+    def _detect_terse_correction(
+        self, msg: str, previous_msgs: List[str]
+    ) -> Optional[str]:
+        """Detect terse corrections: very short messages that supply missing context.
+
+        When a user sends a short factual statement (< 8 words) right after the
+        assistant gave a long response, it's often a correction or clarification
+        rather than a new topic. Examples:
+            "its a file locally"
+            "the port is 3000"
+            "i mean the other one"
+            "python not javascript"
+        """
+        if not previous_msgs:
+            return None
+
+        words = msg.split()
+        word_count = len(words)
+
+        # Only applies to short messages (2-7 words)
+        if word_count < 2 or word_count > 7:
+            return None
+
+        # Must not match acceptance or refinement patterns (those take priority later)
+        acceptance_check, _ = self._check_phrases(msg, self.ACCEPTANCE_PHRASES)
+        if acceptance_check:
+            return None
+        refinement_check, _ = self._check_phrases(msg, self.REFINEMENT_PHRASES)
+        if refinement_check:
+            return None
+
+        # Check if the short message shares content words with the previous user
+        # message — if so, the user is restating/correcting, not starting fresh.
+        filler = {
+            "the",
+            "and",
+            "but",
+            "for",
+            "are",
+            "was",
+            "not",
+            "you",
+            "all",
+            "can",
+            "had",
+            "her",
+            "his",
+            "him",
+            "how",
+            "its",
+            "let",
+            "may",
+            "our",
+            "out",
+            "own",
+            "say",
+            "she",
+            "too",
+            "use",
+            "has",
+            "any",
+            "who",
+            "did",
+            "get",
+            "got",
+            "now",
+            "old",
+            "see",
+            "way",
+            "day",
+            "hot",
+            "oil",
+            "sit",
+            "top",
+            "ask",
+            "big",
+            "bit",
+            "end",
+            "far",
+            "few",
+            "put",
+            "run",
+            "set",
+            "try",
+            "why",
+            "off",
+            "yet",
+            "also",
+            "back",
+            "been",
+            "call",
+            "came",
+            "each",
+            "even",
+            "from",
+            "give",
+            "goes",
+            "gone",
+            "good",
+            "have",
+            "here",
+            "high",
+            "into",
+            "just",
+            "keep",
+            "know",
+            "last",
+            "long",
+            "look",
+            "made",
+            "make",
+            "many",
+            "more",
+            "most",
+            "much",
+            "must",
+            "name",
+            "need",
+            "only",
+            "over",
+            "part",
+            "said",
+            "same",
+            "show",
+            "some",
+            "such",
+            "take",
+            "tell",
+            "than",
+            "that",
+            "them",
+            "then",
+            "they",
+            "this",
+            "time",
+            "turn",
+            "upon",
+            "very",
+            "want",
+            "well",
+            "went",
+            "what",
+            "when",
+            "will",
+            "with",
+            "word",
+            "work",
+            "year",
+            "your",
+            "does",
+            "like",
+            "about",
+            "which",
+            "would",
+            "could",
+            "should",
+            "there",
+            "their",
+            "these",
+            "those",
+            "where",
+            "being",
+            "other",
+            "after",
+            "still",
+            "think",
+        }
+        last_user = previous_msgs[-1].lower() if previous_msgs else ""
+        msg_words = set(re.findall(r"\b\w{3,}\b", msg)) - filler
+        prev_words = set(re.findall(r"\b\w{3,}\b", last_user)) - filler
+
+        shared = msg_words & prev_words
+        if shared and len(shared) >= 1:
+            return f"terse_restatement:{','.join(sorted(shared))}"
+
+        return None
 
     def _calculate_sentiment(self, msg: str) -> float:
         """

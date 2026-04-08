@@ -184,3 +184,8 @@ infra/kubernetes/manifests/**/secrets.yaml
 __pycache__/
 test-results/
 .next/
+
+# Private / local-only
+.local/
+.rag_index_cache.json
+sdk/**/node_modules/
