@@ -19,6 +19,9 @@ archive/
 .claude/
 data/
 autoresearch/
+!scripts/autoresearch/
+scripts/autoresearch/*.json
+scripts/autoresearch/*.txt
 compliance/
 migrations/
 storage/
