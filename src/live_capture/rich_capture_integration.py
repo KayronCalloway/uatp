@@ -707,9 +707,43 @@ class RichCaptureEnhancer:
                 ],
                 "assessed_at": datetime.now(timezone.utc).isoformat(),
             }
+
+            # Override quality grade from actual feedback signals when available.
+            # The heuristic grade (step counts, confidence spread) is unreliable;
+            # real user feedback (correction_rate, inferred_reward) is ground truth.
+            if session_signals and session_signals.total_signals > 0:
+                ir = session_signals.inferred_reward
+                cr = session_signals.correction_rate
+                if ir >= 0.8 and cr == 0:
+                    feedback_grade = "A"
+                elif ir >= 0.6 and cr < 0.2:
+                    feedback_grade = "B"
+                elif ir >= 0.4:
+                    feedback_grade = "C"
+                elif ir >= 0.2:
+                    feedback_grade = "D"
+                else:
+                    feedback_grade = "F"
+                capsule["payload"]["quality_assessment"]["quality_grade"] = (
+                    feedback_grade
+                )
+                capsule["payload"]["quality_assessment"]["overall_quality"] = round(
+                    ir, 3
+                )
+                capsule["payload"]["quality_assessment"]["grade_source"] = (
+                    "feedback_signals"
+                )
+                logger.info(
+                    f" Quality grade overridden by feedback signals: "
+                    f"{quality_assessment.quality_grade} -> {feedback_grade} "
+                    f"(inferred_reward={ir:.2f}, correction_rate={cr:.2f})"
+                )
+            else:
+                capsule["payload"]["quality_assessment"]["grade_source"] = "heuristic"
+
             logger.info(
-                f" Quality assessment: Grade {quality_assessment.quality_grade} "
-                f"({quality_assessment.overall_quality:.2f})"
+                f" Quality assessment: Grade {capsule['payload']['quality_assessment']['quality_grade']} "
+                f"({capsule['payload']['quality_assessment']['overall_quality']:.3f})"
             )
         except Exception as e:
             logger.debug(f"Quality assessment skipped: {e}")
