@@ -189,3 +189,7 @@ test-results/
 .local/
 .rag_index_cache.json
 sdk/**/node_modules/
+src/integrations/knowledge_layer.py
+src/integrations/fast_knowledge.py
+src/integrations/retrieval_backups/
+src/integrations/retrieval_tests.json
