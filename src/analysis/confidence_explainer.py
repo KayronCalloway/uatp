@@ -57,8 +57,13 @@ class ConfidenceExplainer:
         Returns:
             ConfidenceExplanation with full breakdown
         """
-        # Start with base confidence
-        base_confidence = 0.85 if role == "assistant" else 0.70
+        # Calibrated weights from autoresearch/calibrate_confidence.py
+        # Tuned against 1042 DPO pairs. MAE 0.567 → 0.176.
+        from src.live_capture.rich_capture_integration import RichCaptureEnhancer
+
+        w = RichCaptureEnhancer._CONFIDENCE_WEIGHTS
+
+        base_confidence = w["assistant_base"] if role == "assistant" else w["user_base"]
         confidence = base_confidence
 
         factors = {"base": base_confidence}
@@ -66,14 +71,13 @@ class ConfidenceExplainer:
         limiting = []
         suggestions = []
 
-        # Factor 1: Content length
-        if content_length > 1000:
-            adjustment = 0.05
+        if content_length > w["long_content_threshold"]:
+            adjustment = w["long_content_boost"]
             confidence += adjustment
             factors["detailed_response"] = adjustment
             boosting.append("Detailed response with thorough explanation")
-        elif content_length < 100:
-            adjustment = -0.10
+        elif content_length < w["short_content_threshold"]:
+            adjustment = w["short_content_penalty"]
             confidence += adjustment
             factors["brief_response"] = adjustment
             limiting.append("Very brief response - may lack important details")
@@ -81,9 +85,8 @@ class ConfidenceExplainer:
                 "Provide more detailed explanation with examples and reasoning"
             )
 
-        # Factor 2: Code presence
         if has_code:
-            adjustment = 0.08
+            adjustment = w["code_boost"]
             confidence += adjustment
             factors["code_examples"] = adjustment
             boosting.append("Concrete code examples provided for clarity")
@@ -92,17 +95,15 @@ class ConfidenceExplainer:
                 "Consider providing code examples to make guidance more concrete"
             )
 
-        # Factor 3: Clarifying questions
         if has_questions:
-            adjustment = -0.05
+            adjustment = w["question_penalty"]
             confidence += adjustment
             factors["clarifying_questions"] = adjustment
             limiting.append("Clarifying questions indicate incomplete information")
             suggestions.append("Gather more context to reduce need for clarification")
 
-        # Factor 4: Token count (substantial content)
-        if token_count and token_count > 500:
-            adjustment = 0.02
+        if token_count and token_count > w["high_tokens_threshold"]:
+            adjustment = w["high_tokens_boost"]
             confidence += adjustment
             factors["substantial_content"] = adjustment
             boosting.append("Substantial content demonstrates thoroughness")

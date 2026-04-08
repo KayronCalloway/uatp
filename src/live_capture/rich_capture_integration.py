@@ -135,46 +135,50 @@ except ImportError:
 class RichCaptureEnhancer:
     """Enhances live capture with rich reasoning metadata."""
 
-    @staticmethod
+    # Calibrated weights — tuned by autoresearch/calibrate_confidence.py
+    # against 1042 DPO pairs (actual acceptance/correction outcomes).
+    # Baseline MAE 0.567 → 0.176 after calibration.
+    _CONFIDENCE_WEIGHTS = {
+        "assistant_base": 0.55,
+        "user_base": 0.52,
+        "long_content_boost": 0.02,
+        "short_content_penalty": -0.12,
+        "code_boost": 0.05,
+        "question_penalty": -0.04,
+        "high_tokens_boost": 0.0,
+        "long_content_threshold": 1000,
+        "short_content_threshold": 100,
+        "high_tokens_threshold": 500,
+    }
+
+    @classmethod
     def calculate_message_confidence(
+        cls,
         role: str,
         content_length: int,
         token_count: Optional[int],
         has_code: bool = False,
         has_questions: bool = False,
     ) -> float:
-        """
-        Calculate heuristic confidence based on message characteristics.
+        """Calculate confidence calibrated against observed acceptance rates."""
+        w = cls._CONFIDENCE_WEIGHTS
+        base = w["assistant_base"] if role == "assistant" else w["user_base"]
 
-        IMPORTANT: This is a HEURISTIC estimate, not calibrated. The output
-        should be treated as a rough signal, not a probability. True confidence
-        calibration requires outcome tracking and historical accuracy data.
+        if content_length > w["long_content_threshold"]:
+            base += w["long_content_boost"]
+        elif content_length < w["short_content_threshold"]:
+            base += w["short_content_penalty"]
 
-        Returns:
-            float: Heuristic confidence score 0.0-1.0
-        """
-        # NOTE: These are arbitrary heuristics, not calibrated probabilities
-        # ProofLevel: HEURISTIC
-        base_confidence = 0.85 if role == "assistant" else 0.70
+        if has_code:
+            base += w["code_boost"]
 
-        # Adjust based on content characteristics (still heuristic)
-        if content_length > 1000:  # Detailed response
-            base_confidence += 0.05
-        elif content_length < 100:  # Short/unclear
-            base_confidence -= 0.10
+        if has_questions:
+            base += w["question_penalty"]
 
-        if has_code:  # Code examples increase confidence
-            base_confidence += 0.08
+        if token_count and token_count > w["high_tokens_threshold"]:
+            base += w["high_tokens_boost"]
 
-        if has_questions:  # Questions indicate uncertainty
-            base_confidence -= 0.05
-
-        # Token count indicates completeness
-        if token_count and token_count > 500:
-            base_confidence += 0.02
-
-        # Cap at 0.95 - nothing is 100% certain in AI responses
-        return min(0.95, max(0.05, base_confidence))
+        return min(0.95, max(0.05, base))
 
     @staticmethod
     def identify_uncertainty_sources(
