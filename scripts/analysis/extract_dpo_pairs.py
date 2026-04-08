@@ -1,226 +1,255 @@
 #!/usr/bin/env python3
 """
-Extract DPO (Direct Preference Optimization) training pairs from UATP capsules.
+Extract DPO preference pairs from UATP capsules.
 
-Walks reasoning_steps in capsules, detects implicit user feedback signals on
-assistant responses, and labels each as 'chosen' or 'rejected' for DPO training.
+Two extraction modes:
+1. Labeled singles: assistant response + next user signal (chosen/rejected)
+2. Correction chains: prompt → rejected response → correction → chosen response
+   These are true preference pairs (same prompt, two responses, clear preference).
 
-Output: scripts/analysis/dpo_pairs.jsonl + summary stats to stdout.
+Output: JSONL compatible with TRL/Axolotl DPO trainers.
 """
 
 import importlib.util
 import json
-import os
-import re
 import sqlite3
 import sys
-from collections import defaultdict
 from pathlib import Path
 
-# --- Paths ---
-SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parent.parent
-DB_PATH = PROJECT_ROOT / "uatp_dev.db"
-OUTPUT_PATH = SCRIPT_DIR / "dpo_pairs.jsonl"
+project_root = Path(__file__).parent.parent.parent
+DB_PATH = project_root / "uatp_dev.db"
+OUTPUT_PATH = Path(__file__).parent / "dpo_pairs.jsonl"
+
+# Import signal detector without heavy __init__.py
+spec = importlib.util.spec_from_file_location(
+    "signal_detector", project_root / "src" / "live_capture" / "signal_detector.py"
+)
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+SignalDetector = mod.SignalDetector
+
+CHOSEN_SIGNALS = {"acceptance", "refinement", "code_execution"}
+REJECTED_SIGNALS = {"correction", "requery", "abandonment", "soft_rejection"}
 
 
-# --- Import SignalDetector without heavy __init__.py chain ---
-def _load_signal_detector():
-    sd_path = PROJECT_ROOT / "src" / "live_capture" / "signal_detector.py"
-    spec = importlib.util.spec_from_file_location("signal_detector", str(sd_path))
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod.SignalDetector
+def get_step_text(step):
+    return (step.get("reasoning") or step.get("content") or "").strip()
 
 
-SignalDetector = _load_signal_detector()
+def get_step_signal(step):
+    sig = step.get("signal_type")
+    if sig and sig != "neutral":
+        return sig
+    m = step.get("measurements") or {}
+    sig = m.get("signal_type")
+    if sig and sig != "neutral":
+        return sig
+    return None
 
-# --- Signal classification ---
-POSITIVE_SIGNALS = {"acceptance", "refinement", "code_execution"}
-NEGATIVE_SIGNALS = {"correction", "requery", "abandonment", "soft_rejection"}
-# 'neutral' is ambiguous — skip
 
+def extract_thinking(text):
+    """Split [THINKING]...[/THINKING] from content."""
+    import re
 
-def extract_thinking(text: str) -> tuple:
-    """Extract [THINKING]...[/THINKING] block from response text.
-    Returns (thinking_block, cleaned_text)."""
-    match = re.search(r"\[THINKING\](.*?)\[/THINKING\]", text, re.DOTALL)
+    match = re.search(r"\[THINKING\]\n?(.*?)\n?\[/THINKING\]", text, re.DOTALL)
     if match:
         thinking = match.group(1).strip()
-        cleaned = text[: match.start()] + text[match.end() :]
-        return thinking, cleaned.strip()
+        clean = re.sub(
+            r"\[THINKING\].*?\[/THINKING\]\s*", "", text, flags=re.DOTALL
+        ).strip()
+        return thinking, clean
+    # Also check for separate thinking field
     return None, text
 
 
-def get_step_text(step: dict) -> str:
-    """Get the text content from a reasoning step."""
-    return step.get("reasoning") or step.get("content") or ""
+def extract_model(payload):
+    return (
+        payload.get("model_used")
+        or payload.get("model")
+        or payload.get("session_metadata", {}).get("hermes_model")
+        or "unknown"
+    )
 
 
-def get_model(capsule_row: dict) -> str:
-    """Best-effort model extraction from capsule data."""
-    payload = capsule_row.get("payload", {})
-    meta = payload.get("session_metadata", {})
-    # Try several locations
-    for candidate in [
-        meta.get("model"),
-        payload.get("model"),
-        payload.get("model_id"),
-        meta.get("platform"),
-        capsule_row.get("capsule_type"),
-    ]:
-        if candidate:
-            return candidate
-    return "unknown"
-
-
-def query_capsules(db_path: str) -> list:
-    """Query capsules with >5 reasoning steps of target types."""
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    cur = conn.execute("""
-        SELECT capsule_id, capsule_type, payload
-        FROM capsules
-        WHERE capsule_type IN ('reasoning_trace', 'hermes-capture', 'claude-code-capture')
-          AND json_array_length(json_extract(payload, '$.reasoning_steps')) > 5
-    """)
-    rows = []
-    for row in cur:
-        rows.append(
-            {
-                "capsule_id": row["capsule_id"],
-                "capsule_type": row["capsule_type"],
-                "payload": json.loads(row["payload"])
-                if isinstance(row["payload"], str)
-                else row["payload"],
-            }
-        )
+def run():
+    conn = sqlite3.connect(str(DB_PATH))
+    rows = conn.execute("""
+        SELECT capsule_id, payload FROM capsules
+        WHERE json_array_length(json_extract(payload, '$.reasoning_steps')) > 5
+        AND capsule_type IN ('reasoning_trace', 'hermes-capture', 'claude-code-capture')
+    """).fetchall()
     conn.close()
-    return rows
-
-
-def extract_pairs_from_capsule(capsule: dict, detector: SignalDetector) -> list:
-    """Walk reasoning steps and extract labeled DPO pairs."""
-    steps = capsule["payload"].get("reasoning_steps", [])
-    model = get_model(capsule)
-    capsule_id = capsule["capsule_id"]
-    pairs = []
-
-    for i, step in enumerate(steps):
-        role = step.get("role", "")
-        if role != "assistant":
-            continue
-
-        # Find the user prompt BEFORE this assistant response
-        prompt_text = None
-        for j in range(i - 1, -1, -1):
-            if steps[j].get("role") == "user":
-                prompt_text = get_step_text(steps[j])
-                break
-        if not prompt_text:
-            continue
-
-        # Find the NEXT user message after this assistant response
-        next_user_msg = None
-        for j in range(i + 1, len(steps)):
-            if steps[j].get("role") == "user":
-                next_user_msg = get_step_text(steps[j])
-                break
-        if not next_user_msg:
-            continue  # no follow-up to judge
-
-        # Detect signal from the next user message
-        signal = detector.detect_signal(next_user_msg, [prompt_text])
-
-        signal_type = signal.signal_type
-        # Also check pre-computed signal in step measurements if available
-        if signal_type == "neutral":
-            meas = steps[min(i + 1, len(steps) - 1)].get("measurements", {})
-            pre_signal = meas.get("signal_type", "neutral")
-            if pre_signal in POSITIVE_SIGNALS or pre_signal in NEGATIVE_SIGNALS:
-                signal_type = pre_signal
-
-        # Classify
-        if signal_type in POSITIVE_SIGNALS:
-            label = "chosen"
-        elif signal_type in NEGATIVE_SIGNALS:
-            label = "rejected"
-        else:
-            continue  # ambiguous, skip
-
-        response_text = get_step_text(step)
-        thinking, cleaned_response = extract_thinking(response_text)
-
-        pairs.append(
-            {
-                "prompt": prompt_text,
-                "response": cleaned_response,
-                "label": label,
-                "thinking": thinking,
-                "signal_type": signal_type,
-                "signal_confidence": round(signal.confidence, 3),
-                "model": model,
-                "capsule_id": capsule_id,
-            }
-        )
-
-    return pairs
-
-
-def main():
-    if not DB_PATH.exists():
-        print(f"ERROR: Database not found at {DB_PATH}", file=sys.stderr)
-        sys.exit(1)
-
-    print(f"[*] Querying capsules from {DB_PATH} ...")
-    capsules = query_capsules(str(DB_PATH))
-    print(f"[*] Found {len(capsules)} capsules with >5 reasoning steps")
 
     detector = SignalDetector()
-    all_pairs = []
+    labeled_pairs = []
+    chain_pairs = []
 
-    for capsule in capsules:
-        pairs = extract_pairs_from_capsule(capsule, detector)
-        all_pairs.extend(pairs)
+    for capsule_id, payload_str in rows:
+        p = json.loads(payload_str)
+        steps = p.get("reasoning_steps", [])
+        model = extract_model(p)
 
-    # Write JSONL
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(OUTPUT_PATH, "w") as f:
-        for pair in all_pairs:
-            f.write(json.dumps(pair, ensure_ascii=False) + "\n")
+        # --- Mode 1: Labeled singles ---
+        prev_user_msgs = []
+        for i in range(len(steps)):
+            if steps[i].get("role") != "user":
+                continue
+            user_text = get_step_text(steps[i])
+            if not user_text:
+                continue
 
-    print(f"[*] Wrote {len(all_pairs)} DPO pairs to {OUTPUT_PATH}")
+            # Find preceding assistant response
+            asst_idx = None
+            for x in range(i - 1, max(i - 5, -1), -1):
+                if steps[x].get("role") == "assistant":
+                    asst_idx = x
+                    break
+            if asst_idx is None:
+                prev_user_msgs.append(user_text)
+                continue
 
-    # --- Stats ---
-    chosen = [p for p in all_pairs if p["label"] == "chosen"]
-    rejected = [p for p in all_pairs if p["label"] == "rejected"]
-    by_model = defaultdict(lambda: {"chosen": 0, "rejected": 0})
-    by_signal = defaultdict(int)
+            asst_text = get_step_text(steps[asst_idx])
+            if not asst_text:
+                prev_user_msgs.append(user_text)
+                continue
 
-    for p in all_pairs:
-        by_model[p["model"]][p["label"]] += 1
-        by_signal[p["signal_type"]] += 1
+            # Get signal from step or run detector
+            sig = get_step_signal(steps[i])
+            if not sig:
+                detected = detector.detect_signal(user_text, prev_user_msgs, "user")
+                sig = (
+                    detected.signal_type if detected.signal_type != "neutral" else None
+                )
 
-    print("\n=== DPO Extraction Stats ===")
-    print(f"  Total pairs:    {len(all_pairs)}")
-    print(f"  Chosen:         {len(chosen)}")
-    print(f"  Rejected:       {len(rejected)}")
-    print(f"  Capsules used:  {len(capsules)}")
+            if sig and sig in CHOSEN_SIGNALS | REJECTED_SIGNALS:
+                # Find the prompt that triggered this response
+                prompt_idx = None
+                for x in range(asst_idx - 1, max(asst_idx - 5, -1), -1):
+                    if steps[x].get("role") == "user":
+                        prompt_idx = x
+                        break
 
-    if by_signal:
-        print("\n  By signal type:")
-        for sig, count in sorted(by_signal.items(), key=lambda x: -x[1]):
-            print(f"    {sig:20s} {count}")
+                prompt_text = (
+                    get_step_text(steps[prompt_idx]) if prompt_idx is not None else ""
+                )
+                thinking, clean_response = extract_thinking(asst_text)
 
-    if by_model:
-        print("\n  By model:")
-        for model, counts in sorted(by_model.items()):
-            print(
-                f"    {model:30s}  chosen={counts['chosen']}  rejected={counts['rejected']}"
+                labeled_pairs.append(
+                    {
+                        "prompt": prompt_text,
+                        "response": clean_response,
+                        "thinking": thinking,
+                        "label": "chosen" if sig in CHOSEN_SIGNALS else "rejected",
+                        "signal_type": sig,
+                        "model": model,
+                        "capsule_id": capsule_id,
+                        "pair_type": "labeled_single",
+                    }
+                )
+
+            prev_user_msgs.append(user_text)
+
+        # --- Mode 2: Correction chains ---
+        # Pattern: user[i] → asst[j](rejected) → user[k](correction) → asst[m](chosen)
+        for i in range(len(steps)):
+            if steps[i].get("role") != "user":
+                continue
+            prompt_text = get_step_text(steps[i])
+            if not prompt_text:
+                continue
+
+            # Find next assistant
+            j = None
+            for x in range(i + 1, min(i + 5, len(steps))):
+                if steps[x].get("role") == "assistant":
+                    j = x
+                    break
+            if j is None:
+                continue
+
+            # Find next user (correction?)
+            k = None
+            for x in range(j + 1, min(j + 5, len(steps))):
+                if steps[x].get("role") == "user":
+                    k = x
+                    break
+            if k is None:
+                continue
+
+            correction_text = get_step_text(steps[k])
+            sig = get_step_signal(steps[k])
+            if sig not in ("correction", "requery"):
+                continue
+
+            # Find next assistant after correction
+            m = None
+            for x in range(k + 1, min(k + 5, len(steps))):
+                if steps[x].get("role") == "assistant":
+                    m = x
+                    break
+            if m is None:
+                continue
+
+            rejected_text = get_step_text(steps[j])
+            chosen_text = get_step_text(steps[m])
+            if not rejected_text or not chosen_text:
+                continue
+
+            rej_thinking, rej_clean = extract_thinking(rejected_text)
+            cho_thinking, cho_clean = extract_thinking(chosen_text)
+
+            # Combined prompt = original prompt + correction context
+            combined_prompt = prompt_text
+            if correction_text:
+                combined_prompt = (
+                    f"{prompt_text}\n\n[User correction: {correction_text}]"
+                )
+
+            chain_pairs.append(
+                {
+                    "prompt": prompt_text,
+                    "chosen": cho_clean,
+                    "rejected": rej_clean,
+                    "chosen_thinking": cho_thinking,
+                    "rejected_thinking": rej_thinking,
+                    "correction": correction_text,
+                    "signal_type": sig,
+                    "model": model,
+                    "capsule_id": capsule_id,
+                    "pair_type": "correction_chain",
+                }
             )
 
-    print()
+    # Write output
+    with open(OUTPUT_PATH, "w") as f:
+        for pair in chain_pairs:
+            f.write(json.dumps(pair) + "\n")
+        for pair in labeled_pairs:
+            f.write(json.dumps(pair) + "\n")
+
+    # Stats
+    from collections import Counter
+
+    chain_models = Counter(p["model"] for p in chain_pairs)
+    label_models = Counter(p["model"] for p in labeled_pairs)
+    label_signals = Counter(p["signal_type"] for p in labeled_pairs)
+    chosen_count = sum(1 for p in labeled_pairs if p["label"] == "chosen")
+    rejected_count = sum(1 for p in labeled_pairs if p["label"] == "rejected")
+
+    print(f"Written to {OUTPUT_PATH}")
+    print(f"\n  Correction chains: {len(chain_pairs)} (true preference pairs)")
+    print(
+        f"  Labeled singles:   {len(labeled_pairs)} ({chosen_count} chosen, {rejected_count} rejected)"
+    )
+    print(f"  Total pairs:       {len(chain_pairs) + len(labeled_pairs)}")
+    print(f"  Capsules used:     {len(rows)}")
+    print("\n  Chain pairs by model:")
+    for m, c in chain_models.most_common():
+        print(f"    {m:<35} {c}")
+    print("\n  Labeled singles by signal:")
+    for s, c in label_signals.most_common():
+        print(f"    {s:<25} {c}")
 
 
 if __name__ == "__main__":
-    main()
+    run()
