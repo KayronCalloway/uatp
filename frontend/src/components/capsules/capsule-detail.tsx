@@ -46,6 +46,9 @@ import { FeedbackSignalsCard } from '@/components/capsules/FeedbackSignalsCard';
 import { SelfInspectionCard } from '@/components/capsules/SelfInspectionCard';
 import { ComplianceStatusCard } from '@/components/capsules/ComplianceStatusCard';
 import { ProofLevelBadge } from '@/components/capsules/ProofLevelBadge';
+import { ExtendedThinkingCard } from '@/components/capsules/ExtendedThinkingCard';
+import { ToolCallGraphCard } from '@/components/capsules/ToolCallGraphCard';
+import { EconomicsCard } from '@/components/capsules/EconomicsCard';
 
 interface CapsuleDetailProps {
   capsuleId: string;
@@ -563,6 +566,21 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
       {/* Feedback Signals - Implicit user feedback from conversation */}
       {capsule.payload?.session_metadata?.feedback_signals && (
         <FeedbackSignalsCard feedbackSignals={capsule.payload.session_metadata.feedback_signals} />
+      )}
+
+      {/* Extended Thinking - Chain of thought analysis */}
+      {capsule.payload?.extended_thinking && (
+        <ExtendedThinkingCard thinking={capsule.payload.extended_thinking} />
+      )}
+
+      {/* Tool Call Graph - Tool usage patterns */}
+      {capsule.payload?.tool_call_graph && (
+        <ToolCallGraphCard toolCallGraph={capsule.payload.tool_call_graph} />
+      )}
+
+      {/* Economics - Token usage, costs, performance */}
+      {capsule.payload?.economics && (
+        <EconomicsCard economics={capsule.payload.economics} />
       )}
 
       {/* Verification Status */}
