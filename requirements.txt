@@ -98,7 +98,7 @@ pyopenssl>=26.0.0  # Supports cryptography 46+
 numpy==2.2.6
 
 # Integrations
-openai==1.58.1
+openai==2.31.0
 stripe==5.5.0
 
 # Graph processing
