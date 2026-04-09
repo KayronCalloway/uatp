@@ -32,10 +32,10 @@ This directory contains production-ready Kubernetes manifests for deploying the 
 docker build -f Dockerfile.production -t uatp-capsule-engine:latest .
 
 # Tag for your registry
-docker tag uatp-capsule-engine:latest your-registry.com/uatp-capsule-engine:v1.0.1
+docker tag uatp-capsule-engine:latest your-registry.com/uatp-capsule-engine:v1.1.0
 
 # Push to registry
-docker push your-registry.com/uatp-capsule-engine:v1.0.1
+docker push your-registry.com/uatp-capsule-engine:v1.1.0
 ```
 
 ### 2. Configure Secrets
@@ -321,14 +321,14 @@ kubectl logs --previous <pod-name> -n uatp-production
 
 ```bash
 # 1. Build new image
-docker build -f Dockerfile.production -t uatp:v1.0.1 .
+docker build -f Dockerfile.production -t uatp:v1.1.0 .
 
 # 2. Push to registry
-docker push your-registry.com/uatp:v1.0.1
+docker push your-registry.com/uatp:v1.1.0
 
 # 3. Update deployment
 kubectl set image deployment/uatp-api \
-  uatp-api=your-registry.com/uatp:v1.0.1 \
+  uatp-api=your-registry.com/uatp:v1.1.0 \
   -n uatp-production
 
 # 4. Monitor rollout

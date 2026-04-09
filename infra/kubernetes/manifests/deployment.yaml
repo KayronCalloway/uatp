@@ -227,7 +227,7 @@ spec:
     spec:
       containers:
       - name: uatp-api
-        image: uatp-capsule-engine:v1.0.1
+        image: uatp-capsule-engine:v1.1.0
         ports:
         - containerPort: 8000
           name: http

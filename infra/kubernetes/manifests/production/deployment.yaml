@@ -5,7 +5,7 @@ metadata:
   namespace: uatp-production
   labels:
     app: uatp-api
-    version: v1.0.1
+    version: v1.1.0
 spec:
   replicas: 3  # Start with 3 replicas for HA
   strategy:
@@ -20,7 +20,7 @@ spec:
     metadata:
       labels:
         app: uatp-api
-        version: v1.0.1
+        version: v1.1.0
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"

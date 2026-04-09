@@ -807,7 +807,7 @@ def setup_api_routes(app: FastAPI, rate_config: RateLimitConfig):
         """Root endpoint"""
         return {
             "message": "UATP - Unified Agent Trust Protocol",
-            "version": "0.3.0",
+            "version": "1.1.0",
             "environment": os.getenv("ENVIRONMENT", "development"),
         }
 
@@ -968,7 +968,7 @@ def create_app() -> FastAPI:
 
         All API endpoints require proper authentication. See the `/auth` endpoints for details.
         """,
-        version="0.3.0",
+        version="1.1.0",
         lifespan=lifespan,
         docs_url="/docs" if os.getenv("ENVIRONMENT") != "production" else None,
         redoc_url="/redoc" if os.getenv("ENVIRONMENT") != "production" else None,
