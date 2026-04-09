@@ -22,7 +22,7 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-export type ViewType = 'home' | 'capsules' | 'system';
+export type ViewType = 'home' | 'capsules' | 'models' | 'system';
 
 interface NavigationItem {
   id: ViewType;
@@ -43,6 +43,12 @@ const navigationItems: NavigationItem[] = [
     label: 'Capsules',
     icon: Database,
     description: 'Browse and verify transaction capsules'
+  },
+  {
+    id: 'models',
+    label: 'Models',
+    icon: BarChart3,
+    description: 'Cross-model comparison and agent analytics'
   },
   {
     id: 'system',

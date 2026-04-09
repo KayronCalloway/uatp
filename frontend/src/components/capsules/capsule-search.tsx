@@ -20,7 +20,11 @@ import {
   Target,
   Layers,
   Loader2,
-  Database
+  Database,
+  Brain,
+  Wrench,
+  Coins,
+  Cpu,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -95,6 +99,30 @@ const DEFAULT_PRESETS: SearchPreset[] = [
     icon: 'check',
     params: { outcome_status: 'success' },
     category: 'risk'
+  },
+  {
+    id: 'has-thinking',
+    name: 'With Thinking',
+    description: 'Has extended thinking data',
+    icon: 'brain',
+    params: { has_extended_thinking: true },
+    category: 'enrichment'
+  },
+  {
+    id: 'has-tools',
+    name: 'With Tools',
+    description: 'Has tool call graph',
+    icon: 'wrench',
+    params: { has_tool_calls: true },
+    category: 'enrichment'
+  },
+  {
+    id: 'has-economics',
+    name: 'With Economics',
+    description: 'Has token/cost data',
+    icon: 'coins',
+    params: { has_economics: true },
+    category: 'enrichment'
   }
 ];
 
@@ -118,6 +146,9 @@ const getPresetIcon = (iconName?: string) => {
     case 'clock': return Clock;
     case 'check': return CheckCircle;
     case 'git-branch': return GitBranch;
+    case 'brain': return Brain;
+    case 'wrench': return Wrench;
+    case 'coins': return Coins;
     default: return Zap;
   }
 };
@@ -158,10 +189,14 @@ export function CapsuleSearch({
     const agents: Record<string, number> = {};
     const outcomes: Record<string, number> = {};
 
+    const models: Record<string, number> = {};
     let verifiedCount = 0;
     let trustedTimestampCount = 0;
     let withReasoningCount = 0;
     let withOutcomeCount = 0;
+    let withThinkingCount = 0;
+    let withToolsCount = 0;
+    let withEconomicsCount = 0;
 
     capsules.forEach(capsule => {
       // Types
@@ -189,6 +224,15 @@ export function CapsuleSearch({
       // Content
       if (capsule.payload?.reasoning_chain?.length) withReasoningCount++;
       if (capsule.payload?.outcome) withOutcomeCount++;
+
+      // Enrichment
+      if (capsule.payload?.extended_thinking) withThinkingCount++;
+      if (capsule.payload?.tool_call_graph) withToolsCount++;
+      if (capsule.payload?.economics) {
+        withEconomicsCount++;
+        const model = capsule.payload.economics.model;
+        if (model) models[model] = (models[model] || 0) + 1;
+      }
     });
 
     return {
@@ -200,6 +244,10 @@ export function CapsuleSearch({
       trustedTimestampCount,
       withReasoningCount,
       withOutcomeCount,
+      withThinkingCount,
+      withToolsCount,
+      withEconomicsCount,
+      models,
       total: capsules.length
     };
   }, [capsules]);
@@ -343,7 +391,7 @@ export function CapsuleSearch({
           {/* Quick Presets */}
           {showPresets && !compact && (
             <div className="flex flex-wrap gap-2">
-              {DEFAULT_PRESETS.slice(0, 6).map(preset => {
+              {DEFAULT_PRESETS.slice(0, 9).map(preset => {
                 const Icon = getPresetIcon(preset.icon);
                 const isActive = activePresets.includes(preset.id);
                 return (
@@ -635,6 +683,65 @@ export function CapsuleSearch({
                         className="rounded"
                       />
                       <span>Has Outcome ({facets.withOutcomeCount})</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Model Filter */}
+                {Object.keys(facets.models).length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2 flex items-center gap-1">
+                      <Cpu className="h-4 w-4" />
+                      Model
+                    </label>
+                    <select
+                      value={searchParams.model || ''}
+                      onChange={(e) => setFilter('model', e.target.value || undefined)}
+                      className="w-full p-2 border rounded-md text-sm"
+                    >
+                      <option value="">All Models</option>
+                      {Object.entries(facets.models).map(([model, count]) => (
+                        <option key={model} value={model}>
+                          {model} ({count})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Enrichment Filters */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 flex items-center gap-1">
+                    <Brain className="h-4 w-4" />
+                    Enrichment
+                  </label>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={searchParams.has_extended_thinking || false}
+                        onChange={(e) => setFilter('has_extended_thinking', e.target.checked || undefined)}
+                        className="rounded"
+                      />
+                      <span>Extended Thinking ({facets.withThinkingCount})</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={searchParams.has_tool_calls || false}
+                        onChange={(e) => setFilter('has_tool_calls', e.target.checked || undefined)}
+                        className="rounded"
+                      />
+                      <span>Tool Calls ({facets.withToolsCount})</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={searchParams.has_economics || false}
+                        onChange={(e) => setFilter('has_economics', e.target.checked || undefined)}
+                        className="rounded"
+                      />
+                      <span>Economics ({facets.withEconomicsCount})</span>
                     </label>
                   </div>
                 </div>

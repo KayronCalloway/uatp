@@ -20,7 +20,11 @@ import {
   AlertTriangle,
   Lock,
   MessageSquare,
-  Bot
+  Bot,
+  Cpu,
+  Brain,
+  Wrench,
+  Coins,
 } from 'lucide-react';
 import { isEncrypted } from '@/lib/capsule-encryption';
 import { formatDate, truncateText, getCapsuleTypeColor } from '@/lib/utils';
@@ -199,6 +203,24 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
 
       if (searchParams.has_plain_language === true) {
         if (!capsule.payload?.plain_language_summary) return false;
+      }
+
+      // Enrichment filters
+      if (searchParams.model) {
+        const capsuleModel = capsule.payload?.economics?.model;
+        if (capsuleModel !== searchParams.model) return false;
+      }
+
+      if (searchParams.has_extended_thinking === true) {
+        if (!capsule.payload?.extended_thinking) return false;
+      }
+
+      if (searchParams.has_tool_calls === true) {
+        if (!capsule.payload?.tool_call_graph) return false;
+      }
+
+      if (searchParams.has_economics === true) {
+        if (!capsule.payload?.economics) return false;
       }
 
       // Risk level filter
@@ -402,6 +424,14 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
                 const plainSummary = capsule.payload?.plain_language_summary?.decision;
                 const capsuleIsEncrypted = isEncrypted(capsule);
 
+                // Enrichment data
+                const modelName = capsule.payload?.economics?.model;
+                const feedbackSignals = capsule.payload?.session_metadata?.feedback_signals;
+                const economics = capsule.payload?.economics;
+                const hasThinking = !!capsule.payload?.extended_thinking;
+                const hasTools = !!capsule.payload?.tool_call_graph;
+                const toolCount = capsule.payload?.tool_call_graph?.total_tool_calls;
+
                 // Conversation stats
                 const reasoningSteps = capsule.payload?.reasoning_steps || [];
                 const userMessages = reasoningSteps.filter((s: any) => s.role === 'user');
@@ -492,6 +522,14 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
                           <p className="text-sm text-gray-900 mb-2 line-clamp-2">
                             {truncateText(plainSummary, 150)}
                           </p>
+                        ) : capsule.payload?.prompt ? (
+                          <p className="text-sm text-gray-600 mb-2 line-clamp-1">
+                            {truncateText(capsule.payload.prompt, 100)}
+                          </p>
+                        ) : capsule.content ? (
+                          <p className="text-sm text-gray-600 mb-2 line-clamp-1">
+                            {truncateText(capsule.content, 100)}
+                          </p>
                         ) : (
                           <p className="text-sm text-gray-600 mb-2 italic">
                             {capsule.capsule_type} capsule
@@ -500,14 +538,54 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
 
                         {/* Meta row */}
                         <div className="flex items-center flex-wrap gap-3 text-xs text-gray-500">
+                          {modelName && (
+                            <div className="flex items-center gap-1">
+                              <Cpu className="h-3 w-3 text-blue-500" />
+                              <span className="font-mono text-blue-600">{modelName.replace(/^claude-/, 'c-').replace(/-2025\d+$/, '')}</span>
+                            </div>
+                          )}
                           <div className="flex items-center gap-1">
                             <User className="h-3 w-3" />
-                            <span>{truncateText(capsule.verification?.signer || 'unknown', 20)}</span>
+                            <span>{truncateText(capsule.verification?.signer || capsule.agent_id || 'unknown', 20)}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             <span>{formatDate(capsule.timestamp)}</span>
                           </div>
+                          {feedbackSignals && (
+                            <div className="flex items-center gap-1.5">
+                              {feedbackSignals.correction_count > 0 && (
+                                <span className="text-orange-600">{feedbackSignals.correction_count} corrections</span>
+                              )}
+                              {feedbackSignals.acceptance_count > 0 && (
+                                <span className="text-green-600">{feedbackSignals.acceptance_count} accepted</span>
+                              )}
+                            </div>
+                          )}
+                          {economics && (economics.input_tokens || economics.output_tokens) && (
+                            <div className="flex items-center gap-1">
+                              <Coins className="h-3 w-3 text-yellow-500" />
+                              <span>
+                                {((economics.input_tokens || 0) + (economics.output_tokens || 0)) >= 1000000
+                                  ? `${(((economics.input_tokens || 0) + (economics.output_tokens || 0)) / 1000000).toFixed(1)}M tok`
+                                  : ((economics.input_tokens || 0) + (economics.output_tokens || 0)) >= 1000
+                                    ? `${(((economics.input_tokens || 0) + (economics.output_tokens || 0)) / 1000).toFixed(0)}K tok`
+                                    : `${(economics.input_tokens || 0) + (economics.output_tokens || 0)} tok`
+                                }
+                              </span>
+                            </div>
+                          )}
+                          {hasThinking && (
+                            <span title="Has extended thinking">
+                              <Brain className="h-3 w-3 text-purple-500" />
+                            </span>
+                          )}
+                          {hasTools && (
+                            <div className="flex items-center gap-0.5" title={`${toolCount} tool calls`}>
+                              <Wrench className="h-3 w-3 text-orange-500" />
+                              <span className="text-orange-600">{toolCount}</span>
+                            </div>
+                          )}
                           {capsule.payload?.outcome && (
                             <Badge
                               variant="outline"

@@ -18,6 +18,8 @@ export interface QualityAssessment {
   weaknesses: string[];
   improvement_priority: [string, number][];
   quality_grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  backfilled?: boolean;
+  assessed_at?: string;
 }
 
 export interface Pattern {

@@ -126,7 +126,7 @@ export function QualityBadge({
         e.stopPropagation()
         onClick?.()
       }}
-      title={`Quality: ${(assessment.overall_quality * 100).toFixed(0)}% (Click for details)`}
+      title={`Quality: ${(assessment.overall_quality * 100).toFixed(0)}% — ${assessment.backfilled ? 'Heuristic' : 'Feedback-based'} (Click for details)`}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -187,7 +187,7 @@ export function QualityBadgeInline({
         e.stopPropagation()
         onClick?.()
       }}
-      title={`Quality: ${(assessment.overall_quality * 100).toFixed(0)}%`}
+      title={`Quality: ${(assessment.overall_quality * 100).toFixed(0)}% — ${assessment.backfilled ? 'Heuristic' : 'Feedback-based'}`}
     >
       <span className="font-extrabold">{grade}</span>
       <span className="font-normal">Quality</span>

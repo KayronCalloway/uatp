@@ -62,6 +62,12 @@ export interface CapsuleSearchParams {
   has_data_sources?: boolean;
   has_plain_language?: boolean;
 
+  // Enrichment filters
+  model?: string;
+  has_extended_thinking?: boolean;
+  has_tool_calls?: boolean;
+  has_economics?: boolean;
+
   // Pagination & sorting
   page?: number;
   per_page?: number;
@@ -76,7 +82,7 @@ export interface SearchPreset {
   description: string;
   icon?: string;
   params: CapsuleSearchParams;
-  category: 'quality' | 'verification' | 'risk' | 'time' | 'content' | 'custom';
+  category: 'quality' | 'verification' | 'risk' | 'time' | 'content' | 'enrichment' | 'custom';
 }
 
 // Search result with highlights
