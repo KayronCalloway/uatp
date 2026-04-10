@@ -11,6 +11,7 @@ import logging
 import os
 import sqlite3
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -177,7 +178,7 @@ class ClaudeCodeCapture:
         except Exception as e:
             logger.error(f"[ERROR] Database initialization failed: {e}")
 
-    def generate_session_id(self, user_context: str = None) -> str:
+    def generate_session_id(self, user_context: Optional[str] = None) -> str:
         """Generate a unique session ID."""
         timestamp = datetime.now(timezone.utc).isoformat()
         context = user_context or "claude-code-session"
@@ -259,7 +260,7 @@ class ClaudeCodeCapture:
         return topics[:5]  # Limit to top 5 topics
 
     async def start_session(
-        self, user_id: str = None, context: Dict[str, Any] = None
+        self, user_id: Optional[str] = None, context: Dict[str, Any] = None
     ) -> str:
         """Start a new conversation capture session."""
         user_id = user_id or f"user-{os.getenv('USER', 'unknown')}"
@@ -377,8 +378,8 @@ class ClaudeCodeCapture:
         session_id: str,
         role: str,
         content: str,
-        token_count: int = None,
-        model_info: str = None,
+        token_count: Optional[int] = None,
+        model_info: Optional[str] = None,
     ) -> str:
         """Capture a single message in the conversation."""
         if session_id not in self.active_sessions:
@@ -410,8 +411,17 @@ class ClaudeCodeCapture:
             previous_user_msgs = [
                 m.content for m in session.messages if m.role == "user"
             ]
+            # Get the most recent assistant response for soft_rejection detection
+            previous_assistant_response = next(
+                (
+                    m.content
+                    for m in reversed(session.messages)
+                    if m.role == "assistant"
+                ),
+                None,
+            )
             signal = self.signal_detector.detect_signal(
-                content, previous_user_msgs, role
+                content, previous_user_msgs, role, previous_assistant_response
             )
             signal_type = signal.signal_type
             references_previous = signal.references_previous
@@ -557,10 +567,37 @@ class ClaudeCodeCapture:
                 )
             )
 
-            # Store to database (PostgreSQL for production)
-            import json
-            from datetime import datetime
+            # Aggregate non-neutral signals for DPO extraction and quality analysis
+            sig_counts = Counter(
+                m.signal_type
+                for m in session.messages
+                if m.role == "user" and m.signal_type != "neutral"
+            )
+            total_user = len([m for m in session.messages if m.role == "user"])
+            if sig_counts:
+                capsule_data["payload"]["feedback_signals"] = {
+                    "correction_count": sig_counts.get("correction", 0),
+                    "requery_count": sig_counts.get("requery", 0),
+                    "refinement_count": sig_counts.get("refinement", 0),
+                    "acceptance_count": sig_counts.get("acceptance", 0),
+                    "abandonment_count": sig_counts.get("abandonment", 0),
+                    "soft_rejection_count": sig_counts.get("soft_rejection", 0),
+                    "code_execution_count": sig_counts.get("code_execution", 0),
+                    "total_non_neutral": sum(sig_counts.values()),
+                    "correction_rate": round(
+                        sig_counts.get("correction", 0) / total_user, 4
+                    )
+                    if total_user
+                    else 0.0,
+                    "acceptance_rate": round(
+                        sig_counts.get("acceptance", 0) / total_user, 4
+                    )
+                    if total_user
+                    else 0.0,
+                    "signal_breakdown": dict(sig_counts),
+                }
 
+            # Store to database (PostgreSQL for production)
             import asyncpg
 
             from src.core.config import DATABASE_URL
@@ -699,7 +736,7 @@ capture_system = ClaudeCodeCapture()
 
 
 # API functions for integration
-async def start_capture_session(user_id: str = None) -> str:
+async def start_capture_session(user_id: Optional[str] = None) -> str:
     """Start a new live capture session."""
     return await capture_system.start_session(user_id)
 
@@ -710,7 +747,10 @@ async def capture_user_message(session_id: str, content: str) -> str:
 
 
 async def capture_assistant_message(
-    session_id: str, content: str, token_count: int = None, model_info: str = None
+    session_id: str,
+    content: str,
+    token_count: Optional[int] = None,
+    model_info: Optional[str] = None,
 ) -> str:
     """Capture an assistant message."""
     return await capture_system.capture_message(
