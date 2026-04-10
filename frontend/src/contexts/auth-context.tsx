@@ -94,8 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        // Check if we have a valid cookie session by making an authenticated request
-        // The backend will validate the HTTP-only cookie automatically
+        // Check for existing cookie session (backend validates HTTP-only cookie)
+        let hasSession = false;
         try {
           const response = await fetch(
             `${getApiBaseUrl()}/api/v1/auth/me`,
@@ -107,13 +107,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (response.ok) {
             debugLog('Valid cookie session detected');
             setHasCookieSession(true);
-            // Set a placeholder to indicate authenticated state
             setAuthTokenState('cookie-session');
-            // CSRF: Fetch fresh CSRF token for existing session
             await fetchCsrfToken();
+            hasSession = true;
           }
         } catch {
           debugLog('No active cookie session');
+        }
+
+        // DEV AUTO-LOGIN: If no session, auto-login with dev credentials
+        if (!hasSession && isDevelopment) {
+          debugLog('Auto-login: attempting dev credentials...');
+          try {
+            const loginResponse = await fetch(
+              `${getApiBaseUrl()}/api/v1/auth/login`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                  email: 'kayron@houseofcalloway.com',
+                  password: 'uatp2026',
+                }),
+              }
+            );
+            if (loginResponse.ok) {
+              debugLog('Auto-login successful');
+              setHasCookieSession(true);
+              setAuthTokenState('cookie-session');
+              await fetchCsrfToken();
+            } else {
+              debugLog('Auto-login failed, showing login form');
+            }
+          } catch {
+            debugLog('Auto-login request failed');
+          }
         }
 
       } catch (error) {

@@ -53,8 +53,8 @@ function formatTokens(n: number): string {
 export function ModelsView() {
   // Fetch all capsules (use a large page)
   const { data, isLoading } = useQuery({
-    queryKey: ['capsules-for-models', { page: 1, per_page: 500, demo_mode: false }],
-    queryFn: () => api.getCapsules({ page: 1, per_page: 500, demo_mode: false }),
+    queryKey: ['capsules-for-models', { page: 1, per_page: 100 }],
+    queryFn: () => api.getCapsules({ page: 1, per_page: 100 }),
     staleTime: 1000 * 60 * 5,
   });
 
