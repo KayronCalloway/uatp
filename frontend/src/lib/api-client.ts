@@ -30,14 +30,7 @@ import {
   VerifiedContextResponse,
   VerifiedContextQuery,
 } from '@/types/api';
-import {
-  OnboardingProgress,
-  OnboardingApiResponse,
-  UserPreferences,
-  PlatformInfo,
-  SystemHealth,
-  SupportResponse
-} from '@/types/onboarding';
+// Onboarding types removed
 
 /**
  * SECURITY: Get API base URL with strict production checks.
@@ -641,39 +634,7 @@ export class UATCapsuleEngineClient {
     return response.data;
   }
 
-  // Onboarding endpoints
-  async startOnboarding(userId: string, preferences: UserPreferences): Promise<OnboardingApiResponse<OnboardingProgress>> {
-    // Backend expects user_id in path, not body
-    const response = await this.client.post(`/onboarding/api/start/${userId}`);
-    return response.data;
-  }
-
-  async continueOnboarding(userId: string, stepData?: Record<string, any>): Promise<OnboardingApiResponse<OnboardingProgress>> {
-    // Map to complete-step endpoint if step is provided
-    const step = stepData?.step || 'profile_completed';
-    const response = await this.client.post(`/onboarding/api/complete-step/${userId}/${step}`);
-    return response.data;
-  }
-
-  async getOnboardingStatus(userId: string): Promise<OnboardingApiResponse<OnboardingProgress>> {
-    const response = await this.client.get(`/onboarding/api/status/${userId}`);
-    return response.data;
-  }
-
-  async getOnboardingSystemHealth(): Promise<OnboardingApiResponse<SystemHealth>> {
-    const response = await this.client.get('/onboarding/api/health');
-    return response.data;
-  }
-
-  async getOnboardingSupport(userId?: string, issueType?: string, message?: string): Promise<OnboardingApiResponse<SupportResponse>> {
-    // NOTE: Backend endpoint not implemented
-    throw new Error('Support API not implemented. Contact support directly.');
-  }
-
-  async getAvailablePlatforms(): Promise<OnboardingApiResponse<Record<string, PlatformInfo>>> {
-    const response = await this.client.get('/onboarding/api/platforms');
-    return response.data;
-  }
+  // Onboarding endpoints removed
 
   // Reasoning API methods
   async getReasoningChains(): Promise<any> {
@@ -970,12 +931,7 @@ export const api = {
   ping: () => apiClient.ping(),
 
   // Onboarding
-  startOnboarding: (userId: string, preferences: UserPreferences) => apiClient.startOnboarding(userId, preferences),
-  continueOnboarding: (userId: string, stepData?: Record<string, any>) => apiClient.continueOnboarding(userId, stepData),
-  getOnboardingStatus: (userId: string) => apiClient.getOnboardingStatus(userId),
-  getOnboardingSystemHealth: () => apiClient.getOnboardingSystemHealth(),
-  getOnboardingSupport: (userId?: string, issueType?: string, message?: string) => apiClient.getOnboardingSupport(userId, issueType, message),
-  getAvailablePlatforms: () => apiClient.getAvailablePlatforms(),
+  // Onboarding methods removed
 
   // Advanced Reasoning
   getReasoningChains: () => apiClient.getReasoningChains(),

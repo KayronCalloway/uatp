@@ -29,8 +29,6 @@ import {
 import { isEncrypted } from '@/lib/capsule-encryption';
 import { formatDate, truncateText, getCapsuleTypeColor } from '@/lib/utils';
 import { ListCapsulesQuery, AnyCapsule, CapsuleSearchParams } from '@/types/api';
-import { useDemoMode } from '@/contexts/demo-mode-context';
-import { getMockCapsules, mockApiCall } from '@/lib/mock-data';
 import { logger } from '@/lib/logger';
 import { QualityBadgeInline } from '@/components/capsules/quality-badge';
 import { CapsuleSearch } from '@/components/capsules/capsule-search';
@@ -41,7 +39,6 @@ interface CapsuleListProps {
 }
 
 export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
-  const { isDemoMode } = useDemoMode();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [compress, setCompress] = useState(false);
@@ -75,23 +72,17 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
     page: currentPage,
     per_page: pageSize,
     compress,
-    demo_mode: false,  // Explicit: fetch live data only (exclude demo-* capsules)
   };
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['capsules', queryParams, isDemoMode],
+    queryKey: ['capsules', queryParams],
     queryFn: async () => {
-      if (isDemoMode) {
-        logger.debug('Capsules: Using mock capsule data (demo mode)');
-        return mockApiCall(getMockCapsules());
-      }
-      logger.debug('Capsules: Fetching real capsule data...');
+      logger.debug('Capsules: Fetching capsule data...');
       return api.getCapsules(queryParams);
     },
     staleTime: 1000 * 30, // 30 seconds
     refetchInterval: 1000 * 30, // Auto-refresh every 30 seconds
-    refetchIntervalInBackground: false, // Only refresh when tab is active
-    enabled: true, // Always enabled, but uses mock in demo mode
+    refetchIntervalInBackground: false,
   });
 
   const capsules: AnyCapsule[] = (data && 'capsules' in data ? data.capsules : Array.isArray(data) ? data : []) as AnyCapsule[] || [];

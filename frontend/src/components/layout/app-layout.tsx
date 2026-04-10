@@ -3,9 +3,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
-import { NotificationSystem } from '@/components/notifications/notification-system';
-import { OnboardingBanner } from '@/components/onboarding/onboarding-banner';
-import { DemoModeToggle } from '@/components/ui/demo-mode-toggle';
 import {
   Globe,
   Database,
@@ -13,10 +10,8 @@ import {
   LogOut,
   Menu,
   X,
-  Brain,
   BarChart3
 } from 'lucide-react';
-import Link from 'next/link';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -36,25 +31,25 @@ const navigationItems: NavigationItem[] = [
     id: 'home',
     label: 'Home',
     icon: Globe,
-    description: 'Universal Autonomous Transaction Protocol'
+    description: 'Dashboard'
   },
   {
     id: 'capsules',
     label: 'Capsules',
     icon: Database,
-    description: 'Browse and verify transaction capsules'
+    description: 'Browse and verify capsules'
   },
   {
     id: 'models',
     label: 'Models',
     icon: BarChart3,
-    description: 'Cross-model comparison and agent analytics'
+    description: 'Cross-model comparison'
   },
   {
     id: 'system',
     label: 'System',
     icon: Activity,
-    description: 'System health and status'
+    description: 'Health and status'
   }
 ];
 
@@ -134,7 +129,6 @@ export function AppLayoutWithNav({ children, currentView, onViewChange }: AppLay
                 );
               })}
             </div>
-
           </nav>
 
           <div className="p-4 border-t bg-gray-50">
@@ -174,26 +168,15 @@ export function AppLayoutWithNav({ children, currentView, onViewChange }: AppLay
                 </p>
               </div>
             </div>
-
-            <div className="flex items-center space-x-4">
-              <DemoModeToggle />
-              <div className="hidden xl:block text-sm text-gray-500">
-                Universal Autonomous Transaction Protocol
-              </div>
-            </div>
           </div>
         </header>
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto bg-gray-50">
           <div className="p-4 sm:p-6 lg:p-8 max-w-full">
-            <OnboardingBanner />
             {children}
           </div>
         </main>
-
-        {/* Notification System */}
-        <NotificationSystem />
       </div>
     </div>
   );
