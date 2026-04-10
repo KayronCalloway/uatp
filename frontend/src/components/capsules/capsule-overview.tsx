@@ -66,7 +66,7 @@ export function CapsuleOverview({ onViewList }: CapsuleOverviewProps) {
                 <span>Capsule System</span>
               </CardTitle>
               <p className="text-sm text-gray-500 mt-2">
-                Universal Autonomous Transaction Protocol
+                Universal Agent Trust Protocol
               </p>
             </div>
             <Button
