@@ -31,7 +31,12 @@ const nextConfig: NextConfig = {
 
   // API proxy for development - makes API calls same-origin so cookies work
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_UATP_API_URL || 'http://localhost:8000';
+    const apiUrl = process.env.NEXT_PUBLIC_UATP_API_URL;
+    if (!apiUrl) {
+      throw new Error(
+        'NEXT_PUBLIC_UATP_API_URL is required. Set it in your environment or .env.local'
+      );
+    }
     return [
       {
         source: '/api/:path*',

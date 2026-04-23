@@ -118,13 +118,13 @@ def convert_capsule_to_dict(capsule):
                         # Convert complex nested values to JSON
                         try:
                             flattened[f"{k}.{sub_k}"] = json.dumps(sub_v)
-                        except:
+                        except (TypeError, ValueError):
                             flattened[f"{k}.{sub_k}"] = str(sub_v)
             elif isinstance(v, list):
                 # Convert lists to JSON strings for proper export
                 try:
                     flattened[k] = json.dumps(v)
-                except:
+                except (TypeError, ValueError):
                     flattened[k] = str(v)
             else:
                 flattened[k] = v

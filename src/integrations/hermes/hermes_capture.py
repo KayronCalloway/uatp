@@ -457,30 +457,21 @@ def build_capsule(
     asst_msgs = [m for m in messages if m["role"] == "assistant"]
     tool_msgs = [m for m in messages if m["role"] == "tool"]
 
-    capsule["payload"]["session_metadata"]["message_count"] = total_msgs
-    capsule["payload"]["session_metadata"]["user_message_count"] = len(user_msgs)
-    capsule["payload"]["session_metadata"]["assistant_message_count"] = len(asst_msgs)
-    capsule["payload"]["session_metadata"]["tool_message_count"] = len(tool_msgs)
+    session_meta = capsule["payload"].setdefault("session_metadata", {})
+    session_meta["message_count"] = total_msgs
+    session_meta["user_message_count"] = len(user_msgs)
+    session_meta["assistant_message_count"] = len(asst_msgs)
+    session_meta["tool_message_count"] = len(tool_msgs)
 
     # Add Hermes-specific metadata that the Claude Code pipeline doesn't have
-    capsule["payload"]["session_metadata"]["hermes_session_id"] = session_id
-    capsule["payload"]["session_metadata"]["hermes_platform"] = session.get(
-        "source", platform
-    )
-    capsule["payload"]["session_metadata"]["hermes_model"] = model or session.get(
-        "model"
-    )
-    capsule["payload"]["session_metadata"]["hermes_title"] = session.get("title")
-    capsule["payload"]["session_metadata"]["input_tokens"] = session.get("input_tokens")
-    capsule["payload"]["session_metadata"]["output_tokens"] = session.get(
-        "output_tokens"
-    )
-    capsule["payload"]["session_metadata"]["cache_read_tokens"] = session.get(
-        "cache_read_tokens"
-    )
-    capsule["payload"]["session_metadata"]["tool_call_count"] = session.get(
-        "tool_call_count"
-    )
+    session_meta["hermes_session_id"] = session_id
+    session_meta["hermes_platform"] = session.get("source", platform)
+    session_meta["hermes_model"] = model or session.get("model")
+    session_meta["hermes_title"] = session.get("title")
+    session_meta["input_tokens"] = session.get("input_tokens")
+    session_meta["output_tokens"] = session.get("output_tokens")
+    session_meta["cache_read_tokens"] = session.get("cache_read_tokens")
+    session_meta["tool_call_count"] = session.get("tool_call_count")
 
     # --- Tool call graph ---
     # Extract structured tool invocations with arguments and results.
@@ -610,8 +601,9 @@ def build_capsule(
     # --- Session lineage ---
     parent = session.get("parent_session_id")
     if parent:
-        capsule["payload"]["session_metadata"]["parent_session_id"] = parent
-        capsule["payload"]["session_metadata"]["is_continuation"] = True
+        session_meta = capsule["payload"].setdefault("session_metadata", {})
+        session_meta["parent_session_id"] = parent
+        session_meta["is_continuation"] = True
 
     # --- Tool result archive ---
     # Full tool results for context preservation.

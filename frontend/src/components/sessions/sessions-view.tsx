@@ -74,8 +74,9 @@ export default function SessionsView() {
     try {
       const data = await apiClient.getMCPSessions();
       setSessions(data.sessions);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || err.message || "Failed to load sessions");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to load sessions";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -89,8 +90,9 @@ export default function SessionsView() {
       setSessionData(data);
       setSelectedSession(sessionId);
       setExpandedCapsules(new Set());
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || err.message || "Failed to load session");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to load session";
+      setError(message);
     } finally {
       setLoading(false);
     }

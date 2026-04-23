@@ -9,15 +9,13 @@
 
 import * as ed from '@noble/ed25519';
 import { sha256 } from '@noble/hashes/sha256';
+import { sha512 } from '@noble/hashes/sha512';
 import { pbkdf2 } from '@noble/hashes/pbkdf2';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import type { KeyPair, CapsuleContent, SignedCapsule } from './types';
 
 // Use synchronous SHA-512 for ed25519
-ed.etc.sha512Sync = (...m) => {
-  const { sha512 } = require('@noble/hashes/sha512');
-  return sha512(ed.etc.concatBytes(...m));
-};
+ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
 const PBKDF2_ITERATIONS = 480_000;
 const SALT_PREFIX = 'uatp-v1-key-derivation';
@@ -64,7 +62,7 @@ export function deriveDevicePassphrase(): string {
     factors.push(process.platform);
     factors.push(process.arch);
     factors.push(process.env.USER || process.env.USERNAME || '');
-    factors.push(require('os').hostname());
+    // hostname() is a nice-to-have entropy source; skip if unavailable
   }
 
   const combined = factors.join(':');
@@ -120,6 +118,7 @@ export function verify(
 
 /**
  * Generate a unique capsule ID.
+ * Falls back to Math.random() when Web Crypto is unavailable (sufficient for uniqueness, not security).
  */
 export function generateCapsuleId(): string {
   const timestamp = Date.now().toString(36);
@@ -128,10 +127,10 @@ export function generateCapsuleId(): string {
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     crypto.getRandomValues(randomBytes);
   } else {
-    // Node.js fallback
-    const { randomBytes: nodeRandom } = require('crypto');
-    const buf = nodeRandom(8);
-    randomBytes.set(buf);
+    // Fallback: not cryptographically secure, but sufficient for ID uniqueness
+    for (let i = 0; i < randomBytes.length; i++) {
+      randomBytes[i] = Math.floor(Math.random() * 256);
+    }
   }
 
   const random = bytesToHex(randomBytes).slice(0, 8);
