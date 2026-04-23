@@ -54,7 +54,6 @@ docs/BEFORE_AFTER_*.md
 docs/CAPSULE_ENHANCEMENT_*.md
 docs/CODEBASE_CLEANUP_*.md
 docs/CYBERNETIC_*.md
-docs/DATA_MARKETPLACE_*.md
 docs/COMPLETE_USER_*.md
 docs/COMPREHENSIVE_*.md
 docs/ENTERPRISE_*.md
@@ -75,8 +74,6 @@ docs/start-here.md
 docs/deployment-guide.md
 docs/*_PROPOSAL.md
 docs/*_ROADMAP.md
-docs/*_VISION.md
-docs/*_ANALYSIS.md
 
 # Secrets
 .env

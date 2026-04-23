@@ -1,0 +1,6 @@
+name: uatp-capture
+version: 1.0.0
+description: Captures Hermes sessions as UATP capsules with Ed25519 signatures and implicit feedback signals
+author: kay
+hooks:
+  - on_session_end
