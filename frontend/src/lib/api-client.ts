@@ -816,6 +816,27 @@ export class UATCapsuleEngineClient {
     return response.data;
   }
 
+  // MCP Sessions (certifying gateway audit)
+  async getMCPSessions(): Promise<import('../types/api').MCPSessionListResponse> {
+    const response = await this.client.get('/mcp/sessions');
+    return response.data;
+  }
+
+  async getMCPSession(sessionId: string): Promise<import('../types/api').MCPSessionResponse> {
+    const response = await this.client.get(`/mcp/sessions/${sessionId}`);
+    return response.data;
+  }
+
+  async getMCPSessionGraph(sessionId: string): Promise<import('../types/api').MCPSessionGraphResponse> {
+    const response = await this.client.get(`/mcp/sessions/${sessionId}/graph`);
+    return response.data;
+  }
+
+  async getMCPSessionCapsules(sessionId: string): Promise<import('../types/api').MCPSessionResponse> {
+    const response = await this.client.get(`/mcp/sessions/${sessionId}/capsules`);
+    return response.data;
+  }
+
   // Admin endpoints
   async getAdminCapsuleStats(): Promise<{
     total_capsules: number;
@@ -966,6 +987,12 @@ export const api = {
   getCapsuleLineage: (capsuleId: string) => apiClient.getCapsuleLineage(capsuleId),
   getChainCapsules: (chainId: string) => apiClient.getChainCapsules(chainId),
   getChainSealerStatus: () => apiClient.getChainSealerStatus(),
+
+  // MCP Sessions
+  getMCPSessions: () => apiClient.getMCPSessions(),
+  getMCPSession: (sessionId: string) => apiClient.getMCPSession(sessionId),
+  getMCPSessionGraph: (sessionId: string) => apiClient.getMCPSessionGraph(sessionId),
+  getMCPSessionCapsules: (sessionId: string) => apiClient.getMCPSessionCapsules(sessionId),
 };
 
 export default apiClient;

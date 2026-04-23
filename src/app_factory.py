@@ -1128,6 +1128,12 @@ def create_app() -> FastAPI:
 
         app.include_router(calibration_router)
 
+    # MCP Sessions router (read-only audit of certifying gateway)
+    # Available in all environments - this is audit data, not experimental
+    from .api.mcp_sessions_router import router as mcp_sessions_router
+
+    app.include_router(mcp_sessions_router)
+
     # Setup routes
     setup_health_routes(app)
     setup_api_routes(app, limiter)

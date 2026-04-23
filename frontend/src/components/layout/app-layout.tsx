@@ -10,14 +10,15 @@ import {
   LogOut,
   Menu,
   X,
-  BarChart3
+  BarChart3,
+  Network
 } from 'lucide-react';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-export type ViewType = 'home' | 'capsules' | 'models' | 'system';
+export type ViewType = "home" | "capsules" | "models" | "system" | "sessions";
 
 interface NavigationItem {
   id: ViewType;
@@ -50,6 +51,12 @@ const navigationItems: NavigationItem[] = [
     label: 'System',
     icon: Activity,
     description: 'Health and status'
+  },
+  {
+    id: 'sessions',
+    label: 'Sessions',
+    icon: Network,
+    description: 'MCP session audit'
   }
 ];
 

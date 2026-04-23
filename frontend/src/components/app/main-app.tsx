@@ -6,6 +6,7 @@ import { HomeView } from '@/components/home/home-view';
 import { CapsuleExplorer } from '@/components/capsules/capsule-explorer';
 import { ModelsView } from '@/components/models/models-view';
 import { SystemView } from '@/components/system/system-view';
+import SessionsView from '@/components/sessions/sessions-view';
 
 export function MainApp() {
   const [currentView, setCurrentView] = useState<ViewType>('home');
@@ -23,6 +24,9 @@ export function MainApp() {
 
       case 'system':
         return <SystemView />;
+
+      case 'sessions':
+        return <SessionsView />;
 
       default:
         return <HomeView />;

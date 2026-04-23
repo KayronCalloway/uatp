@@ -505,9 +505,42 @@ export interface AnyCapsule {
 export interface TrustMetrics {
   agent_id: string;
   trust_score: number;
-  reputation: number;
-  violations: number;
-  last_updated: string;
+  violation_count: number;
+  last_violation?: string;
+}
+
+// MCP Session Types
+export interface MCPSessionSummary {
+  session_id: string;
+  latest_timestamp: string;
+}
+
+export interface MCPSessionListResponse {
+  sessions: MCPSessionSummary[];
+  total: number;
+}
+
+export interface MCPCapsule {
+  capsule_id: string;
+  type: string;
+  parent_id: string | null;
+  timestamp: string;
+  upstream_server_id: string | null;
+  signature_preview: string | null;
+  payload: Record<string, any>;
+}
+
+export interface MCPSessionResponse {
+  session_id: string;
+  capsule_count: number;
+  evidence_classes: string[];
+  source_layers: string[];
+  capsules: MCPCapsule[];
+}
+
+export interface MCPSessionGraphResponse {
+  session_id: string;
+  graph: string;
 }
 
 export interface ReasoningAnalysisRequest {
