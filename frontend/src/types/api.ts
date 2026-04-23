@@ -309,7 +309,7 @@ export interface VerifySealResponse {
 // Rich Data Types (Court-Admissible Format)
 export interface DataSource {
   source: string;
-  value: any;
+  value: unknown;
   timestamp?: string;
   api_endpoint?: string;
   api_version?: string;
@@ -317,7 +317,7 @@ export interface DataSource {
   response_time_ms?: number;
   verification?: {
     cross_checked?: string[];
-    values?: any[];
+    values?: unknown[];
     consensus?: boolean;
   };
   audit_trail?: string;
@@ -327,7 +327,7 @@ export interface Alternative {
   option: string;
   score?: number;
   why_not_chosen: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 export interface RiskAssessment {
@@ -441,7 +441,7 @@ export interface AnyCapsule {
   capsule_id: string;
   type: string;
   content: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   timestamp: string;
   agent_id: string;
   // Owner ID for user-scoped isolation (null = legacy/system capsule)

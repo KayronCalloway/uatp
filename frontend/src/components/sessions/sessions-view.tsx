@@ -26,11 +26,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  MCPSessionSummary,
-  MCPSessionResponse,
-} from "@/types/api";
-import { apiClient } from "@/lib/api-client";
+import { MCPSessionSummary, MCPSessionResponse } from "@/types/api";
+import apiClient from "@/lib/api-client";
 
 // Evidence class badge colors
 const evidenceColors: Record<string, string> = {

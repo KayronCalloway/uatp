@@ -55,7 +55,7 @@ export function getApiBaseUrl(): string {
       return '';
     }
     // Server-side still needs the full URL
-    return 'http://localhost:8000';
+    return 'http://localhost:9000';
   }
 
   // SECURITY: In production, missing config should fail loudly
@@ -219,13 +219,13 @@ export class UATCapsuleEngineClient {
   }
 
   // Helper method to normalize capsule data
-  private normalizeCapsule(capsule: any): AnyCapsule {
+  private normalizeCapsule(capsule: Record<string, unknown>): AnyCapsule {
     // Ensure both id and capsule_id fields are available
     return {
       ...capsule,
-      id: capsule.id || capsule.capsule_id,
-      capsule_id: capsule.capsule_id || capsule.id,
-    };
+      id: (capsule.id || capsule.capsule_id) as string,
+      capsule_id: (capsule.capsule_id || capsule.id) as string,
+    } as AnyCapsule;
   }
 
   private normalizeCapsuleResponse(response: CapsuleListResponse | CompressedCapsuleListResponse): CapsuleListResponse | CompressedCapsuleListResponse {
@@ -358,12 +358,12 @@ export class UATCapsuleEngineClient {
     return response.data;
   }
 
-  async compareReasoning(request: { traces: any[] }): Promise<any> {
+  async compareReasoning(request: { traces: unknown[] }): Promise<any> {
     const response = await this.client.post('/reasoning/compare', request);
     return response.data;
   }
 
-  async analyzeBatch(request: { items: any[] }): Promise<any> {
+  async analyzeBatch(request: { items: unknown[] }): Promise<any> {
     const response = await this.client.post('/reasoning/analyze-batch', request);
     return response.data;
   }
@@ -461,7 +461,7 @@ export class UATCapsuleEngineClient {
     return response.data;
   }
 
-  async computeAttribution(config: any): Promise<any> {
+  async computeAttribution(config: Record<string, unknown>): Promise<any> {
     const response = await this.client.post('/economics/attribution/compute', config);
     return response.data;
   }
@@ -490,12 +490,12 @@ export class UATCapsuleEngineClient {
     return response.data;
   }
 
-  async startLiveCaptureMonitor(config: any): Promise<any> {
+  async startLiveCaptureMonitor(config: Record<string, unknown>): Promise<any> {
     const response = await this.client.post('/live/monitor/start', config);
     return response.data;
   }
 
-  async captureLiveMessage(message: any): Promise<any> {
+  async captureLiveMessage(message: Record<string, unknown>): Promise<any> {
     const response = await this.client.post('/live/capture/message', message);
     return response.data;
   }
@@ -511,8 +511,8 @@ export class UATCapsuleEngineClient {
       return {
         seals: seals,
         total_chains: seals.length,
-        verified_seals: seals.filter((seal: any) => seal.status === 'sealed' || seal.status === 'verified').length,
-        pending_seals: seals.filter((seal: any) => seal.status === 'pending').length
+        verified_seals: seals.filter((seal: Record<string, unknown>) => seal.status === 'sealed' || seal.status === 'verified').length,
+        pending_seals: seals.filter((seal: Record<string, unknown>) => seal.status === 'pending').length
       };
     }
 
@@ -530,7 +530,7 @@ export class UATCapsuleEngineClient {
     return response.data;
   }
 
-  async createCitizenshipApplication(data: any): Promise<any> {
+  async createCitizenshipApplication(data: Record<string, unknown>): Promise<any> {
     const response = await this.client.post('/bonds-citizenship/citizenship/applications', data);
     return response.data;
   }
@@ -661,11 +661,11 @@ export class UATCapsuleEngineClient {
         content: string;
         confidence: number;
         evidence: string[];
-        metadata?: Record<string, any>;
+        metadata?: Record<string, unknown>;
       }>;
       conclusion: string;
       confidence_score: number;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     };
     status?: string;
   }): Promise<any> {
@@ -679,7 +679,7 @@ export class UATCapsuleEngineClient {
   }
 
   // Quick capsule creation for live conversations
-  async createCapsuleFromConversation(sessionId: string, conversationData?: any): Promise<any> {
+  async createCapsuleFromConversation(sessionId: string, conversationData?: Record<string, unknown>): Promise<any> {
     const response = await this.client.post('/capsules/from-conversation', {
       session_id: sessionId,
       conversation_data: conversationData
@@ -719,8 +719,8 @@ export class UATCapsuleEngineClient {
       algorithm: string;
       key_id?: string;
     };
-    payload?: Record<string, any>; // Optional minimal metadata
-    verification?: any;
+    payload?: Record<string, unknown>; // Optional minimal metadata
+    verification?: unknown;
   }): Promise<any> {
     const response = await this.client.post('/capsules', capsuleData);
     return response.data;
@@ -749,7 +749,7 @@ export class UATCapsuleEngineClient {
     };
     encryption: {
       is_encrypted: boolean;
-      metadata: any;
+      metadata: unknown;
     };
     bundle_generated_at: string;
     instructions: {
@@ -894,7 +894,7 @@ export const api = {
   // Reasoning
   validateReasoning: (request: ReasoningAnalysisRequest) => apiClient.validateReasoning(request),
   analyzeReasoning: (request: ReasoningAnalysisRequest) => apiClient.analyzeReasoning(request),
-  compareReasoning: (request: { traces: any[] }) => apiClient.compareReasoning(request),
+  compareReasoning: (request: { traces: unknown[] }) => apiClient.compareReasoning(request),
 
   // Federation
   getFederationNodes: () => apiClient.getFederationNodes(),
@@ -921,7 +921,7 @@ export const api = {
   // Advanced attribution
   getAttributionModels: () => apiClient.getAttributionModels(),
   getAttributionAnalysis: () => apiClient.getAttributionAnalysis(),
-  computeAttribution: (config: any) => apiClient.computeAttribution(config),
+  computeAttribution: (config: Record<string, unknown>) => apiClient.computeAttribution(config),
 
   // Hallucination detection
   detectHallucinations: (request: { text: string; context?: string }) => apiClient.detectHallucinations(request),
@@ -933,8 +933,8 @@ export const api = {
   // Live capture
   getLiveCaptureStats: () => apiClient.getLiveCaptureStats(),
   getLiveCaptureConversations: () => apiClient.getLiveCaptureConversations(),
-  startLiveCaptureMonitor: (config: any) => apiClient.startLiveCaptureMonitor(config),
-  captureLiveMessage: (message: any) => apiClient.captureLiveMessage(message),
+  startLiveCaptureMonitor: (config: Record<string, unknown>) => apiClient.startLiveCaptureMonitor(config),
+  captureLiveMessage: (message: Record<string, unknown>) => apiClient.captureLiveMessage(message),
 
   // Chain sealing
   getChainSealsList: () => apiClient.getChainSealsList(),
@@ -942,7 +942,7 @@ export const api = {
   // Rights evolution
   getRightsEvolutionHistory: (modelId: string) => apiClient.getRightsEvolutionHistory(modelId),
   getRightsEvolutionAlerts: () => apiClient.getRightsEvolutionAlerts(),
-  createCitizenshipApplication: (data: any) => apiClient.createCitizenshipApplication(data),
+  createCitizenshipApplication: (data: Record<string, unknown>) => apiClient.createCitizenshipApplication(data),
   getCitizenshipApplications: () => apiClient.getCitizenshipApplications(),
 
   // System
@@ -961,8 +961,8 @@ export const api = {
 
   // Capsule Creation
   createReasoningCapsule: (request: any) => apiClient.createReasoningCapsule(request),
-  createGenericCapsule: (capsuleData: any) => apiClient.createGenericCapsule(capsuleData),
-  createCapsuleFromConversation: (sessionId: string, conversationData?: any) => apiClient.createCapsuleFromConversation(sessionId, conversationData),
+  createGenericCapsule: (capsuleData: AnyCapsule) => apiClient.createGenericCapsule(capsuleData),
+  createCapsuleFromConversation: (sessionId: string, conversationData?: Record<string, unknown>) => apiClient.createCapsuleFromConversation(sessionId, conversationData),
 
   // Authentication
   setAuthToken: (token: string) => apiClient.setAuthToken(token),

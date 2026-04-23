@@ -688,6 +688,7 @@ if __name__ == "__main__":
         result = await service.register_user(
             email="alice@example.com",
             username="alice123",
+            # SECURITY: Demo credentials for direct module execution only
             password="SecurePass123!",
             full_name="Alice Johnson",
         )
@@ -729,6 +730,7 @@ if __name__ == "__main__":
             print(f"Payout setup result: {payout_result}")
 
             # Login user
+            # SECURITY: Demo credentials for direct module execution only
             print("\n Logging in user...")
             login_result = await service.login_user(
                 email="alice@example.com",

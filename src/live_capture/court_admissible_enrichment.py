@@ -335,6 +335,12 @@ class CourtAdmissibleEnricher:
                 return 0, None, []
 
             # Query outcomes for similar capsules
+            # Skip if running SQLite (dev mode) — PostgreSQL not available
+            from src.core.config import DATABASE_URL
+
+            if "sqlite" in DATABASE_URL.lower():
+                return 0, None, []
+
             import psycopg2
 
             conn = psycopg2.connect(

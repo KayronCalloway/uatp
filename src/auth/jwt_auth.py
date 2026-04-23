@@ -414,6 +414,7 @@ async def main():
     # Test user creation
     print("\n Testing user creation...")
     try:
+        # SECURITY: Demo credentials for direct module execution only
         user1 = auth.create_user(
             "alice", "alice@example.com", "password123", ["user", "admin"]
         )
@@ -424,6 +425,7 @@ async def main():
 
     # Test authentication
     print("\n Testing authentication...")
+    # SECURITY: Demo credentials for direct module execution only
     user = auth.authenticate_user("alice", "password123")
     if user:
         print(f"[OK] Authentication successful: {user.username}")

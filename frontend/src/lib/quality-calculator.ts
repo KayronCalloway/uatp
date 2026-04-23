@@ -25,9 +25,9 @@ interface CriticalPathAnalysis {
  * Calculate quality assessment from capsule data
  */
 export function calculateQualityFromCapsule(capsule: AnyCapsule): QualityAssessment {
-  const payload = capsule.payload || capsule.metadata || {}
+  const payload = (capsule.payload || capsule.metadata || {}) as Record<string, any>
   const verification = capsule.verification || {}
-  const reasoning_steps = payload.reasoning_steps || []
+  const reasoning_steps = (payload.reasoning_steps || []) as any[]
 
   // Extract metadata
   const uncertainty: UncertaintyAnalysis = payload.uncertainty_analysis || {}

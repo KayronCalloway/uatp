@@ -171,7 +171,7 @@ export async function getCausalGraph(capsuleIds: string[]): Promise<CausalGraph>
 }
 
 export async function getRootCauses(outcomeVariable: string, capsuleIds: string[]) {
-  return fetchAPI<{ root_causes: any[]; confidence: number }>('/api/causal/root-causes', {
+  return fetchAPI<{ root_causes: unknown[]; confidence: number }>('/api/causal/root-causes', {
     method: 'POST',
     body: JSON.stringify({
       outcome_variable: outcomeVariable,
@@ -182,7 +182,7 @@ export async function getRootCauses(outcomeVariable: string, capsuleIds: string[
 
 export async function predictIntervention(
   interventionVar: string,
-  interventionValue: any,
+  interventionValue: unknown,
   outcomeVar: string,
   capsuleIds: string[]
 ) {
@@ -276,7 +276,7 @@ export interface MLDashboardData {
       log_loss?: number;
       reliability_diagram?: Record<string, number>;
     };
-    domains?: Record<string, any>;
+    domains?: Record<string, unknown>;
     reliability_data: Array<{
       predicted: number;
       actual: number;
@@ -329,7 +329,7 @@ export async function getCalibrationTable(): Promise<{ table: string; format: st
 }
 
 export async function getRecentOutcomes(limit: number = 10) {
-  return fetchAPI<{ outcomes: any[]; total: number; error?: string }>(
+  return fetchAPI<{ outcomes: unknown[]; total: number; error?: string }>(
     `/ml/outcomes/recent?limit=${limit}`
   );
 }

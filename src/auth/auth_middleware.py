@@ -4,6 +4,7 @@ FastAPI authentication middleware with JWT token validation
 """
 
 import logging
+import uuid
 from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, HTTPException, Request, status
@@ -55,6 +56,16 @@ def extract_token_from_request(request: Request) -> Optional[str]:
     return None
 
 
+def _normalize_user_id(user_id: Any) -> Any:
+    """Convert string UUIDs to uuid.UUID objects for SQLAlchemy compatibility."""
+    if isinstance(user_id, str):
+        try:
+            return uuid.UUID(user_id)
+        except ValueError:
+            pass
+    return user_id
+
+
 def get_current_user(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(
@@ -92,7 +103,7 @@ def get_current_user(
         )
 
     # Normalize: JWT standard uses 'sub', internal code uses 'user_id'
-    payload["user_id"] = payload.get("sub")
+    payload["user_id"] = _normalize_user_id(payload.get("sub"))
     return payload
 
 
@@ -105,7 +116,7 @@ def get_current_user_optional(request: Request) -> Optional[Dict[str, Any]]:
     payload = verify_access_token(token)
     if payload:
         # Normalize: JWT standard uses 'sub', internal code uses 'user_id'
-        payload["user_id"] = payload.get("sub")
+        payload["user_id"] = _normalize_user_id(payload.get("sub"))
     return payload
 
 
@@ -286,21 +297,26 @@ async def authentication_middleware(request: Request, call_next):
     # For protected endpoints, require authentication
     if request.url.path.startswith("/api/v1/"):
         if not token:
-            raise HTTPException(
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication required",
+                content={"detail": "Authentication required"},
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
         payload = verify_access_token(token)
         if not payload:
-            raise HTTPException(
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token",
+                content={"detail": "Invalid or expired token"},
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
         # Add user info to request state
+        payload["user_id"] = _normalize_user_id(payload.get("sub"))
         request.state.user = payload
 
     response = await call_next(request)

@@ -733,6 +733,7 @@ if __name__ == "__main__":
         )
         await secrets_manager.set_secret(
             "db_password",
+            # SECURITY: Demo credentials for direct module execution only
             "mypassword123",
             SecretType.DATABASE_PASSWORD,
             rotation_days=7,

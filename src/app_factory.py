@@ -125,14 +125,20 @@ async def lifespan(app: FastAPI):
         db.init_app(app)
 
         # Initialize asyncpg database manager (PostgreSQL high-performance layer - optional)
-        logger.info("Initializing asyncpg connection pool...")
-        try:
-            await db_manager.connect()
-            # Run migrations
-            logger.info("Running database migrations...")
-            await run_migrations()
-        except Exception as e:
-            logger.warning(f"PostgreSQL not available (using SQLite): {e}")
+        # Skip entirely when using SQLite to avoid spurious connection errors in dev
+        from src.core.config import DATABASE_URL
+
+        if "sqlite" in DATABASE_URL.lower():
+            logger.info("SQLite detected — skipping asyncpg initialization")
+        else:
+            logger.info("Initializing asyncpg connection pool...")
+            try:
+                await db_manager.connect()
+                # Run migrations
+                logger.info("Running database migrations...")
+                await run_migrations()
+            except Exception as e:
+                logger.warning(f"PostgreSQL not available (using SQLite): {e}")
 
         # Load lineage graph from database
         try:

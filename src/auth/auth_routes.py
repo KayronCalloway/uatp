@@ -444,6 +444,10 @@ async def refresh_token(
             )
 
         user_id = payload["sub"]
+        import uuid
+
+        if isinstance(user_id, str):
+            user_id = uuid.UUID(user_id)
 
         # Find user
         user = db.query(UserModel).filter(UserModel.id == user_id).first()
