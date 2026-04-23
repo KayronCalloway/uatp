@@ -68,10 +68,10 @@ def render_graph(capsules: list[dict[str, Any]]) -> str:
     indent = "    "
 
     for cap in capsules:
-        ctype = cap["type"]
-        cid = cap["capsule_id"]
-        parent = cap["parent"]
-        payload = cap["payload"]
+        ctype = cap.get("type") or cap.get("capsule_type", "UNKNOWN")
+        cid = cap.get("capsule_id", "?")
+        parent = cap.get("parent") or cap.get("parent_id")
+        payload = cap.get("payload", {})
 
         if ctype == "DECISION_POINT":
             selected = (

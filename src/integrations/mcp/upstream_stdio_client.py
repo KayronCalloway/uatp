@@ -62,7 +62,7 @@ class UpstreamStdioClient:
 
         # For MVP, we use a simple JSON-RPC request
         response = await self._send_request("tools/list", {})
-        tools = response.get("tools", [])
+        tools: list[dict[str, Any]] = response.get("tools", [])
         self._tools = tools
         logger.debug(f"Discovered {len(tools)} tools from upstream")
         return tools
@@ -108,10 +108,14 @@ class UpstreamStdioClient:
 
         response = json.loads(response_line)
 
+        if not isinstance(response, dict):
+            raise RuntimeError("Invalid JSON-RPC response: not a dict")
+
         if "error" in response:
             raise RuntimeError(f"Upstream error: {response['error']}")
 
-        return response.get("result", {})
+        result: dict[str, Any] = response.get("result", {})
+        return result
 
     async def close(self) -> None:
         """Terminate the upstream process."""

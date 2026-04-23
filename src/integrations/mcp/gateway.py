@@ -63,7 +63,7 @@ class UATPMCPGateway:
         self.builder = CapsuleBuilder(self.store, self.crypto)
         self.policy = PolicyEngine()
         self.server = Server("uatp-certifier")
-        self._session_id = None
+        self._session_id: str | None = None
 
     async def initialize(self) -> None:
         """Connect to upstream and register handlers."""

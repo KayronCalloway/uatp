@@ -38,7 +38,7 @@ class DemoMCPServer:
     Simple MCP server with file and shell tools for demo purposes.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.server = Server("uatp-demo-upstream")
 
         @self.server.list_tools()

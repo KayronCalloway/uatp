@@ -311,8 +311,11 @@ class CapsuleBuilder:
             return ""
 
         # sign_capsule returns a full verification dict; we extract the signature
-        verification = self.crypto.sign_capsule(payload, timestamp_mode="none")
-        return verification.get("signature", "")
+        verification: dict[str, Any] = self.crypto.sign_capsule(
+            payload, timestamp_mode="none"
+        )
+        sig: str = verification.get("signature", "")
+        return sig
 
     def _build_preview(
         self, tool_name: str, arguments: dict[str, Any], result: Any
