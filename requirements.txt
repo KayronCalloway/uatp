@@ -55,7 +55,7 @@ python-multipart==0.0.26
 cbor2==5.9.0
 
 # Production Server - Security hardened
-gunicorn==23.0.0
+gunicorn==25.3.0
 
 # Configuration Management
 pyyaml==6.0.3
