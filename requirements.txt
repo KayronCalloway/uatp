@@ -28,7 +28,7 @@ argon2-cffi==25.1.0  # More secure password hashing
 # HTTP Client - Security patches
 httpx==0.28.1
 aiohttp==3.13.5
-requests==2.32.5
+requests==2.33.1  # CVE-2026-25645 fix
 
 # Validation & Serialization - Updated
 pydantic==2.12.5
