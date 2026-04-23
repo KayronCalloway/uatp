@@ -1,4 +1,4 @@
-# UATP
+# UATP Capsule Engine
 
 **Signed reasoning traces for AI systems. Capture decisions, detect failures, generate training data.**
 
@@ -10,7 +10,7 @@
 
 ---
 
-## What UATP Does
+## What It Does
 
 UATP captures what AI systems do, signs it cryptographically, and turns it into training signal.
 
@@ -34,10 +34,144 @@ A **capsule** is a signed record of an AI interaction containing:
 - Economics (tokens, cache hit rates, cost)
 - Cryptographic signature (Ed25519, optionally ML-DSA-65 post-quantum)
 
-The signature proves the capsule hasn't been tampered with. The signals tell you whether the AI succeeded or failed. The thinking shows you why.
+The signature proves the capsule has not been tampered with. The signals tell you whether the AI succeeded or failed. The thinking shows you why.
 
-## Quick Start
+---
 
+## Architecture
+
+UATP is a full-stack web platform, not just a library.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Next.js Frontend (localhost:3000)                                          │
+│  ├── Auth (login / register)                                                │
+│  ├── Capsule Browser (search, filter, verify)                               │
+│  ├── Session Audit Dashboard (MCP tool-call graphs)                         │
+│  └── System Overview (live topology)                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ Proxy rewrite
+                                    │ /api/v1/*  → FastAPI
+                                    │ /mcp/*     → FastAPI
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  FastAPI Backend (localhost:9000)                                           │
+│  ├── Capsule API (CRUD, verify, search)                                     │
+│  ├── Auth API (JWT, bcrypt, rate limiting)                                  │
+│  ├── MCP Certifying Gateway (intercept → sign → audit)                      │
+│  └── Health / Metrics / Calibration                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    ▼                               ▼
+            ┌───────────────┐               ┌───────────────┐
+            │  SQLite       │               │  PostgreSQL   │
+            │  (dev mode)   │               │  (production) │
+            └───────────────┘               └───────────────┘
+```
+
+**Capture sources** feed capsules into the engine:
+
+| Source | How | What's Captured |
+|--------|-----|-----------------|
+| **Claude Code** | Hook in `.claude/hooks/` | Thinking blocks, tool calls, usage, full transcript |
+| **Hermes Agent** | Plugin (`on_session_end`) | Reasoning, tool graphs, economics, session lineage |
+| **Ollama/Gemma** | Transparent proxy (`:11435→:11434`) | Prompt/response, `<think>` tags, eval metrics |
+| **Any OpenAI-compatible** | `BaseHook` subclass | Configurable per platform |
+
+---
+
+## Quick Start (Development)
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/KayronCalloway/uatp.git
+cd uatp
+```
+
+### 2. Backend
+
+```bash
+# Python dependencies
+pip install -e ".[dev]"
+
+# Create env file (development uses SQLite, no Postgres needed)
+cp .env.example .env
+# Edit .env: ENVIRONMENT=development, DEV_DB_URL=sqlite:///./uatp_dev.db
+
+# Run
+python -m uvicorn src.main:app --host 0.0.0.0 --port 9000 --reload
+```
+
+The backend serves:
+- API: `http://localhost:9000/api/v1/`
+- MCP audit: `http://localhost:9000/mcp/`
+- Health: `http://localhost:9000/health`
+
+### 3. Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`. In development mode, the app uses auto-login and SQLite — no external database required.
+
+### 4. Verify both are running
+
+```bash
+curl http://localhost:9000/health
+curl http://localhost:3000/api/v1/health  # proxied through Next.js
+```
+
+---
+
+## MCP Certifying Gateway
+
+When an AI agent calls an MCP tool, the gateway intercepts the request, signs the parameters and result, and stores an audit capsule.
+
+```
+Agent → MCP Gateway → Upstream Tool Server
+            │
+            ▼
+    Ed25519-signed audit capsule
+    (observed, not asserted)
+```
+
+Evidence classes distinguish fact from inference:
+- `observed` — raw tool call / response
+- `asserted` — agent's claim about the result
+- `derived` — computed downstream
+- `policy` — refusal or guardrail trigger
+
+The gateway stores capsules in a separate SQLite database (`uatp_mcp_store.db`) for audit independence. Browse the audit trail in the **Session Audit Dashboard** at `/system`.
+
+---
+
+## Session Audit Dashboard
+
+The dashboard renders MCP sessions as interactive graphs:
+
+- **Nodes**: `USER_MESSAGE`, `AGENT_RESPONSE`, `TOOL_CALL`, `REFUSAL`, `DECISION_POINT`
+- **Edges**: parent/child lineage, evidence-class coloring
+- **Verification**: click any capsule to see the signature, timestamp, and upstream server ID
+
+To seed demo data in dev:
+
+```bash
+python seed_mcp.py
+```
+
+---
+
+## SDK (Client Libraries)
+
+For programmatic capsule creation outside the web platform:
+
+**Python**
 ```bash
 pip install uatp
 ```
@@ -45,72 +179,21 @@ pip install uatp
 ```python
 from uatp import create_capsule, sign_capsule, verify_capsule
 
-# Create
 capsule = create_capsule(
     prompt="Deploy the service to production",
     response="Deployed via kubectl apply...",
     model="claude-opus-4",
 )
-
-# Sign locally (private key never leaves your machine)
 signed = sign_capsule(capsule, passphrase="your-passphrase")
-
-# Verify independently (no server needed)
 assert verify_capsule(signed)
 ```
 
-## Capture Sources
-
-UATP captures from multiple AI platforms into the same capsule format:
-
-| Source | How | What's Captured |
-|--------|-----|-----------------|
-| **Claude Code** | Hook in `.claude/hooks/` | Thinking blocks, tool calls, usage, full transcript |
-| **Hermes Agent** | Plugin (`on_session_end`) | Reasoning, tool graphs, economics, session lineage |
-| **Ollama/Gemma** | Transparent proxy (`:11435→:11434`) | Prompt/response, `<think>` tags, eval metrics |
-| **Any OpenAI-compatible** | BaseHook subclass | Configurable per platform |
-
-### Standalone Ollama Proxy (zero dependencies on UATP)
-
+**TypeScript**
 ```bash
-cd scripts/proxy
-pip install -r requirements.txt
-python3 proxy.py
-# Now: export OLLAMA_HOST=http://localhost:11435
-# Every Ollama interaction is captured and signed automatically
+npm install @coolwithakay/uatp
 ```
 
-## Analysis Tools
-
-Once capsules exist, extract intelligence from them:
-
-```bash
-# Cross-model comparison (which model gets corrected less?)
-python3 scripts/analysis/cross_model_report.py
-
-# Extract DPO training pairs (720 correction chains + 1267 labeled)
-python3 scripts/analysis/extract_dpo_pairs.py
-
-# Tool call sequence analysis (which patterns lead to success?)
-python3 scripts/analysis/tool_patterns.py
-
-# Backfill old capsules with thinking/tools/economics from transcripts
-python3 scripts/capture/rich_hook_capture.py --backfill <transcript.jsonl>
-
-# Re-score all capsules with improved signal detector
-python3 scripts/analysis/rescore_capsules.py
-```
-
-### Confidence Calibration (Autoresearch)
-
-The confidence scores on capsules are calibrated against real outcomes,
-not hardcoded guesses. A local Gemma model tunes the weights:
-
-```bash
-# Iterates: Gemma proposes weight changes → eval against DPO pairs → keep if better
-python3 scripts/autoresearch/calibrate_confidence.py --iterations 30
-# Baseline MAE 0.567 → 0.176 (69% reduction, $0 compute cost)
-```
+---
 
 ## Signal Detection
 
@@ -127,6 +210,26 @@ Every user message is analyzed for implicit feedback:
 
 These signals become the reward signal for DPO training and the ground truth for confidence calibration.
 
+---
+
+## Analysis Tools
+
+```bash
+# Cross-model comparison (which model gets corrected less?)
+python3 scripts/analysis/cross_model_report.py
+
+# Extract DPO training pairs
+python3 scripts/analysis/extract_dpo_pairs.py
+
+# Tool call sequence analysis
+python3 scripts/analysis/tool_patterns.py
+
+# Confidence calibration (Gemma, local, $0)
+python3 scripts/autoresearch/calibrate_confidence.py --iterations 30
+```
+
+---
+
 ## Trust Model
 
 UATP is zero-trust by design:
@@ -136,19 +239,48 @@ UATP is zero-trust by design:
 - **Verification is independent.** Anyone with the public key can verify, no UATP server needed.
 - **Sealed capsules are immutable.** Modifying one invalidates the signature.
 
-See [TRUST_MODEL.md](TRUST_MODEL.md) for the full security model, including what UATP explicitly cannot do.
+See [TRUST_MODEL.md](TRUST_MODEL.md) for the full security model.
 
-## Architecture
+---
+
+## What's Working
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Ed25519 signing + verification | Stable | Core protocol, local-only |
+| Python SDK | Stable | `pip install uatp` |
+| Signal detection (7 types) | Stable | Calibrated against 1042 DPO pairs |
+| Capsule capture (Claude Code) | Stable | Thinking, tools, economics |
+| Capsule capture (Hermes) | Stable | Plugin, auto-fires on session end |
+| Capsule capture (Ollama proxy) | Stable | Standalone, zero UATP deps |
+| DPO pair extraction | Stable | 1987 pairs from 79 capsules |
+| Confidence calibration | Stable | Autoresearch via Gemma |
+| Cross-model comparison | Stable | Query across all capture sources |
+| Next.js dashboard | Stable | Auth, browse, verify, search, MCP audit |
+| FastAPI backend | Stable | REST API, JWT auth, rate limiting |
+| MCP Certifying Gateway | Stable | Intercept, sign, audit tool calls |
+| ML-DSA-65 post-quantum | Beta | Ed25519 + ML-DSA-65 dual signing |
+| RFC 3161 timestamps | Beta | DigiCert TSA, local fallback |
+| TypeScript SDK | Beta | `npm install @coolwithakay/uatp` |
+
+---
+
+## Project Structure
 
 ```
 uatp-capsule-engine/
 ├── src/
 │   ├── security/          # Ed25519 + ML-DSA-65 signing, RFC 3161 timestamps
 │   ├── live_capture/      # Signal detection, rich capture, conversation monitoring
-│   ├── analysis/          # Confidence explainer, uncertainty quantification
-│   ├── api/               # FastAPI capsule endpoints
-│   ├── models/            # Capsule ORM (SQLAlchemy)
+│   ├── integrations/mcp/  # Certifying gateway, policy engine, graph viewer
+│   ├── api/               # FastAPI routers (capsules, auth, MCP sessions, calibration)
+│   ├── auth/              # JWT, bcrypt, middleware, routes
+│   ├── models/            # SQLAlchemy ORM (User, Capsule, Session)
 │   └── core/              # Config, database, provenance layers
+├── frontend/              # Next.js 14+ app (app router)
+│   ├── src/app/           # Routes (/, /system)
+│   ├── src/components/    # Capsule browser, auth forms, session graphs
+│   └── src/lib/           # API client, quality calculator
 ├── scripts/
 │   ├── analysis/          # Cross-model reports, DPO extraction, tool patterns
 │   ├── autoresearch/      # Gemma-powered confidence calibration
@@ -157,53 +289,15 @@ uatp-capsule-engine/
 ├── sdk/
 │   ├── python/            # pip install uatp
 │   └── typescript/        # npm install @coolwithakay/uatp
-├── frontend/              # Next.js capsule dashboard
 ├── tests/                 # 1400+ tests
-└── docs/                  # Trust model, threat model, capsule type specs
+└── docs/                  # Trust model, threat model, capsule type specs, ADRs
 ```
 
-## What's Working
-
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Ed25519 signing + verification | ✅ Stable | Core protocol, local-only |
-| Python SDK | ✅ Stable | `pip install uatp` |
-| Signal detection (7 types) | ✅ Stable | Calibrated against 1042 DPO pairs |
-| Capsule capture (Claude Code) | ✅ Stable | Thinking, tools, economics |
-| Capsule capture (Hermes) | ✅ Stable | Plugin, auto-fires on session end |
-| Capsule capture (Ollama proxy) | ✅ Stable | Standalone, zero UATP deps |
-| DPO pair extraction | ✅ Stable | 1987 pairs from 79 capsules |
-| Confidence calibration | ✅ Stable | Autoresearch via Gemma |
-| Cross-model comparison | ✅ Stable | Query across all capture sources |
-| ML-DSA-65 post-quantum | 🔶 Beta | Ed25519 + ML-DSA-65 dual signing |
-| RFC 3161 timestamps | 🔶 Beta | DigiCert TSA, local fallback |
-| Next.js dashboard | 🔶 Beta | Browse, verify, search capsules |
-| TypeScript SDK | 🔶 Beta | `npm install @coolwithakay/uatp` |
-| FastAPI backend | 🔶 Beta | REST API for capsule CRUD |
+---
 
 ## Version
 
 All components are at **v1.1.0**. See [STATUS.md](STATUS.md) for detailed component status and [ROADMAP.md](ROADMAP.md) for what's next.
-
-## Packages
-
-| Package | Version | Install |
-|---------|---------|---------|
-| Python SDK | 1.1.0 | `pip install uatp` |
-| TypeScript SDK | 1.1.0 | `npm install @coolwithakay/uatp` |
-| Engine | 1.1.0 | Clone this repo |
-
-## How UATP Compares
-
-| | UATP | MLflow | W&B | Sigstore |
-|--|------|--------|-----|----------|
-| Local signing | ✅ Ed25519 | ❌ | ❌ | ✅ |
-| Reasoning traces | ✅ Full chain-of-thought | ❌ | ❌ | ❌ |
-| Implicit feedback | ✅ 7 signal types | ❌ | ❌ | ❌ |
-| DPO training data | ✅ Correction chains | ❌ | ❌ | ❌ |
-| Post-quantum | ✅ ML-DSA-65 | ❌ | ❌ | ❌ |
-| Independent verify | ✅ | ❌ | ❌ | ✅ |
-| AI-specific | ✅ | Partial | Partial | ❌ |
 
 ## License
 
