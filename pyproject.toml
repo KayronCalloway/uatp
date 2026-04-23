@@ -79,6 +79,8 @@ dependencies = [
     # Resilience patterns
     "tenacity>=8.0.0",
     "circuit-breaker>=0.1.0",
+    # Agent protocol
+    "mcp>=1.0.0",
 ]
 
 [project.optional-dependencies]
