@@ -24,8 +24,10 @@ from __future__ import annotations
 
 import fnmatch
 import logging
+import os
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +81,67 @@ class PolicyEngine:
             },
         }
 
+    @staticmethod
+    def _resolve_path(raw_path: str) -> str:
+        """
+        Resolve a tool-provided path to a canonical absolute path.
+
+        Handles: ~, ., .., symlinks, relative paths.
+
+        Returns the canonical path string, or raises ValueError if
+        the path is unresolvable or attempts to escape the filesystem.
+        """
+        p = Path(raw_path).expanduser()
+        if not p.is_absolute():
+            # Relative paths are rejected for file operations
+            # in a governance boundary — implicit cwd makes policy unreliable.
+            raise ValueError(f"Relative paths not allowed: {raw_path}")
+
+        try:
+            resolved = p.resolve(strict=False)
+        except (OSError, RuntimeError) as e:
+            raise ValueError(f"Cannot resolve path {raw_path}: {e}")
+
+        # os.path.realpath resolves any remaining symlinks not caught by resolve()
+        canonical = os.path.realpath(str(resolved))
+
+        return canonical
+
+    @staticmethod
+    def _path_matches_patterns(canonical: str, patterns: list[str]) -> bool:
+        """
+        Check if a canonical path matches any pattern.
+
+        Patterns can be:
+        - Absolute directory: /home/user/project → match /home/user/project/*
+        - Absolute with wildcard: /tmp/* → match /tmp/anything
+
+        Uses prefix comparison after normalizing patterns.
+        """
+        for pattern in patterns:
+            # Normalize pattern the same way
+            pattern_path = Path(pattern).expanduser()
+            pattern_str = str(pattern_path)
+
+            # If pattern has wildcard, strip it and compare prefix
+            if "*" in pattern_str:
+                prefix = pattern_str.split("*")[0]
+                if canonical.startswith(prefix):
+                    return True
+            elif pattern_str.endswith("/"):
+                if canonical.startswith(pattern_str) or canonical == pattern_str.rstrip(
+                    "/"
+                ):
+                    return True
+            else:
+                # Exact match or child-of-pattern
+                if canonical == pattern_str or canonical.startswith(
+                    pattern_str + os.sep
+                ):
+                    return True
+
+        return False
+
     def evaluate(self, tool_name: str, arguments: dict[str, Any]) -> PolicyResult:
         """
         Evaluate whether a tool call should proceed.
@@ -123,26 +186,28 @@ class PolicyEngine:
             allowlist = constraints.get("path_allowlist", [])
             denylist = constraints.get("path_denylist", [])
 
-            # Normalize path for matching
-            normalized = str(path).replace("~", "/home/user")
+            try:
+                canonical = self._resolve_path(str(path))
 
-            if denylist:
-                matched = any(
-                    fnmatch.fnmatch(normalized, pattern) for pattern in denylist
+                # Log raw argument for audit (hash it separately)
+                logger.debug(
+                    "Path check: raw=%s canonical=%s", str(path)[:100], canonical
                 )
-                if matched:
-                    checks_failed.append("path_blocked_by_denylist")
-                else:
-                    checks_passed.append("path_not_in_denylist")
 
-            if allowlist and not checks_failed:
-                matched = any(
-                    fnmatch.fnmatch(normalized, pattern) for pattern in allowlist
-                )
-                if matched:
-                    checks_passed.append("path_in_allowlist")
-                else:
-                    checks_failed.append("path_not_in_allowlist")
+                if denylist:
+                    if self._path_matches_patterns(canonical, denylist):
+                        checks_failed.append("path_blocked_by_denylist")
+                    else:
+                        checks_passed.append("path_not_in_denylist")
+
+                if allowlist and not checks_failed:
+                    if self._path_matches_patterns(canonical, allowlist):
+                        checks_passed.append("path_in_allowlist")
+                    else:
+                        checks_failed.append("path_not_in_allowlist")
+
+            except ValueError as e:
+                checks_failed.append(f"path_unresolvable: {e}")
 
         # Command constraints (for shell operations)
         command = arguments.get("command")
