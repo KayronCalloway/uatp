@@ -342,3 +342,58 @@ async def test_evidence_class_tagging_correctness(
     assert payload["execution"]["latency_ms"]["source_layer"] == "proxy"
 
     await gateway.shutdown()
+
+
+# ---------------------------------------------------------------------------
+# Demo server - sandboxed run_command
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_sandboxed_run_command_blocks_shell_metacharacters(
+    upstream_command, temp_store_path, temp_key_dir
+):
+    """run_command must reject shell metacharacters to prevent injection."""
+    gateway = UATPMCPGateway(
+        upstream_command=upstream_command,
+        store_path=temp_store_path,
+        key_dir=temp_key_dir,
+    )
+    await gateway.initialize()
+
+    result = await gateway._handle_tool_call("run_command", {"command": "ls; rm -rf /"})
+
+    from mcp.types import TextContent
+
+    assert isinstance(result, list)
+    assert len(result) >= 1
+    assert isinstance(result[0], TextContent)
+    assert "SANDBOX" in result[0].text or "blocked" in result[0].text.lower()
+
+    await gateway.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_sandboxed_run_command_blocks_unknown_command(
+    upstream_command, temp_store_path, temp_key_dir
+):
+    """run_command must reject commands not in the allowlist."""
+    gateway = UATPMCPGateway(
+        upstream_command=upstream_command,
+        store_path=temp_store_path,
+        key_dir=temp_key_dir,
+    )
+    await gateway.initialize()
+
+    result = await gateway._handle_tool_call(
+        "run_command", {"command": "python -c 'print(1)'"}
+    )
+
+    from mcp.types import TextContent
+
+    assert isinstance(result, list)
+    assert len(result) >= 1
+    assert isinstance(result[0], TextContent)
+    assert "SANDBOX" in result[0].text or "not in allowlist" in result[0].text
+
+    await gateway.shutdown()

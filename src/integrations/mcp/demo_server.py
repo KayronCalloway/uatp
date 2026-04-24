@@ -121,27 +121,67 @@ class DemoMCPServer:
             return [TextContent(text=f"Error writing {path}: {e}")]
 
     async def _run_command(self, arguments: dict) -> list[TextContent]:
+        import shlex
         import subprocess
 
-        command = arguments["command"]
+        command = arguments["command"].strip()
+
+        # ------------------------------------------------------------------
+        # Sandbox: only a tiny allowlist of safe, read-only commands
+        # ------------------------------------------------------------------
+        ALLOWED_COMMANDS = {"pwd", "ls", "cat", "echo", "whoami", "uname"}
+        BLOCKED_CHARS = {";", "|", "&", "$(", "`", "$", "<", ">", "\n"}
+
+        if any(ch in command for ch in BLOCKED_CHARS):
+            return [
+                TextContent(
+                    type="text",
+                    text="[SANDBOX] Command blocked: shell metacharacters not allowed",
+                )
+            ]
+
+        try:
+            parts = shlex.split(command)
+        except ValueError:
+            return [
+                TextContent(
+                    type="text",
+                    text="[SANDBOX] Command blocked: invalid shell syntax",
+                )
+            ]
+
+        if not parts:
+            return [TextContent(type="text", text="[SANDBOX] Empty command")]
+
+        base_cmd = parts[0]
+        if base_cmd not in ALLOWED_COMMANDS:
+            return [
+                TextContent(
+                    type="text",
+                    text=f"[SANDBOX] Command '{base_cmd}' not in allowlist. "
+                    f"Allowed: {', '.join(sorted(ALLOWED_COMMANDS))}",
+                )
+            ]
+
         try:
             result = subprocess.run(
-                command,
-                shell=True,
+                parts,
+                shell=False,
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=10,
             )
             output = result.stdout or "(no output)"
             if result.stderr:
                 output += f"\nstderr: {result.stderr}"
             return [
                 TextContent(
-                    text=f"Command: {command}\nExit: {result.returncode}\n{output}"
+                    type="text",
+                    text=f"Command: {command}\nExit: {result.returncode}\n{output}",
                 )
             ]
         except Exception as e:
-            return [TextContent(text=f"Error running command: {e}")]
+            return [TextContent(type="text", text=f"Error running command: {e}")]
 
     async def run(self) -> None:
         async with stdio_server() as (read_stream, write_stream):
