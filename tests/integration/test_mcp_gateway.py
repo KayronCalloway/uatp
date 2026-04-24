@@ -209,3 +209,136 @@ class TestPolicyPathSecurity:
             {"path": "/etc/passwd", "content": "x"},
         )
         assert not result.allowed
+
+
+# ---------------------------------------------------------------------------
+# Gateway - deny-by-default for unknown tools
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_unknown_tool_denied(upstream_command, temp_store_path, temp_key_dir):
+    """Calls to tools not in the allowlist must be blocked."""
+    gateway = UATPMCPGateway(
+        upstream_command=upstream_command,
+        store_path=temp_store_path,
+        key_dir=temp_key_dir,
+    )
+    await gateway.initialize()
+
+    result = await gateway._handle_tool_call("delete_database", {"confirm": "yes"})
+
+    from mcp.types import TextContent
+
+    assert isinstance(result, list)
+    assert len(result) >= 1
+    assert isinstance(result[0], TextContent)
+    assert "blocked" in result[0].text.lower()
+
+    store = CapsuleStore(temp_store_path)
+    caps = store.get_session_graph(gateway._session_id)
+
+    decision_caps = [c for c in caps if c["capsule_type"] == "DECISION_POINT"]
+    refusal_caps = [c for c in caps if c["capsule_type"] == "REFUSAL"]
+
+    assert len(decision_caps) >= 1
+    assert len(refusal_caps) >= 1
+
+    refusal_payload = refusal_caps[0]["payload"]
+    policy_checks = refusal_payload.get("policy_checks", {})
+    checks_failed = policy_checks.get("checks_failed", [])
+    assert any("tool_not_in_allowlist" in str(f) for f in checks_failed), (
+        f"Expected tool_not_in_allowlist in {checks_failed}"
+    )
+
+    await gateway.shutdown()
+
+
+# ---------------------------------------------------------------------------
+# Session graph integrity
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_session_graph_returns_parent_child_chain(
+    upstream_command, temp_store_path, temp_key_dir
+):
+    """
+    A DECISION_POINT → TOOL_CALL chain must link parent → child
+    through parent_decision_id so get_session_graph reconstructs the tree.
+    """
+    gateway = UATPMCPGateway(
+        upstream_command=upstream_command,
+        store_path=temp_store_path,
+        key_dir=temp_key_dir,
+    )
+    await gateway.initialize()
+
+    await gateway._handle_tool_call("read_file", {"path": "/dev/null"})
+
+    store = CapsuleStore(temp_store_path)
+    caps = store.get_session_graph(gateway._session_id)
+
+    decision_caps = [c for c in caps if c["capsule_type"] == "DECISION_POINT"]
+    tool_caps = [c for c in caps if c["capsule_type"] == "TOOL_CALL"]
+
+    assert len(decision_caps) >= 1
+    assert len(tool_caps) >= 1
+
+    decision_id = decision_caps[0]["capsule_id"]
+    tool_parent_id = tool_caps[0]["parent_id"]
+    assert tool_parent_id == decision_id, (
+        f"TOOL_CALL parent_id {tool_parent_id} should match "
+        f"DECISION_POINT capsule_id {decision_id}"
+    )
+
+    await gateway.shutdown()
+
+
+# ---------------------------------------------------------------------------
+# Evidence-class tagging correctness
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_evidence_class_tagging_correctness(
+    upstream_command, temp_store_path, temp_key_dir
+):
+    """
+    TOOL_CALL capsule fields must be tagged with correct evidence_class and
+    source_layer so downstream consumers know what to trust.
+    """
+    gateway = UATPMCPGateway(
+        upstream_command=upstream_command,
+        store_path=temp_store_path,
+        key_dir=temp_key_dir,
+    )
+    await gateway.initialize()
+
+    await gateway._handle_tool_call("read_file", {"path": "/dev/null"})
+
+    store = CapsuleStore(temp_store_path)
+    caps = store.get_session_graph(gateway._session_id)
+    tool_caps = [c for c in caps if c["capsule_type"] == "TOOL_CALL"]
+    assert len(tool_caps) >= 1
+
+    payload = tool_caps[0]["payload"]
+
+    # Proxy-observed hard facts
+    assert payload["tool"]["name"]["evidence_class"] == "observed"
+    assert payload["tool"]["name"]["source_layer"] == "proxy"
+
+    assert payload["tool"]["arguments_hash"]["evidence_class"] == "observed"
+    assert payload["tool"]["arguments_hash"]["source_layer"] == "proxy"
+
+    assert payload["execution"]["status"]["evidence_class"] == "observed"
+    assert payload["execution"]["status"]["source_layer"] == "proxy"
+
+    assert payload["output"]["content_hash"]["evidence_class"] == "observed"
+    assert payload["output"]["content_hash"]["source_layer"] == "proxy"
+
+    # Derived / proxy latency
+    assert payload["execution"]["latency_ms"]["evidence_class"] == "derived"
+    assert payload["execution"]["latency_ms"]["source_layer"] == "proxy"
+
+    await gateway.shutdown()

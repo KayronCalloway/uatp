@@ -274,6 +274,12 @@ class CapsuleBuilder:
                 "evidence_class": "policy",
                 "source_layer": "policy",
             },
+            "policy_checks": {
+                "checks_passed": policy_result.checks_passed,
+                "checks_failed": policy_result.checks_failed,
+                "evidence_class": "policy",
+                "source_layer": "policy",
+            },
             "policy_version": {
                 "value": policy_result.policy_version,
                 "evidence_class": "policy",
