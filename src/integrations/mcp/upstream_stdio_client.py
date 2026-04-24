@@ -19,12 +19,11 @@ Production would add:
 
 from __future__ import annotations
 
-import asyncio
-import json
 import logging
-import subprocess
-import sys
-from typing import Any, Dict, List, Optional
+from typing import Any
+
+from mcp import ClientSession
+from mcp.client.stdio import StdioServerParameters, stdio_client
 
 logger = logging.getLogger(__name__)
 
@@ -36,93 +35,51 @@ class UpstreamStdioClient:
 
     def __init__(self, command: list[str]):
         self.command = command
-        self.process: subprocess.Popen | None = None
-        self._request_id = 0
+        self._stdio_ctx: Any | None = None
+        self._session_ctx: Any | None = None
+        self.session: ClientSession | None = None
         self._tools: list[dict[str, Any]] = []
 
     async def connect(self) -> None:
-        """Start the upstream subprocess."""
+        """Start the upstream subprocess and perform MCP handshake."""
         logger.info(f"Starting upstream MCP server: {' '.join(self.command)}")
-        self.process = subprocess.Popen(
-            self.command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
+        params = StdioServerParameters(
+            command=self.command[0],
+            args=self.command[1:],
         )
-        # Give it a moment to initialize
-        await asyncio.sleep(0.5)
-        logger.info("Upstream MCP server started")
+        self._stdio_ctx = stdio_client(params)
+        read_stream, write_stream = await self._stdio_ctx.__aenter__()
+        self._session_ctx = ClientSession(read_stream, write_stream)
+        self.session = await self._session_ctx.__aenter__()
+        await self.session.initialize()
+        logger.info("Upstream MCP server initialized")
 
     async def list_tools(self) -> list[dict[str, Any]]:
         """List available tools from the upstream server."""
-        if self.process is None or self.process.poll() is not None:
-            raise RuntimeError("Upstream process not running")
+        if self.session is None:
+            raise RuntimeError("Upstream session not initialized")
 
-        # For MVP, we use a simple JSON-RPC request
-        response = await self._send_request("tools/list", {})
-        tools: list[dict[str, Any]] = response.get("tools", [])
+        result = await self.session.list_tools()
+        tools: list[dict[str, Any]] = [tool.model_dump() for tool in result.tools]
         self._tools = tools
         logger.debug(f"Discovered {len(tools)} tools from upstream")
         return tools
 
     async def call_tool(self, name: str, arguments: dict[str, Any]) -> Any:
         """Call a tool on the upstream server."""
-        if self.process is None or self.process.poll() is not None:
-            raise RuntimeError("Upstream process not running")
+        if self.session is None:
+            raise RuntimeError("Upstream session not initialized")
 
-        response = await self._send_request(
-            "tools/call",
-            {"name": name, "arguments": arguments},
-        )
-        return response.get("result")
-
-    async def _send_request(
-        self, method: str, params: dict[str, Any]
-    ) -> dict[str, Any]:
-        """Send a JSON-RPC request and read the response."""
-        self._request_id += 1
-        request = {
-            "jsonrpc": "2.0",
-            "id": self._request_id,
-            "method": method,
-            "params": params,
-        }
-
-        if self.process is None or self.process.stdin is None:
-            raise RuntimeError("Upstream process not initialized")
-
-        # Write request
-        line = json.dumps(request) + "\n"
-        self.process.stdin.write(line)
-        self.process.stdin.flush()
-
-        # Read response
-        if self.process.stdout is None:
-            raise RuntimeError("Upstream stdout not available")
-
-        response_line = self.process.stdout.readline()
-        if not response_line:
-            raise RuntimeError("Upstream closed connection")
-
-        response = json.loads(response_line)
-
-        if not isinstance(response, dict):
-            raise RuntimeError("Invalid JSON-RPC response: not a dict")
-
-        if "error" in response:
-            raise RuntimeError(f"Upstream error: {response['error']}")
-
-        result: dict[str, Any] = response.get("result", {})
+        result = await self.session.call_tool(name, arguments)
         return result
 
     async def close(self) -> None:
         """Terminate the upstream process."""
-        if self.process is not None and self.process.poll() is None:
-            self.process.terminate()
-            try:
-                self.process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self.process.kill()
+        if self._session_ctx is not None:
+            await self._session_ctx.__aexit__(None, None, None)
+            self._session_ctx = None
+            self.session = None
+        if self._stdio_ctx is not None:
+            await self._stdio_ctx.__aexit__(None, None, None)
+            self._stdio_ctx = None
             logger.info("Upstream MCP server terminated")
