@@ -1,20 +1,15 @@
 """
-Integration tests proving UpstreamStdioClient lacks proper MCP initialize handshake.
-
-These tests are expected to FAIL against the current implementation because
-UpstreamStdioClient.connect() spawns a subprocess but does NOT use
-mcp.ClientSession or call session.initialize().
-
-Once the client is fixed to perform the proper MCP handshake, these tests
-should pass.
+Integration tests for MCP Certifying Gateway.
 """
 
+import os
 import sys
 
 import pytest
 from mcp import ClientSession
 
 from src.integrations.mcp.gateway import UATPMCPGateway
+from src.integrations.mcp.policy_engine import PolicyEngine
 from src.integrations.mcp.store import CapsuleStore
 from src.integrations.mcp.upstream_stdio_client import UpstreamStdioClient
 
@@ -72,7 +67,6 @@ async def test_connect_performs_mcp_initialize_handshake(tmp_path):
 async def test_list_tools_works_after_proper_initialization(tmp_path):
     """
     list_tools() should succeed after a properly initialized MCP session.
-    Currently it fails because raw JSON-RPC is sent without the handshake.
     """
     client = UpstreamStdioClient(
         command=[sys.executable, "-m", "src.integrations.mcp.demo_server"]
@@ -152,3 +146,66 @@ async def test_result_hash_is_stable(upstream_command, temp_store_path, temp_key
     assert len(content_hash) == 71  # "sha256:" + 64 hex chars
 
     await gateway.shutdown()
+
+
+# ---------------------------------------------------------------------------
+# Policy engine - path security
+# ---------------------------------------------------------------------------
+
+
+class TestPolicyPathSecurity:
+    """Policy engine must block path traversal, not just pattern match."""
+
+    def test_dotdot_traversal_blocked(self):
+        """write_file with ../ must be blocked even if pattern matches."""
+        engine = PolicyEngine()
+
+        result = engine.evaluate(
+            "write_file",
+            {"path": "~/project/../../etc/passwd", "content": "x"},
+        )
+        assert not result.allowed, (
+            f"Expected blocked, got allowed. Reason: {result.reason}"
+        )
+        assert "path_not_in_allowlist" in (result.checks_failed or [])
+
+    def test_symlink_escape_blocked(self, tmp_path):
+        """Symlinks that escape the allowed root must be blocked."""
+        allowed = tmp_path / "project"
+        allowed.mkdir()
+
+        outside = tmp_path / "outside"
+        outside.mkdir()
+        symlink = allowed / "escape_link"
+        symlink.symlink_to(outside)
+
+        rules = {
+            "default_action": "deny",
+            "tools": {
+                "write_file": {
+                    "action": "allow",
+                    "constraints": {
+                        "path_allowlist": [f"{allowed}/*"],
+                        "path_denylist": [],
+                    },
+                },
+            },
+        }
+        engine = PolicyEngine(rules=rules, version="test")
+
+        result = engine.evaluate(
+            "write_file",
+            {"path": str(symlink / "secrets.txt"), "content": "leak"},
+        )
+        assert not result.allowed, (
+            f"Symlink escape should be blocked. Got: allowed={result.allowed}"
+        )
+
+    def test_absolute_path_outside_allowlist_blocked(self):
+        """Absolute paths outside allowed roots must be denied."""
+        engine = PolicyEngine()
+        result = engine.evaluate(
+            "write_file",
+            {"path": "/etc/passwd", "content": "x"},
+        )
+        assert not result.allowed
