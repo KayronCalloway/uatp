@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import logging
 import sys
 import uuid
@@ -116,7 +117,8 @@ class UATPMCPGateway:
             )
             return [
                 TextContent(
-                    text=f"Policy blocked: {policy_result.reason}{refusal_text}"
+                    type="text",
+                    text=f"Policy blocked: {policy_result.reason}{refusal_text}",
                 )
             ]
 
@@ -146,20 +148,28 @@ class UATPMCPGateway:
             error_message=error_message,
         )
 
-        # 6. Format result with proof
+        # 6. Append proof as a separate content block
         proof_text = ProofAttachment.text_proof_block(tool_capsule_id)
 
-        # Normalize result to TextContent
-        if isinstance(result, str):
-            result_text = result
+        # Preserve original upstream content blocks
+        if hasattr(result, "content") and result.content:
+            # mcp.types.CallToolResult — extract content blocks
+            content_blocks = list(result.content)
+        elif hasattr(result, "model_dump"):
+            # Fallback: serialized tool result
+            dumped = result.model_dump()
+            content_blocks = [TextContent(type="text", text=json.dumps(dumped))]
         elif isinstance(result, dict):
-            result_text = result.get("text", str(result))
+            # Legacy: plain dict from old upstream client
+            text_val = result.get("text", str(result))
+            content_blocks = [TextContent(type="text", text=text_val)]
         else:
-            result_text = str(result)
+            content_blocks = [TextContent(type="text", text=str(result))]
 
-        return [
-            TextContent(text=result_text + proof_text),
-        ]
+        # Append proof as separate TextContent block
+        content_blocks.append(TextContent(type="text", text=proof_text))
+
+        return content_blocks
 
     async def run(self) -> None:
         """Run the gateway server (stdio transport)."""
