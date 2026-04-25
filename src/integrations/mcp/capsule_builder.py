@@ -29,7 +29,7 @@ import hashlib
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.integrations.mcp.policy_engine import PolicyResult
 from src.integrations.mcp.store import CapsuleStore

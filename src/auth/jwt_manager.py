@@ -74,7 +74,7 @@ class TokenRevocationList:
             if env in ("production", "prod", "staging"):
                 logger.error(f"CRITICAL: Redis unavailable for token revocation: {e}")
             elif not TokenRevocationList._redis_unavailable:
-                logger.warning(f"Redis unavailable for token revocation: {e}")
+                logger.debug(f"Redis unavailable for token revocation (dev mode): {e}")
             self._redis_available = False
             TokenRevocationList._redis_unavailable = True
             TokenRevocationList._redis_retry_after = time.time() + 60

@@ -832,11 +832,6 @@ export class UATCapsuleEngineClient {
     return response.data;
   }
 
-  async getMCPSessionCapsules(sessionId: string): Promise<import('../types/api').MCPSessionResponse> {
-    const response = await this.client.get(`/mcp/sessions/${sessionId}/capsules`);
-    return response.data;
-  }
-
   // Admin endpoints
   async getAdminCapsuleStats(): Promise<{
     total_capsules: number;
@@ -992,7 +987,6 @@ export const api = {
   getMCPSessions: () => apiClient.getMCPSessions(),
   getMCPSession: (sessionId: string) => apiClient.getMCPSession(sessionId),
   getMCPSessionGraph: (sessionId: string) => apiClient.getMCPSessionGraph(sessionId),
-  getMCPSessionCapsules: (sessionId: string) => apiClient.getMCPSessionCapsules(sessionId),
 };
 
 export default apiClient;

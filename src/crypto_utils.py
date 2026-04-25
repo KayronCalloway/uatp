@@ -69,7 +69,7 @@ def _init_replay_redis():
         if env in ("production", "prod", "staging"):
             logger.error(f"CRITICAL: Redis unavailable for replay protection: {e}")
         elif not _redis_unavailable:
-            logger.warning(f"Redis unavailable for replay protection: {e}")
+            logger.debug(f"Redis unavailable for replay protection (dev mode): {e}")
         _redis_available = False
         _redis_unavailable = True
         _redis_retry_after = time.time() + 60

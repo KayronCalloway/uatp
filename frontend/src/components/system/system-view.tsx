@@ -13,7 +13,6 @@ import {
   AlertCircle,
   Clock,
   RefreshCw,
-  Key,
   Lock,
   FileCheck
 } from 'lucide-react';
@@ -38,13 +37,21 @@ export function SystemView() {
     staleTime: 1000 * 60,
   });
 
+  const { data: mcpData, isLoading: mcpLoading, error: mcpError, refetch: refetchMCP } = useQuery({
+    queryKey: ['mcp-sessions'],
+    queryFn: () => api.getMCPSessions(),
+    staleTime: 1000 * 30,
+  });
+
   const isHealthy = health?.status === 'healthy';
   const dbConnected = (stats as any)?.database_connected !== false;
+  const mcpSessionCount = mcpData?.total ?? 0;
 
   const handleRefresh = () => {
     refetchHealth();
     refetchStats();
     refetchCrypto();
+    refetchMCP();
   };
 
   return (
@@ -63,9 +70,9 @@ export function SystemView() {
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              disabled={healthLoading || statsLoading}
+              disabled={healthLoading || statsLoading || mcpLoading}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${(healthLoading || statsLoading) ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 mr-2 ${(healthLoading || statsLoading || mcpLoading) ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
           </div>
@@ -244,9 +251,16 @@ export function SystemView() {
 
                 <div className="bg-orange-50 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-orange-600">
-                    100%
+                    {mcpLoading ? '…' : mcpError ? '—' : mcpSessionCount}
                   </div>
-                  <div className="text-sm text-gray-600">Verified</div>
+                  <div className="text-sm text-gray-600">
+                    {mcpError ? (
+                      <span className="text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        MCP Store Error
+                      </span>
+                    ) : 'MCP Sessions'}
+                  </div>
                 </div>
               </div>
 
@@ -385,12 +399,8 @@ export function SystemView() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-600">Protocol Version:</span>
-              <span className="font-medium ml-2">UATP 7.4</span>
-            </div>
-            <div>
               <span className="text-gray-600">API Version:</span>
-              <span className="font-medium ml-2">1.0.0</span>
+              <span className="font-medium ml-2">{health?.version || 'unknown'}</span>
             </div>
             <div>
               <span className="text-gray-600">Backend:</span>
@@ -398,7 +408,13 @@ export function SystemView() {
             </div>
             <div>
               <span className="text-gray-600">Database:</span>
-              <span className="font-medium ml-2">SQLite / PostgreSQL</span>
+              <span className="font-medium ml-2">{dbConnected ? 'Connected' : 'Disconnected'}</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Environment:</span>
+              <span className="font-medium ml-2 capitalize">
+                {cryptoStatus?.environment || 'development'}
+              </span>
             </div>
             <div>
               <span className="text-gray-600">Signing Algorithms:</span>
@@ -407,9 +423,11 @@ export function SystemView() {
               </span>
             </div>
             <div>
-              <span className="text-gray-600">Environment:</span>
-              <span className="font-medium ml-2 capitalize">
-                {cryptoStatus?.environment || 'development'}
+              <span className="text-gray-600">MCP Store:</span>
+              <span className="font-medium ml-2">
+                {mcpLoading ? 'Loading…' : mcpError ? (
+                  <span className="text-red-600">Error</span>
+                ) : mcpSessionCount > 0 ? `${mcpSessionCount} sessions` : 'No sessions'}
               </span>
             </div>
           </div>

@@ -4,7 +4,7 @@ UATP MCP Gateway
 
 Certifying proxy for MCP tool calls.
 
-Sits between an MCP client and one or more upstream MCP servers.
+Sits between an MCP client and a single upstream MCP server.
 Every tool call is:
 1. Evaluated by policy
 2. Logged as a DECISION_POINT capsule
@@ -32,7 +32,7 @@ import logging
 import sys
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any
 
 from mcp.server import Server
 from mcp.types import TextContent, Tool

@@ -101,24 +101,26 @@ class DemoMCPServer:
             elif name == "run_command":
                 return await self._run_command(arguments)
             else:
-                return [TextContent(text=f"Unknown tool: {name}")]
+                return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
     async def _read_file(self, arguments: dict) -> list[TextContent]:
         path = Path(arguments["path"]).expanduser()
         try:
             content = path.read_text()
-            return [TextContent(text=f"Content of {path}:\n{content}")]
+            return [TextContent(type="text", text=f"Content of {path}:\n{content}")]
         except Exception as e:
-            return [TextContent(text=f"Error reading {path}: {e}")]
+            return [TextContent(type="text", text=f"Error reading {path}: {e}")]
 
     async def _write_file(self, arguments: dict) -> list[TextContent]:
         path = Path(arguments["path"]).expanduser()
         content = arguments["content"]
         try:
             path.write_text(content)
-            return [TextContent(text=f"Wrote {len(content)} bytes to {path}")]
+            return [
+                TextContent(type="text", text=f"Wrote {len(content)} bytes to {path}")
+            ]
         except Exception as e:
-            return [TextContent(text=f"Error writing {path}: {e}")]
+            return [TextContent(type="text", text=f"Error writing {path}: {e}")]
 
     async def _run_command(self, arguments: dict) -> list[TextContent]:
         import shlex

@@ -12,7 +12,6 @@ import {
   Box,
   Terminal,
   Ban,
-  Eye,
   Download,
   RefreshCw,
   Loader2,

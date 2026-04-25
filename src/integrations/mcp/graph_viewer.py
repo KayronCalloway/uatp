@@ -20,7 +20,7 @@ import json
 import sqlite3
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
 def list_sessions(db_path: str) -> list[str]:

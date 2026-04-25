@@ -75,10 +75,11 @@ UATP is a full-stack web platform, not just a library.
 
 | Source | How | What's Captured |
 |--------|-----|-----------------|
-| **Claude Code** | Hook in `.claude/hooks/` | Thinking blocks, tool calls, usage, full transcript |
-| **Hermes Agent** | Plugin (`on_session_end`) | Reasoning, tool graphs, economics, session lineage |
-| **Ollama/Gemma** | Transparent proxy (`:11435→:11434`) | Prompt/response, `<think>` tags, eval metrics |
-| **Any OpenAI-compatible** | `BaseHook` subclass | Configurable per platform |
+|| **Claude Code** | Hook in `.claude/hooks/` | Thinking blocks, tool calls, usage, full transcript |
+|| **Hermes Agent** | Plugin (`on_session_end`) | Reasoning, tool graphs, economics, session lineage |
+|| **Ollama/Gemma** | Transparent proxy (`:11435→:11434`) | Prompt/response, `<think>` tags, eval metrics |
+|| **Any OpenAI-compatible** | `BaseHook` subclass | Configurable per platform |
+|| **MCP Gateway** | `python -m src.integrations.mcp.gateway` | Certified tool calls, DECISION_POINT → TOOL_CALL/REFUSAL graph |
 
 ---
 
@@ -131,23 +132,74 @@ curl http://localhost:3000/api/v1/health  # proxied through Next.js
 
 ## MCP Certifying Gateway
 
-When an AI agent calls an MCP tool, the gateway intercepts the request, signs the parameters and result, and stores an audit capsule.
+The MCP Gateway is UATP's primary integration surface. It turns the Model Context Protocol — the emerging standard for AI tool access — into a certifying proxy that signs every action at the boundary.
+
+Why MCP? Because tool calls are the highest-signal moment in an agent's lifecycle. Before the gateway, tool execution is invisible and ungoverned. After the gateway, every call becomes a signed, queryable audit record.
 
 ```
-Agent → MCP Gateway → Upstream Tool Server
-            │
-            ▼
-    Ed25519-signed audit capsule
-    (observed, not asserted)
+Agent (Claude, Cursor, any MCP client)
+        │
+        ▼
+┌─────────────────────┐
+│  UATP MCP Gateway   │  ← intercepts every tool_call
+│  - Policy check     │
+│  - Sign params      │
+│  - Forward / Block  │
+└─────────────────────┘
+        │
+    ┌───┴───┐
+    ▼       ▼
+TOOL_CALL  REFUSAL
+    │
+    ▼
+Ed25519-signed capsule
+(observed, not asserted)
 ```
 
-Evidence classes distinguish fact from inference:
-- `observed` — raw tool call / response
-- `asserted` — agent's claim about the result
-- `derived` — computed downstream
-- `policy` — refusal or guardrail trigger
+Every intercepted call produces a lineage graph:
 
-The gateway stores capsules in a separate SQLite database (`uatp_mcp_store.db`) for audit independence. Browse the audit trail in the **Session Audit Dashboard** at `/system`.
+1. **DECISION_POINT** — the policy evaluation moment (what tool, what constraints)
+2. **TOOL_CALL** or **REFUSAL** — the executed result or blocked reason
+3. **Proof block** — appended to the MCP response so the client knows the call was certified
+
+Evidence classes separate fact from inference:
+
+| Class | Meaning | Example |
+|-------|---------|---------|
+| `observed` | Proxy-verified hard fact | Tool name, timestamp, argument hash |
+| `asserted` | Model's self-reported claim | "I intended to read this file" |
+| `derived` | Computed by the gateway | Latency, status classification |
+| `policy` | Governance decision | Allow/deny, constraint check results |
+
+This distinction matters. Critics of AI auditing often conflate "the system said it did X" with "we can prove X happened." UATP makes the trust boundary explicit.
+
+### Usage
+
+```bash
+# Start an upstream MCP server (any compliant server)
+python -m src.integrations.mcp.demo_server
+
+# Start the certifying gateway
+python -m src.integrations.mcp.gateway \
+    --upstream-cmd python -m src.integrations.mcp.demo_server
+
+# Configure your MCP client (Claude Desktop, Cursor, etc.) to point at the gateway
+```
+
+Browse the audit trail in the **Session Audit Dashboard** at `/system`, or query via CLI:
+
+```bash
+python -m src.integrations.mcp.graph_viewer --latest
+```
+
+### Current Limitations (Alpha)
+
+- **stdio transport only** — HTTP/SSE transport is planned
+- **single upstream server** — multi-server aggregation is planned
+- **no streaming or cancellation** — standard request/response only
+- **local anchoring only** — remote timestamping and blockchain anchoring are planned
+
+Status: Alpha. Core protocol compliance and security hardening are complete. Concurrency, multi-server, and remote anchoring are next.
 
 ---
 
@@ -256,12 +308,12 @@ See [TRUST_MODEL.md](TRUST_MODEL.md) for the full security model.
 | DPO pair extraction | Stable | 1987 pairs from 79 capsules |
 | Confidence calibration | Stable | Autoresearch via Gemma |
 | Cross-model comparison | Stable | Query across all capture sources |
-| Next.js dashboard | Stable | Auth, browse, verify, search, MCP audit |
-| FastAPI backend | Stable | REST API, JWT auth, rate limiting |
-| MCP Certifying Gateway | Stable | Intercept, sign, audit tool calls |
-| ML-DSA-65 post-quantum | Beta | Ed25519 + ML-DSA-65 dual signing |
-| RFC 3161 timestamps | Beta | DigiCert TSA, local fallback |
-| TypeScript SDK | Beta | `npm install @coolwithakay/uatp` |
+|| Next.js dashboard | Stable | Auth, browse, verify, search, MCP audit |
+|| FastAPI backend | Stable | REST API, JWT auth, rate limiting |
+|| MCP Certifying Gateway | Alpha | stdio transport, single-server, needs concurrency + anchoring |
+|| ML-DSA-65 post-quantum | Beta | Ed25519 + ML-DSA-65 dual signing |
+|| RFC 3161 timestamps | Beta | DigiCert TSA, local fallback |
+|| TypeScript SDK | Beta | `npm install @coolwithakay/uatp` |
 
 ---
 

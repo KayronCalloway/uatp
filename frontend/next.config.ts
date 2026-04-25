@@ -29,6 +29,17 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'standalone',
 
+  // Redirect removed routes to home (all views are client-side in MainApp)
+  async redirects() {
+    return [
+      {
+        source: '/system',
+        destination: '/',
+        permanent: true,
+      },
+    ];
+  },
+
   // API proxy for development - makes API calls same-origin so cookies work
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_UATP_API_URL;

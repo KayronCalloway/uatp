@@ -296,7 +296,11 @@ def setup_middleware(app: FastAPI, limiter: RateLimitConfig, metrics: Dict[str, 
 
     # Redis-backed rate limiting middleware
     # Uses sliding window algorithm with Redis for distributed rate limiting
-    use_redis = os.getenv("RATE_LIMIT_USE_REDIS", "true").lower() == "true"
+    env = os.getenv("ENVIRONMENT", os.getenv("UATP_ENV", "development")).lower()
+    use_redis_default = (
+        "false" if env in ("development", "dev", "test", "testing") else "true"
+    )
+    use_redis = os.getenv("RATE_LIMIT_USE_REDIS", use_redis_default).lower() == "true"
     if use_redis:
         logger.info(" Using Redis-backed rate limiter (production mode)")
         app.add_middleware(RateLimitMiddleware, config=limiter)
