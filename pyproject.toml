@@ -64,7 +64,7 @@ dependencies = [
     # Date/Time & Config
     "python-dateutil>=2.8.0",
     "python-dotenv>=1.0.0",
-    "python-multipart>=0.0.22",
+    "python-multipart>=0.0.26",
     "pytz>=2023.3",
     "pyyaml>=6.0.0",
     "toml>=0.10.0",
