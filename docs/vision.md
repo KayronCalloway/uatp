@@ -1,136 +1,92 @@
 # UATP Vision
 
-## The Core Idea
+## The Stakes
 
-Systems that shape the world should leave verifiable memory behind.
+A handful of companies built the most powerful systems in history by treating human expression as free raw material. Every post, every debugged line, every image shared, every late-night answer — scraped, ingested, and monetized without consent, without compensation, and without a mechanism to opt out. The people who fed the machine were treated as inputs, not participants.
 
-AI is making decisions about loans, hiring, medical diagnoses, and legal outcomes. Most of these decisions vanish the moment they're made—no trace of the reasoning, no proof of what was considered, no accountability when things go wrong.
+This is not sustainable. It is becoming legally untenable — courts are already treating unauthorized training-data scraping as copyright infringement. And it is economically shortsighted: the quality of AI depends on the health of its sources, and treating contributors as extractable inputs degrades the supply.
 
-UATP builds the infrastructure to change that.
+At the same time, AI is entering high-stakes domains where opacity is unacceptable. When a robotaxi crashes, when a doctor's AI recommends the wrong medication, when a bank algorithm denies a mortgage, there is no record of what was decided, with what reasoning, at what moment. Liability is unprovable. Trust collapses.
 
----
-
-## Three Horizons
-
-### Horizon 1: Cryptographic Audit Trails (Now)
-
-**Problem:** AI decisions are black boxes. When something goes wrong, there's no evidence trail.
-
-**Solution:** Capsules—cryptographically signed records that capture what was decided, with what reasoning, at what time. Ed25519 signatures make them tamper-evident. RFC 3161 timestamps prove when they existed. Anyone can verify without trusting UATP.
-
-**What this enables:**
-- Regulatory compliance with proof, not promises
-- Insurance underwriting based on transparent AI risk
-- Consumer trust through auditability ("show me why the AI denied my application")
+Both failures trace to the same absence: memory — verifiable memory, owned by the people who created it.
 
 ---
 
-### Horizon 2: Provenance, Attribution, Consent (2-5 years)
+## The Insight
 
-**Problem:** AI systems are trained on humanity's collective knowledge—Reddit posts, Wikipedia edits, Stack Overflow answers, photos, conversations—but the people who created that knowledge have no visibility, no control, and no compensation.
+The infrastructure that makes AI decisions auditable is the same infrastructure that makes AI influences attributable.
 
-**Solution:** The same cryptographic infrastructure that proves AI decisions can prove AI influences. Capsules can track which training data contributed to which outputs, creating verifiable provenance chains. Precisely attributing influence across model training remains an open research problem; UATP's position is not that this is solved, but that verifiable memory is a prerequisite for any serious solution.
+Cryptographically signed records — capsules — capture what an AI decided, what inputs it used, and how it reasoned. Ed25519 signatures make them tamper-evident. RFC 3161 timestamps prove when they existed. Anyone can verify without trusting UATP.
 
-**What this enables:**
+This works in multiple directions at once.
 
-- **Provenance:** Trace any AI output back to its influences
-- **Attribution:** Credit creators whose work shaped the output
-- **Consent:** Let people choose whether and how their contributions are used
-- **Compensation:** Route value back to the humans who made AI possible
+**Forward:** It makes AI court-admissible and insurable. Enterprises can deploy in medicine, finance, and transportation because liability is bounded by cryptographic proof.
 
-This isn't theoretical. Thomson Reuters v. Ross Intelligence (2025) signals that training-data licensing is becoming legally enforceable. The infrastructure for attribution is becoming a legal requirement.
+**Backward:** It captures structured records of how AI actually thinks under real conditions — reasoning chains, confidence scores, error cases, corrections, and outcomes. This is more valuable than scraped text because it contains process, not just product. Model trainers will pay for it because it teaches models to reason, not just to pattern-match.
 
----
-
-### Horizon 3: Post-Labor Economics (5-10 years)
-
-**Problem:** As AI automates more cognitive work, traditional employment shrinks. Without new economic models, we face a future where AI creates unprecedented wealth—captured entirely by those who own the systems.
-
-**Solution:** Universal Basic Attribution.
-
-If AI learned from all of us, all of us should benefit. UATP's provenance infrastructure can power economic flows that recognize humanity's collective contribution to AI capability:
-
-```
-AI writes a bestselling novel (illustrative):
-├─ Novel earns $10 million
-├─ Attribution capsule traces influences:
-│  ├─ 40% influenced by public domain literature → Global Commons Fund
-│  ├─ 30% influenced by living authors → Author royalties
-│  ├─ 15% influenced by user's prompt → User compensation
-│  └─ 15% novel AI innovation → AI company
-│
-└─ Money flows automatically via smart contracts
-```
-
-**The principle:** AI value should flow to those who made it possible—including the billions of people whose daily contributions trained these systems, often without their knowledge or consent.
+Point the same provenance layer backward again, and it traces which human contributions shaped the model. One primitive. Three directions. Trust, training data, and attribution from the same root.
 
 ---
 
-## Why Order Matters
+## The Flywheel
 
-These horizons are sequential, not parallel:
+This creates a self-sustaining loop:
 
-1. **Horizon 1 creates trust.** Without verifiable audit trails, no one will trust AI with consequential decisions.
+1. **Audit.** High-stakes AI deployments require provable decision records. Capsules make them court-admissible and insurable. Enterprises adopt because the liability gap closes.
 
-2. **Horizon 2 requires scale.** Attribution only matters when AI is making enough decisions that the economic flows are meaningful.
+2. **Capture.** Those audited decisions contain something scarce: structured training data that shows how AI reasons under real-world constraints. Not the output — the process that produced it. This is what model trainers actually need.
 
-3. **Horizon 3 requires both.** Post-labor economics needs the trust infrastructure (Horizon 1) and the attribution infrastructure (Horizon 2) to function.
+3. **Attribute.** The same provenance chains that prove what the AI decided can prove what shaped the AI. Human contributions become visible, traceable, and linkable to the outputs they influenced.
 
-Skip a step and the whole thing collapses. You can't build attribution economics for AI that no one trusts. You can't redistribute value from AI decisions that aren't being made.
+4. **Own.** Participation is opt-in. You control your capsules. You choose whether to list them in the training marketplace, set your price, and define your terms. This is not a handout or a tax on AI companies. It is economic participation in a market for something that was previously taken without asking.
 
----
+5. **Filter.** Quality is rewarded; slop is ignored. Precise, useful data gets licensed and compensated. Low-value noise does not. The market of model trainers decides what is valuable — no central committee required.
 
-## The Data Marketplace Bridge
-
-Between audit trails and post-labor economics sits a practical intermediate step: data marketplaces.
-
-UATP capsules are valuable training data. They contain:
-
-- **Reasoning chains:** How AI actually thinks, not just what it outputs
-- **Confidence scores:** Uncertainty quantification that's hard to get elsewhere
-- **Real-world outcomes:** What happened after the decision
-- **Rich metadata:** Efficiency benchmarks, error cases, edge conditions
-
-The training data market is projected to grow from $2.68B to $11.16B by 2030 (23.4% CAGR). UATP-structured data is more valuable than web scraping because it shows the *process*, not just the result.
-
-Capsule creators control their data. Participation is opt-in: you choose whether to list your capsules, set your terms, and receive compensation when your data is licensed for AI training.
-
-This creates immediate economic value for capsule creators while building the infrastructure for broader attribution systems.
+The loop closes automatically. Better data feeds better AI, which produces better decisions, which generate better data. Creators are compensated, so they keep creating. AI improves, so enterprises deploy more widely. More deployment means more audited decisions, more training data, and more attribution.
 
 ---
 
-## What We're Not Building
+## Symbiosis, Not Replacement
 
-UATP is infrastructure, not application. We're building:
+Most people assume AI replaces human contribution. The more interesting case is that it amplifies it — if the link between the two is preserved.
 
-- The cryptographic primitives for verifiable AI memory
-- The provenance chains for attribution
-- The protocol for economic flows
+When a researcher sees their reasoning shape a medical AI, they dig deeper. When a writer watches their style inform a generation of models, they write more. When an open-source maintainer knows their code underpins critical infrastructure, they maintain with purpose. Recognition is not a bonus. It is a structural requirement for sustained contribution.
 
-We're not building:
+Without it, creators become extractable inputs and the well dries up.
 
-- The AI systems themselves
-- The insurance products (we enable them)
-- The regulatory frameworks (we comply with them)
-- The applications (developers build those)
+With it, AI becomes an extension of human reputation rather than a replacement for human effort. The result is not managed decline or passive redistribution. It is productive symbiosis: human ingenuity amplified by artificial intelligence, with the link between the two preserved in verifiable memory.
 
-Think of UATP like TCP/IP—invisible infrastructure that makes everything else possible.
+This also addresses a structural problem no one wants to name. As AI automates cognitive work, the economic value it generates will concentrate in fewer hands unless the flow is restructured. Universal attribution is not utopian. It is a practical mechanism to keep wealth from calcifying at the top while billions are displaced. The world only stays stable when the people who power the system participate in its rewards.
+
+---
+
+## What We Are Building
+
+- **Verifiable memory** for AI decisions and influences
+- **Provenance chains** that keep the human link intact
+- **Economic rails** for value to flow back to its sources
+
+We are not building the AI, the insurance products, the regulatory frameworks, or the end applications. We are building the memory layer that makes all of them trustworthy, attributable, and economically sustainable.
+
+Think of UATP like TCP/IP — invisible infrastructure that makes everything else possible.
 
 ---
 
 ## The Bet
 
-We're betting that:
+1. **Trust is the bottleneck.** Enterprises will not deploy AI in medicine, finance, or transportation without audit trails. Solve trust, and adoption follows.
 
-1. **AI decisions will become more consequential, not less.** Healthcare, finance, legal, government—automation is coming.
+2. **The extraction model is ending.** Scraping the open web for free training data is becoming legally untenable and socially unsustainable. The companies that transition to consent-based, attributed data will outlast the ones that do not.
 
-2. **Liability uncertainty is blocking adoption.** Enterprises want AI but can't deploy it without audit trails.
+3. **Process data is more valuable than product data.** Model trainers do not need more text. They need structured records of reasoning, error, and correction. Audit trails produce exactly this.
 
-3. **Attribution will become legally required.** Copyright law is catching up. Training data licensing is inevitable.
+4. **Attribution is a prerequisite, not a feature.** Precisely tracing influence across model training remains an open research problem. Verifiable memory is the foundation any serious solution must build on.
 
-4. **People will demand their share.** As AI displaces work, the political pressure for economic redistribution will intensify.
+5. **Symbiosis beats replacement.** Systems that carry their creators forward outlast systems that consume them.
 
-UATP is positioned at the intersection of all four trends.
+6. **Wealth concentration without redistribution destabilizes.** As AI displaces work, the political and economic pressure for participation in the gains will intensify. Infrastructure that routes value back to sources is not idealism. It is survival.
+
+7. **The future belongs to intelligence that remembers where it came from.**
 
 ---
 
@@ -147,10 +103,12 @@ UATP is positioned at the intersection of all four trends.
 
 ## The Bottom Line
 
-Today, UATP is a cryptographic audit trail for AI decisions.
+UATP builds the infrastructure for AI to remember its human origins — and for humans to own the memory.
 
-Tomorrow, it's the infrastructure for AI accountability—provenance, attribution, consent, and economic participation.
+Not to slow AI down. To stop treating the people behind it as free raw material. To give creators control, consent, and a share of the value they produce.
 
-The core idea stays constant: **systems that shape the world should leave verifiable memory behind.**
+Quality is rewarded. Ambition is sustained. Slop is ignored. Wealth circulates through verifiable channels instead of concentrating by default. And everyone who contributed carries forward.
+
+**Systems that shape the world should leave verifiable memory behind.**
 
 Everything else follows from that.

@@ -474,6 +474,10 @@ class InMemoryRateLimiter:
             if not self.requests[key]:
                 del self.requests[key]
 
+    async def cleanup_expired_keys(self):
+        """Async cleanup interface for middleware compatibility."""
+        self._cleanup()
+
 
 def create_rate_limiter(
     use_redis: bool = True, config: Optional[RateLimitConfig] = None

@@ -45,7 +45,7 @@
 |-----------|--------|-------|
 | External Security Audit | Q2 2026 | Seeking auditors |
 | Hosted SaaS | Q3 2026 | Architecture designed |
-| PyPI publish v1.1.0 | Q2 2026 | Currently 0.2.1 on PyPI |
+| PyPI publish automation | Q2 2026 | CI/CD pipeline for releases |
 
 ## Experimental (Not Core)
 
