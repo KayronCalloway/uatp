@@ -64,7 +64,7 @@ toml==0.10.2
 # Async utilities
 anyio==4.13.0
 aiofiles==25.1.0
-aiosqlite==0.20.0
+aiosqlite==0.22.1
 
 # JSON handling - Updated
 orjson>=3.11.7  # CVE-2025-67221 fix
