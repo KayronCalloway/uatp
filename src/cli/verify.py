@@ -17,6 +17,7 @@ Commands:
 """
 
 import json
+import re
 import sys
 from enum import IntEnum
 from pathlib import Path
@@ -155,6 +156,188 @@ def determine_exit_code(result: VerificationResult) -> ExitCode:
             return ExitCode.WARNINGS
         return ExitCode.SUCCESS
     return ExitCode.FAILED
+
+
+_SHA256_HEX = re.compile(r"^[0-9a-f]{64}$")
+
+
+def _is_sha256_hex(value: Any) -> bool:
+    return isinstance(value, str) and _SHA256_HEX.fullmatch(value) is not None
+
+
+def _require_fields(
+    item: Dict[str, Any],
+    fields: List[str],
+    prefix: str,
+    errors: List[str],
+) -> None:
+    for field in fields:
+        if field not in item:
+            errors.append(f"{prefix}.{field} missing")
+
+
+def _validate_hash_field(
+    item: Dict[str, Any],
+    field: str,
+    prefix: str,
+    errors: List[str],
+) -> None:
+    if field in item and not _is_sha256_hex(item[field]):
+        errors.append(f"{prefix}.{field} must be lowercase SHA-256 hex")
+
+
+def _artifact_counts(artifacts: Dict[str, Any]) -> Dict[str, int]:
+    files = artifacts.get("files") if isinstance(artifacts.get("files"), list) else []
+    commands = (
+        artifacts.get("commands") if isinstance(artifacts.get("commands"), list) else []
+    )
+    verifications = [
+        cmd
+        for cmd in commands
+        if isinstance(cmd, dict) and cmd.get("is_verification") is True
+    ]
+    return {
+        "files_total": len(files),
+        "commands_total": len(commands),
+        "verification_commands_total": len(verifications),
+    }
+
+
+def verify_artifacts_in_capsule(capsule: Dict[str, Any]) -> Dict[str, Any]:
+    """Verify the base artifact-proof manifest structure in a capsule payload."""
+    errors: List[str] = []
+    warnings: List[str] = []
+    payload = capsule.get("payload") if isinstance(capsule, dict) else None
+    if not isinstance(payload, dict):
+        errors.append("payload missing")
+        payload = {}
+
+    artifacts = payload.get("artifacts")
+    if not isinstance(artifacts, dict):
+        errors.append("payload.artifacts missing")
+        artifacts = {}
+
+    files = artifacts.get("files", [])
+    commands = artifacts.get("commands", [])
+    if not isinstance(files, list):
+        errors.append("payload.artifacts.files must be a list")
+        files = []
+    if not isinstance(commands, list):
+        errors.append("payload.artifacts.commands must be a list")
+        commands = []
+
+    for index, file_artifact in enumerate(files):
+        prefix = f"payload.artifacts.files[{index}]"
+        if not isinstance(file_artifact, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        _require_fields(file_artifact, ["path", "operation"], prefix, errors)
+        operation = file_artifact.get("operation")
+        if operation == "write":
+            _require_fields(
+                file_artifact,
+                [
+                    "content_hash_after",
+                    "content_size_after",
+                    "content_preview",
+                    "content_preview_truncated",
+                    "content_preview_original_length",
+                    "redactions",
+                ],
+                prefix,
+                errors,
+            )
+            _validate_hash_field(file_artifact, "content_hash_after", prefix, errors)
+        elif operation == "patch":
+            _require_fields(
+                file_artifact,
+                [
+                    "old_string_hash",
+                    "new_string_hash",
+                    "old_string_size",
+                    "new_string_size",
+                ],
+                prefix,
+                errors,
+            )
+            _validate_hash_field(file_artifact, "old_string_hash", prefix, errors)
+            _validate_hash_field(file_artifact, "new_string_hash", prefix, errors)
+        elif operation == "read":
+            # H1 read artifacts intentionally bind only to the requested path/window.
+            # They do not claim a content hash unless a future producer captures one.
+            pass
+        elif operation is not None:
+            errors.append(f"{prefix}.operation unsupported: {operation}")
+
+    for index, command in enumerate(commands):
+        prefix = f"payload.artifacts.commands[{index}]"
+        if not isinstance(command, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        _require_fields(
+            command,
+            [
+                "command",
+                "stdout_hash",
+                "stdout_size",
+                "stdout_preview",
+                "stdout_preview_truncated",
+                "stdout_preview_original_length",
+                "redactions",
+                "is_verification",
+                "verification_type",
+                "verification_status",
+            ],
+            prefix,
+            errors,
+        )
+        _validate_hash_field(command, "stdout_hash", prefix, errors)
+
+    counts = _artifact_counts({"files": files, "commands": commands})
+    for key, actual in counts.items():
+        declared = artifacts.get(key)
+        if declared is not None and declared != actual:
+            errors.append(
+                f"payload.artifacts.{key} expected {actual}, found {declared}"
+            )
+
+    return {
+        "is_valid": not errors,
+        "errors": errors,
+        "warnings": warnings,
+        "artifact_checks": counts,
+    }
+
+
+def verify_artifacts_file(
+    path: Path,
+    output_format: str = "text",
+) -> tuple[ExitCode, Dict[str, Any]]:
+    """Verify artifact-proof metadata from a local capsule JSON file."""
+    if not path.exists():
+        data = {"error": f"File not found: {path}", "file": str(path)}
+        if output_format == "text":
+            click.echo(
+                click.style(f"Error: File not found: {path}", fg="red"), err=True
+            )
+        return ExitCode.CONFIG_ERROR, data
+
+    try:
+        capsule = json.loads(path.read_text())
+    except json.JSONDecodeError as e:
+        data = {"error": f"Invalid JSON: {e}", "file": str(path)}
+        if output_format == "text":
+            click.echo(click.style(f"Error: Invalid JSON: {e}", fg="red"), err=True)
+        return ExitCode.CONFIG_ERROR, data
+
+    result = verify_artifacts_in_capsule(capsule)
+    result["file"] = str(path)
+    if output_format == "text":
+        status = "PASSED" if result["is_valid"] else "FAILED"
+        click.echo(f"Artifact verification {status}")
+        for error in result["errors"]:
+            click.echo(f"  • {error}")
+    return (ExitCode.SUCCESS if result["is_valid"] else ExitCode.FAILED), result
 
 
 def verify_bundle_file(
@@ -423,6 +606,11 @@ def verify_workflow_from_server(
 
 @click.command("verify")
 @click.argument("files", nargs=-1, type=click.Path(exists=False))
+@click.option(
+    "--artifacts",
+    type=click.Path(exists=False),
+    help="Verify artifact-proof metadata from a capsule JSON file",
+)
 @click.option("--capsule-id", "-c", help="Verify capsule by ID from server")
 @click.option("--workflow", "-w", help="Verify workflow by ID from server")
 @click.option(
@@ -443,6 +631,7 @@ def verify_workflow_from_server(
 @click.option("--no-color", is_flag=True, help="Disable colored output")
 def verify_cmd(
     files: tuple,
+    artifacts: Optional[str],
     capsule_id: Optional[str],
     workflow: Optional[str],
     server: str,
@@ -471,7 +660,9 @@ def verify_cmd(
     """
     result_data: Any = None
 
-    if files:
+    if artifacts:
+        exit_code, result_data = verify_artifacts_file(Path(artifacts), output)
+    elif files:
         paths = [Path(f) for f in files]
         if len(paths) == 1:
             exit_code, result_data = verify_bundle_file(

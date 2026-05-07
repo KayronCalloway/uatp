@@ -15,6 +15,7 @@ from src.cli.verify import (
     determine_exit_code,
     format_result,
     result_to_dict,
+    verify_artifacts_in_capsule,
     verify_cmd,
 )
 from src.export import UATPBundle, VerificationResult
@@ -151,6 +152,175 @@ class TestCLICommands:
             except json.JSONDecodeError:
                 # Allow for error messages that aren't JSON
                 pass
+
+    def test_verify_artifacts_json_output_for_capsule_file(self):
+        runner = CliRunner()
+        capsule = {
+            "payload": {
+                "artifacts": {
+                    "files": [
+                        {
+                            "path": "src/app.py",
+                            "operation": "write",
+                            "content_hash_after": "a" * 64,
+                            "content_size_after": 12,
+                            "content_preview": "print('ok')",
+                            "content_preview_truncated": False,
+                            "content_preview_original_length": 11,
+                            "redactions": 0,
+                        }
+                    ],
+                    "files_total": 1,
+                    "commands": [
+                        {
+                            "tool": "terminal",
+                            "command": "PYTHONPATH=. .venv/bin/python -m pytest tests -q",
+                            "exit_code": 0,
+                            "stdout_hash": "b" * 64,
+                            "stdout_size": 12,
+                            "stdout_preview": "1 passed\n",
+                            "stdout_preview_truncated": False,
+                            "stdout_preview_original_length": 9,
+                            "redactions": 0,
+                            "is_verification": True,
+                            "verification_type": "test",
+                            "verification_status": "passed",
+                        }
+                    ],
+                    "commands_total": 1,
+                    "verification_commands_total": 1,
+                }
+            }
+        }
+        with runner.isolated_filesystem():
+            Path("capsule.json").write_text(json.dumps(capsule))
+            result = runner.invoke(
+                verify_cmd,
+                ["--artifacts", "capsule.json", "--output", "json"],
+            )
+
+        assert result.exit_code == ExitCode.SUCCESS
+        output = json.loads(result.output)
+        assert output["is_valid"] is True
+        assert output["artifact_checks"]["files_total"] == 1
+        assert output["artifact_checks"]["commands_total"] == 1
+        assert output["artifact_checks"]["verification_commands_total"] == 1
+
+
+class TestArtifactVerification:
+    def test_verify_artifacts_in_capsule_accepts_valid_base_manifest(self):
+        capsule = {
+            "payload": {
+                "artifacts": {
+                    "files": [
+                        {
+                            "path": "src/app.py",
+                            "operation": "patch",
+                            "old_string_hash": "a" * 64,
+                            "new_string_hash": "b" * 64,
+                            "old_string_size": 3,
+                            "new_string_size": 4,
+                        }
+                    ],
+                    "commands": [
+                        {
+                            "tool": "terminal",
+                            "command": "git diff --check",
+                            "exit_code": 0,
+                            "stdout_hash": "c" * 64,
+                            "stdout_size": 0,
+                            "stdout_preview": "",
+                            "stdout_preview_truncated": False,
+                            "stdout_preview_original_length": 0,
+                            "redactions": 0,
+                            "is_verification": True,
+                            "verification_type": "diff_check",
+                            "verification_status": "passed",
+                        }
+                    ],
+                    "files_total": 1,
+                    "commands_total": 1,
+                    "verification_commands_total": 1,
+                }
+            }
+        }
+
+        result = verify_artifacts_in_capsule(capsule)
+
+        assert result["is_valid"] is True
+        assert result["errors"] == []
+        assert result["artifact_checks"]["files_total"] == 1
+        assert result["artifact_checks"]["commands_total"] == 1
+
+    def test_verify_artifacts_in_capsule_reports_missing_artifacts(self):
+        result = verify_artifacts_in_capsule({"payload": {}})
+
+        assert result["is_valid"] is False
+        assert "payload.artifacts missing" in result["errors"]
+
+    def test_verify_artifacts_in_capsule_reports_bad_hash_shape(self):
+        capsule = {
+            "payload": {
+                "artifacts": {
+                    "files": [
+                        {
+                            "path": "src/app.py",
+                            "operation": "write",
+                            "content_hash_after": "not-a-sha256",
+                            "content_size_after": 1,
+                            "content_preview": "x",
+                            "content_preview_truncated": False,
+                            "content_preview_original_length": 1,
+                            "redactions": 0,
+                        }
+                    ],
+                    "commands": [],
+                }
+            }
+        }
+
+        result = verify_artifacts_in_capsule(capsule)
+
+        assert result["is_valid"] is False
+        assert any("content_hash_after" in error for error in result["errors"])
+
+    def test_verify_artifacts_in_capsule_accepts_h1_read_artifact_shape(self):
+        capsule = {
+            "payload": {
+                "artifacts": {
+                    "files": [
+                        {
+                            "path": "src/bar.py",
+                            "operation": "read",
+                            "offset": 1,
+                            "limit": 200,
+                        }
+                    ],
+                    "files_total": 1,
+                    "commands": [],
+                    "commands_total": 0,
+                    "verification_commands_total": 0,
+                }
+            }
+        }
+
+        result = verify_artifacts_in_capsule(capsule)
+
+        assert result["is_valid"] is True
+        assert result["errors"] == []
+
+    def test_verify_artifacts_in_capsule_reports_non_object_command_without_crash(self):
+        capsule = {"payload": {"artifacts": {"files": [], "commands": ["bad"]}}}
+
+        result = verify_artifacts_in_capsule(capsule)
+
+        assert result["is_valid"] is False
+        assert "payload.artifacts.commands[0] must be an object" in result["errors"]
+        assert result["artifact_checks"] == {
+            "files_total": 0,
+            "commands_total": 1,
+            "verification_commands_total": 0,
+        }
 
 
 class TestResultToDictEdgeCases:
