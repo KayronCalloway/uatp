@@ -27,7 +27,12 @@ class ChainSealer:
     Seals provide legal admissibility and tamper-evidence.
     """
 
-    def __init__(self, seals_dir: str = None, signing_key_hex: str = None):
+    _SIGNING_SEED_BYTES = 32
+    _EPHEMERAL_SIGNING_KEY_ENVS = {"dev", "development", "local", "test", "testing"}
+
+    def __init__(
+        self, seals_dir: Optional[str] = None, signing_key_hex: Optional[str] = None
+    ):
         """
         Initialize the ChainSealer.
 
@@ -43,13 +48,14 @@ class ChainSealer:
         # Load or create signing key
         signing_key_hex = signing_key_hex or os.getenv("UATP_SIGNING_KEY")
         if signing_key_hex:
-            seed = bytes.fromhex(signing_key_hex)
+            seed = self._decode_signing_seed(signing_key_hex)
             self.signing_key = nacl.signing.SigningKey(seed)
-        else:
-            # Generate a new key
+        elif self._allows_ephemeral_signing_key():
+            # Generate an ephemeral key for explicit local/dev/test use without leaking the secret seed.
             self.signing_key = nacl.signing.SigningKey.generate()
-            print(
-                f"WARNING: No signing key provided. Generated a new key: {self.signing_key.encode(nacl.encoding.HexEncoder).decode('utf-8')}"
+        else:
+            raise ValueError(
+                "UATP_SIGNING_KEY is required in production/staging and must be a valid hex-encoded 32-byte Ed25519 seed"
             )
 
         # Get the verify key
@@ -58,7 +64,40 @@ class ChainSealer:
             "utf-8"
         )
 
-    def _get_seal_path(self, chain_id: str, seal_id: str = None) -> str:
+    @classmethod
+    def _allows_ephemeral_signing_key(cls) -> bool:
+        """Allow generated signing keys only in explicit non-production environments."""
+        environment = (
+            (
+                os.getenv("ENVIRONMENT")
+                or os.getenv("UATP_ENV")
+                or os.getenv("APP_ENV")
+                or ""
+            )
+            .strip()
+            .lower()
+        )
+        return environment in cls._EPHEMERAL_SIGNING_KEY_ENVS
+
+    @classmethod
+    def _decode_signing_seed(cls, signing_key_hex: str) -> bytes:
+        """Decode and validate the UATP Ed25519 signing seed."""
+        normalized_key = signing_key_hex.strip()
+        try:
+            seed = bytes.fromhex(normalized_key)
+        except ValueError as exc:
+            raise ValueError(
+                "UATP_SIGNING_KEY must be a valid hex-encoded 32-byte Ed25519 seed"
+            ) from exc
+
+        if len(seed) != cls._SIGNING_SEED_BYTES:
+            raise ValueError(
+                "UATP_SIGNING_KEY must be a valid hex-encoded 32-byte Ed25519 seed"
+            )
+
+        return seed
+
+    def _get_seal_path(self, chain_id: str, seal_id: Optional[str] = None) -> str:
         """Get the path to store a chain seal."""
         if not seal_id:
             return os.path.join(self.seals_dir, f"{chain_id}_seals.json")

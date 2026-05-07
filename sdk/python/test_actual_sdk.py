@@ -1,6 +1,23 @@
 """
-Test the actual UATP SDK (not just raw API calls)
+Live smoke test for the actual UATP SDK client.
+
+This file is not part of the default active suite. It requires a running UATP API
+server on localhost:8000 and explicit opt-in via UATP_RUN_LIVE_SDK_TESTS=1.
 """
+
+import os
+
+import pytest
+
+pytestmark = pytest.mark.skipif(
+    os.getenv("UATP_RUN_LIVE_SDK_TESTS") != "1",
+    reason="live SDK smoke test; requires API server and UATP_RUN_LIVE_SDK_TESTS=1",
+)
+if os.getenv("UATP_RUN_LIVE_SDK_TESTS") != "1":
+    pytest.skip(
+        "live SDK smoke test; requires API server and UATP_RUN_LIVE_SDK_TESTS=1",
+        allow_module_level=True,
+    )
 
 from uatp import UATP
 

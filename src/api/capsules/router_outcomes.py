@@ -84,7 +84,7 @@ async def record_capsule_outcome(
                 raise HTTPException(
                     status_code=403, detail="Access denied: legacy capsule"
                 )
-            if str(capsule.owner_id) != user_id:
+            if capsule.owner_id != to_uuid(user_id):
                 raise HTTPException(status_code=403, detail="Access denied")
 
         # Parse metrics if provided
@@ -151,7 +151,7 @@ async def get_capsule_outcome(
                 raise HTTPException(
                     status_code=403, detail="Access denied: legacy capsule"
                 )
-            if str(capsule.owner_id) != user_id:
+            if capsule.owner_id != to_uuid(user_id):
                 raise HTTPException(status_code=403, detail="Access denied")
 
         return {
@@ -282,7 +282,7 @@ async def link_followup_capsule(
                 raise HTTPException(
                     status_code=403, detail="Access denied: legacy capsule"
                 )
-            if str(capsule.owner_id) != user_id:
+            if capsule.owner_id != to_uuid(user_id):
                 raise HTTPException(status_code=403, detail="Access denied")
 
         # Verify follow-up capsule exists
@@ -301,7 +301,7 @@ async def link_followup_capsule(
                 raise HTTPException(
                     status_code=403, detail="Access denied: legacy follow-up capsule"
                 )
-            if str(followup.owner_id) != user_id:
+            if followup.owner_id != to_uuid(user_id):
                 raise HTTPException(
                     status_code=403,
                     detail="Access denied: cannot link capsule you don't own",

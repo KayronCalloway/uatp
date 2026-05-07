@@ -5,7 +5,7 @@ End-to-End Test: Verify new capsules go to PostgreSQL (frontend database)
 import asyncio
 import sys
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent))
@@ -39,7 +39,7 @@ async def test_capture_flow():
         "capsule_id": test_id,
         "capsule_type": "reasoning_trace",
         "version": "7.2",
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(UTC),
         "status": "sealed",
         "payload": {
             "prompt": "End-to-end test capture",

@@ -38,17 +38,21 @@ IS_SQLITE = "sqlite" in DATABASE_URL.lower()
 logger = logging.getLogger(__name__)
 
 
-def to_uuid(user_id: str) -> uuid.UUID:
+def to_uuid(user_id: str | uuid.UUID) -> uuid.UUID:
     """
-    Convert a user_id string to a UUID object for database queries.
+    Convert a user ID to a UUID object for database queries.
 
-    The owner_id column in the database is of type UUID(as_uuid=True),
-    so we need to convert the string user_id from JWT tokens to UUID.
+    The owner_id column uses UUID(as_uuid=True). Auth layers may provide either
+    a UUID object or a UUID string, so normalize both forms at the router boundary.
     """
+    if isinstance(user_id, uuid.UUID):
+        return user_id
+
     try:
-        return uuid.UUID(user_id)
-    except (ValueError, TypeError):
-        logger.warning(f"Invalid user_id format (not a UUID): {user_id[:8]}...")
+        return uuid.UUID(str(user_id))
+    except (ValueError, TypeError, AttributeError):
+        user_id_preview = str(user_id)[:8]
+        logger.warning(f"Invalid user_id format (not a UUID): {user_id_preview}...")
         raise HTTPException(status_code=400, detail="Invalid user ID format")
 
 

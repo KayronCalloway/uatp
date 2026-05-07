@@ -1,11 +1,21 @@
 """
-Test the UATP SDK against the live backend
+Live smoke test for the UATP SDK raw API flow.
+
+This file is not part of the default active suite. It requires a running UATP API
+server on localhost:8000 and explicit opt-in via UATP_RUN_LIVE_SDK_TESTS=1.
 """
 
 import json
+import os
 from datetime import datetime
 
+import pytest
 import requests
+
+pytestmark = pytest.mark.skipif(
+    os.getenv("UATP_RUN_LIVE_SDK_TESTS") != "1",
+    reason="live SDK smoke test; requires API server and UATP_RUN_LIVE_SDK_TESTS=1",
+)
 
 
 # Test creating a capsule directly via API

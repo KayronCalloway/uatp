@@ -258,6 +258,7 @@ def _convert_to_uatp_objects(
     for i, msg in enumerate(messages):
         role = msg["role"]
         content = msg.get("content") or ""
+        visible_content = content
         ts = _ts_from_epoch(msg.get("timestamp")) or now
 
         # Only user and assistant messages map to ConversationMessage.
@@ -266,13 +267,20 @@ def _convert_to_uatp_objects(
             continue
 
         # For assistant messages, prepend the extended thinking if available.
-        # This is the model's actual chain-of-thought — the most valuable
-        # data for a reasoning trace capsule.
+        # RichCaptureEnhancer only sees ConversationMessage.content, so the
+        # thinking must ride through the enhancer in-band, then build_capsule()
+        # splits it back into separate `thinking` fields. Do not drop
+        # reasoning-only assistant turns — those are valid reasoning steps.
         reasoning = msg.get("reasoning") or ""
+        if role == "assistant" and reasoning.strip():
+            content = f"[THINKING]\n{reasoning.strip()}\n[/THINKING]"
+            if (visible_content or "").strip():
+                content = f"{content}\n\n{visible_content.strip()}"
 
-        # Skip empty assistant messages (pure tool dispatch with no text or thinking).
-        # These are just "I'm going to call tool X" with no reasoning — noise.
-        if role == "assistant" and not content.strip():
+        # Skip assistant turns only when both visible content and thinking are
+        # empty. Tool-dispatch turns with reasoning still matter for the action
+        # graph; empty dispatch shells do not.
+        if role == "assistant" and not content.strip() and not reasoning.strip():
             continue
 
         signal_type = "neutral"
@@ -287,57 +295,289 @@ def _convert_to_uatp_objects(
             references_previous = signal.references_previous
             sentiment_delta = signal.sentiment_delta
 
-            # Guard: "ok" at the start of a new topic or question is not acceptance.
-            # The detector's ^ok\b pattern fires on "ok but..." and "ok how..."
-            # which are actually topic pivots or corrections.
+            # -----------------------------------------------------------------
+            # Hermes signal guards — post-process detector output to fix false
+            # positives that are common in CLI usage but rare in chat.
+            # -----------------------------------------------------------------
+            matched_phrases = signal.matched_phrases or []
+            lower = content.lower().strip()
+            words = lower.split()
+            word_count = len(words)
+            pa_len = len(previous_assistant_response or "")
+
+            # ---- Guard A: "ok"/"okay" discourse markers ----
+            # Real acceptances are short acknowledgments with gratitude.
+            # Directives disguised as "ok" are the #1 false positive.
+            if signal_type == "acceptance" and (
+                lower.startswith("ok") or lower.startswith("okay")
+            ):
+                gratitude = (
+                    "thanks",
+                    "thank you",
+                    "perfect",
+                    "great",
+                    "awesome",
+                    "cool",
+                    "nice",
+                    "good",
+                    "sounds good",
+                    "makes sense",
+                    "got it",
+                    "i see",
+                    "appreciate",
+                )
+                has_gratitude = any(g in lower for g in gratitude)
+                directive_verbs = (
+                    "fix",
+                    "change",
+                    "push",
+                    "run",
+                    "look",
+                    "check",
+                    "add",
+                    "remove",
+                    "delete",
+                    "update",
+                    "create",
+                    "build",
+                    "launch",
+                    "audit",
+                    "sweep",
+                    "commit",
+                    "merge",
+                    "pull",
+                    "apply",
+                    "implement",
+                    "write",
+                    "edit",
+                    "move",
+                    "replace",
+                    "restore",
+                    "reset",
+                    "kill",
+                    "stop",
+                    "start",
+                    "restart",
+                    "upload",
+                    "download",
+                    "generate",
+                    "make",
+                    "set",
+                    "configure",
+                    "deploy",
+                    "verify",
+                    "test",
+                    "go",
+                    "do",
+                )
+                has_directive = any(w in directive_verbs for w in words)
+                if has_directive or (word_count > 5 and not has_gratitude):
+                    signal_type = "neutral"
+                    references_previous = False
+
+            # ---- Guard B: substring-only acceptance false positives ----
+            # The detector does substring matching on phrases like "great",
+            # "fixed", "cool", "nice". In long CLI messages these appear inside
+            # completely unrelated statements and create massive noise.
             if signal_type == "acceptance":
-                lower = content.lower().strip()
-                if lower.startswith("ok") or lower.startswith("okay"):
-                    # Real "ok" acceptances are short ("ok", "ok thanks", "ok go ahead").
-                    # Longer messages starting with "ok" are discourse markers ("ok, so...")
-                    # and are almost always new questions or redirects, not acceptance.
-                    word_count = len(lower.split())
-                    pivot_words = ("but", "however", "actually", "wait", "no", "not")
-                    has_pivot = any(w in lower[:50] for w in pivot_words)
-                    has_question = "?" in lower
-                    if word_count > 4 or has_pivot or has_question:
+                pattern_triggered = any(
+                    p.startswith("pattern:") for p in matched_phrases
+                )
+                phrase_triggered = any(
+                    not p.startswith("pattern:") for p in matched_phrases
+                )
+
+                # If triggered ONLY by substring phrases (not regex), be very skeptical
+                if phrase_triggered and not pattern_triggered:
+                    if word_count > 10:
                         signal_type = "neutral"
                         references_previous = False
+                    elif "?" in lower:
+                        signal_type = "neutral"
+                        references_previous = False
+                    else:
+                        # Medium length: require it starts with an acceptance word
+                        if not re.search(
+                            r"^(yes|yep|yeah|yea|sure|ok|okay|right|done|perfect|thanks|thank you|great|awesome|excellent|nice|cool|looks good|sounds good|it works|working now|fixed|solved|got it|makes sense|do it|go ahead|ship it|lgtm)\b",
+                            lower,
+                        ):
+                            signal_type = "neutral"
+                            references_previous = False
 
-            # Guard: soft_rejection on follow-up questions is a false positive.
-            # The detector sees zero shared content words and calls it rejection,
-            # but "so what about..." / "how does..." are legitimate follow-ups.
+            # ---- Guard C: soft_rejection on legitimate follow-ups ----
+            # Soft rejection means the user IGNORED the assistant. In CLI usage
+            # this is almost never true — users pivot, clarify, or give new tasks.
             if signal_type == "soft_rejection":
-                lower = content.lower().strip()
-                question_starters = (
-                    "so ",
-                    "what ",
-                    "how ",
-                    "can ",
-                    "could ",
-                    "would ",
-                    "will ",
-                    "why ",
-                    "when ",
-                    "where ",
-                    "who ",
-                    "which ",
-                    "is ",
-                    "are ",
-                    "do ",
-                    "does ",
-                    "did ",
-                )
-                if "?" in lower or any(lower.startswith(w) for w in question_starters):
+                # Questions are never rejections
+                if "?" in lower:
                     signal_type = "neutral"
                     references_previous = True
+                # Bug reports are never rejections
+                bug_phrases = (
+                    "isn't",
+                    "isnt",
+                    "not working",
+                    "doesn't work",
+                    "doesnt work",
+                    "didn't work",
+                    "didnt work",
+                    "still broken",
+                    "still not",
+                    "is gone",
+                    "missing",
+                    "can't find",
+                    "cant find",
+                    "error",
+                    "bug",
+                    "issue",
+                    "problem",
+                    "wrong",
+                    "broken",
+                    "fail",
+                    "failed",
+                    "doesn't",
+                    "doesnt",
+                    "didn't",
+                    "didnt",
+                    "can't",
+                    "cant",
+                    "won't",
+                    "wont",
+                )
+                if any(p in lower for p in bug_phrases):
+                    signal_type = "neutral"
+                    references_previous = True
+                # Directives are never rejections
+                directive_starters = (
+                    "lets ",
+                    "let's ",
+                    "please ",
+                    "can you ",
+                    "could you ",
+                    "would you ",
+                    "will you ",
+                    "go ahead",
+                    "do ",
+                    "make ",
+                    "run ",
+                    "check ",
+                    "verify ",
+                    "push ",
+                    "pull ",
+                    "commit ",
+                    "merge ",
+                    "add ",
+                    "remove ",
+                    "delete ",
+                    "update ",
+                    "create ",
+                    "build ",
+                    "launch ",
+                    "audit ",
+                    "sweep ",
+                    "apply ",
+                    "implement ",
+                    "write ",
+                    "edit ",
+                    "move ",
+                    "replace ",
+                    "restore ",
+                    "reset ",
+                    "kill ",
+                    "stop ",
+                    "start ",
+                    "restart ",
+                    "upload ",
+                    "download ",
+                    "generate ",
+                    "set ",
+                    "configure ",
+                    "deploy ",
+                    "test ",
+                )
+                if any(lower.startswith(w) for w in directive_starters):
+                    signal_type = "neutral"
+                    references_previous = True
+                # Deferrals are neutral
+                if lower in (
+                    "whatever you think",
+                    "whatever you think is best",
+                    "up to you",
+                    "you decide",
+                    "your call",
+                    "whatever",
+                ):
+                    signal_type = "neutral"
+                    references_previous = True
+                # Factual statements about state are neutral
+                if any(
+                    lower.startswith(w)
+                    for w in (
+                        "there are ",
+                        "there is ",
+                        "i have ",
+                        "we have ",
+                        "it has ",
+                        "this has ",
+                        "there's ",
+                    )
+                ):
+                    signal_type = "neutral"
+                    references_previous = True
+
+            # ---- Guard D: catch missed corrections ----
+            # Short imperatives after a long assistant response are very often
+            # terse corrections that the detector missed.
+            if signal_type == "neutral" and pa_len > 500 and word_count <= 5:
+                correction_imperatives = (
+                    "fix it",
+                    "fix that",
+                    "fix this",
+                    "change it",
+                    "change that",
+                    "change this",
+                    "do it again",
+                    "try again",
+                    "redo it",
+                    "redo that",
+                    "not quite",
+                    "almost but",
+                    "close but",
+                    "still wrong",
+                    "wrong",
+                    "no",
+                    "nope",
+                    "not that",
+                    "not this",
+                    "not it",
+                    "bad",
+                    "worse",
+                    "terrible",
+                    "awful",
+                )
+                if any(lower.startswith(c) for c in correction_imperatives):
+                    signal_type = "correction"
+                    references_previous = True
+                    sentiment_delta = -0.4
+
+            # ---- Guard E: intent restatements are corrections ----
+            # Messages that explicitly restate what the user wanted after the
+            # assistant misunderstood are corrections, even if phrased politely.
+            if signal_type == "neutral" and pa_len > 300:
+                if re.search(
+                    r"^(i asked|i meant|i said|i was asking|i was talking|i want|i need|the issue is|what i want|what i need|what i asked)",
+                    lower,
+                ):
+                    signal_type = "correction"
+                    references_previous = True
+                    sentiment_delta = -0.3
 
             previous_user_msgs.append(content)
             # Reset after user message; next assistant will set this
             previous_assistant_response = None
 
-        if role == "assistant" and content.strip():
-            previous_assistant_response = content
+        if role == "assistant" and visible_content.strip():
+            previous_assistant_response = visible_content
 
         conv_msg = ConversationMessage(
             role=role,
@@ -731,7 +971,7 @@ def write_capsule(capsule: Dict) -> bool:
 
 def capture_session(
     session_id: str,
-    model: str = None,
+    model: Optional[str] = None,
     platform: str = "hermes-cli",
 ) -> Optional[Dict]:
     """Full pipeline: read session -> RichCaptureEnhancer -> sign -> write."""

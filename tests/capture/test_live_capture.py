@@ -4,25 +4,23 @@ Test script for the UATP Live Capture System
 """
 
 import json
+import os
 import time
 from datetime import datetime
 
+import pytest
 import requests
+
+pytestmark = pytest.mark.skipif(
+    os.getenv("UATP_RUN_LIVE_CAPTURE_TESTS") != "1",
+    reason="live capture smoke test; requires API server and UATP_RUN_LIVE_CAPTURE_TESTS=1",
+)
 
 
 def test_server_connection():
     """Test if the UATP server is running."""
-    try:
-        response = requests.get("http://localhost:8000/health")
-        if response.status_code == 200:
-            print("[OK] Server is running")
-            return True
-        else:
-            print(f"[ERROR] Server returned status {response.status_code}")
-            return False
-    except Exception as e:
-        print(f"[ERROR] Cannot connect to server: {e}")
-        return False
+    response = requests.get("http://localhost:8000/health", timeout=5)
+    assert response.status_code == 200
 
 
 def test_capture_endpoints():

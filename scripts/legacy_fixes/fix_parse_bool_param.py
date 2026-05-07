@@ -16,14 +16,14 @@ def fix_parse_bool_param():
     # 1. Add parse_bool_param utility function right before validate_capsule
     if "def parse_bool_param(value: str) -> bool:" not in content:
         target = "# Utility functions\ndef validate_capsule(capsule_data: dict) -> bool:"
-        replacement = """# Utility functions
+        replacement = '''# Utility functions
 def parse_bool_param(value: str) -> bool:
     """Parse a string query parameter as a boolean value."""
     if not value:
         return False
     return str(value).lower() in ('true', '1', 'yes', 't', 'y')
 
-def validate_capsule(capsule_data: dict) -> bool:"""
+def validate_capsule(capsule_data: dict) -> bool:'''
 
         if target in content:
             content = content.replace(target, replacement)

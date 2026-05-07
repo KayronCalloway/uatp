@@ -95,6 +95,12 @@ tests/legacy/
 # Database files
 *.sqlite3
 *.db
+*.db.backup
+*.db.backup.*
+*.sqlite.backup
+*.sqlite.backup.*
+*.sqlite3.backup
+*.sqlite3.backup.*
 file:memdb_*
 :memory:*
 

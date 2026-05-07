@@ -199,6 +199,22 @@ result = uatp.certify(
 )
 ```
 
+## Live SDK smoke checks
+
+The files `test_sdk.py` and `test_actual_sdk.py` are live smoke checks, not the
+active unit/integration suite. They require a running UATP API server on
+`http://localhost:8000` and explicit opt-in:
+
+```bash
+UATP_RUN_LIVE_SDK_TESTS=1 PYTHONPATH=. .venv/bin/python -m pytest sdk/python -q
+```
+
+Default repo verification uses:
+
+```bash
+PYTHONPATH=. .venv/bin/python -m pytest tests -q
+```
+
 ## Error Handling
 
 ```python

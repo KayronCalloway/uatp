@@ -22,6 +22,7 @@ from ._shared import (
     is_admin_user,
     logger,
     select,
+    to_uuid,
 )
 
 router = APIRouter()
@@ -65,7 +66,7 @@ async def get_capsule_ancestors(
                 raise HTTPException(
                     status_code=403, detail="Access denied: legacy capsule (admin-only)"
                 )
-            if str(capsule.owner_id) != user_id:
+            if capsule.owner_id != to_uuid(user_id):
                 raise HTTPException(status_code=403, detail="Access denied")
 
         ancestors = await capsule_lifecycle_service.get_ancestors(capsule_id, depth)
@@ -125,7 +126,7 @@ async def get_capsule_descendants(
                 raise HTTPException(
                     status_code=403, detail="Access denied: legacy capsule (admin-only)"
                 )
-            if str(capsule.owner_id) != user_id:
+            if capsule.owner_id != to_uuid(user_id):
                 raise HTTPException(status_code=403, detail="Access denied")
 
         descendants = await capsule_lifecycle_service.get_descendants(capsule_id, depth)
@@ -181,7 +182,7 @@ async def get_capsule_lineage(
                 raise HTTPException(
                     status_code=403, detail="Access denied: legacy capsule (admin-only)"
                 )
-            if str(capsule.owner_id) != user_id:
+            if capsule.owner_id != to_uuid(user_id):
                 raise HTTPException(status_code=403, detail="Access denied")
 
         lineage = await capsule_lifecycle_service.get_lineage(capsule_id)

@@ -298,7 +298,7 @@ async def get_capsule(
                     detail="Access denied: legacy capsule (admin-only)",
                 )
             # Non-admin users can only access their own capsules
-            if str(capsule.owner_id) != user_id:
+            if capsule.owner_id != to_uuid(user_id):
                 raise HTTPException(status_code=403, detail="Access denied")
 
         # Fix timestamp format

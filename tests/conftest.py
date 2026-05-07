@@ -12,6 +12,9 @@ import os
 os.environ.setdefault(
     "JWT_SECRET", "test-jwt-secret-for-integration-tests-minimum-32-bytes"
 )
+# SECURITY: Force a deterministic valid Ed25519 seed for tests so developer shell
+# config cannot break app imports. Value is test-only and never used in prod.
+os.environ["UATP_SIGNING_KEY"] = "00" * 32
 
 import asyncio
 import tempfile
@@ -61,6 +64,7 @@ def test_env_vars():
         "AUTH__JWT_SECRET_KEY": "test-secret-key-for-testing-only",
         "DATABASE__DATABASE_URL": "sqlite:///test.db",
         "CACHE__CACHE_TYPE": "memory",
+        "UATP_SIGNING_KEY": "00" * 32,
     }
 
     os.environ.update(test_env)
