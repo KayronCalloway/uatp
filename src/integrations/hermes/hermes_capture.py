@@ -22,6 +22,7 @@ import json
 import logging
 import os
 import re
+import shlex
 import sqlite3
 import sys
 from collections import Counter
@@ -220,6 +221,68 @@ def _parse_tool_result(result: Any) -> Dict[str, Any]:
     return parsed if isinstance(parsed, dict) else {"output": result, "exit_code": None}
 
 
+def _classify_verification_command(
+    command: str,
+    exit_code: Optional[int],
+    output: str = "",
+) -> Dict[str, Optional[str] | bool]:
+    """Classify commands that verify correctness rather than mutate state."""
+    output_lower = output.lower()
+    verification_type: Optional[str] = None
+
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        tokens = command.split()
+
+    # Ignore environment assignments before the executable, e.g.
+    # PYTHONPATH=. .venv/bin/python -m pytest tests -q
+    while tokens and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", tokens[0]):
+        tokens = tokens[1:]
+
+    executable = Path(tokens[0]).name.lower() if tokens else ""
+    lowered = [token.lower() for token in tokens]
+
+    if executable in {"pytest"}:
+        verification_type = "test"
+    elif executable in {"ruff"} and len(lowered) > 1 and lowered[1] == "check":
+        verification_type = "lint"
+    elif executable == "git" and lowered[1:3] == ["diff", "--check"]:
+        verification_type = "diff_check"
+    elif executable in {"python", "python3"} and "-m" in lowered:
+        module_index = lowered.index("-m") + 1
+        module = lowered[module_index] if module_index < len(lowered) else ""
+        module_args = lowered[module_index + 1 :]
+        if module == "pytest":
+            verification_type = "test"
+        elif module == "ruff" and module_args[:1] == ["check"]:
+            verification_type = "lint"
+        elif module == "py_compile":
+            verification_type = "compile"
+
+    if verification_type is None:
+        return {
+            "is_verification": False,
+            "verification_type": None,
+            "verification_status": None,
+        }
+
+    status = "passed" if exit_code == 0 else "failed"
+    if exit_code is None and verification_type == "test":
+        failure_markers = (" failed", " error", " errors", " failures")
+        status = (
+            "failed"
+            if any(marker in f" {output_lower}" for marker in failure_markers)
+            else "passed"
+        )
+
+    return {
+        "is_verification": True,
+        "verification_type": verification_type,
+        "verification_status": status,
+    }
+
+
 def _extract_file_artifacts(
     invocations: List[Dict[str, Any]],
 ) -> List[Dict[str, Any]]:
@@ -317,22 +380,25 @@ def _extract_command_artifacts(
             continue
 
         result = _parse_tool_result(inv.get("result_preview"))
+        exit_code = result.get("exit_code")
         output = result.get("output") or result.get("stdout") or ""
         output_text = output if isinstance(output, str) else str(output)
         preview = _build_artifact_preview(output_text)
         redacted_output = preview["redacted_text"]
+        verification = _classify_verification_command(command, exit_code, output_text)
 
         entry: Dict[str, Any] = {
             "tool": tool,
             "call_id": inv.get("call_id"),
             "command": command,
-            "exit_code": result.get("exit_code"),
+            "exit_code": exit_code,
             "stdout_hash": _sha256_hex(redacted_output),
             "stdout_size": len(redacted_output),
             "stdout_preview": preview["preview"],
             "stdout_preview_truncated": preview["truncated"],
             "stdout_preview_original_length": preview["original_length"],
             "redactions": preview["redactions"],
+            **verification,
         }
         if args.get("workdir"):
             entry["workdir"] = args.get("workdir")
@@ -341,6 +407,30 @@ def _extract_command_artifacts(
         commands.append(entry)
 
     return commands
+
+
+def _summarize_command_verifications(
+    commands: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Summarize verification command results for quick capsule review."""
+    verifications = [cmd for cmd in commands if cmd.get("is_verification") is True]
+    by_type = Counter(
+        cmd.get("verification_type")
+        for cmd in verifications
+        if cmd.get("verification_type")
+    )
+    by_status = Counter(
+        cmd.get("verification_status")
+        for cmd in verifications
+        if cmd.get("verification_status")
+    )
+    return {
+        "verification_commands_total": len(verifications),
+        "verification_commands_passed": by_status.get("passed", 0),
+        "verification_commands_failed": by_status.get("failed", 0),
+        "verification_commands_by_type": dict(by_type.most_common()),
+        "verification_commands_by_status": dict(by_status.most_common()),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -1040,6 +1130,7 @@ def build_capsule(
         if command_artifacts:
             artifacts["commands"] = command_artifacts
             artifacts["commands_total"] = len(command_artifacts)
+            artifacts.update(_summarize_command_verifications(command_artifacts))
 
     # --- Cost economics ---
     # Real compute cost data: token usage, caching efficiency, billing.
