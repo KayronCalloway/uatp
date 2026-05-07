@@ -149,3 +149,49 @@ def test_extract_file_artifacts_is_stable_across_mixed_tools():
     assert [m["operation"] for m in manifest] == ["write", "patch"]
     assert manifest[0]["path"] == "/tmp/a.txt"
     assert manifest[1]["path"] == "/tmp/b.py"
+
+
+def test_write_file_preview_is_redacted_and_truncated_but_hashes_full_content():
+    secret_value = "sk-synthetic1234567890"
+    long_content = f"api_key={secret_value}\n" + ("x" * 5000)
+    invocations = [
+        {
+            "tool": "write_file",
+            "call_id": "call_7",
+            "arguments": {
+                "path": "src/large.py",
+                "content": long_content,
+            },
+        }
+    ]
+
+    manifest = hermes_capture._extract_file_artifacts(invocations)
+
+    assert len(manifest) == 1
+    entry = manifest[0]
+    assert entry["content_hash_after"] == _sha256_hex(long_content)
+    assert entry["content_size_after"] == len(long_content)
+    assert entry["content_preview_truncated"] is True
+    assert entry["content_preview_original_length"] == len(long_content)
+    assert len(entry["content_preview"]) <= hermes_capture._ARTIFACT_PREVIEW_CHARS
+    assert secret_value not in entry["content_preview"]
+    assert "[REDACTED]" in entry["content_preview"]
+    assert entry["redactions"] >= 1
+
+
+def test_short_write_file_preview_records_not_truncated_metadata():
+    content = "print('safe')\n"
+    invocations = [
+        {
+            "tool": "write_file",
+            "call_id": "call_8",
+            "arguments": {"path": "src/small.py", "content": content},
+        }
+    ]
+
+    entry = hermes_capture._extract_file_artifacts(invocations)[0]
+
+    assert entry["content_preview"] == content
+    assert entry["content_preview_truncated"] is False
+    assert entry["content_preview_original_length"] == len(content)
+    assert entry["redactions"] == 0

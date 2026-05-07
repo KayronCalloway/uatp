@@ -170,6 +170,7 @@ def _redact_secrets(text: Any) -> tuple:
 _FILE_WRITE_TOOLS = {"write_file", "Write"}
 _FILE_PATCH_TOOLS = {"patch", "Edit", "MultiEdit"}
 _FILE_READ_TOOLS = {"read_file", "Read"}
+_ARTIFACT_PREVIEW_CHARS = 2000
 
 
 def _sha256_hex(text: str) -> str:
@@ -188,6 +189,20 @@ def _parse_args(arguments: Any) -> Optional[Dict[str, Any]]:
     except (json.JSONDecodeError, ValueError):
         return None
     return parsed if isinstance(parsed, dict) else None
+
+
+def _build_artifact_preview(text: str) -> Dict[str, Any]:
+    """Build a redacted, size-bounded artifact preview with metadata."""
+    redacted_text, redactions = _redact_secrets(text)
+    original_length = len(text)
+    truncated = len(redacted_text) > _ARTIFACT_PREVIEW_CHARS
+    preview = redacted_text[:_ARTIFACT_PREVIEW_CHARS] if truncated else redacted_text
+    return {
+        "preview": preview,
+        "truncated": truncated,
+        "original_length": original_length,
+        "redactions": redactions,
+    }
 
 
 def _extract_file_artifacts(
@@ -228,11 +243,16 @@ def _extract_file_artifacts(
             if content is None:
                 continue
             content_str = content if isinstance(content, str) else str(content)
+            preview = _build_artifact_preview(content_str)
             entry = {
                 **base_entry,
                 "operation": "write",
                 "content_hash_after": _sha256_hex(content_str),
                 "content_size_after": len(content_str),
+                "content_preview": preview["preview"],
+                "content_preview_truncated": preview["truncated"],
+                "content_preview_original_length": preview["original_length"],
+                "redactions": preview["redactions"],
             }
             manifest.append(entry)
         elif tool in _FILE_PATCH_TOOLS:
