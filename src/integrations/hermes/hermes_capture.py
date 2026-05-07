@@ -170,6 +170,7 @@ def _redact_secrets(text: Any) -> tuple:
 _FILE_WRITE_TOOLS = {"write_file", "Write"}
 _FILE_PATCH_TOOLS = {"patch", "Edit", "MultiEdit"}
 _FILE_READ_TOOLS = {"read_file", "Read"}
+_COMMAND_TOOLS = {"terminal", "Bash"}
 _ARTIFACT_PREVIEW_CHARS = 2000
 
 
@@ -202,7 +203,21 @@ def _build_artifact_preview(text: str) -> Dict[str, Any]:
         "truncated": truncated,
         "original_length": original_length,
         "redactions": redactions,
+        "redacted_text": redacted_text,
     }
+
+
+def _parse_tool_result(result: Any) -> Dict[str, Any]:
+    """Parse a Hermes tool result preview into output/exit-code fields."""
+    if isinstance(result, dict):
+        return result
+    if not isinstance(result, str):
+        return {"output": "", "exit_code": None}
+    try:
+        parsed = json.loads(result)
+    except (json.JSONDecodeError, ValueError):
+        return {"output": result, "exit_code": None}
+    return parsed if isinstance(parsed, dict) else {"output": result, "exit_code": None}
 
 
 def _extract_file_artifacts(
@@ -280,6 +295,52 @@ def _extract_file_artifacts(
             manifest.append(entry)
 
     return manifest
+
+
+def _extract_command_artifacts(
+    invocations: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Extract command execution proof from terminal/Bash tool invocations."""
+    commands: List[Dict[str, Any]] = []
+
+    for inv in invocations:
+        tool = inv.get("tool")
+        if tool not in _COMMAND_TOOLS:
+            continue
+
+        args = _parse_args(inv.get("arguments"))
+        if args is None:
+            continue
+
+        command = args.get("command")
+        if not command:
+            continue
+
+        result = _parse_tool_result(inv.get("result_preview"))
+        output = result.get("output") or result.get("stdout") or ""
+        output_text = output if isinstance(output, str) else str(output)
+        preview = _build_artifact_preview(output_text)
+        redacted_output = preview["redacted_text"]
+
+        entry: Dict[str, Any] = {
+            "tool": tool,
+            "call_id": inv.get("call_id"),
+            "command": command,
+            "exit_code": result.get("exit_code"),
+            "stdout_hash": _sha256_hex(redacted_output),
+            "stdout_size": len(redacted_output),
+            "stdout_preview": preview["preview"],
+            "stdout_preview_truncated": preview["truncated"],
+            "stdout_preview_original_length": preview["original_length"],
+            "redactions": preview["redactions"],
+        }
+        if args.get("workdir"):
+            entry["workdir"] = args.get("workdir")
+        if inv.get("timestamp"):
+            entry["timestamp"] = inv.get("timestamp")
+        commands.append(entry)
+
+    return commands
 
 
 # ---------------------------------------------------------------------------
@@ -967,13 +1028,18 @@ def build_capsule(
         # Bind file operations to verifiable hashes so a reviewer can later
         # confirm what the agent wrote/patched/read.
         file_artifacts = _extract_file_artifacts(tool_invocations)
-        if file_artifacts:
+        command_artifacts = _extract_command_artifacts(tool_invocations)
+        if file_artifacts or command_artifacts:
             artifacts = capsule["payload"].setdefault("artifacts", {})
+        if file_artifacts:
             artifacts["files"] = file_artifacts
             artifacts["files_total"] = len(file_artifacts)
             artifacts["files_by_operation"] = dict(
                 Counter(f["operation"] for f in file_artifacts).most_common()
             )
+        if command_artifacts:
+            artifacts["commands"] = command_artifacts
+            artifacts["commands_total"] = len(command_artifacts)
 
     # --- Cost economics ---
     # Real compute cost data: token usage, caching efficiency, billing.
