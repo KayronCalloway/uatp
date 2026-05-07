@@ -99,6 +99,69 @@ def _get_crypto():
 
 
 # ---------------------------------------------------------------------------
+# Secret redaction (Phase H1.2)
+# ---------------------------------------------------------------------------
+
+# Patterns are applied in order. Each captures a secret-like substring and
+# replaces it with [REDACTED]. Designed to err on the side of redacting
+# anything that looks like an API key, token, password, or signing seed.
+_REDACTION_PATTERNS = [
+    # JWT-shaped tokens: three base64url segments separated by dots.
+    re.compile(r"eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+"),
+    # AWS access key IDs.
+    re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
+    # Google API keys.
+    re.compile(r"AIza[0-9A-Za-z_\-]{35,}"),
+    # Key/secret/token/password assignments. The value runs until whitespace,
+    # quote, comma, or close-brace/bracket — covering both `k=v` and `k: v`,
+    # quoted and unquoted, with optional quote around the key (JSON-style).
+    re.compile(
+        r"(?i)['\"]?("
+        r"api[_-]?key|apikey|secret|password|passwd|token|"
+        r"signing[_-]?key|private[_-]?key|access[_-]?token|"
+        r"bearer"
+        r")['\"]?"
+        r"\s*[:=]\s*"
+        r"['\"]?"
+        r"([^\s'\"\,\}\]]{6,})"
+        r"['\"]?"
+    ),
+]
+
+
+def _redact_secrets(text: Any) -> tuple:
+    """Replace secret-like substrings with [REDACTED]. Returns (text, count).
+
+    Non-string inputs return ("", 0). Benign text returns unchanged with count 0.
+    """
+    if not isinstance(text, str) or not text:
+        return ("" if text is None else (text if isinstance(text, str) else ""), 0)
+
+    redacted = text
+    count = 0
+
+    for pattern in _REDACTION_PATTERNS:
+        if pattern.groups >= 2:
+            # Assignment pattern: keep key, redact value.
+            def _sub(match: "re.Match") -> str:
+                nonlocal count
+                count += 1
+                return f"{match.group(1)}=[REDACTED]"
+
+            redacted = pattern.sub(_sub, redacted)
+        else:
+            # Standalone-token pattern: redact the whole match.
+            def _sub_full(match: "re.Match") -> str:
+                nonlocal count
+                count += 1
+                return "[REDACTED]"
+
+            redacted = pattern.sub(_sub_full, redacted)
+
+    return (redacted, count)
+
+
+# ---------------------------------------------------------------------------
 # File artifact manifest (Phase H1.1)
 # ---------------------------------------------------------------------------
 
