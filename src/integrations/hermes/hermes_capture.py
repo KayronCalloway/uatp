@@ -99,6 +99,107 @@ def _get_crypto():
 
 
 # ---------------------------------------------------------------------------
+# File artifact manifest (Phase H1.1)
+# ---------------------------------------------------------------------------
+
+# Tool names that map to file write/patch/read operations. Match Hermes-recorded
+# tool names exactly; we do not normalize case.
+_FILE_WRITE_TOOLS = {"write_file", "Write"}
+_FILE_PATCH_TOOLS = {"patch", "Edit", "MultiEdit"}
+_FILE_READ_TOOLS = {"read_file", "Read"}
+
+
+def _sha256_hex(text: str) -> str:
+    """SHA-256 hex digest of UTF-8 encoded text."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _parse_args(arguments: Any) -> Optional[Dict[str, Any]]:
+    """Parse tool arguments which may be a JSON string or already a dict."""
+    if isinstance(arguments, dict):
+        return arguments
+    if not isinstance(arguments, str):
+        return None
+    try:
+        parsed = json.loads(arguments)
+    except (json.JSONDecodeError, ValueError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _extract_file_artifacts(
+    invocations: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Extract structured file-operation artifacts from tool invocations.
+
+    Returns a list of `{operation, path, ...hashes/sizes}` dicts. Operations:
+    - write: full content known; records content_hash_after, content_size_after
+    - patch: old/new string known; records hashes and sizes for both
+    - read: only path/offset/limit known; no content hash
+    """
+    manifest: List[Dict[str, Any]] = []
+
+    for inv in invocations:
+        tool = inv.get("tool")
+        if not tool:
+            continue
+
+        args = _parse_args(inv.get("arguments"))
+        if args is None:
+            continue
+
+        path = args.get("path") or args.get("file_path")
+        if not path:
+            continue
+
+        base_entry: Dict[str, Any] = {
+            "path": path,
+            "call_id": inv.get("call_id"),
+            "tool": tool,
+        }
+        if inv.get("timestamp"):
+            base_entry["timestamp"] = inv.get("timestamp")
+
+        if tool in _FILE_WRITE_TOOLS:
+            content = args.get("content")
+            if content is None:
+                continue
+            content_str = content if isinstance(content, str) else str(content)
+            entry = {
+                **base_entry,
+                "operation": "write",
+                "content_hash_after": _sha256_hex(content_str),
+                "content_size_after": len(content_str),
+            }
+            manifest.append(entry)
+        elif tool in _FILE_PATCH_TOOLS:
+            old_str = args.get("old_string")
+            new_str = args.get("new_string")
+            entry = {
+                **base_entry,
+                "operation": "patch",
+            }
+            if isinstance(old_str, str):
+                entry["old_string_hash"] = _sha256_hex(old_str)
+                entry["old_string_size"] = len(old_str)
+            if isinstance(new_str, str):
+                entry["new_string_hash"] = _sha256_hex(new_str)
+                entry["new_string_size"] = len(new_str)
+            manifest.append(entry)
+        elif tool in _FILE_READ_TOOLS:
+            entry = {
+                **base_entry,
+                "operation": "read",
+            }
+            for opt_key in ("offset", "limit"):
+                if opt_key in args:
+                    entry[opt_key] = args[opt_key]
+            manifest.append(entry)
+
+    return manifest
+
+
+# ---------------------------------------------------------------------------
 # Read Hermes session
 # ---------------------------------------------------------------------------
 
@@ -778,6 +879,18 @@ def build_capsule(
             "total_tool_calls": len(tool_invocations),
             "unique_tools": len(tool_counts),
         }
+
+        # --- File artifact manifest (Phase H1.1) ---
+        # Bind file operations to verifiable hashes so a reviewer can later
+        # confirm what the agent wrote/patched/read.
+        file_artifacts = _extract_file_artifacts(tool_invocations)
+        if file_artifacts:
+            artifacts = capsule["payload"].setdefault("artifacts", {})
+            artifacts["files"] = file_artifacts
+            artifacts["files_total"] = len(file_artifacts)
+            artifacts["files_by_operation"] = dict(
+                Counter(f["operation"] for f in file_artifacts).most_common()
+            )
 
     # --- Cost economics ---
     # Real compute cost data: token usage, caching efficiency, billing.
