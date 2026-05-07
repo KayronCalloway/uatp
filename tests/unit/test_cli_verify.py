@@ -16,6 +16,7 @@ from src.cli.verify import (
     format_result,
     result_to_dict,
     verify_artifacts_in_capsule,
+    verify_artifacts_strict,
     verify_cmd,
 )
 from src.export import UATPBundle, VerificationResult
@@ -206,6 +207,54 @@ class TestCLICommands:
         assert output["artifact_checks"]["commands_total"] == 1
         assert output["artifact_checks"]["verification_commands_total"] == 1
 
+    def test_verify_artifacts_strict_json_output_for_capsule_file(self, tmp_path):
+        runner = CliRunner()
+        root = tmp_path / "workspace"
+        root.mkdir()
+        source = root / "src" / "app.py"
+        source.parent.mkdir()
+        source.write_text("print('ok')\n")
+        capsule = {
+            "payload": {
+                "artifacts": {
+                    "files": [
+                        {
+                            "path": "src/app.py",
+                            "operation": "write",
+                            "content_hash_after": "ad64355106bb158b020ecf9702be48f7730fc091dd4bb6a2f092b40393495b3d",
+                            "content_size_after": 12,
+                            "content_preview": "print('ok')\n",
+                            "content_preview_truncated": False,
+                            "content_preview_original_length": 12,
+                            "redactions": 0,
+                        }
+                    ],
+                    "commands": [],
+                }
+            }
+        }
+        capsule_path = tmp_path / "capsule.json"
+        capsule_path.write_text(json.dumps(capsule))
+
+        result = runner.invoke(
+            verify_cmd,
+            [
+                "--artifacts",
+                str(capsule_path),
+                "--strict",
+                "--root",
+                str(root),
+                "--output",
+                "json",
+            ],
+        )
+
+        assert result.exit_code == ExitCode.SUCCESS
+        output = json.loads(result.output)
+        assert output["is_valid"] is True
+        assert output["strict"] is True
+        assert output["strict_checks"]["files_checked"] == 1
+
 
 class TestArtifactVerification:
     def test_verify_artifacts_in_capsule_accepts_valid_base_manifest(self):
@@ -321,6 +370,121 @@ class TestArtifactVerification:
             "commands_total": 1,
             "verification_commands_total": 0,
         }
+
+    def test_verify_artifacts_strict_confirms_write_hash_against_workspace(
+        self, tmp_path
+    ):
+        source = tmp_path / "src" / "app.py"
+        source.parent.mkdir()
+        source.write_text("print('ok')\n")
+        capsule = {
+            "payload": {
+                "artifacts": {
+                    "files": [
+                        {
+                            "path": "src/app.py",
+                            "operation": "write",
+                            "content_hash_after": "ad64355106bb158b020ecf9702be48f7730fc091dd4bb6a2f092b40393495b3d",
+                            "content_size_after": 12,
+                            "content_preview": "print('ok')\n",
+                            "content_preview_truncated": False,
+                            "content_preview_original_length": 12,
+                            "redactions": 0,
+                        }
+                    ],
+                    "commands": [],
+                }
+            }
+        }
+
+        result = verify_artifacts_strict(capsule, tmp_path)
+
+        assert result["is_valid"] is True
+        assert result["strict_checks"]["files_checked"] == 1
+        assert result["strict_checks"]["file_hash_matches"] == 1
+
+    def test_verify_artifacts_strict_reports_write_hash_mismatch(self, tmp_path):
+        source = tmp_path / "src" / "app.py"
+        source.parent.mkdir()
+        source.write_text("print('changed')\n")
+        capsule = {
+            "payload": {
+                "artifacts": {
+                    "files": [
+                        {
+                            "path": "src/app.py",
+                            "operation": "write",
+                            "content_hash_after": "ad64355106bb158b020ecf9702be48f7730fc091dd4bb6a2f092b40393495b3d",
+                            "content_size_after": 12,
+                            "content_preview": "print('ok')\n",
+                            "content_preview_truncated": False,
+                            "content_preview_original_length": 12,
+                            "redactions": 0,
+                        }
+                    ],
+                    "commands": [],
+                }
+            }
+        }
+
+        result = verify_artifacts_strict(capsule, tmp_path)
+
+        assert result["is_valid"] is False
+        assert any("content_hash_after mismatch" in error for error in result["errors"])
+
+    def test_verify_artifacts_strict_blocks_path_traversal(self, tmp_path):
+        capsule = {
+            "payload": {
+                "artifacts": {
+                    "files": [
+                        {
+                            "path": "../outside.py",
+                            "operation": "write",
+                            "content_hash_after": "a" * 64,
+                            "content_size_after": 1,
+                            "content_preview": "x",
+                            "content_preview_truncated": False,
+                            "content_preview_original_length": 1,
+                            "redactions": 0,
+                        }
+                    ],
+                    "commands": [],
+                }
+            }
+        }
+
+        result = verify_artifacts_strict(capsule, tmp_path)
+
+        assert result["is_valid"] is False
+        assert any("escapes strict root" in error for error in result["errors"])
+
+    def test_verify_artifacts_strict_fails_failed_verification_command(self, tmp_path):
+        capsule = {
+            "payload": {
+                "artifacts": {
+                    "files": [],
+                    "commands": [
+                        {
+                            "command": ".venv/bin/python -m pytest tests -q",
+                            "stdout_hash": "a" * 64,
+                            "stdout_size": 10,
+                            "stdout_preview": "1 failed",
+                            "stdout_preview_truncated": False,
+                            "stdout_preview_original_length": 8,
+                            "redactions": 0,
+                            "is_verification": True,
+                            "verification_type": "test",
+                            "verification_status": "failed",
+                        }
+                    ],
+                }
+            }
+        }
+
+        result = verify_artifacts_strict(capsule, tmp_path)
+
+        assert result["is_valid"] is False
+        assert "verification command failed: test" in result["errors"]
 
 
 class TestResultToDictEdgeCases:

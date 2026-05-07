@@ -16,6 +16,7 @@ Commands:
     uatp verify bundle.json --output json  # JSON output
 """
 
+import hashlib
 import json
 import re
 import sys
@@ -309,9 +310,87 @@ def verify_artifacts_in_capsule(capsule: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _resolve_artifact_path(root: Path, artifact_path: Any) -> Path | None:
+    if not isinstance(artifact_path, str) or not artifact_path:
+        return None
+    root_resolved = root.resolve()
+    candidate = (root_resolved / artifact_path).resolve()
+    try:
+        candidate.relative_to(root_resolved)
+    except ValueError:
+        return None
+    return candidate
+
+
+def verify_artifacts_strict(capsule: Dict[str, Any], root: Path) -> Dict[str, Any]:
+    """Strictly verify artifact-proof metadata against the current workspace."""
+    result = verify_artifacts_in_capsule(capsule)
+    errors = list(result["errors"])
+    warnings = list(result["warnings"])
+    strict_checks = {
+        "files_checked": 0,
+        "file_hash_matches": 0,
+        "verification_commands_checked": 0,
+        "verification_commands_failed": 0,
+    }
+
+    payload = capsule.get("payload") if isinstance(capsule, dict) else {}
+    artifacts = payload.get("artifacts") if isinstance(payload, dict) else {}
+    files = artifacts.get("files", []) if isinstance(artifacts, dict) else []
+    commands = artifacts.get("commands", []) if isinstance(artifacts, dict) else []
+
+    for index, file_artifact in enumerate(files if isinstance(files, list) else []):
+        if not isinstance(file_artifact, dict):
+            continue
+        if file_artifact.get("operation") != "write":
+            continue
+        prefix = f"payload.artifacts.files[{index}]"
+        artifact_path = file_artifact.get("path")
+        disk_path = _resolve_artifact_path(root, artifact_path)
+        if disk_path is None:
+            errors.append(f"{prefix}.path escapes strict root")
+            continue
+        strict_checks["files_checked"] += 1
+        if not disk_path.is_file():
+            errors.append(f"{prefix}.path missing on disk: {artifact_path}")
+            continue
+        disk_bytes = disk_path.read_bytes()
+        disk_hash = hashlib.sha256(disk_bytes).hexdigest()
+        if disk_hash != file_artifact.get("content_hash_after"):
+            errors.append(f"{prefix}.content_hash_after mismatch")
+            continue
+        declared_size = file_artifact.get("content_size_after")
+        if isinstance(declared_size, int) and declared_size != len(disk_bytes):
+            errors.append(f"{prefix}.content_size_after mismatch")
+            continue
+        strict_checks["file_hash_matches"] += 1
+
+    for command in commands if isinstance(commands, list) else []:
+        if not isinstance(command, dict) or command.get("is_verification") is not True:
+            continue
+        strict_checks["verification_commands_checked"] += 1
+        if command.get("verification_status") == "failed":
+            strict_checks["verification_commands_failed"] += 1
+            verification_type = command.get("verification_type") or "unknown"
+            errors.append(f"verification command failed: {verification_type}")
+
+    result.update(
+        {
+            "strict": True,
+            "is_valid": not errors,
+            "errors": errors,
+            "warnings": warnings,
+            "strict_checks": strict_checks,
+        }
+    )
+    return result
+
+
 def verify_artifacts_file(
     path: Path,
     output_format: str = "text",
+    strict: bool = False,
+    root: Optional[Path] = None,
 ) -> tuple[ExitCode, Dict[str, Any]]:
     """Verify artifact-proof metadata from a local capsule JSON file."""
     if not path.exists():
@@ -330,11 +409,16 @@ def verify_artifacts_file(
             click.echo(click.style(f"Error: Invalid JSON: {e}", fg="red"), err=True)
         return ExitCode.CONFIG_ERROR, data
 
-    result = verify_artifacts_in_capsule(capsule)
+    result = (
+        verify_artifacts_strict(capsule, root or Path.cwd())
+        if strict
+        else verify_artifacts_in_capsule(capsule)
+    )
     result["file"] = str(path)
     if output_format == "text":
         status = "PASSED" if result["is_valid"] else "FAILED"
-        click.echo(f"Artifact verification {status}")
+        mode = "strict artifact" if strict else "artifact"
+        click.echo(f"{mode.title()} verification {status}")
         for error in result["errors"]:
             click.echo(f"  • {error}")
     return (ExitCode.SUCCESS if result["is_valid"] else ExitCode.FAILED), result
@@ -629,6 +713,17 @@ def verify_workflow_from_server(
 )
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.option("--no-color", is_flag=True, help="Disable colored output")
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Strictly verify artifact metadata against the workspace",
+)
+@click.option(
+    "--root",
+    type=click.Path(exists=False, file_okay=False, dir_okay=True),
+    default=None,
+    help="Workspace root for --strict artifact verification (default: current directory)",
+)
 def verify_cmd(
     files: tuple,
     artifacts: Optional[str],
@@ -638,6 +733,8 @@ def verify_cmd(
     output: str,
     verbose: bool,
     no_color: bool,
+    strict: bool,
+    root: Optional[str],
 ) -> None:
     """
     Verify UATP bundles, capsules, or workflows.
@@ -661,7 +758,9 @@ def verify_cmd(
     result_data: Any = None
 
     if artifacts:
-        exit_code, result_data = verify_artifacts_file(Path(artifacts), output)
+        exit_code, result_data = verify_artifacts_file(
+            Path(artifacts), output, strict, Path(root) if root else None
+        )
     elif files:
         paths = [Path(f) for f in files]
         if len(paths) == 1:
