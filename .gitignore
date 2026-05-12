@@ -146,6 +146,7 @@ dist/
 # Test/runtime data
 chain_seals/
 federation_data/
+.uatp_artifacts/
 
 # ============================================
 # SENSITIVE - NEVER COMMIT

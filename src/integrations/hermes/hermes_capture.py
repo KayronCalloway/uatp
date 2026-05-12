@@ -26,9 +26,21 @@ import shlex
 import sqlite3
 import sys
 from collections import Counter
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from src.agent_receipts.artifacts import ArtifactStore
+from src.agent_receipts.events import (
+    ActionTraceEvent,
+    SessionEnded,
+    SessionStarted,
+    ToolCallCompleted,
+)
+from src.agent_receipts.redaction import redact_value
+from src.agent_receipts.signing import Ed25519ReceiptSigner
+from src.agent_receipts.sink import build_signed_receipt_bundle
 
 logger = logging.getLogger(__name__)
 
@@ -497,6 +509,510 @@ def _ts_from_epoch(epoch) -> Optional[datetime]:
         return datetime.fromtimestamp(float(epoch), tz=timezone.utc)
     except (ValueError, TypeError, OSError):
         return None
+
+
+def _ts_from_iso(value: Any) -> Optional[datetime]:
+    """Parse an ISO datetime string to an aware datetime when possible."""
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _get_agent_receipt_signer() -> Ed25519ReceiptSigner:
+    """Load or create the persistent Hermes agent-receipt Ed25519 key."""
+    key_path = UATP_ROOT / ".uatp_keys" / "hermes_agent_receipts_ed25519.hex"
+    key_path.parent.mkdir(parents=True, exist_ok=True)
+    if key_path.exists():
+        return Ed25519ReceiptSigner.from_hex(
+            key_path.read_text().strip(), signer_id="hermes_agent_receipts"
+        )
+
+    signer = Ed25519ReceiptSigner.generate(signer_id="hermes_agent_receipts")
+    key_path.write_text(signer.signing_key_hex)
+    try:
+        key_path.chmod(0o600)
+    except OSError:
+        logger.warning("Could not chmod agent receipt signing key at %s", key_path)
+    return signer
+
+
+def _get_agent_receipt_artifact_store() -> ArtifactStore:
+    """Return the local content-addressed store for Hermes receipt artifacts."""
+    return ArtifactStore(UATP_ROOT / ".uatp_artifacts" / "agent_receipts")
+
+
+def _redaction_metadata(redactions: int) -> Dict[str, Any]:
+    return {
+        "status": "redacted" if redactions else "none",
+        "redactions": redactions,
+    }
+
+
+def _store_text_artifact(
+    artifact_store: ArtifactStore,
+    text: str,
+    *,
+    redactions: int,
+    media_type: str = "text/plain",
+) -> Dict[str, Any]:
+    return artifact_store.store_bytes(
+        text.encode("utf-8"),
+        media_type=media_type,
+        redaction=_redaction_metadata(redactions),
+    ).to_dict()
+
+
+def _store_redacted_text_artifact(
+    artifact_store: ArtifactStore,
+    text: Any,
+    *,
+    media_type: str = "text/plain",
+) -> Dict[str, Any]:
+    """Redact text, store redacted bytes, and return a content-addressed ref."""
+    text_value = text if isinstance(text, str) else str(text)
+    preview = _build_artifact_preview(text_value)
+    return _store_text_artifact(
+        artifact_store,
+        preview["redacted_text"],
+        redactions=preview["redactions"],
+        media_type=media_type,
+    )
+
+
+def _redact_error_message(message: str) -> str:
+    """Redact sensitive-looking path segments and secret assignments from errors."""
+    redacted, _count = _redact_secrets(message)
+    parts = redacted.split("/")
+    sensitive_words = ("secret", "token", "password", "private_key", "signing_key")
+    for index, part in enumerate(parts):
+        if any(word in part.lower() for word in sensitive_words):
+            parts[index] = "[REDACTED]"
+    return "/".join(parts)
+
+
+def _tool_category(tool_name: str | None) -> str:
+    if tool_name in _COMMAND_TOOLS:
+        return "command"
+    if tool_name in _FILE_WRITE_TOOLS | _FILE_PATCH_TOOLS | _FILE_READ_TOOLS:
+        return "file"
+    return "custom"
+
+
+def _as_text(value: Any) -> str:
+    """Return text for payload fields where None means absent/empty."""
+    if value is None:
+        return ""
+    return value if isinstance(value, str) else str(value)
+
+
+def _file_path_from_args(arguments: Dict[str, Any]) -> Any:
+    return arguments.get("path") or arguments.get("file_path")
+
+
+def _joined_edit_strings(arguments: Dict[str, Any], key: str) -> str:
+    edits = arguments.get("edits")
+    if not isinstance(edits, list):
+        return ""
+    return "".join(edit.get(key, "") for edit in edits if isinstance(edit, dict))
+
+
+def _file_action_payload(
+    tool_name: str | None,
+    arguments: Dict[str, Any],
+    result_preview: Any,
+) -> Optional[Dict[str, Any]]:
+    """Build an ActionTrace payload for Hermes file tools."""
+    if tool_name in _FILE_WRITE_TOOLS:
+        content = _as_text(arguments.get("content"))
+        return {
+            "action_type": "file.write",
+            "file_path": _file_path_from_args(arguments),
+            "file_operation": "write",
+            "bytes_affected": len(content),
+            "after_hash": _sha256_hex(content),
+        }
+
+    if tool_name in _FILE_PATCH_TOOLS:
+        before_content = _as_text(
+            arguments.get("old_string") or _joined_edit_strings(arguments, "old_string")
+        )
+        after_content = _as_text(
+            arguments.get("new_string") or _joined_edit_strings(arguments, "new_string")
+        )
+        return {
+            "action_type": "file.edit",
+            "file_path": _file_path_from_args(arguments),
+            "file_operation": "edit",
+            "bytes_affected": len(after_content),
+            "before_hash": _sha256_hex(before_content),
+            "after_hash": _sha256_hex(after_content),
+        }
+
+    if tool_name in _FILE_READ_TOOLS:
+        parsed_result = _parse_tool_result(result_preview)
+        content = _as_text(parsed_result.get("content") or parsed_result.get("output"))
+        return {
+            "action_type": "file.read",
+            "file_path": _file_path_from_args(arguments),
+            "file_operation": "read",
+            "bytes_affected": len(content),
+            "after_hash": _sha256_hex(content),
+        }
+
+    return None
+
+
+def _command_action_payload(
+    arguments: Dict[str, Any],
+    result_preview: Any,
+) -> Dict[str, Any]:
+    parsed_result = _parse_tool_result(result_preview)
+    stdout = parsed_result.get("stdout") or parsed_result.get("output") or ""
+    stderr = parsed_result.get("stderr") or ""
+    command = arguments.get("command")
+    output = f"{stdout}\n{stderr}"
+    return {
+        "action_type": "terminal.command",
+        "command": _public_command_value(
+            command, parsed_result.get("exit_code"), output
+        ),
+        "command_hash": _sha256_hex(command) if isinstance(command, str) else None,
+        "cwd": arguments.get("workdir"),
+        "exit_code": parsed_result.get("exit_code"),
+        "stdout_hash": _sha256_hex(stdout if isinstance(stdout, str) else str(stdout)),
+        "stderr_hash": _sha256_hex(stderr if isinstance(stderr, str) else str(stderr)),
+    }
+
+
+def _tool_action_payload(
+    tool_name: str | None,
+    arguments: Dict[str, Any],
+    result_preview: Any,
+) -> Optional[Dict[str, Any]]:
+    if tool_name in _COMMAND_TOOLS:
+        return _command_action_payload(arguments, result_preview)
+    return _file_action_payload(tool_name, arguments, result_preview)
+
+
+def _fallback_call_id(session_id: str, index: int) -> str:
+    """Build a deterministic, session-scoped fallback call ID under legacy DB limits."""
+    candidate = f"{session_id}:tool_{index}"
+    if len(candidate) <= 64:
+        return candidate
+    return f"tool_{_sha256_hex(candidate)[:59]}"
+
+
+def _redacted_receipt_value(value: Any) -> Any:
+    """Redact public signed-receipt payload values before persistence."""
+    return redact_value(value)
+
+
+def _omitted_text_summary(value: Any) -> str | None:
+    """Return a non-content summary for text that must not enter public receipts."""
+    if value is None:
+        return None
+    text = (
+        value
+        if isinstance(value, str)
+        else json.dumps(value, sort_keys=True, default=str)
+    )
+    return f"[omitted:sha256:{_sha256_hex(text)}:length:{len(text)}]"
+
+
+def _public_command_value(
+    command: Any, exit_code: Optional[int], output: str = ""
+) -> str | None:
+    """Preserve only verification commands; hide arbitrary shell text from public receipts."""
+    if not isinstance(command, str):
+        return None
+    verification = _classify_verification_command(command, exit_code, output)
+    return command if verification.get("is_verification") else None
+
+
+def _public_tool_arguments(
+    tool_name: str | None,
+    arguments: Dict[str, Any],
+    *,
+    exit_code: Optional[int] = None,
+    output: str = "",
+) -> Dict[str, Any]:
+    """Build a public-safe tool argument summary without raw content bodies."""
+    if tool_name in _COMMAND_TOOLS:
+        command = arguments.get("command")
+        return {
+            "command": _public_command_value(command, exit_code, output),
+            "command_hash": _sha256_hex(command) if isinstance(command, str) else None,
+            "workdir": arguments.get("workdir"),
+            "content_redaction": "omitted_non_verification_command"
+            if _public_command_value(command, exit_code, output) is None
+            else "verification_command_preserved",
+        }
+
+    public: Dict[str, Any] = {}
+    for key in ("path", "file_path", "offset", "limit"):
+        if key in arguments:
+            public[key] = arguments[key]
+    omitted_fields = sorted(
+        key for key in arguments if key not in public and arguments.get(key) is not None
+    )
+    if omitted_fields:
+        public["omitted_fields"] = omitted_fields
+        public["content_redaction"] = "omitted"
+    return public
+
+
+def _public_tool_result_summary(result_preview: Any) -> Dict[str, Any]:
+    """Summarize tool result shape/size without embedding raw output/content."""
+    if result_preview is None:
+        return {"preview": None, "length": None, "content_redaction": "none"}
+    serialized = (
+        result_preview
+        if isinstance(result_preview, str)
+        else json.dumps(result_preview, sort_keys=True, default=str)
+    )
+    return {
+        "preview": "[omitted]",
+        "length": len(serialized),
+        "content_redaction": "omitted",
+        "preview_hash": _sha256_hex(serialized),
+    }
+
+
+def _typed_hash_value(value: Any) -> Any:
+    """Normalize `sha256:<hex>` digests for legacy typed columns sized to 64 chars."""
+    if isinstance(value, str) and re.fullmatch(r"sha256:[a-f0-9]{64}", value):
+        return value.removeprefix("sha256:")
+    return value
+
+
+def _build_event_native_receipt_bundle(
+    session_id: str,
+    session: Dict,
+    messages: List[Dict],
+    tool_invocations: List[Dict[str, Any]],
+    *,
+    model: Optional[str] = None,
+    platform: str = "hermes-cli",
+    signer: Optional[Ed25519ReceiptSigner] = None,
+    artifact_store: Optional[ArtifactStore] = None,
+) -> Dict[str, Any]:
+    """Build signed framework-neutral receipts for a Hermes capture."""
+    now = datetime.now(timezone.utc)
+    started_at = _ts_from_epoch(session.get("started_at")) or now
+    ended_at = (
+        _ts_from_epoch(session.get("ended_at"))
+        or _ts_from_epoch(session.get("updated_at"))
+        or max(
+            (_ts_from_epoch(msg.get("timestamp")) or started_at for msg in messages),
+            default=started_at,
+        )
+    )
+
+    first_user_message = next(
+        ((msg.get("content") or "") for msg in messages if msg.get("role") == "user"),
+        None,
+    )
+    safe_title = _omitted_text_summary(session.get("title"))
+
+    events = [
+        SessionStarted(
+            event_id=f"{session_id}:session_started",
+            session_id=session_id,
+            adapter_name="hermes",
+            agent_name="Hermes",
+            timestamp=started_at,
+            parent_event_hash=None,
+            actor="system",
+            payload={
+                "agent_version": session.get("agent_version"),
+                "platform": session.get("source", platform),
+                "model_provider": session.get("model_provider"),
+                "model": model or session.get("model"),
+                "trigger_message": _omitted_text_summary(first_user_message),
+                "trigger_source": "hermes_state_db",
+                "goals": [],
+                "metadata": {
+                    "title": safe_title,
+                    "message_count": len(messages),
+                },
+            },
+            redaction_summary={"secrets_removed": 0, "content_omitted": True},
+            trust_level="local",
+        )
+    ]
+
+    receipt_artifact_store = artifact_store or _get_agent_receipt_artifact_store()
+
+    for index, invocation in enumerate(tool_invocations):
+        arguments = _parse_args(invocation.get("arguments"))
+        if arguments is None:
+            arguments = {"raw_arguments": invocation.get("arguments") or ""}
+
+        artifact_refs: Dict[str, Any] = {}
+        tool_name = invocation.get("tool")
+
+        if tool_name in _COMMAND_TOOLS:
+            parsed_result = _parse_tool_result(invocation.get("result_preview"))
+            output = parsed_result.get("output") or parsed_result.get("stdout") or ""
+            artifact_refs["stdout"] = _store_redacted_text_artifact(
+                receipt_artifact_store,
+                output,
+            )
+        elif tool_name in _FILE_WRITE_TOOLS:
+            content = arguments.get("content")
+            if content is not None:
+                artifact_refs["content_after"] = _store_redacted_text_artifact(
+                    receipt_artifact_store,
+                    content,
+                )
+        elif tool_name in _FILE_PATCH_TOOLS:
+            for ref_key, argument_key in (
+                ("old_string", "old_string"),
+                ("new_string", "new_string"),
+                ("patch", "patch"),
+            ):
+                content = arguments.get(argument_key)
+                if content is not None:
+                    artifact_refs[ref_key] = _store_redacted_text_artifact(
+                        receipt_artifact_store,
+                        content,
+                    )
+
+            edits = arguments.get("edits")
+            if isinstance(edits, list):
+                edit_refs = []
+                for edit in edits:
+                    if not isinstance(edit, dict):
+                        continue
+                    refs_for_edit: Dict[str, Any] = {}
+                    for ref_key, argument_key in (
+                        ("old_string", "old_string"),
+                        ("new_string", "new_string"),
+                    ):
+                        content = edit.get(argument_key)
+                        if content is not None:
+                            refs_for_edit[ref_key] = _store_redacted_text_artifact(
+                                receipt_artifact_store,
+                                content,
+                            )
+                    if refs_for_edit:
+                        edit_refs.append(refs_for_edit)
+                if edit_refs:
+                    artifact_refs["edits"] = edit_refs
+        elif tool_name in _FILE_READ_TOOLS:
+            parsed_result = _parse_tool_result(invocation.get("result_preview"))
+            content = parsed_result.get("content") or parsed_result.get("output") or ""
+            if content:
+                artifact_refs["content_read"] = _store_redacted_text_artifact(
+                    receipt_artifact_store,
+                    content,
+                )
+
+        timestamp = _ts_from_iso(invocation.get("timestamp")) or started_at
+        parsed_result_for_public = _parse_tool_result(invocation.get("result_preview"))
+        result_output = (
+            parsed_result_for_public.get("output")
+            or parsed_result_for_public.get("stdout")
+            or ""
+        )
+        result_stderr = parsed_result_for_public.get("stderr") or ""
+        combined_output = f"{result_output}\n{result_stderr}"
+        public_arguments = _public_tool_arguments(
+            tool_name,
+            arguments,
+            exit_code=parsed_result_for_public.get("exit_code"),
+            output=combined_output,
+        )
+        public_result = _public_tool_result_summary(invocation.get("result_preview"))
+        payload = {
+            "call_id": invocation.get("call_id")
+            or _fallback_call_id(session_id, index),
+            "tool_name": tool_name or "unknown",
+            "tool_category": _tool_category(tool_name),
+            "arguments": public_arguments,
+            "result": public_result,
+            "completed_at": timestamp,
+            "status": "success",
+            "step_index": index,
+        }
+        if artifact_refs:
+            payload["artifact_refs"] = artifact_refs
+
+        events.append(
+            ToolCallCompleted(
+                event_id=f"{session_id}:tool_completed:{index}",
+                session_id=session_id,
+                adapter_name="hermes",
+                agent_name="Hermes",
+                timestamp=timestamp,
+                parent_event_hash=None,
+                actor="assistant",
+                payload=payload,
+                redaction_summary={"secrets_removed": 0, "content_omitted": True},
+                trust_level="local",
+            )
+        )
+
+        action_payload = _tool_action_payload(
+            tool_name,
+            arguments,
+            invocation.get("result_preview"),
+        )
+
+        if action_payload is not None:
+            events.append(
+                ActionTraceEvent(
+                    event_id=f"{session_id}:action_trace:{index}",
+                    session_id=session_id,
+                    adapter_name="hermes",
+                    agent_name="Hermes",
+                    timestamp=timestamp,
+                    parent_event_hash=None,
+                    actor="assistant",
+                    payload={
+                        "action_id": f"{session_id}:action:{index}",
+                        "tool_call_id": payload["call_id"],
+                        "executed_at": timestamp,
+                        "duration_ms": payload.get("duration_ms") or 0,
+                        **action_payload,
+                    },
+                    redaction_summary={"secrets_removed": 0, "content_omitted": True},
+                    trust_level="local",
+                )
+            )
+
+    events.append(
+        SessionEnded(
+            event_id=f"{session_id}:session_ended",
+            session_id=session_id,
+            adapter_name="hermes",
+            agent_name="Hermes",
+            timestamp=ended_at,
+            parent_event_hash=None,
+            actor="system",
+            payload={
+                "status": "completed",
+                "tool_call_count": len(tool_invocations),
+                "action_count": len(tool_invocations),
+                "decision_count": 0,
+                "total_duration_ms": int(
+                    (ended_at - started_at).total_seconds() * 1000
+                ),
+                "outcome_summary": safe_title,
+            },
+            redaction_summary={"secrets_removed": 0, "content_omitted": True},
+            trust_level="local",
+        )
+    )
+
+    receipt_signer = signer or _get_agent_receipt_signer()
+    return build_signed_receipt_bundle(events, receipt_signer)
 
 
 def _extract_topics(messages: List[Dict]) -> List[str]:
@@ -1229,6 +1745,42 @@ def build_capsule(
     if feedback_signals:
         capsule["payload"]["feedback_signals"] = feedback_signals
 
+    # --- Event-native signed receipt bundle ---
+    # Preserve the existing rich Hermes capture shape while adding a framework-
+    # neutral, offline-verifiable receipt chain for new provenance consumers.
+    try:
+        receipt_artifact_store = _get_agent_receipt_artifact_store()
+        receipt_bundle = _build_event_native_receipt_bundle(
+            session_id,
+            session,
+            messages,
+            tool_invocations,
+            model=model,
+            platform=platform,
+            artifact_store=receipt_artifact_store,
+        )
+        bundle_artifact_ref = receipt_artifact_store.store_json(
+            receipt_bundle["public"],
+            media_type="application/vnd.uatp.agent-receipts.bundle+json",
+            redaction=_redaction_metadata(0),
+        ).to_dict()
+        capsule["payload"]["agent_receipts"] = receipt_bundle["public"]
+        capsule["payload"]["agent_receipts_bundle_ref"] = bundle_artifact_ref
+        capsule["payload"]["agent_receipts_status"] = {
+            "status": "attached",
+            "bundle_artifact_ref": bundle_artifact_ref,
+        }
+    except Exception as e:
+        redacted_error = _redact_error_message(str(e))
+        logger.warning(
+            "Failed to build event-native agent receipts: %s", redacted_error
+        )
+        capsule["payload"]["agent_receipts_status"] = {
+            "status": "failed",
+            "error_type": type(e).__name__,
+            "message": redacted_error,
+        }
+
     return capsule
 
 
@@ -1260,6 +1812,228 @@ def sign_capsule(capsule: Dict) -> Dict:
             "note": f"Signing unavailable: {e}",
         }
     return capsule
+
+
+def _agent_receipt_capsule_draft_rows(capsule: Dict) -> List[Dict[str, Any]]:
+    """Build first-class capsule-table rows for embedded agent receipt drafts."""
+    payload = capsule.get("payload", {})
+    agent_receipts = payload.get("agent_receipts", {})
+    capsule_drafts = agent_receipts.get("capsule_drafts", [])
+    if not isinstance(capsule_drafts, list):
+        return []
+
+    parent_capsule_id = capsule["capsule_id"]
+    bundle_ref = payload.get("agent_receipts_bundle_ref")
+    chain_report = agent_receipts.get("chain_report", {})
+    rows = []
+    for index, draft in enumerate(capsule_drafts):
+        if not isinstance(draft, dict):
+            continue
+        capsule_type = draft.get("capsule_type")
+        if not capsule_type:
+            continue
+        draft_payload = deepcopy(draft)
+        receipt_metadata = draft_payload.setdefault("receipt_metadata", {})
+        if bundle_ref is not None:
+            receipt_metadata["bundle_artifact_ref"] = bundle_ref
+        receipt_metadata["parent_hermes_capsule_id"] = parent_capsule_id
+        receipt_metadata["receipt_chain_report"] = chain_report
+
+        rows.append(
+            {
+                "capsule_id": f"{parent_capsule_id}:agent_receipt:{index}:{capsule_type}",
+                "capsule_type": capsule_type,
+                "version": agent_receipts.get("schema_version", "agent_receipts.v1"),
+                "timestamp": capsule["timestamp"],
+                "status": capsule.get("status", "active"),
+                "verification": {
+                    "method": "agent_receipt_draft",
+                    "parent_capsule_id": parent_capsule_id,
+                    "bundle_artifact_ref": bundle_ref,
+                    "chain_tip_hash": chain_report.get("chain_tip_hash"),
+                },
+                "parent_capsule_id": parent_capsule_id,
+                "payload": draft_payload,
+            }
+        )
+    return rows
+
+
+def _insert_agent_receipt_capsule_drafts(
+    conn: sqlite3.Connection, capsule: Dict
+) -> int:
+    """Persist agent receipt capsule drafts as first-class capsule rows."""
+    rows = _agent_receipt_capsule_draft_rows(capsule)
+    for row in rows:
+        conn.execute(
+            """
+            INSERT INTO capsules (
+                capsule_id, capsule_type, version, timestamp, status,
+                verification, parent_capsule_id, payload
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (capsule_id) DO NOTHING
+            """,
+            (
+                row["capsule_id"],
+                row["capsule_type"],
+                row["version"],
+                row["timestamp"],
+                row["status"],
+                json.dumps(row["verification"]),
+                row["parent_capsule_id"],
+                json.dumps(row["payload"]),
+            ),
+        )
+    return len(rows)
+
+
+def _sqlite_table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
+    return (
+        conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+            (table_name,),
+        ).fetchone()
+        is not None
+    )
+
+
+def _typed_row_verification(row: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        **row["verification"],
+        "method": "agent_receipt_typed_row",
+    }
+
+
+def _insert_agent_session_typed_row(
+    conn: sqlite3.Connection, row: Dict[str, Any]
+) -> None:
+    payload = row["payload"].get("agent_session", {})
+    conn.execute(
+        """
+        INSERT INTO agent_sessions (
+            session_id, agent_type, agent_version, scheduler_type,
+            trigger_message, trigger_source, user_id_hash, goals, status,
+            tool_call_count, action_count, decision_count, started_at,
+            completed_at, total_duration_ms, outcome_summary, error_message,
+            verification, capsule_id, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            payload["session_id"],
+            payload["agent_type"],
+            payload.get("agent_version"),
+            payload.get("scheduler_type"),
+            payload.get("trigger_message"),
+            payload.get("trigger_source"),
+            payload.get("user_id_hash"),
+            json.dumps(payload.get("goals", [])),
+            payload["status"],
+            payload.get("tool_call_count"),
+            payload.get("action_count"),
+            payload.get("decision_count"),
+            payload["started_at"],
+            payload.get("completed_at"),
+            payload.get("total_duration_ms"),
+            payload.get("outcome_summary"),
+            payload.get("error_message"),
+            json.dumps(_typed_row_verification(row)),
+            row["capsule_id"],
+            datetime.now(timezone.utc).isoformat(),
+        ),
+    )
+
+
+def _insert_tool_call_typed_row(conn: sqlite3.Connection, row: Dict[str, Any]) -> None:
+    payload = row["payload"].get("tool_call", {})
+    conn.execute(
+        """
+        INSERT INTO tool_calls (
+            call_id, session_id, tool_name, tool_category, tool_inputs,
+            tool_outputs, started_at, completed_at, duration_ms, status,
+            error_message, step_index, parent_call_id, verification,
+            capsule_id, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            payload["call_id"],
+            payload["session_id"],
+            payload["tool_name"],
+            payload["tool_category"],
+            json.dumps(payload.get("tool_inputs")),
+            json.dumps(payload.get("tool_outputs")),
+            payload["started_at"],
+            payload.get("completed_at"),
+            payload.get("duration_ms"),
+            payload["status"],
+            payload.get("error_message"),
+            payload["step_index"],
+            payload.get("parent_call_id"),
+            json.dumps(_typed_row_verification(row)),
+            row["capsule_id"],
+            datetime.now(timezone.utc).isoformat(),
+        ),
+    )
+
+
+def _insert_action_trace_typed_row(
+    conn: sqlite3.Connection, row: Dict[str, Any]
+) -> None:
+    payload = row["payload"].get("action_trace", {})
+    conn.execute(
+        """
+        INSERT INTO action_traces (
+            action_id, session_id, tool_call_id, action_type, command,
+            exit_code, stdout_hash, stderr_hash, url, selector,
+            browser_action, file_path, file_operation, bytes_affected,
+            executed_at, duration_ms, verification, capsule_id, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            payload["action_id"],
+            payload["session_id"],
+            payload.get("tool_call_id"),
+            payload["action_type"],
+            payload.get("command"),
+            payload.get("exit_code"),
+            _typed_hash_value(payload.get("stdout_hash")),
+            _typed_hash_value(payload.get("stderr_hash")),
+            payload.get("url"),
+            payload.get("selector"),
+            payload.get("browser_action"),
+            payload.get("file_path"),
+            payload.get("file_operation"),
+            payload.get("bytes_affected"),
+            payload["executed_at"],
+            payload["duration_ms"],
+            json.dumps(_typed_row_verification(row)),
+            row["capsule_id"],
+            datetime.now(timezone.utc).isoformat(),
+        ),
+    )
+
+
+def _insert_agent_receipt_typed_rows(conn: sqlite3.Connection, capsule: Dict) -> int:
+    """Fan agent receipt capsule drafts into typed provenance tables when present."""
+    rows = _agent_receipt_capsule_draft_rows(capsule)
+    inserted = 0
+    has_agent_sessions = _sqlite_table_exists(conn, "agent_sessions")
+    has_tool_calls = _sqlite_table_exists(conn, "tool_calls")
+    has_action_traces = _sqlite_table_exists(conn, "action_traces")
+    for row in rows:
+        if row["capsule_type"] == "agent_session" and has_agent_sessions:
+            _insert_agent_session_typed_row(conn, row)
+            inserted += 1
+        elif row["capsule_type"] == "tool_call" and has_tool_calls:
+            _insert_tool_call_typed_row(conn, row)
+            inserted += 1
+        elif row["capsule_type"] == "action_trace" and has_action_traces:
+            _insert_action_trace_typed_row(conn, row)
+            inserted += 1
+    return inserted
 
 
 def write_capsule(capsule: Dict) -> bool:
@@ -1304,6 +2078,8 @@ def write_capsule(capsule: Dict) -> bool:
                 json.dumps(capsule["payload"]),
             ),
         )
+        _insert_agent_receipt_capsule_drafts(conn, capsule)
+        _insert_agent_receipt_typed_rows(conn, capsule)
         conn.commit()
         rows = conn.total_changes
         logger.info(
