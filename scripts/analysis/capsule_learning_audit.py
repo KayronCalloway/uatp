@@ -47,10 +47,16 @@ def extract_model(payload: dict[str, Any]) -> str:
 
 def audit(db_path: Path = DB_PATH) -> dict[str, Any]:
     conn = sqlite3.connect(str(db_path))
-    rows = conn.execute(
-        "SELECT capsule_id, capsule_type, payload, timestamp FROM capsules ORDER BY timestamp DESC"
-    ).fetchall()
-    conn.close()
+    try:
+        rows = conn.execute(
+            "SELECT capsule_id, capsule_type, payload, timestamp FROM capsules ORDER BY timestamp DESC"
+        ).fetchall()
+    except sqlite3.OperationalError as exc:
+        if "no such table: capsules" not in str(exc).lower():
+            raise
+        rows = []
+    finally:
+        conn.close()
 
     capsule_types = Counter(row[1] for row in rows)
     signal_counts = Counter()

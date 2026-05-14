@@ -213,8 +213,14 @@ def load_capsules(
     if limit is not None:
         query += " LIMIT ?"
         params = (limit,)
-    rows = conn.execute(query, params).fetchall()
-    conn.close()
+    try:
+        rows = conn.execute(query, params).fetchall()
+    except sqlite3.OperationalError as exc:
+        if "no such table: capsules" not in str(exc).lower():
+            raise
+        rows = []
+    finally:
+        conn.close()
 
     capsules = []
     for capsule_id, capsule_type, payload_text in rows:

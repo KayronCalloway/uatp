@@ -54,6 +54,18 @@ def test_report_payload_can_be_built_without_external_pythonpath(tmp_path):
     assert payload["summary"]["safe_to_promote_live"] is False
 
 
+def test_report_payload_treats_missing_capsules_table_as_empty_dataset(tmp_path):
+    output = tmp_path / "report.md"
+    empty_db = tmp_path / "empty.db"
+
+    payload = build_report_payload(db_path=empty_db, output_path=output, dry_run=True)
+
+    assert payload["audit"]["capsules_total"] == 0
+    assert payload["audit"]["hermes"]["capsules"] == 0
+    assert payload["eval"]["records"] == 0
+    assert payload["summary"]["safe_to_promote_live"] is False
+
+
 def test_main_writes_markdown_report(tmp_path):
     from scripts.analysis.hermes_capsule_learning_report import main
 
