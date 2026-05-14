@@ -1,6 +1,6 @@
 # UATP Capsule Engine
 
-**Signed reasoning traces for AI systems. Capture decisions, detect failures, generate training data.**
+**Verifiable memory for AI systems. Capture decisions, certify agent actions, detect failures, and generate training signal.**
 
 [![CI](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml)
 [![Security](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml)
@@ -12,11 +12,11 @@
 
 ## The Stakes
 
-A handful of companies built the most powerful systems in history by treating human expression as free raw material. Every post, every debugged line, every image shared, every late-night answer — scraped, ingested, and monetized without consent, without compensation, and without a mechanism to opt out.
+A handful of companies built the most powerful systems in history by treating human expression as free raw material. Posts, code, images, and forum answers were scraped, ingested, and monetized without consent or compensation.
 
 At the same time, AI is entering high-stakes domains where opacity is unacceptable. When a robotaxi crashes, when a doctor's AI recommends the wrong medication, when a bank algorithm denies a mortgage, there is no record of what was decided, with what reasoning, at what moment. Liability is unprovable. Trust collapses.
 
-Both failures trace to the same absence: memory — verifiable memory, owned by the people who created it.
+Both failures trace to the same absence: verifiable memory.
 
 **[Read the full vision →](docs/vision.md)**
 
@@ -24,7 +24,7 @@ Both failures trace to the same absence: memory — verifiable memory, owned by 
 
 ## What It Does
 
-UATP captures what AI systems do, signs it cryptographically, and turns it into training signal.
+UATP captures what AI systems do, signs it cryptographically, and turns those records into training signal.
 
 A **capsule** is a signed record of an AI interaction containing:
 - The conversation (user messages, assistant responses, tool calls)
@@ -85,7 +85,7 @@ Evidence classes separate fact from inference: `observed` (proxy-verified), `ass
 python -m src.integrations.mcp.gateway --upstream-cmd "python -m src.integrations.mcp.demo_server"
 ```
 
-Browse audits at `/system` or query via CLI: `python -m src.integrations.mcp.graph_viewer --latest`
+Query signed gateway sessions via CLI: `python -m src.integrations.mcp.graph_viewer --latest`
 
 **Status:** Alpha. Core protocol compliance and security hardening are complete. Concurrency, multi-server, and remote anchoring are next.
 
@@ -157,9 +157,16 @@ docs/                # Vision, trust model, architecture decisions
 
 ---
 
-## Version
+## Versions
 
-All components are at **v1.1.0**. See [STATUS.md](STATUS.md) for detailed component status and [ROADMAP.md](ROADMAP.md) for what's next.
+Source tree: **1.1.0**. GitHub latest release: **v1.1.0**.
+
+Public package registries may lag the source tree:
+- PyPI `uatp`: **0.2.1** published, **1.1.0** in `sdk/python/`
+- npm `@coolwithakay/uatp`: **1.0.1** published, **1.1.0** in `sdk/typescript/`
+- Capsule schema: legacy capsules use **7.2**; agent execution traces use **7.4**
+
+See [STATUS.md](STATUS.md) for component status and [ROADMAP.md](ROADMAP.md) for what's next.
 
 ## License
 

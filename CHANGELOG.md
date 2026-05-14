@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Empty-database regression coverage for the Hermes capsule learning report.
+
+### Changed
+- Clarified public README, vision, status, roadmap, and security docs around source-tree versions, published package versions, and UATP 7.4 agent execution traces.
+
+### Fixed
+- Hermes capsule learning report now treats a missing local `capsules` table as an empty dataset instead of failing CI.
+
 ## [1.1.0] - 2026-04-08
 
 ### Added

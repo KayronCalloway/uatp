@@ -1,6 +1,6 @@
 # Roadmap
 
-**Current:** SDK 1.1.0 | Capsule Schema 7.2 | See [STATUS.md](STATUS.md) for component-level detail.
+**Current source:** 1.1.0 | Capsule Schema 7.2 + 7.4 agent execution traces | See [STATUS.md](STATUS.md) for component-level detail.
 
 ---
 
@@ -31,6 +31,7 @@
 - **External security audit** — Cryptographic review by third party
 - **Frontend polish** — Production-ready dashboard
 - **TypeScript SDK stabilization** — Browser and Node.js support
+- **Registry release sync** — Publish source 1.1.0 to PyPI/npm or label older packages as historical
 - **Hosted API** — Optional managed service
 
 ---
@@ -43,4 +44,4 @@
 
 ---
 
-*Last updated: April 2026*
+*Last updated: May 2026*

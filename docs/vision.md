@@ -2,13 +2,13 @@
 
 ## The Stakes
 
-A handful of companies built the most powerful systems in history by treating human expression as free raw material. Every post, every debugged line, every image shared, every late-night answer — scraped, ingested, and monetized without consent, without compensation, and without a mechanism to opt out. The people who fed the machine were treated as inputs, not participants.
+A handful of companies built the most powerful systems in history by treating human expression as free raw material. Posts, code, images, and forum answers were scraped, ingested, and monetized without consent or compensation. The people who fed the machine were treated as inputs, not participants.
 
-This is not sustainable. It is becoming legally untenable — courts are already treating unauthorized training-data scraping as copyright infringement. And it is economically shortsighted: the quality of AI depends on the health of its sources, and treating contributors as extractable inputs degrades the supply.
+This is not sustainable. Courts are beginning to test unauthorized training-data scraping under copyright and contract law. Even where the law remains unsettled, the economics are straightforward: the quality of AI depends on the health of its sources, and treating contributors as extractable inputs degrades the supply.
 
 At the same time, AI is entering high-stakes domains where opacity is unacceptable. When a robotaxi crashes, when a doctor's AI recommends the wrong medication, when a bank algorithm denies a mortgage, there is no record of what was decided, with what reasoning, at what moment. Liability is unprovable. Trust collapses.
 
-Both failures trace to the same absence: memory — verifiable memory, owned by the people who created it.
+Both failures trace to the same absence: verifiable memory.
 
 ---
 
@@ -30,7 +30,7 @@ Point the same provenance layer backward again, and it traces which human contri
 
 ## The Flywheel
 
-This creates a self-sustaining loop:
+This creates a loop:
 
 1. **Audit.** High-stakes AI deployments require provable decision records. Capsules make them court-admissible and insurable. Enterprises adopt because the liability gap closes.
 
@@ -48,7 +48,7 @@ The loop closes automatically. Better data feeds better AI, which produces bette
 
 ## Symbiosis, Not Replacement
 
-Most people assume AI replaces human contribution. The more interesting case is that it amplifies it — if the link between the two is preserved.
+AI does not have to replace human contribution. It can amplify it, if the link between the two is preserved.
 
 When a researcher sees their reasoning shape a medical AI, they dig deeper. When a writer watches their style inform a generation of models, they write more. When an open-source maintainer knows their code underpins critical infrastructure, they maintain with purpose. Recognition is not a bonus. It is a structural requirement for sustained contribution.
 
@@ -76,17 +76,17 @@ Think of UATP like TCP/IP — invisible infrastructure that makes everything els
 
 1. **Trust is the bottleneck.** Enterprises will not deploy AI in medicine, finance, or transportation without audit trails. Solve trust, and adoption follows.
 
-2. **The extraction model is ending.** Scraping the open web for free training data is becoming legally untenable and socially unsustainable. The companies that transition to consent-based, attributed data will outlast the ones that do not.
+2. **The extraction model is weakening.** Scraping the open web for free training data is being tested in court and challenged by the people who supplied the material. Companies that transition to consent-based, attributed data will have a more durable supply chain.
 
 3. **Process data is more valuable than product data.** Model trainers do not need more text. They need structured records of reasoning, error, and correction. Audit trails produce exactly this.
 
 4. **Attribution is a prerequisite, not a feature.** Precisely tracing influence across model training remains an open research problem. Verifiable memory is the foundation any serious solution must build on.
 
-5. **Symbiosis beats replacement.** Systems that carry their creators forward outlast systems that consume them.
+5. **Symbiosis beats replacement.** Systems that carry their creators forward are more durable than systems that consume them.
 
 6. **Wealth concentration without redistribution destabilizes.** As AI displaces work, the political and economic pressure for participation in the gains will intensify. Infrastructure that routes value back to sources is not idealism. It is survival.
 
-7. **The future belongs to intelligence that remembers where it came from.**
+7. **Intelligence needs memory of where it came from.**
 
 ---
 
@@ -103,7 +103,7 @@ Think of UATP like TCP/IP — invisible infrastructure that makes everything els
 
 ## The Bottom Line
 
-UATP builds the infrastructure for AI to remember its human origins — and for humans to own the memory.
+UATP builds infrastructure for AI to remember its human origins — and for humans to control the memory.
 
 Not to slow AI down. To stop treating the people behind it as free raw material. To give creators control, consent, and a share of the value they produce.
 

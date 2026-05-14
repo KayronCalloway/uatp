@@ -4,8 +4,10 @@
 
 | Version | Supported |
 |---------|-----------|
-| 1.1.x   | Yes       |
-| < 1.1   | No        |
+| Source tree 1.1.x | Yes |
+| GitHub release v1.1.0 | Yes |
+| PyPI `uatp` 0.2.x / npm 1.0.x | Security fixes only until registry sync |
+| < 0.2 | No |
 
 ## Reporting a Vulnerability
 
@@ -21,9 +23,7 @@ Include:
 
 ## Response Timeline
 
-- **Initial response:** 48 hours
-- **Status update:** 7 days
-- **Resolution target:** Critical (7 days), High (14 days), Medium/Low (30 days)
+Expect an initial response within 48 hours and status updates within 7 days. Critical fixes are prioritized immediately; lower-severity issues are batched when safe.
 
 ## Security Architecture
 

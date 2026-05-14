@@ -7,7 +7,7 @@
 | Component | Status | Notes |
 |-----------|--------|-------|
 | Ed25519 Signatures | **Stable** | FIPS 186-5 algorithm, not FIPS-certified |
-| Python SDK | **Stable** | `pip install uatp` v1.1.0 |
+| Python SDK | **Stable** | Source version 1.1.0; PyPI currently publishes 0.2.1 |
 | Local Key Management | **Stable** | Keys never leave the device |
 | Capsule Verification | **Stable** | Standalone, no server needed |
 | DSSE Bundle Export | **Stable** | Sigstore-compatible |
@@ -21,7 +21,7 @@
 | Claude Code capture | **Stable** | Thinking, tool calls, usage, full transcripts |
 | Hermes Agent capture | **Stable** | Plugin, fires on session end (CLI + gateway) |
 | Ollama proxy capture | **Stable** | Standalone, zero UATP deps |
-| DPO pair extraction | **Stable** | 1987 pairs (720 correction chains) |
+| DPO pair extraction | **Stable** | Held-out correction-chain evals, non-mutating learning reports |
 | Cross-model comparison | **Stable** | Queries across all capture sources |
 | Capsule rescore | **Stable** | Re-runs detector on existing capsules |
 
@@ -35,7 +35,7 @@
 | PostgreSQL Storage | **Beta** | Works, needs production hardening |
 | Next.js Frontend | **Beta** | Dashboard functional, needs polish |
 | CLI Tools | **Beta** | `uatp verify`, `uatp export`, `uatp inspect` |
-| TypeScript SDK | **Beta** | `npm install @coolwithakay/uatp` |
+| TypeScript SDK | **Beta** | Source version 1.1.0; npm currently publishes 1.0.1 |
 | ML-DSA-65 Post-Quantum | **Beta** | FIPS 204 algorithm, not audited |
 | RFC 3161 Timestamps | **Beta** | DigiCert TSA, local fallback |
 
@@ -45,7 +45,7 @@
 |-----------|--------|-------|
 | External Security Audit | Q2 2026 | Seeking auditors |
 | Hosted SaaS | Q3 2026 | Architecture designed |
-| PyPI publish automation | Q2 2026 | CI/CD pipeline for releases |
+| Registry release sync | Q2 2026 | Publish source 1.1.0 to PyPI/npm or mark registry packages historical |
 
 ## Experimental (Not Core)
 
@@ -66,18 +66,21 @@ In production (`ENVIRONMENT=production`), only core routes are exposed.
 
 We welcome security review. See [SECURITY.md](SECURITY.md).
 
-## Version
+## Versions
 
-All components: **v1.1.0**
+Source tree: **1.1.0**
+GitHub latest release: **v1.1.0**
 
 | Artifact | Version |
 |----------|---------|
-| Python SDK | 1.1.0 |
-| TypeScript SDK | 1.1.0 |
+| Python SDK source | 1.1.0 |
+| Python SDK on PyPI | 0.2.1 |
+| TypeScript SDK source | 1.1.0 |
+| TypeScript SDK on npm | 1.0.1 |
 | Backend Engine | 1.1.0 |
-| Capsule Schema | 7.2 |
+| Capsule Schema | 7.2 legacy capsules; 7.4 agent execution traces |
 
-Last Updated: 2026-04-08
+Last Updated: 2026-05-13
 
 ## What These Labels Mean
 
