@@ -6,6 +6,8 @@ records. It is intentionally deterministic and does not call an LLM, mutate the
 DB, or promote behavior changes.
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import re

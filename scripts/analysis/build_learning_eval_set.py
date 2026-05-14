@@ -6,6 +6,8 @@ correction chains that can be used to evaluate future behavior-policy changes
 before any learning signal is promoted.
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import sqlite3
@@ -13,14 +15,11 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from scripts.analysis.hermes_signal_filters import is_hermes_meta_message
+
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 DB_PATH = PROJECT_ROOT / "uatp_dev.db"
 NEGATIVE_SIGNALS = {"correction", "requery", "abandonment", "soft_rejection"}
-META_PREFIXES = (
-    "[context compaction",
-    "[your active task list was preserved",
-    "[note: model was just switched",
-)
 
 
 CapsuleRow = dict[str, Any]
@@ -49,8 +48,7 @@ def signal_path(step: dict[str, Any]) -> str:
 
 
 def is_meta_text(text: str) -> bool:
-    lower = text.lower().strip()
-    return any(lower.startswith(prefix) for prefix in META_PREFIXES)
+    return is_hermes_meta_message(text)
 
 
 def extract_model(

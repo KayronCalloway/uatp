@@ -13,13 +13,10 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
+from scripts.analysis.hermes_signal_filters import is_hermes_meta_message
+
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 DB_PATH = PROJECT_ROOT / "uatp_dev.db"
-META_PREFIXES = (
-    "[context compaction",
-    "[your active task list was preserved",
-    "[note: model was just switched",
-)
 NEGATIVE_SIGNALS = {"correction", "requery", "abandonment", "soft_rejection"}
 
 
@@ -33,8 +30,7 @@ def step_signal(step: dict[str, Any]) -> str:
 
 
 def is_meta_message(text: str) -> bool:
-    lower = text.lower().strip()
-    return any(lower.startswith(prefix) for prefix in META_PREFIXES)
+    return is_hermes_meta_message(text)
 
 
 def extract_model(payload: dict[str, Any]) -> str:
