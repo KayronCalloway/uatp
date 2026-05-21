@@ -119,7 +119,8 @@ all = ["uatp[test,dev,docs]"]
 uatp = "src.cli.main:main"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["src*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.json", "*.jsonl", "*.md", "py.typed"]

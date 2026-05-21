@@ -1,0 +1,166 @@
+{
+  "capsule_drafts": [
+    {
+      "action_trace": {
+        "action_id": "act_demo_001",
+        "action_type": "custom",
+        "browser_action": null,
+        "bytes_affected": null,
+        "command": "python -m pytest tests/agent_receipts/test_verifier.py -q",
+        "duration_ms": 0,
+        "executed_at": "2026-05-21T15:00:00+00:00",
+        "exit_code": null,
+        "file_operation": null,
+        "file_path": null,
+        "selector": null,
+        "session_id": "sess_demo_agent_receipts",
+        "stderr_hash": "sha256:12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "stdout_hash": "sha256:12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "tool_call_id": null,
+        "url": null
+      },
+      "capsule_type": "action_trace",
+      "payload_key": "action_trace",
+      "receipt_metadata": {
+        "adapter_name": "hermes",
+        "after_hash": null,
+        "agent_name": "Hermes",
+        "before_hash": null,
+        "command_hash": "sha256:bd10c96ed9d980665380ba594c732fa78b5d621ab0331ca4f7cf3e2df0567c11",
+        "cwd": null,
+        "event_hash": "sha256:def52fecb67e8b03ee4121b8cf35cba78cf77f7b1613eb772ebfc24f574c8d43",
+        "event_id": "evt_demo_001",
+        "output_preview": {
+          "stderr": "",
+          "stdout": ""
+        },
+        "output_preview_original_length": 25,
+        "output_preview_truncated": false,
+        "parent_event_hash": null,
+        "redaction_summary": {
+          "secrets_removed": 1
+        },
+        "trust_level": "local",
+        "verification_classification": "pytest"
+      }
+    },
+    {
+      "action_trace": {
+        "action_id": "act_demo_002",
+        "action_type": "custom",
+        "browser_action": null,
+        "bytes_affected": null,
+        "command": null,
+        "duration_ms": 0,
+        "executed_at": "2026-05-21T15:01:00+00:00",
+        "exit_code": null,
+        "file_operation": null,
+        "file_path": null,
+        "selector": null,
+        "session_id": "sess_demo_agent_receipts",
+        "stderr_hash": "sha256:12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "stdout_hash": "sha256:12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "tool_call_id": null,
+        "url": null
+      },
+      "capsule_type": "action_trace",
+      "payload_key": "action_trace",
+      "receipt_metadata": {
+        "adapter_name": "hermes",
+        "after_hash": null,
+        "agent_name": "Hermes",
+        "before_hash": null,
+        "command_hash": null,
+        "cwd": null,
+        "event_hash": "sha256:1991ef85f903da17f8748bda526955d39bd1fdec21a15ab918788d01df722a14",
+        "event_id": "evt_demo_002",
+        "output_preview": {
+          "stderr": "",
+          "stdout": ""
+        },
+        "output_preview_original_length": 25,
+        "output_preview_truncated": false,
+        "parent_event_hash": "sha256:def52fecb67e8b03ee4121b8cf35cba78cf77f7b1613eb772ebfc24f574c8d43",
+        "redaction_summary": {
+          "secrets_removed": 1
+        },
+        "trust_level": "local",
+        "verification_classification": null
+      }
+    }
+  ],
+  "chain_report": {
+    "chain_root_hash": "sha256:def52fecb67e8b03ee4121b8cf35cba78cf77f7b1613eb772ebfc24f574c8d43",
+    "chain_tip_hash": "sha256:1991ef85f903da17f8748bda526955d39bd1fdec21a15ab918788d01df722a14",
+    "errors": [],
+    "event_count": 2,
+    "valid": true
+  },
+  "schema_version": "agent_receipts.v1",
+  "signed_receipts": [
+    {
+      "event": {
+        "actor": "assistant",
+        "adapter_name": "hermes",
+        "agent_name": "Hermes",
+        "event_id": "evt_demo_001",
+        "event_type": "action.trace",
+        "parent_event_hash": null,
+        "payload": {
+          "action_id": "act_demo_001",
+          "artifact_refs": {
+            "stdout": {
+              "digest": "sha256:11509ac587f7a8eb75b2ec31e3ca8ee3673cd610e2537ead1fad167a0c5f1c15",
+              "media_type": "text/plain",
+              "path": "sha256/11/11509ac587f7a8eb75b2ec31e3ca8ee3673cd610e2537ead1fad167a0c5f1c15",
+              "redaction": {
+                "redactions": 1,
+                "status": "redacted"
+              },
+              "size": 35
+            }
+          },
+          "command": "python -m pytest tests/agent_receipts/test_verifier.py -q",
+          "kind": "terminal.command"
+        },
+        "redaction_summary": {
+          "secrets_removed": 1
+        },
+        "session_id": "sess_demo_agent_receipts",
+        "timestamp": "2026-05-21T15:00:00+00:00",
+        "trust_level": "local"
+      },
+      "event_hash": "sha256:def52fecb67e8b03ee4121b8cf35cba78cf77f7b1613eb772ebfc24f574c8d43",
+      "public_key": "d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+      "signature": "49b924ac7463077e38194dfbf5d0b94f9c9b5193cbf55845a1c87aca492f96b1bf0fb55e4ba6a33f3264f04718c66f14c933ec88a050be24367cac6f9d709f09",
+      "signature_algorithm": "Ed25519",
+      "signer_id": "uatp-demo-fixture-key"
+    },
+    {
+      "event": {
+        "actor": "assistant",
+        "adapter_name": "hermes",
+        "agent_name": "Hermes",
+        "event_id": "evt_demo_002",
+        "event_type": "action.trace",
+        "parent_event_hash": "sha256:def52fecb67e8b03ee4121b8cf35cba78cf77f7b1613eb772ebfc24f574c8d43",
+        "payload": {
+          "action_id": "act_demo_002",
+          "kind": "verification.summary",
+          "result": "passed"
+        },
+        "redaction_summary": {
+          "secrets_removed": 1
+        },
+        "session_id": "sess_demo_agent_receipts",
+        "timestamp": "2026-05-21T15:01:00+00:00",
+        "trust_level": "local"
+      },
+      "event_hash": "sha256:1991ef85f903da17f8748bda526955d39bd1fdec21a15ab918788d01df722a14",
+      "public_key": "d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+      "signature": "793f8236123341225cb39344b063bbe443da2e59aa50cffc5d4f8169c22ebdd9e585f34dea3fb0b3de20ab7146583278d186ee7ffae4e8c9b8458d338ed7fb00",
+      "signature_algorithm": "Ed25519",
+      "signer_id": "uatp-demo-fixture-key"
+    }
+  ]
+}
