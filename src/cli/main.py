@@ -18,6 +18,7 @@ import click
 from src.cli.export_cmd import export_cmd
 from src.cli.inspect import inspect_cmd
 from src.cli.verify import verify_cmd
+from src.cli.verify_receipts import verify_receipts_cmd
 
 
 @click.group()
@@ -33,6 +34,7 @@ def cli() -> None:
 
 # Register subcommands
 cli.add_command(verify_cmd)
+cli.add_command(verify_receipts_cmd)
 cli.add_command(export_cmd)
 cli.add_command(inspect_cmd)
 
