@@ -5,27 +5,26 @@
 safe_to_promote_live: false
 dry_run: true
 Insufficient data for live behavior promotion.
-Signal cleanup required.
 
 ## Data Inventory
 
-Capsules total: 2236
-Hermes capsules: 131
-Hermes steps: 1152
-Clean eval records: 9
+Capsules total: 2242
+Hermes capsules: 137
+Hermes steps: 1169
+Clean eval records: 8
 
 ## Signal Health
 
-User signals: `{"acceptance": 53, "correction": 19, "neutral": 249, "refinement": 2, "requery": 9, "soft_rejection": 2}`
-Meta contamination count: 79
-Clean correction chains: 9
+User signals: `{"acceptance": 41, "correction": 15, "neutral": 286, "refinement": 1}`
+Meta contamination count: 0
+Clean correction chains: 8
 Minimum chains for behavior rules: 50
 safe_for_behavior_rules: false
 
 ## Clean Correction Chains
 
-Records: 9
-Signals: `{"correction": 8, "soft_rejection": 1}`
+Records: 8
+Signals: `{"correction": 8}`
 safe_to_finetune_raw: false
 
 ## Behavioral Failure Modes
@@ -48,13 +47,12 @@ Evidence:
 
 ## Token Waste / Repetition
 
-Long answer followed by short correction: 3
-Estimated wasted tokens: 1433
+Long answer followed by short correction: 2
+Estimated wasted tokens: 1000
 Deflection phrases: `{"I can": 1}`
 Evidence:
 - caps_2026_04_27_190156_20260427:21-22-23-24: long_answer_short_correction
 - caps_2026_05_06_170346_20260506:0-2-3-4: long_answer_short_correction
-- caps_2026_05_12_174322_20260512:0-2-3-4: long_answer_short_correction
 
 ## Tool-Use Misses
 
@@ -74,12 +72,12 @@ No proposal met the evidence threshold. No memory or skill changes should be app
 
 ## Eval and Benchmark Results
 
-Promotion gate: `{"baseline_pass_rate": 0.0, "beats_baseline": true, "safe_to_promote_live": false, "winner": "concise_action_bias", "winner_pass_rate": 1.0}`
+Promotion gate: `{"baseline_pass_rate": 0.0, "beats_baseline": true, "safe_to_promote_live": false, "winner": "oracle_chosen", "winner_pass_rate": 1.0}`
 Ranking:
-- concise_action_bias: pass_rate=1.0 passed=9 failed=0
-- oracle_chosen: pass_rate=0.8889 passed=8 failed=1
-- overexplainer_negative_control: pass_rate=0.6667 passed=6 failed=3
-- baseline_rejected: pass_rate=0.0 passed=0 failed=9
+- oracle_chosen: pass_rate=1.0 passed=8 failed=0
+- concise_action_bias: pass_rate=1.0 passed=8 failed=0
+- overexplainer_negative_control: pass_rate=0.75 passed=6 failed=2
+- baseline_rejected: pass_rate=0.0 passed=0 failed=8
 
 ## Next Actions
 

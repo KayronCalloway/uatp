@@ -43,6 +43,30 @@ def test_render_markdown_marks_insufficient_data_and_signal_cleanup_required():
     assert "safe_to_promote_live: false" in markdown
 
 
+def test_report_counts_only_non_neutral_meta_signals_as_contamination(monkeypatch):
+    from scripts.analysis import hermes_capsule_learning_report as report
+
+    monkeypatch.setattr(
+        report,
+        "audit",
+        lambda _db_path: {
+            "capsules_total": 1,
+            "hermes": {
+                "capsules": 1,
+                "steps_total": 1,
+                "user_signal_counts": {},
+                "meta_signal_counts": {"neutral": 80},
+            },
+        },
+    )
+    monkeypatch.setattr(report, "_load_or_build_records", lambda *_args, **_kwargs: [])
+
+    payload = report.build_report_payload(output_path=None, dry_run=True)
+
+    assert payload["summary"]["meta_contamination_count"] == 0
+    assert payload["signal_health"]["meta_contamination_count"] == 0
+
+
 def test_report_payload_can_be_built_without_external_pythonpath(tmp_path):
     output = tmp_path / "report.md"
 

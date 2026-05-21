@@ -90,7 +90,9 @@ def build_report_payload(
     )
 
     meta_counts = audit_report.get("hermes", {}).get("meta_signal_counts", {})
-    meta_contamination_count = sum(int(value) for value in meta_counts.values())
+    meta_contamination_count = sum(
+        int(value) for signal, value in meta_counts.items() if signal != "neutral"
+    )
     clean_chains = len(records)
     signal_health = {
         "meta_contamination_count": meta_contamination_count,

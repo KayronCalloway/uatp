@@ -17,10 +17,16 @@ import argparse
 import json
 import re
 import sqlite3
+import sys
 from collections import Counter
 from pathlib import Path
 
 project_root = Path(__file__).parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from scripts.analysis.hermes_signal_filters import is_hermes_meta_message
+
 DB_PATH = project_root / "uatp_dev.db"
 
 
@@ -31,12 +37,7 @@ def apply_guards_to_existing(old_sig: str, content: str, pa_len: int) -> str:
     word_count = len(words)
     new_sig = old_sig
 
-    system_meta_markers = (
-        "[context compaction",
-        "[your active task list was preserved",
-        "[note: model was just switched",
-    )
-    if any(lower.startswith(marker) for marker in system_meta_markers):
+    if is_hermes_meta_message(content):
         return "neutral"
 
     # ---- Guard A+B: acceptance false positives ----

@@ -55,6 +55,16 @@ def test_preserved_task_list_signal_is_neutralized():
     assert new_sig == "neutral"
 
 
+def test_preserved_task_list_suffix_signal_is_neutralized():
+    new_sig = rescore.apply_guards_to_existing(
+        "refinement",
+        "show the sparkle on hover\n\n[Your active task list was preserved across context compression]\n- [>] Visual polish",
+        900,
+    )
+
+    assert new_sig == "neutral"
+
+
 def test_short_fix_after_long_assistant_promotes_to_correction():
     new_sig = rescore.apply_guards_to_existing("neutral", "ok fix it", 1200)
 
