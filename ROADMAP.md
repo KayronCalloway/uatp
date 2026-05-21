@@ -28,6 +28,9 @@
 
 ## In Progress (Q2-Q3 2026)
 
+- **Offline agent receipt bundle verifier** — Verify receipt hashes, signatures, parent chains, artifact refs, and capsule drafts outside Hermes/runtime
+- **Tamper-failure demo** — Deterministic proof that event, chain, signature, and artifact modification fails verification
+- **MCP certifying gateway hardening** — Use MCP as the first external boundary after receipt bundle verification is complete
 - **External security audit** — Cryptographic review by third party
 - **Frontend polish** — Production-ready dashboard
 - **TypeScript SDK stabilization** — Browser and Node.js support

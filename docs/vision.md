@@ -20,7 +20,7 @@ Cryptographically signed records — capsules — capture what an AI decided, wh
 
 This works in multiple directions at once.
 
-**Forward:** It makes AI court-admissible and insurable. Enterprises can deploy in medicine, finance, and transportation because liability is bounded by cryptographic proof.
+**Forward:** It makes AI decisions evidence-grade and audit-ready. Enterprises can deploy in medicine, finance, and transportation with stronger records for legal, insurance, and compliance workflows because the runtime leaves cryptographic proof.
 
 **Backward:** It captures structured records of how AI actually thinks under real conditions — reasoning chains, confidence scores, error cases, corrections, and outcomes. This is more valuable than scraped text because it contains process, not just product. Model trainers will pay for it because it teaches models to reason, not just to pattern-match.
 
@@ -32,7 +32,7 @@ Point the same provenance layer backward again, and it traces which human contri
 
 This creates a loop:
 
-1. **Audit.** High-stakes AI deployments require provable decision records. Capsules make them court-admissible and insurable. Enterprises adopt because the liability gap closes.
+1. **Audit.** High-stakes AI deployments require provable decision records. Capsules support legal, insurance, and compliance workflows by preserving signed decision records. Enterprises adopt because the liability gap becomes easier to inspect and contest.
 
 2. **Capture.** Those audited decisions contain something scarce: structured training data that shows how AI reasons under real-world constraints. Not the output — the process that produced it. This is what model trainers actually need.
 

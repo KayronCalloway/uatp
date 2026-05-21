@@ -1,6 +1,6 @@
 # UATP Capsule Engine
 
-**Verifiable memory for AI systems. Capture decisions, certify agent actions, detect failures, and generate training signal.**
+**Signed receipts for AI agent actions. Turn tool calls, decisions, artifacts, corrections, and session traces into tamper-evident records that can be verified outside the agent runtime.**
 
 [![CI](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml)
 [![Security](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml)
@@ -16,7 +16,7 @@ A handful of companies built the most powerful systems in history by treating hu
 
 At the same time, AI is entering high-stakes domains where opacity is unacceptable. When a robotaxi crashes, when a doctor's AI recommends the wrong medication, when a bank algorithm denies a mortgage, there is no record of what was decided, with what reasoning, at what moment. Liability is unprovable. Trust collapses.
 
-Both failures trace to the same absence: verifiable memory.
+Both failures trace to the same absence: verifiable memory — signed records of what happened, when, and under whose key.
 
 **[Read the full vision →](docs/vision.md)**
 
@@ -24,16 +24,16 @@ Both failures trace to the same absence: verifiable memory.
 
 ## What It Does
 
-UATP captures what AI systems do, signs it cryptographically, and turns those records into training signal.
+UATP captures what AI systems do, signs it cryptographically, and turns those records into audit-ready proof and training signal.
 
-A **capsule** is a signed record of an AI interaction containing:
+A **capsule** is a signed record of an AI interaction. For agent systems, UATP also emits signed receipt bundles containing:
 - The conversation (user messages, assistant responses, tool calls)
 - Extended thinking (chain-of-thought, when available)
 - Implicit feedback signals (corrections, acceptances, abandonments)
 - Economics (tokens, cache hit rates, cost)
-- Cryptographic signature (Ed25519, optionally ML-DSA-65 post-quantum)
+- Cryptographic signatures (Ed25519; ML-DSA-65 support is beta)
 
-The signature proves the capsule has not been tampered with. The signals reveal whether the AI succeeded or failed, and the thinking shows why.
+The signatures make tampering detectable. The signals reveal whether the AI succeeded or failed, and the trace shows what happened at the tool boundary.
 
 ---
 

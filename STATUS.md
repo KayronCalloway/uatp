@@ -2,28 +2,29 @@
 
 > Source of truth. What's ready, what's not, what's planned.
 
-## Core Protocol (Stable)
+## Core Protocol (Stable Local/Dev)
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Ed25519 Signatures | **Stable** | FIPS 186-5 algorithm, not FIPS-certified |
-| Python SDK | **Stable** | Source version 1.1.0; PyPI currently publishes 0.2.1 |
-| Local Key Management | **Stable** | Keys never leave the device |
-| Capsule Verification | **Stable** | Standalone, no server needed |
-| DSSE Bundle Export | **Stable** | Sigstore-compatible |
-| Signal Detection | **Stable** | 7 signal types, calibrated against 1042 outcomes |
-| Confidence Calibration | **Stable** | Autoresearch via Gemma, MAE 0.176 |
+| Ed25519 Signatures | **Stable local/dev** | FIPS 186-5 algorithm, not FIPS-certified |
+| Python SDK | **Stable local/dev** | Source version 1.1.0; PyPI currently publishes 0.2.1 |
+| Local Key Management | **Stable local/dev** | Keys never leave the device |
+| Capsule Verification | **Stable local/dev** | Standalone legacy capsule verification; agent receipt bundle verifier is next |
+| DSSE Bundle Export | **Stable local/dev** | Sigstore-compatible |
+| Signal Detection | **Stable local/dev** | 7 signal types, calibrated against local outcomes |
+| Confidence Calibration | **Stable local/dev** | Autoresearch via Gemma, MAE 0.176 |
 
-## Capture Pipeline (Stable)
+## Capture Pipeline (Stable Local/Dev)
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Claude Code capture | **Stable** | Thinking, tool calls, usage, full transcripts |
-| Hermes Agent capture | **Stable** | Plugin, fires on session end (CLI + gateway) |
-| Ollama proxy capture | **Stable** | Standalone, zero UATP deps |
-| DPO pair extraction | **Stable** | Held-out correction-chain evals, non-mutating learning reports |
-| Cross-model comparison | **Stable** | Queries across all capture sources |
-| Capsule rescore | **Stable** | Re-runs detector on existing capsules |
+| Claude Code capture | **Stable local/dev** | Thinking, tool calls, usage, full transcripts |
+| Hermes Agent capture | **Stable local/dev** | Plugin, fires on session end (CLI + gateway); not externally audited |
+| Agent receipt bundles | **Beta** | Signed receipt chains exist; offline bundle verifier is planned next |
+| Ollama proxy capture | **Stable local/dev** | Standalone, zero UATP deps |
+| DPO pair extraction | **Stable local/dev** | Held-out correction-chain evals, non-mutating learning reports |
+| Cross-model comparison | **Stable local/dev** | Queries across all capture sources |
+| Capsule rescore | **Stable local/dev** | Re-runs detector on existing capsules |
 
 ## Backend (Beta)
 
@@ -38,12 +39,14 @@
 | TypeScript SDK | **Beta** | Source version 1.1.0; npm currently publishes 1.0.1 |
 | ML-DSA-65 Post-Quantum | **Beta** | FIPS 204 algorithm, not audited |
 | RFC 3161 Timestamps | **Beta** | DigiCert TSA, local fallback |
+| MCP Certifying Gateway | **Alpha** | Stdio/single-server certifying proxy; needs external receipt verification, concurrency, multi-server, and remote anchoring |
 
 ## Planned
 
 | Component | Target | Notes |
 |-----------|--------|-------|
 | External Security Audit | Q2 2026 | Seeking auditors |
+| Offline agent receipt bundle verifier | Q2 2026 | Verify receipt hashes, signatures, parent chain, artifacts, and capsule drafts outside Hermes/runtime |
 | Hosted SaaS | Q3 2026 | Architecture designed |
 | Registry release sync | Q2 2026 | Publish source 1.1.0 to PyPI/npm or mark registry packages historical |
 
@@ -80,11 +83,12 @@ GitHub latest release: **v1.1.0**
 | Backend Engine | 1.1.0 |
 | Capsule Schema | 7.2 legacy capsules; 7.4 agent execution traces |
 
-Last Updated: 2026-05-13
+Last Updated: 2026-05-21
 
 ## What These Labels Mean
 
-- **Stable**: Functions correctly, API won't break, not externally audited
+- **Stable local/dev**: Functions correctly in local/dev workflows, API intended to hold steady, not externally audited
+- **Alpha**: Working integration, but missing production hardening or scale properties
 - **Beta**: Works but may need configuration or has known limitations
 - **Experimental**: Code exists, not maintained to protocol standards
 - **Planned**: Design exists, code doesn't
