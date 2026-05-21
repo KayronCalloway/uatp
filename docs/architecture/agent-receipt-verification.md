@@ -141,3 +141,32 @@ uatp verify-receipts docs/examples/agent-receipts/valid_bundle.json --no-color
 ```
 
 Use strict mode in CI and demos where artifacts are available. Use non-strict mode when you only have a detached public receipt bundle.
+
+## MCP gateway boundary export
+
+The MCP certifying gateway can export stored DECISION_POINT -> TOOL_CALL capsules as the same offline-verifiable receipt bundle format. This keeps the external boundary demo honest: the gateway writes local MCP audit capsules, then a separate CLI command exports a detached public receipt bundle that `uatp verify-receipts` can check without the running gateway or SQLite store.
+
+Example flow:
+
+```bash
+uatp export-mcp-receipts uatp_mcp_store.db \
+  --session-id sess_<id> \
+  --output /tmp/mcp_receipts.json
+
+uatp verify-receipts /tmp/mcp_receipts.json \
+  --strict \
+  --no-color
+```
+
+Expected result:
+
+```text
+Exported MCP receipt bundle: /tmp/mcp_receipts.json (2 receipts, session sess_<id>)
+✓ Agent receipt verification PASSED
+```
+
+Notes:
+
+- The export covers the proxy-observed MCP boundary facts: policy decision, selected tool, argument hash/preview, output hash/preview, timing, status, and parent linkage.
+- It intentionally exports detached public receipts, not raw upstream outputs or private database handles.
+- The receipt bundle is newly signed at export time and remains independently verifiable via Ed25519 signatures and parent-hash chain checks.

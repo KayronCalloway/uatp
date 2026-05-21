@@ -32,14 +32,17 @@ import logging
 import sys
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from mcp.server import Server
 from mcp.types import TextContent, Tool
 
+from src.agent_receipts.signing import Ed25519ReceiptSigner
 from src.integrations.mcp.capsule_builder import CapsuleBuilder
 from src.integrations.mcp.policy_engine import PolicyEngine
 from src.integrations.mcp.proof_attachment import ProofAttachment
+from src.integrations.mcp.receipt_export import export_mcp_receipt_bundle
 from src.integrations.mcp.store import CapsuleStore
 from src.integrations.mcp.upstream_stdio_client import UpstreamStdioClient
 from src.security.uatp_crypto_v7 import UATPCryptoV7
@@ -61,6 +64,9 @@ class UATPMCPGateway:
         self.upstream = UpstreamStdioClient(upstream_command)
         self.store = CapsuleStore(store_path)
         self.crypto = UATPCryptoV7(key_dir=key_dir, signer_id="uatp-mcp-gateway")
+        self.receipt_signer = Ed25519ReceiptSigner.generate(
+            signer_id="uatp-mcp-gateway"
+        )
         self.builder = CapsuleBuilder(self.store, self.crypto)
         self.policy = PolicyEngine()
         self.server = Server("uatp-certifier")
@@ -170,6 +176,24 @@ class UATPMCPGateway:
         content_blocks.append(TextContent(type="text", text=proof_text))
 
         return content_blocks
+
+    def export_receipt_bundle(
+        self,
+        session_id: str | None = None,
+        *,
+        output_path: str | Path | None = None,
+    ) -> dict[str, Any]:
+        """Export the current MCP session as an offline-verifiable receipt bundle."""
+        target_session_id = session_id or self._session_id
+        if target_session_id is None:
+            raise ValueError("session_id is required before gateway initialization")
+
+        return export_mcp_receipt_bundle(
+            self.store,
+            target_session_id,
+            self.receipt_signer,
+            output_path=output_path,
+        )
 
     async def run(self) -> None:
         """Run the gateway server (stdio transport)."""

@@ -6,8 +6,11 @@ import os
 import sys
 
 import pytest
+from click.testing import CliRunner
 from mcp import ClientSession
 
+from src.agent_receipts.verifier import verify_agent_receipt_bundle
+from src.cli.main import cli
 from src.integrations.mcp.gateway import UATPMCPGateway
 from src.integrations.mcp.policy_engine import PolicyEngine
 from src.integrations.mcp.store import CapsuleStore
@@ -144,6 +147,80 @@ async def test_result_hash_is_stable(upstream_command, temp_store_path, temp_key
     content_hash = payload["output"]["content_hash"]["value"]
     assert content_hash.startswith("sha256:")
     assert len(content_hash) == 71  # "sha256:" + 64 hex chars
+
+    await gateway.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_gateway_exports_offline_verifiable_receipt_bundle(
+    upstream_command, temp_store_path, temp_key_dir
+):
+    """A real MCP boundary call should export an offline-verifiable receipt bundle."""
+    gateway = UATPMCPGateway(
+        upstream_command=upstream_command,
+        store_path=temp_store_path,
+        key_dir=temp_key_dir,
+    )
+    await gateway.initialize()
+
+    await gateway._handle_tool_call("read_file", {"path": "/dev/null"})
+
+    bundle = gateway.export_receipt_bundle()
+    report = verify_agent_receipt_bundle(bundle)
+
+    assert report.valid is True
+    assert report.receipt_count == 2
+    assert [
+        receipt["event"]["event_type"] for receipt in bundle["signed_receipts"]
+    ] == [
+        "decision.point",
+        "tool_call.completed",
+    ]
+    assert [draft["capsule_type"] for draft in bundle["capsule_drafts"]] == [
+        "decision_point",
+        "tool_call",
+    ]
+
+    await gateway.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_cli_exports_and_verifies_mcp_receipt_bundle(
+    upstream_command, temp_store_path, temp_key_dir, tmp_path
+):
+    """The MCP demo path should produce a bundle accepted by verify-receipts."""
+    gateway = UATPMCPGateway(
+        upstream_command=upstream_command,
+        store_path=temp_store_path,
+        key_dir=temp_key_dir,
+    )
+    await gateway.initialize()
+
+    await gateway._handle_tool_call("read_file", {"path": "/dev/null"})
+    assert gateway._session_id is not None
+
+    bundle_path = tmp_path / "mcp_receipts.json"
+    runner = CliRunner()
+    export_result = runner.invoke(
+        cli,
+        [
+            "export-mcp-receipts",
+            temp_store_path,
+            "--session-id",
+            gateway._session_id,
+            "--output",
+            str(bundle_path),
+        ],
+    )
+    verify_result = runner.invoke(
+        cli,
+        ["verify-receipts", str(bundle_path), "--strict", "--no-color"],
+    )
+
+    assert export_result.exit_code == 0, export_result.output
+    assert "Exported MCP receipt bundle" in export_result.output
+    assert verify_result.exit_code == 0, verify_result.output
+    assert "Agent receipt verification PASSED" in verify_result.output
 
     await gateway.shutdown()
 

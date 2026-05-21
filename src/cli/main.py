@@ -16,6 +16,7 @@ Usage:
 import click
 
 from src.cli.export_cmd import export_cmd
+from src.cli.export_mcp_receipts import export_mcp_receipts_cmd
 from src.cli.inspect import inspect_cmd
 from src.cli.verify import verify_cmd
 from src.cli.verify_receipts import verify_receipts_cmd
@@ -36,6 +37,7 @@ def cli() -> None:
 cli.add_command(verify_cmd)
 cli.add_command(verify_receipts_cmd)
 cli.add_command(export_cmd)
+cli.add_command(export_mcp_receipts_cmd)
 cli.add_command(inspect_cmd)
 
 
