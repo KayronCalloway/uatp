@@ -12,6 +12,7 @@ from src.agent_receipts.events import (
     AgentReceiptEvent,
     DecisionPointEvent,
     EnvironmentSnapshotEvent,
+    RefusalEvent,
     SessionEnded,
     SessionStarted,
     ToolCallCompleted,
@@ -24,6 +25,7 @@ from src.capsule_schema import (
     CapsuleType,
     DecisionPointPayload,
     EnvironmentSnapshotPayload,
+    RefusalPayload,
     ToolCallPayload,
 )
 
@@ -275,6 +277,34 @@ def _raw_reasoning_ref(payload_data: dict[str, Any]) -> dict[str, Any] | None:
             "raw_reasoning_ref must be reference-only; inline content is not allowed"
         )
     return {**ref, "storage_policy": "local_encrypted_only"}
+
+
+def map_refusal_event_to_refusal_capsule(event: RefusalEvent) -> dict[str, Any]:
+    """Convert a refused action event into a REFUSAL capsule draft."""
+    payload_data = event.payload
+    refusal_payload = RefusalPayload(
+        refused_capsule_id=payload_data.get("refusal_id", event.event_id),
+        explanation=payload_data.get("reason", "Action refused by policy"),
+        violations=payload_data.get("violations", []),
+    )
+    return {
+        "capsule_type": CapsuleType.REFUSAL.value,
+        "payload_key": "refusal",
+        "refusal": refusal_payload.model_dump(mode="json"),
+        "receipt_metadata": {
+            "adapter_name": event.adapter_name,
+            "agent_name": event.agent_name,
+            "event_id": event.event_id,
+            "event_hash": event_hash(event),
+            "parent_event_hash": event.parent_event_hash,
+            "attempted_tool": payload_data.get("attempted_tool"),
+            "parent_decision_id": payload_data.get("parent_decision_id"),
+            "policy_version": payload_data.get("policy_version"),
+            "policy_checks": payload_data.get("policy_checks", {}),
+            "redaction_summary": event.redaction_summary,
+            "trust_level": event.trust_level,
+        },
+    }
 
 
 def map_decision_point_event_to_decision_point_capsule(

@@ -7,7 +7,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from src.agent_receipts.events import DecisionPointEvent, ToolCallCompleted
+from src.agent_receipts.events import (
+    DecisionPointEvent,
+    RefusalEvent,
+    ToolCallCompleted,
+)
 from src.agent_receipts.signing import Ed25519ReceiptSigner
 from src.agent_receipts.sink import build_signed_receipt_bundle
 from src.integrations.mcp.store import CapsuleStore
@@ -44,7 +48,7 @@ def export_mcp_receipt_bundle(
 
 def receipt_event_from_capsule_row(
     row: dict[str, Any],
-) -> DecisionPointEvent | ToolCallCompleted | None:
+) -> DecisionPointEvent | RefusalEvent | ToolCallCompleted | None:
     """Map a stored MCP capsule row into a neutral agent receipt event."""
     capsule_type = row.get("capsule_type")
     timestamp = datetime.fromisoformat(row["timestamp"])
@@ -105,6 +109,23 @@ def receipt_event_from_capsule_row(
                 "status": execution["status"]["value"],
                 "error_message": execution["error_message"]["value"],
                 "parent_call_id": row.get("parent_id"),
+            },
+        )
+
+    if capsule_type == "REFUSAL":
+        payload = row["payload"]
+        policy_checks = payload.get("policy_checks", {})
+        violations = policy_checks.get("checks_failed") or []
+        return RefusalEvent(
+            **base_kwargs,
+            payload={
+                "refusal_id": row["capsule_id"],
+                "parent_decision_id": payload["parent_decision_id"]["value"],
+                "attempted_tool": payload["attempted_tool"]["value"],
+                "reason": payload["reason"]["value"],
+                "violations": violations,
+                "policy_checks": policy_checks,
+                "policy_version": payload["policy_version"]["value"],
             },
         )
 

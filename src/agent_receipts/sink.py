@@ -10,6 +10,7 @@ from src.agent_receipts.events import (
     AgentReceiptEvent,
     DecisionPointEvent,
     EnvironmentSnapshotEvent,
+    RefusalEvent,
     SessionEnded,
     SessionStarted,
     ToolCallCompleted,
@@ -18,6 +19,7 @@ from src.agent_receipts.mappers import (
     map_action_trace_event_to_action_trace_capsule,
     map_decision_point_event_to_decision_point_capsule,
     map_environment_snapshot_event_to_environment_snapshot_capsule,
+    map_refusal_event_to_refusal_capsule,
     map_session_events_to_agent_session_capsule,
     map_tool_call_event_to_tool_call_capsule,
 )
@@ -73,6 +75,8 @@ def map_events_to_capsule_drafts(
             drafts.append(map_action_trace_event_to_action_trace_capsule(event))
         elif isinstance(event, DecisionPointEvent):
             drafts.append(map_decision_point_event_to_decision_point_capsule(event))
+        elif isinstance(event, RefusalEvent):
+            drafts.append(map_refusal_event_to_refusal_capsule(event))
         elif isinstance(event, EnvironmentSnapshotEvent):
             drafts.append(
                 map_environment_snapshot_event_to_environment_snapshot_capsule(event)

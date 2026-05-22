@@ -2,6 +2,7 @@
 Integration tests for MCP Certifying Gateway.
 """
 
+import json
 import os
 import sys
 
@@ -221,6 +222,60 @@ async def test_cli_exports_and_verifies_mcp_receipt_bundle(
     assert "Exported MCP receipt bundle" in export_result.output
     assert verify_result.exit_code == 0, verify_result.output
     assert "Agent receipt verification PASSED" in verify_result.output
+
+    await gateway.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_cli_exports_and_verifies_refused_mcp_receipt_bundle(
+    upstream_command, temp_store_path, temp_key_dir, tmp_path
+):
+    """Denied MCP calls should export as verifiable decision -> refusal receipts."""
+    gateway = UATPMCPGateway(
+        upstream_command=upstream_command,
+        store_path=temp_store_path,
+        key_dir=temp_key_dir,
+    )
+    await gateway.initialize()
+
+    await gateway._handle_tool_call("delete_database", {"confirm": "yes"})
+    assert gateway._session_id is not None
+
+    bundle_path = tmp_path / "mcp_refusal_receipts.json"
+    runner = CliRunner()
+    export_result = runner.invoke(
+        cli,
+        [
+            "export-mcp-receipts",
+            temp_store_path,
+            "--session-id",
+            gateway._session_id,
+            "--output",
+            str(bundle_path),
+        ],
+    )
+    verify_result = runner.invoke(
+        cli,
+        ["verify-receipts", str(bundle_path), "--strict", "--no-color"],
+    )
+
+    assert export_result.exit_code == 0, export_result.output
+    assert verify_result.exit_code == 0, verify_result.output
+
+    bundle = json.loads(bundle_path.read_text())
+    assert [
+        receipt["event"]["event_type"] for receipt in bundle["signed_receipts"]
+    ] == [
+        "decision.point",
+        "refusal",
+    ]
+    assert [draft["capsule_type"] for draft in bundle["capsule_drafts"]] == [
+        "decision_point",
+        "refusal",
+    ]
+    refusal_draft = bundle["capsule_drafts"][1]
+    assert refusal_draft["refusal"]["refused_capsule_id"].startswith("ref_")
+    assert "tool_not_in_allowlist" in refusal_draft["refusal"]["violations"]
 
     await gateway.shutdown()
 

@@ -131,6 +131,11 @@ class DecisionPointEvent(AgentReceiptEvent):
 
 
 @dataclass(frozen=True)
+class RefusalEvent(AgentReceiptEvent):
+    event_type: ClassVar[str] = "refusal"
+
+
+@dataclass(frozen=True)
 class EnvironmentSnapshotEvent(AgentReceiptEvent):
     event_type: ClassVar[str] = "environment.snapshot"
 

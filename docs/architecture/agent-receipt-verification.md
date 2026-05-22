@@ -167,6 +167,8 @@ Exported MCP receipt bundle: /tmp/mcp_receipts.json (2 receipts, session sess_<i
 
 Notes:
 
-- The export covers the proxy-observed MCP boundary facts: policy decision, selected tool, argument hash/preview, output hash/preview, timing, status, and parent linkage.
+- Successful calls export as `decision.point -> tool_call.completed` receipt chains.
+- Denied calls export as `decision.point -> refusal` receipt chains, preserving policy failure details such as `tool_not_in_allowlist`.
+- The export covers the proxy-observed MCP boundary facts: policy decision, selected/refused tool, argument hash/preview, output hash/preview for executed calls, timing, status, and parent linkage.
 - It intentionally exports detached public receipts, not raw upstream outputs or private database handles.
 - The receipt bundle is newly signed at export time and remains independently verifiable via Ed25519 signatures and parent-hash chain checks.
