@@ -31,7 +31,7 @@ aiohttp==3.13.5
 requests==2.33.1  # CVE-2026-25645 fix
 
 # Validation & Serialization - Updated
-pydantic==2.13.3
+pydantic==2.13.4
 pydantic-settings==2.13.1
 validators==0.35.0
 
