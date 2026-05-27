@@ -65,6 +65,27 @@ def test_preserved_task_list_suffix_signal_is_neutralized():
     assert new_sig == "neutral"
 
 
+def test_background_process_notification_signal_is_neutralized():
+    new_sig = rescore.apply_guards_to_existing(
+        "refinement",
+        '[IMPORTANT: Background process proc_123 matched watch pattern "Serving HTTP".]',
+        900,
+    )
+
+    assert new_sig == "neutral"
+
+
+def test_tool_iteration_limit_signal_is_neutralized():
+    new_sig = rescore.apply_guards_to_existing(
+        "correction",
+        "You've reached the maximum number of tool-calling iterations allowed. "
+        "Please provide a final response summarizing what you've found.",
+        900,
+    )
+
+    assert new_sig == "neutral"
+
+
 def test_short_fix_after_long_assistant_promotes_to_correction():
     new_sig = rescore.apply_guards_to_existing("neutral", "ok fix it", 1200)
 

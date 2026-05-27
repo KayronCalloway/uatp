@@ -1,3 +1,6 @@
+import json
+import subprocess
+import sys
 from pathlib import Path
 
 from scripts.analysis.hermes_capsule_learning_report import (
@@ -67,6 +70,36 @@ def test_report_counts_only_non_neutral_meta_signals_as_contamination(monkeypatc
     assert payload["signal_health"]["meta_contamination_count"] == 0
 
 
+def test_report_surfaces_meta_kind_counts(monkeypatch):
+    from scripts.analysis import hermes_capsule_learning_report as report
+
+    monkeypatch.setattr(
+        report,
+        "audit",
+        lambda _db_path: {
+            "capsules_total": 2,
+            "hermes": {
+                "capsules": 2,
+                "steps_total": 2,
+                "user_signal_counts": {},
+                "meta_signal_counts": {"neutral": 2},
+                "meta_kind_counts": {
+                    "context_compaction": 1,
+                    "background_process_notification": 1,
+                },
+            },
+        },
+    )
+    monkeypatch.setattr(report, "_load_or_build_records", lambda *_args, **_kwargs: [])
+
+    payload = report.build_report_payload(output_path=None, dry_run=True)
+
+    assert payload["signal_health"]["meta_kind_counts"] == {
+        "context_compaction": 1,
+        "background_process_notification": 1,
+    }
+
+
 def test_report_payload_can_be_built_without_external_pythonpath(tmp_path):
     output = tmp_path / "report.md"
 
@@ -76,6 +109,26 @@ def test_report_payload_can_be_built_without_external_pythonpath(tmp_path):
     assert "eval" in payload
     assert "summary" in payload
     assert payload["summary"]["safe_to_promote_live"] is False
+
+
+def test_audit_script_runs_directly_without_external_pythonpath(tmp_path):
+    script = (
+        Path(__file__).resolve().parents[2]
+        / "scripts/analysis/capsule_learning_audit.py"
+    )
+    empty_db = tmp_path / "empty.db"
+
+    result = subprocess.run(
+        [sys.executable, str(script), "--json", "--db", str(empty_db)],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    payload = json.loads(result.stdout)
+    assert payload["capsules_total"] == 0
+    assert payload["hermes"]["meta_kind_counts"] == {}
 
 
 def test_report_payload_treats_missing_capsules_table_as_empty_dataset(tmp_path):

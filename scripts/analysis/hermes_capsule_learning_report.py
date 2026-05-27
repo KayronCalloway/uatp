@@ -90,12 +90,14 @@ def build_report_payload(
     )
 
     meta_counts = audit_report.get("hermes", {}).get("meta_signal_counts", {})
+    meta_kind_counts = audit_report.get("hermes", {}).get("meta_kind_counts", {})
     meta_contamination_count = sum(
         int(value) for signal, value in meta_counts.items() if signal != "neutral"
     )
     clean_chains = len(records)
     signal_health = {
         "meta_contamination_count": meta_contamination_count,
+        "meta_kind_counts": dict(meta_kind_counts),
         "clean_correction_chains": clean_chains,
         "min_chains_for_behavior_rules": MIN_CHAINS_FOR_BEHAVIOR_RULES,
         "min_chains_for_policy_promotion": MIN_CHAINS_FOR_POLICY_PROMOTION,
@@ -226,6 +228,7 @@ def render_markdown(payload: dict[str, Any]) -> str:
             "",
             f"User signals: `{json.dumps(hermes.get('user_signal_counts', {}), sort_keys=True)}`",
             f"Meta contamination count: {signal_health.get('meta_contamination_count', 0)}",
+            f"Meta kinds detected: `{json.dumps(signal_health.get('meta_kind_counts', {}), sort_keys=True)}`",
             f"Clean correction chains: {signal_health.get('clean_correction_chains', 0)}",
             f"Minimum chains for behavior rules: {signal_health.get('min_chains_for_behavior_rules', MIN_CHAINS_FOR_BEHAVIOR_RULES)}",
             f"safe_for_behavior_rules: {_bool_text(bool(signal_health.get('safe_for_behavior_rules')))}",

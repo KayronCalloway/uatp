@@ -6,16 +6,22 @@ existing capsule data is clean enough to promote into learning rules, skills,
 preference data, or model-routing evals.
 """
 
+# ruff: noqa: E402, I001
+
 import argparse
 import json
 import sqlite3
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
-from scripts.analysis.hermes_signal_filters import is_hermes_meta_message
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+from scripts.analysis.hermes_signal_filters import classify_hermes_meta_message  # noqa: E402
+
 DB_PATH = PROJECT_ROOT / "uatp_dev.db"
 NEGATIVE_SIGNALS = {"correction", "requery", "abandonment", "soft_rejection"}
 
@@ -27,10 +33,6 @@ def step_text(step: dict[str, Any]) -> str:
 def step_signal(step: dict[str, Any]) -> str:
     measurements = step.get("measurements") or {}
     return str(step.get("signal_type") or measurements.get("signal_type") or "neutral")
-
-
-def is_meta_message(text: str) -> bool:
-    return is_hermes_meta_message(text)
 
 
 def extract_model(payload: dict[str, Any]) -> str:
@@ -62,6 +64,7 @@ def audit(db_path: Path = DB_PATH) -> dict[str, Any]:
     signal_counts = Counter()
     user_signal_counts = Counter()
     meta_signal_counts = Counter()
+    meta_kind_counts = Counter()
     role_counts = Counter()
     model_counts = Counter()
     text_fields = Counter()
@@ -97,8 +100,10 @@ def audit(db_path: Path = DB_PATH) -> dict[str, Any]:
 
                 if role == "user":
                     user_signal_counts[signal] += 1
-                    if is_meta_message(text):
+                    meta_kind = classify_hermes_meta_message(text)
+                    if meta_kind is not None:
                         meta_signal_counts[signal] += 1
+                        meta_kind_counts[meta_kind] += 1
                         if signal != "neutral" and len(noisy_examples[signal]) < 3:
                             noisy_examples[signal].append(text[:180])
                     if signal in NEGATIVE_SIGNALS and previous_assistant_has_text:
@@ -131,6 +136,7 @@ def audit(db_path: Path = DB_PATH) -> dict[str, Any]:
             if user_steps
             else 0.0,
             "meta_signal_counts": dict(meta_signal_counts),
+            "meta_kind_counts": dict(meta_kind_counts),
             "noisy_meta_examples": dict(noisy_examples),
             "approx_negative_chains": approx_negative_chains,
             "text_fields": dict(text_fields),
