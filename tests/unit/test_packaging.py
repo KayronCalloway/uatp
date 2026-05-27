@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import tomllib
+import toml
 
 
 def test_package_discovery_installs_src_namespace_for_console_scripts() -> None:
-    pyproject = tomllib.loads(Path("pyproject.toml").read_text())
+    pyproject = toml.loads(Path("pyproject.toml").read_text())
 
     package_find = pyproject["tool"]["setuptools"]["packages"]["find"]
 
