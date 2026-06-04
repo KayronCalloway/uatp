@@ -9,6 +9,7 @@ from src.agent_receipts.chain import build_receipt_chain, event_hash
 from src.agent_receipts.events import ActionTraceEvent
 from src.agent_receipts.signing import (
     Ed25519ReceiptSigner,
+    ReceiptTrustPolicy,
     sign_receipt_chain,
     verify_signed_receipt,
     verify_signed_receipt_chain,
@@ -60,10 +61,44 @@ def test_tampered_signed_event_fails_signature_verification() -> None:
     assert report.errors == ("event_hash does not match signed event payload",)
 
 
+def test_tampered_signer_identity_fails_signature_verification() -> None:
+    signer = Ed25519ReceiptSigner.generate(signer_id="trusted_signer")
+    signed = signer.sign_event(build_receipt_chain(sample_events())[0])
+    tampered = replace(signed, signer_id="attacker_claiming_same_key")
+
+    report = verify_signed_receipt(tampered)
+
+    assert report.valid is False
+    assert any("signature verification failed" in error for error in report.errors)
+
+
+def test_trust_policy_rejects_untrusted_public_key_for_signer() -> None:
+    trusted_signer = Ed25519ReceiptSigner.generate(signer_id="gateway")
+    impostor_signer = Ed25519ReceiptSigner.generate(signer_id="gateway")
+    signed = impostor_signer.sign_event(build_receipt_chain(sample_events())[0])
+    policy = ReceiptTrustPolicy.from_signers({"gateway": trusted_signer.public_key_hex})
+
+    report = verify_signed_receipt(signed, trust_policy=policy)
+
+    assert report.valid is False
+    assert report.errors == ("signer gateway public key is not trusted",)
+
+
+def test_unsupported_signature_algorithm_is_rejected() -> None:
+    signer = Ed25519ReceiptSigner.generate(signer_id="test_signer")
+    signed = signer.sign_event(build_receipt_chain(sample_events())[0])
+    unsupported = replace(signed, signature_algorithm="RSA-PSS")
+
+    report = verify_signed_receipt(unsupported)
+
+    assert report.valid is False
+    assert report.errors == ("unsupported signature_algorithm: RSA-PSS",)
+
+
 def test_signed_chain_verification_treats_signature_failure_as_fatal() -> None:
     signer = Ed25519ReceiptSigner.generate(signer_id="chain_signer")
     signed_chain = sign_receipt_chain(sample_events(), signer)
-    broken_signature = replace(signed_chain[1], signature="00" * 64)
+    broken_signature = replace(signed_chain[1], signature="01" * 64)
 
     report = verify_signed_receipt_chain([signed_chain[0], broken_signature])
 
@@ -71,6 +106,19 @@ def test_signed_chain_verification_treats_signature_failure_as_fatal() -> None:
     assert report.chain_root_hash is None
     assert report.chain_tip_hash is None
     assert any("signature verification failed" in error for error in report.errors)
+
+
+def test_signed_chain_verification_rejects_all_zero_placeholder_signature() -> None:
+    signer = Ed25519ReceiptSigner.generate(signer_id="chain_signer")
+    signed_chain = sign_receipt_chain(sample_events(), signer)
+    placeholder_signature = replace(signed_chain[1], signature="0" * 128)
+
+    report = verify_signed_receipt_chain([signed_chain[0], placeholder_signature])
+
+    assert report.valid is False
+    assert report.chain_root_hash is None
+    assert report.chain_tip_hash is None
+    assert any("placeholder signature" in error for error in report.errors)
 
 
 def test_signed_chain_verification_rejects_parent_hash_breaks() -> None:

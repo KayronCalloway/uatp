@@ -52,6 +52,14 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+_ZERO_ED25519_SIGNATURE = "ed25519:" + "0" * 128
+_ZERO_SHA256_ROOT = "sha256:" + "0" * 64
+_VERIFIED_STATUS_VALUES = {"sealed", "verified"}
+
+
+def _status_value(status: Any) -> str:
+    return str(getattr(status, "value", status)).lower()
+
 
 def _get_key_password() -> bytes:
     """
@@ -511,42 +519,18 @@ class UATPCryptoV7:
 
     def _compute_merkle_root(self, data: Dict[str, Any]) -> str:
         """
-        Compute Merkle root for the capsule.
+        Compute a stable verification root for a capsule.
 
-        For single capsules, computes based on content hash.
-        When the global chain manager is available, uses the chain's Merkle tree.
-
-        Args:
-            data: Capsule data dictionary
-
-        Returns:
-            Merkle root in format "sha256:hex_string"
+        This legacy field is used by UATPCryptoV7 as a per-capsule integrity
+        root. It must be deterministic and independently recomputable; using a
+        process-local mutable chain head would make old/offline capsules fail
+        verification after restart or after later capsules are signed.
         """
-        try:
-            # Try to use the chain Merkle manager for proper tree computation
-            from src.security.merkle_tree import get_chain_merkle_manager
+        return self._compute_content_hash(data)
 
-            manager = get_chain_merkle_manager()
-            capsule_id = data.get("capsule_id")
-
-            if capsule_id:
-                # Add to chain and get updated root
-                return manager.add_capsule(capsule_id, data)
-            else:
-                # Fallback for capsules without ID
-                content_hash = self._compute_content_hash(data)
-                return content_hash
-
-        except ImportError:
-            # Merkle tree module not available - use simple hash
-            logger.debug("Merkle tree module not available, using content hash")
-            content_hash = self._compute_content_hash(data)
-            return content_hash
-        except Exception as e:
-            # Any other error - fallback to simple hash
-            logger.warning(f"Merkle root computation failed: {e}, using content hash")
-            content_hash = self._compute_content_hash(data)
-            return content_hash
+    def _current_merkle_root_for_verification(self, data: Dict[str, Any]) -> str:
+        """Return the stable per-capsule root without mutating chain state."""
+        return self._compute_content_hash(data)
 
     def _sign_ed25519(self, data: Dict[str, Any]) -> str:
         """
@@ -783,7 +767,10 @@ class UATPCryptoV7:
             return self._create_placeholder_verification()
 
     def verify_capsule(
-        self, capsule_data: Dict[str, Any], verification: Dict[str, Any]
+        self,
+        capsule_data: Dict[str, Any],
+        verification: Dict[str, Any],
+        trusted_public_keys_by_signer: Optional[Dict[str, str]] = None,
     ) -> Tuple[bool, str]:
         """
         Verify a signed capsule.
@@ -799,12 +786,38 @@ class UATPCryptoV7:
             return False, "Crypto not enabled"
 
         try:
+            capsule_status = _status_value(capsule_data.get("status", ""))
+            signature_value = verification.get("signature")
+            hash_value = verification.get("hash")
+            merkle_root_value = verification.get("merkle_root")
+            if capsule_status in _VERIFIED_STATUS_VALUES and (
+                not signature_value or not hash_value or not merkle_root_value
+            ):
+                return (
+                    False,
+                    f"{capsule_status} capsules require real verification artifacts",
+                )
+            if signature_value == _ZERO_ED25519_SIGNATURE:
+                return False, "placeholder signature is not valid evidence"
+            if merkle_root_value == _ZERO_SHA256_ROOT:
+                return False, "placeholder merkle_root is not valid evidence"
+
             # Verify content hash
             expected_hash = self._compute_content_hash(capsule_data)
             if verification.get("hash") != expected_hash:
                 return (
                     False,
                     f"Hash mismatch: expected {expected_hash}, got {verification.get('hash')}",
+                )
+
+            expected_merkle_root = self._current_merkle_root_for_verification(
+                capsule_data
+            )
+            if verification.get("merkle_root") != expected_merkle_root:
+                return (
+                    False,
+                    "Merkle root mismatch: "
+                    f"expected {expected_merkle_root}, got {verification.get('merkle_root')}",
                 )
 
             # Verify Ed25519 signature
@@ -827,6 +840,16 @@ class UATPCryptoV7:
             verify_key_hex = verification.get("verify_key")
             if not verify_key_hex:
                 return False, "No verify_key in verification"
+
+            if trusted_public_keys_by_signer is not None:
+                signer_id = verification.get("signer")
+                if not isinstance(signer_id, str):
+                    return False, "signer is required for trust policy verification"
+                trusted_key = trusted_public_keys_by_signer.get(signer_id)
+                if trusted_key is None:
+                    return False, f"signer {signer_id} is not trusted"
+                if verify_key_hex != trusted_key:
+                    return False, f"signer {signer_id} public key is not trusted"
 
             verify_key_bytes = bytes.fromhex(verify_key_hex)
             public_key = ed25519.Ed25519PublicKey.from_public_bytes(verify_key_bytes)

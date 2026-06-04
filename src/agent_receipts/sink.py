@@ -15,6 +15,7 @@ from src.agent_receipts.events import (
     SessionStarted,
     ToolCallCompleted,
 )
+from src.agent_receipts.hashing import sha256_digest
 from src.agent_receipts.mappers import (
     map_action_trace_event_to_action_trace_capsule,
     map_decision_point_event_to_decision_point_capsule,
@@ -85,6 +86,37 @@ def map_events_to_capsule_drafts(
     return drafts
 
 
+def build_bundle_manifest(
+    *,
+    schema_version: str,
+    chain_report: dict[str, Any],
+    signed_receipts: Sequence[SignedReceipt],
+    capsule_drafts: Sequence[dict[str, Any]],
+    signer: Ed25519ReceiptSigner,
+) -> dict[str, Any]:
+    """Build a signed manifest binding receipts, chain report, and capsule drafts."""
+    payload = {
+        "schema_version": schema_version,
+        "chain_report_hash": sha256_digest(chain_report),
+        "chain_root_hash": chain_report.get("chain_root_hash"),
+        "chain_tip_hash": chain_report.get("chain_tip_hash"),
+        "event_count": chain_report.get("event_count"),
+        "signed_receipt_hashes": [
+            sha256_digest(receipt.to_dict()) for receipt in signed_receipts
+        ],
+        "capsule_drafts_hash": sha256_digest(list(capsule_drafts)),
+    }
+    manifest_hash = sha256_digest(payload)
+    return {
+        "payload": payload,
+        "manifest_hash": manifest_hash,
+        "signature": signer.sign_hash(manifest_hash),
+        "public_key": signer.public_key_hex,
+        "signer_id": signer.signer_id,
+        "signature_algorithm": "Ed25519",
+    }
+
+
 def build_signed_receipt_bundle(
     events: Sequence[AgentReceiptEvent], signer: Ed25519ReceiptSigner
 ) -> dict[str, Any]:
@@ -94,11 +126,20 @@ def build_signed_receipt_bundle(
     signed_receipts: list[SignedReceipt] = [
         signer.sign_event(event) for event in chained_events
     ]
+    chain_report_dict = _chain_report_to_dict(chain_report)
+    capsule_drafts = map_events_to_capsule_drafts(chained_events)
     public_bundle = {
         "schema_version": SCHEMA_VERSION,
-        "chain_report": _chain_report_to_dict(chain_report),
+        "chain_report": chain_report_dict,
         "signed_receipts": [receipt.to_dict() for receipt in signed_receipts],
-        "capsule_drafts": map_events_to_capsule_drafts(chained_events),
+        "capsule_drafts": capsule_drafts,
+        "bundle_manifest": build_bundle_manifest(
+            schema_version=SCHEMA_VERSION,
+            chain_report=chain_report_dict,
+            signed_receipts=signed_receipts,
+            capsule_drafts=capsule_drafts,
+            signer=signer,
+        ),
     }
     return {
         **public_bundle,

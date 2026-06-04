@@ -7,12 +7,16 @@ from datetime import datetime, timezone
 
 from src.agent_receipts.artifacts import ArtifactStore
 from src.agent_receipts.events import ActionTraceEvent
-from src.agent_receipts.signing import Ed25519ReceiptSigner
-from src.agent_receipts.sink import build_signed_receipt_bundle
+from src.agent_receipts.signing import (
+    Ed25519ReceiptSigner,
+    ReceiptTrustPolicy,
+    SignedReceipt,
+)
+from src.agent_receipts.sink import build_bundle_manifest, build_signed_receipt_bundle
 from src.agent_receipts.verifier import verify_agent_receipt_bundle
 
 
-def _valid_bundle(tmp_path):
+def _valid_bundle(tmp_path, signer: Ed25519ReceiptSigner | None = None):
     store = ArtifactStore(tmp_path)
     artifact_ref = store.store_bytes(
         b"redacted tool output\n",
@@ -34,7 +38,7 @@ def _valid_bundle(tmp_path):
         redaction_summary={"secrets_removed": 1},
         trust_level="local",
     )
-    signer = Ed25519ReceiptSigner.generate(signer_id="offline_verifier_test")
+    signer = signer or Ed25519ReceiptSigner.generate(signer_id="offline_verifier_test")
     return build_signed_receipt_bundle([event], signer)["public"]
 
 
@@ -54,6 +58,140 @@ def test_verify_agent_receipt_bundle_accepts_valid_bundle_with_artifacts(
     assert report.chain_tip_hash == bundle["chain_report"]["chain_tip_hash"]
     assert report.artifacts_checked == 1
     assert report.capsule_draft_count == 1
+    assert report.timestamp_verified is False
+    assert report.trusted_timestamp_status == "missing"
+
+
+def test_verify_agent_receipt_bundle_requires_trusted_timestamp_when_requested(
+    tmp_path,
+) -> None:
+    bundle = _valid_bundle(tmp_path)
+
+    report = verify_agent_receipt_bundle(
+        bundle,
+        artifact_root=tmp_path,
+        strict=True,
+        require_trusted_timestamp=True,
+    )
+
+    assert report.valid is False
+    assert report.timestamp_verified is False
+    assert report.trusted_timestamp_status == "missing"
+    assert any("trusted timestamp proof missing" in error for error in report.errors)
+
+
+def test_verify_agent_receipt_bundle_rejects_malformed_trusted_timestamp(
+    tmp_path,
+) -> None:
+    bundle = _valid_bundle(tmp_path)
+    bundle["bundle_manifest"]["trusted_timestamp"] = {
+        "rfc3161": {
+            "token": "not-base64",
+            "timestamp": "2026-05-21T12:00:00+00:00",
+            "tsa": "freetsa",
+            "hash_algorithm": "sha256",
+            "message_imprint": "0" * 64,
+        }
+    }
+
+    report = verify_agent_receipt_bundle(bundle, artifact_root=tmp_path, strict=True)
+
+    assert report.valid is False
+    assert report.timestamp_verified is False
+    assert report.trusted_timestamp_status == "invalid"
+    assert any(
+        "trusted timestamp verification failed" in error for error in report.errors
+    )
+
+
+def test_verify_agent_receipt_bundle_applies_trust_policy(tmp_path) -> None:
+    trusted_signer = Ed25519ReceiptSigner.generate(signer_id="offline_verifier_test")
+    impostor_signer = Ed25519ReceiptSigner.generate(signer_id="offline_verifier_test")
+    bundle = _valid_bundle(tmp_path, signer=impostor_signer)
+    policy = ReceiptTrustPolicy.from_signers(
+        {"offline_verifier_test": trusted_signer.public_key_hex}
+    )
+
+    report = verify_agent_receipt_bundle(
+        bundle,
+        artifact_root=tmp_path,
+        strict=True,
+        trust_policy=policy,
+    )
+
+    assert report.valid is False
+    assert any("public key is not trusted" in error for error in report.errors)
+
+
+def test_verify_agent_receipt_bundle_rejects_tampered_signer_identity(tmp_path) -> None:
+    bundle = _valid_bundle(tmp_path)
+    tampered = deepcopy(bundle)
+    tampered["signed_receipts"][0]["signer_id"] = "different_signer"
+
+    report = verify_agent_receipt_bundle(tampered, artifact_root=tmp_path, strict=True)
+
+    assert report.valid is False
+    assert any("signature verification failed" in error for error in report.errors)
+
+
+def test_verify_agent_receipt_bundle_rejects_tampered_capsule_draft(tmp_path) -> None:
+    bundle = _valid_bundle(tmp_path)
+    tampered = deepcopy(bundle)
+    tampered["capsule_drafts"][0]["action_trace"]["action_id"] = "changed_after_signing"
+
+    report = verify_agent_receipt_bundle(tampered, artifact_root=tmp_path, strict=True)
+
+    assert report.valid is False
+    assert any("capsule_drafts_hash" in error for error in report.errors)
+
+
+def test_verify_agent_receipt_bundle_rejects_attacker_resigned_manifest(
+    tmp_path,
+) -> None:
+    trusted_signer = Ed25519ReceiptSigner.generate(signer_id="offline_verifier_test")
+    attacker_signer = Ed25519ReceiptSigner.generate(signer_id="attacker_manifest_key")
+    bundle = _valid_bundle(tmp_path, signer=trusted_signer)
+    bundle["capsule_drafts"][0]["action_trace"]["action_id"] = "changed_after_signing"
+    bundle["bundle_manifest"] = build_bundle_manifest(
+        schema_version=bundle["schema_version"],
+        chain_report=bundle["chain_report"],
+        signed_receipts=[
+            SignedReceipt(**receipt) for receipt in bundle["signed_receipts"]
+        ],
+        capsule_drafts=bundle["capsule_drafts"],
+        signer=attacker_signer,
+    )
+    policy = ReceiptTrustPolicy.from_signers(
+        {"offline_verifier_test": trusted_signer.public_key_hex}
+    )
+
+    report = verify_agent_receipt_bundle(
+        bundle,
+        artifact_root=tmp_path,
+        strict=True,
+        trust_policy=policy,
+    )
+
+    assert report.valid is False
+    assert any(
+        "bundle_manifest signer attacker_manifest_key is not trusted" in error
+        for error in report.errors
+    )
+
+
+def test_verify_agent_receipt_bundle_reports_malformed_manifest_signature_fields(
+    tmp_path,
+) -> None:
+    bundle = _valid_bundle(tmp_path)
+    bundle["bundle_manifest"]["public_key"] = None
+
+    report = verify_agent_receipt_bundle(bundle, artifact_root=tmp_path, strict=True)
+
+    assert report.valid is False
+    assert any(
+        "bundle_manifest signature verification failed" in error
+        for error in report.errors
+    )
 
 
 def test_verify_agent_receipt_bundle_rejects_tampered_event_payload(tmp_path) -> None:

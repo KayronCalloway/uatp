@@ -10,7 +10,13 @@ from nacl.signing import SigningKey, VerifyKey
 
 from src.agent_receipts.chain import ChainVerificationReport, event_hash
 from src.agent_receipts.events import AgentReceiptEvent
-from src.agent_receipts.hashing import sha256_digest
+from src.agent_receipts.hashing import canonical_json_bytes, sha256_digest
+
+SIGNATURE_PREIMAGE_DOMAIN = "UATP-AgentReceipt-v1"
+
+
+def _is_all_zero_hex(value: str) -> bool:
+    return bool(value) and all(char == "0" for char in value)
 
 
 @dataclass(frozen=True)
@@ -33,6 +39,39 @@ class SignedReceipt:
             "signer_id": self.signer_id,
             "signature_algorithm": self.signature_algorithm,
         }
+
+
+@dataclass(frozen=True)
+class ReceiptTrustPolicy:
+    """Trust roots for offline receipt verification.
+
+    A valid Ed25519 signature only proves possession of a private key. This
+    policy binds signer identity to the raw public keys a verifier is willing
+    to trust for that identity.
+    """
+
+    trusted_public_keys_by_signer: dict[str, frozenset[str]]
+
+    @classmethod
+    def from_signers(
+        cls, signers: dict[str, str | Sequence[str]]
+    ) -> ReceiptTrustPolicy:
+        trusted: dict[str, frozenset[str]] = {}
+        for signer_id, public_keys in signers.items():
+            if isinstance(public_keys, str):
+                key_set = frozenset([public_keys])
+            else:
+                key_set = frozenset(public_keys)
+            trusted[signer_id] = key_set
+        return cls(trusted_public_keys_by_signer=trusted)
+
+    def validate(self, signed: SignedReceipt) -> tuple[str, ...]:
+        trusted_keys = self.trusted_public_keys_by_signer.get(signed.signer_id)
+        if trusted_keys is None:
+            return (f"signer {signed.signer_id} is not trusted",)
+        if signed.public_key not in trusted_keys:
+            return (f"signer {signed.signer_id} public key is not trusted",)
+        return ()
 
 
 @dataclass(frozen=True)
@@ -66,8 +105,17 @@ class Ed25519ReceiptSigner:
     def signing_key_hex(self) -> str:
         return bytes(self._signing_key).hex()
 
+    def signature_preimage(self, receipt_hash: str) -> bytes:
+        return signature_preimage(
+            event_hash=receipt_hash,
+            public_key=self.public_key_hex,
+            signer_id=self.signer_id,
+        )
+
     def sign_hash(self, receipt_hash: str) -> str:
-        return self._signing_key.sign(receipt_hash.encode("utf-8")).signature.hex()
+        return self._signing_key.sign(
+            self.signature_preimage(receipt_hash)
+        ).signature.hex()
 
     def sign_event(self, event: AgentReceiptEvent) -> SignedReceipt:
         serialized_event = event.to_dict()
@@ -81,14 +129,63 @@ class Ed25519ReceiptSigner:
         )
 
 
-def _verify_signature(
-    public_key_hex: str, signature_hex: str, receipt_hash: str
+def signature_preimage(
+    *,
+    event_hash: str,
+    public_key: str,
+    signer_id: str,
+    signature_algorithm: str = "Ed25519",
+) -> bytes:
+    """Return the domain-separated bytes covered by a receipt signature."""
+    return canonical_json_bytes(
+        {
+            "domain": SIGNATURE_PREIMAGE_DOMAIN,
+            "event_hash": event_hash,
+            "public_key": public_key,
+            "signature_algorithm": signature_algorithm,
+            "signer_id": signer_id,
+        }
+    )
+
+
+def verify_hash_signature(
+    *,
+    public_key: str,
+    signature: str,
+    digest: str,
+    signer_id: str,
+    signature_algorithm: str = "Ed25519",
 ) -> None:
-    verify_key = VerifyKey(bytes.fromhex(public_key_hex))
-    verify_key.verify(receipt_hash.encode("utf-8"), bytes.fromhex(signature_hex))
+    """Verify a signature over a domain-separated content hash."""
+    if signature_algorithm != "Ed25519":
+        raise ValueError(f"unsupported signature_algorithm: {signature_algorithm}")
+    verify_key = VerifyKey(bytes.fromhex(public_key))
+    verify_key.verify(
+        signature_preimage(
+            event_hash=digest,
+            public_key=public_key,
+            signer_id=signer_id,
+            signature_algorithm=signature_algorithm,
+        ),
+        bytes.fromhex(signature),
+    )
 
 
-def verify_signed_receipt(signed: SignedReceipt) -> SignatureVerificationReport:
+def _verify_signature(signed: SignedReceipt) -> None:
+    verify_hash_signature(
+        public_key=signed.public_key,
+        signature=signed.signature,
+        digest=signed.event_hash,
+        signer_id=signed.signer_id,
+        signature_algorithm=signed.signature_algorithm,
+    )
+
+
+def verify_signed_receipt(
+    signed: SignedReceipt,
+    *,
+    trust_policy: ReceiptTrustPolicy | None = None,
+) -> SignatureVerificationReport:
     """Verify a single signed receipt envelope."""
     errors: list[str] = []
     computed_hash = sha256_digest(signed.event)
@@ -101,8 +198,36 @@ def verify_signed_receipt(signed: SignedReceipt) -> SignatureVerificationReport:
             signer_id=signed.signer_id,
         )
 
+    if signed.signature_algorithm != "Ed25519":
+        errors.append(f"unsupported signature_algorithm: {signed.signature_algorithm}")
+        return SignatureVerificationReport(
+            valid=False,
+            errors=tuple(errors),
+            event_hash=None,
+            signer_id=signed.signer_id,
+        )
+
+    if _is_all_zero_hex(signed.signature):
+        errors.append("placeholder signature is not valid evidence")
+        return SignatureVerificationReport(
+            valid=False,
+            errors=tuple(errors),
+            event_hash=None,
+            signer_id=signed.signer_id,
+        )
+
+    if trust_policy is not None:
+        errors.extend(trust_policy.validate(signed))
+        if errors:
+            return SignatureVerificationReport(
+                valid=False,
+                errors=tuple(errors),
+                event_hash=None,
+                signer_id=signed.signer_id,
+            )
+
     try:
-        _verify_signature(signed.public_key, signed.signature, signed.event_hash)
+        _verify_signature(signed)
     except (BadSignatureError, ValueError) as exc:
         errors.append(f"signature verification failed: {exc}")
 
@@ -126,13 +251,15 @@ def sign_receipt_chain(
 
 def verify_signed_receipt_chain(
     signed_receipts: Sequence[SignedReceipt],
+    *,
+    trust_policy: ReceiptTrustPolicy | None = None,
 ) -> ChainVerificationReport:
     """Verify signatures and append-only parent-hash adjacency for signed receipts."""
     errors: list[str] = []
     event_hashes: list[str] = []
 
     for index, signed in enumerate(signed_receipts):
-        signature_report = verify_signed_receipt(signed)
+        signature_report = verify_signed_receipt(signed, trust_policy=trust_policy)
         if not signature_report.valid:
             errors.extend(
                 f"event {index} ({signed.event.get('event_id')}): {error}"

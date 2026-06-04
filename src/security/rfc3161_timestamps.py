@@ -271,7 +271,10 @@ class RFC3161Timestamper:
         """
         Parse timestamp from TSA response.
 
-        Returns the timestamp from the response, or current time if parsing fails.
+        Returns the timestamp from the response.
+
+        Raises:
+            ValueError: If the response cannot be parsed as an RFC 3161 token.
         """
         if RFC3161_AVAILABLE:
             try:
@@ -295,13 +298,13 @@ class RFC3161Timestamper:
         except Exception as e:
             logger.warning(f"Failed to extract timestamp: {e}")
 
-        # Last resort: use current time
-        return datetime.now(timezone.utc)
+        raise ValueError("could not parse RFC 3161 timestamp response")
 
     def verify_timestamp(
         self,
         token: TimestampToken,
         original_data: bytes,
+        trusted_tsa_certificates: Optional[Tuple[bytes, ...]] = None,
     ) -> Tuple[bool, str]:
         """
         Verify a timestamp token against the original data.
@@ -327,25 +330,20 @@ class RFC3161Timestamper:
         if computed_hash != token.message_imprint:
             return False, "Message imprint mismatch - data has been modified"
 
-        # For full verification, we would need to verify the TSA signature
-        # This requires the TSA's certificate chain
-        if RFC3161_AVAILABLE:
-            try:
-                # Verify using rfc3161ng
-                rfc3161ng.verify_timestamp(
-                    token.token_bytes,
-                    data=original_data,
-                )
-                return True, "Timestamp verified (full cryptographic verification)"
-            except Exception as e:
-                logger.warning(f"Full timestamp verification failed: {e}")
-                # Fall through to basic verification
+        # Full verification is required. A matching message imprint proves only
+        # that this token-like object repeats the expected hash; it does not
+        # prove an independent TSA signed that hash at the stated time.
+        if not RFC3161_AVAILABLE:
+            return False, "full RFC 3161 verification unavailable"
 
-        # Basic verification passed (hash match)
-        return (
-            True,
-            "Timestamp verified (hash match only - install rfc3161ng for full verification)",
-        )
+        # Without a verifier-owned TSA trust anchor, do not promote the token to
+        # trusted time even if an ASN.1 library can parse and verify internal
+        # structure. The current implementation deliberately fails closed for
+        # non-empty anchors too because the anchors are not yet wired into the
+        # rfc3161ng verification call.
+        if not trusted_tsa_certificates:
+            return False, "TSA trust anchor verification not configured"
+        return False, "TSA trust-anchor validation is not implemented"
 
     def _cache_token(self, token: TimestampToken) -> None:
         """Cache a timestamp token to disk."""

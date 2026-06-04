@@ -7,10 +7,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from nacl.exceptions import BadSignatureError
+
 from src.agent_receipts.artifacts import verify_artifact_ref
 from src.agent_receipts.events import ArtifactRef
-from src.agent_receipts.signing import SignedReceipt, verify_signed_receipt_chain
+from src.agent_receipts.hashing import sha256_digest
+from src.agent_receipts.signing import (
+    ReceiptTrustPolicy,
+    SignedReceipt,
+    verify_hash_signature,
+    verify_signed_receipt_chain,
+)
 from src.agent_receipts.sink import SCHEMA_VERSION
+from src.security.rfc3161_timestamps import RFC3161Timestamper, TimestampToken
 
 
 @dataclass(frozen=True)
@@ -26,6 +35,8 @@ class AgentReceiptBundleVerificationReport:
     artifacts_checked: int
     chain_root_hash: str | None
     chain_tip_hash: str | None
+    timestamp_verified: bool = False
+    trusted_timestamp_status: str = "missing"
 
 
 def _load_bundle(bundle_or_path: dict[str, Any] | str | Path) -> dict[str, Any]:
@@ -65,6 +76,124 @@ def _iter_artifact_refs(value: Any):
             yield from _iter_artifact_refs(item)
 
 
+def _verify_bundle_manifest(
+    *,
+    bundle: dict[str, Any],
+    signed_receipts: list[SignedReceipt],
+    trust_policy: ReceiptTrustPolicy | None = None,
+) -> list[str]:
+    errors: list[str] = []
+    manifest = bundle.get("bundle_manifest")
+    if not isinstance(manifest, dict):
+        return ["bundle_manifest must be an object"]
+
+    payload = manifest.get("payload")
+    if not isinstance(payload, dict):
+        return ["bundle_manifest.payload must be an object"]
+
+    expected_payload = {
+        "schema_version": bundle.get("schema_version"),
+        "chain_report_hash": sha256_digest(bundle.get("chain_report", {})),
+        "chain_root_hash": bundle.get("chain_report", {}).get("chain_root_hash")
+        if isinstance(bundle.get("chain_report"), dict)
+        else None,
+        "chain_tip_hash": bundle.get("chain_report", {}).get("chain_tip_hash")
+        if isinstance(bundle.get("chain_report"), dict)
+        else None,
+        "event_count": bundle.get("chain_report", {}).get("event_count")
+        if isinstance(bundle.get("chain_report"), dict)
+        else None,
+        "signed_receipt_hashes": [
+            sha256_digest(receipt.to_dict()) for receipt in signed_receipts
+        ],
+        "capsule_drafts_hash": sha256_digest(bundle.get("capsule_drafts", [])),
+    }
+    for key, expected_value in expected_payload.items():
+        if payload.get(key) != expected_value:
+            errors.append(f"bundle_manifest.{key} does not match computed value")
+
+    computed_manifest_hash = sha256_digest(payload)
+    if manifest.get("manifest_hash") != computed_manifest_hash:
+        errors.append("bundle_manifest.manifest_hash does not match payload")
+
+    manifest_signer_id = manifest.get("signer_id")
+    manifest_public_key = manifest.get("public_key")
+    receipt_signers = {
+        (receipt.signer_id, receipt.public_key) for receipt in signed_receipts
+    }
+    if (manifest_signer_id, manifest_public_key) not in receipt_signers:
+        errors.append("bundle_manifest signer does not match any signed receipt signer")
+
+    if trust_policy is not None:
+        manifest_trust_errors = trust_policy.validate(
+            SignedReceipt(
+                event={},
+                event_hash=manifest.get("manifest_hash", ""),
+                signature=manifest.get("signature", ""),
+                public_key=manifest_public_key or "",
+                signer_id=manifest_signer_id or "",
+                signature_algorithm=manifest.get("signature_algorithm", "Ed25519"),
+            )
+        )
+        errors.extend(f"bundle_manifest {error}" for error in manifest_trust_errors)
+
+    try:
+        verify_hash_signature(
+            public_key=manifest["public_key"],
+            signature=manifest["signature"],
+            digest=manifest["manifest_hash"],
+            signer_id=manifest["signer_id"],
+            signature_algorithm=manifest.get("signature_algorithm", "Ed25519"),
+        )
+    except KeyError as exc:
+        errors.append(f"bundle_manifest malformed: missing {exc}")
+    except (BadSignatureError, TypeError, ValueError) as exc:
+        errors.append(f"bundle_manifest signature verification failed: {exc}")
+
+    return errors
+
+
+def _verify_trusted_timestamp(manifest: dict[str, Any]) -> tuple[str, bool, list[str]]:
+    """Verify the RFC3161 proof over the signed bundle manifest hash.
+
+    Missing timestamp proof is not itself a bundle-integrity failure; it means
+    the bundle has no independently verified time. Malformed or present-but-
+    unverifiable proofs fail closed because they would otherwise invite false
+    "timestamped" claims.
+    """
+    timestamp_info = manifest.get("trusted_timestamp")
+    if timestamp_info is None:
+        return "missing", False, []
+    if not isinstance(timestamp_info, dict) or "rfc3161" not in timestamp_info:
+        return (
+            "invalid",
+            False,
+            ["trusted timestamp verification failed: missing RFC 3161 token"],
+        )
+
+    manifest_hash = manifest.get("manifest_hash")
+    if not isinstance(manifest_hash, str):
+        return (
+            "invalid",
+            False,
+            ["trusted timestamp verification failed: manifest_hash missing"],
+        )
+
+    try:
+        token = TimestampToken.from_dict(timestamp_info["rfc3161"])
+        timestamper = RFC3161Timestamper.__new__(RFC3161Timestamper)
+        verified, reason = timestamper.verify_timestamp(
+            token,
+            manifest_hash.encode("utf-8"),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        return "invalid", False, [f"trusted timestamp verification failed: {exc}"]
+
+    if not verified:
+        return "invalid", False, [f"trusted timestamp verification failed: {reason}"]
+    return "verified", True, []
+
+
 def _invalid_report(
     *,
     errors: list[str],
@@ -75,6 +204,8 @@ def _invalid_report(
     artifacts_checked: int = 0,
     chain_root_hash: str | None = None,
     chain_tip_hash: str | None = None,
+    timestamp_verified: bool = False,
+    trusted_timestamp_status: str = "missing",
 ) -> AgentReceiptBundleVerificationReport:
     return AgentReceiptBundleVerificationReport(
         valid=False,
@@ -86,6 +217,8 @@ def _invalid_report(
         artifacts_checked=artifacts_checked,
         chain_root_hash=chain_root_hash,
         chain_tip_hash=chain_tip_hash,
+        timestamp_verified=timestamp_verified,
+        trusted_timestamp_status=trusted_timestamp_status,
     )
 
 
@@ -94,6 +227,8 @@ def verify_agent_receipt_bundle(
     *,
     artifact_root: str | Path | None = None,
     strict: bool = True,
+    trust_policy: ReceiptTrustPolicy | None = None,
+    require_trusted_timestamp: bool = False,
 ) -> AgentReceiptBundleVerificationReport:
     """Verify a public signed agent receipt bundle without Hermes or database state.
 
@@ -103,6 +238,8 @@ def verify_agent_receipt_bundle(
     """
     errors: list[str] = []
     warnings: list[str] = []
+    timestamp_verified = False
+    trusted_timestamp_status = "missing"
 
     try:
         bundle = _load_bundle(bundle_or_path)
@@ -133,7 +270,10 @@ def verify_agent_receipt_bundle(
         )
 
     try:
-        chain_report = verify_signed_receipt_chain(signed_receipts)
+        chain_report = verify_signed_receipt_chain(
+            signed_receipts,
+            trust_policy=trust_policy,
+        )
     except (TypeError, ValueError) as exc:
         return _invalid_report(
             errors=[f"receipt chain verification failed: {exc}"],
@@ -143,6 +283,29 @@ def verify_agent_receipt_bundle(
 
     if not chain_report.valid:
         errors.extend(chain_report.errors)
+
+    errors.extend(
+        _verify_bundle_manifest(
+            bundle=bundle,
+            signed_receipts=signed_receipts,
+            trust_policy=trust_policy,
+        )
+    )
+    manifest = bundle.get("bundle_manifest")
+    if isinstance(manifest, dict):
+        (
+            trusted_timestamp_status,
+            timestamp_verified,
+            timestamp_errors,
+        ) = _verify_trusted_timestamp(manifest)
+        errors.extend(timestamp_errors)
+    if require_trusted_timestamp and not timestamp_verified:
+        if trusted_timestamp_status == "missing":
+            errors.append("trusted timestamp proof missing")
+        elif not any(
+            "trusted timestamp verification failed" in error for error in errors
+        ):
+            errors.append("trusted timestamp proof unverified")
 
     declared_chain = bundle.get("chain_report", {})
     if isinstance(declared_chain, dict):
@@ -198,4 +361,6 @@ def verify_agent_receipt_bundle(
         artifacts_checked=artifacts_checked,
         chain_root_hash=chain_report.chain_root_hash if valid else None,
         chain_tip_hash=chain_report.chain_tip_hash if valid else None,
+        timestamp_verified=timestamp_verified,
+        trusted_timestamp_status=trusted_timestamp_status,
     )

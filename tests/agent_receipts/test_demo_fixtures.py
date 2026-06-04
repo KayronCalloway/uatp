@@ -54,7 +54,7 @@ def test_tampered_signature_demo_fixture_fails_signature_verification() -> None:
     result = _run_verify("tampered_signature_bundle.json")
 
     assert result.exit_code == ExitCode.FAILED
-    assert "signature verification failed" in result.output
+    assert "placeholder signature is not valid evidence" in result.output
 
 
 def test_tampered_artifact_demo_fixture_fails_artifact_verification() -> None:

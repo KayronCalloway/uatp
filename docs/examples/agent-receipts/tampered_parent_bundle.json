@@ -1,4 +1,23 @@
 {
+  "bundle_manifest": {
+    "manifest_hash": "sha256:4445dbddc53ee69979e59c8ea49f2cb50156a809a87a185e932711ef8d81e116",
+    "payload": {
+      "capsule_drafts_hash": "sha256:3af3d3cb83785c75c9b6a767e8032f2d2aab92f0154e025c3847d4b4ca377017",
+      "chain_report_hash": "sha256:e54c243524234041fc0066c718f80bee08ad149ad5da58ef603b5a312f6aeb3d",
+      "chain_root_hash": "sha256:def52fecb67e8b03ee4121b8cf35cba78cf77f7b1613eb772ebfc24f574c8d43",
+      "chain_tip_hash": "sha256:1991ef85f903da17f8748bda526955d39bd1fdec21a15ab918788d01df722a14",
+      "event_count": 2,
+      "schema_version": "agent_receipts.v1",
+      "signed_receipt_hashes": [
+        "sha256:78456b0f3188aec35ef5b3fa0050f1349bafc2a215f38a02404b064792793f0a",
+        "sha256:adb065e2b9e424a7d5f355c059aebc7cdd811fbdbf467b52a8cd80d130a0598b"
+      ]
+    },
+    "public_key": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "signature": "491faeb0079e7b97fdfb231a8cf9cd496b4b5bf23fc04eb9d731c4e203be8a058df68d576513833ac9286e62a2826c48a18bdce1b3cb43d0b4c90e5ed17d3608",
+    "signature_algorithm": "Ed25519",
+    "signer_id": "uatp-demo-fixture-key"
+  },
   "capsule_drafts": [
     {
       "action_trace": {
@@ -131,8 +150,8 @@
         "trust_level": "local"
       },
       "event_hash": "sha256:def52fecb67e8b03ee4121b8cf35cba78cf77f7b1613eb772ebfc24f574c8d43",
-      "public_key": "d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
-      "signature": "49b924ac7463077e38194dfbf5d0b94f9c9b5193cbf55845a1c87aca492f96b1bf0fb55e4ba6a33f3264f04718c66f14c933ec88a050be24367cac6f9d709f09",
+      "public_key": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "signature": "ee8ebbf6bd3892ffa00a0d98575827de44bb7383226ee3bf578d144ee9335d656482416470ab2853dd3059ec386c9746adeca96adfea84d0662af52313615f03",
       "signature_algorithm": "Ed25519",
       "signer_id": "uatp-demo-fixture-key"
     },
@@ -157,8 +176,8 @@
         "trust_level": "local"
       },
       "event_hash": "sha256:bf6d61d34abbad525684e484322affc98b8db2ea6ebbdac3aad3eac556a743b5",
-      "public_key": "d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
-      "signature": "8d2b541b0fc156f88fb8904fb218126e5e95552fa737a0ca84b5262e84b816403d10669e907210576a325b0c410bf4acbb12ac4adfcd171aca147b0a921b8808",
+      "public_key": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "signature": "fb5e25b0718d46f2b743c1517003b14a268f4d7dde4f07293a5344965e51caef715e707fb3f5f3c52b8bf901e596cbeda037ad4806839261a68f1ba09d777709",
       "signature_algorithm": "Ed25519",
       "signer_id": "uatp-demo-fixture-key"
     }

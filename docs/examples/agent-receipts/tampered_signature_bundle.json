@@ -1,4 +1,23 @@
 {
+  "bundle_manifest": {
+    "manifest_hash": "sha256:5bed8864e2102bf81b12c27dd74e3eb90e8567a323d6bcc92acc0d0be63f8d99",
+    "payload": {
+      "capsule_drafts_hash": "sha256:3af3d3cb83785c75c9b6a767e8032f2d2aab92f0154e025c3847d4b4ca377017",
+      "chain_report_hash": "sha256:e54c243524234041fc0066c718f80bee08ad149ad5da58ef603b5a312f6aeb3d",
+      "chain_root_hash": "sha256:def52fecb67e8b03ee4121b8cf35cba78cf77f7b1613eb772ebfc24f574c8d43",
+      "chain_tip_hash": "sha256:1991ef85f903da17f8748bda526955d39bd1fdec21a15ab918788d01df722a14",
+      "event_count": 2,
+      "schema_version": "agent_receipts.v1",
+      "signed_receipt_hashes": [
+        "sha256:78456b0f3188aec35ef5b3fa0050f1349bafc2a215f38a02404b064792793f0a",
+        "sha256:5066f2d7f8fddafbb7ff718b24b57d6531203b37564861e116d82a25a6897c02"
+      ]
+    },
+    "public_key": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "signature": "f41c2205c9f34cf8ffa8dfb7b4a81ce77258a7d824f803797b0b59a1218ed9aed8dc6f293ec3a1718c907bea61a385dc8673118831194641ed7a367027a34102",
+    "signature_algorithm": "Ed25519",
+    "signer_id": "uatp-demo-fixture-key"
+  },
   "capsule_drafts": [
     {
       "action_trace": {
@@ -131,8 +150,8 @@
         "trust_level": "local"
       },
       "event_hash": "sha256:def52fecb67e8b03ee4121b8cf35cba78cf77f7b1613eb772ebfc24f574c8d43",
-      "public_key": "d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
-      "signature": "49b924ac7463077e38194dfbf5d0b94f9c9b5193cbf55845a1c87aca492f96b1bf0fb55e4ba6a33f3264f04718c66f14c933ec88a050be24367cac6f9d709f09",
+      "public_key": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "signature": "ee8ebbf6bd3892ffa00a0d98575827de44bb7383226ee3bf578d144ee9335d656482416470ab2853dd3059ec386c9746adeca96adfea84d0662af52313615f03",
       "signature_algorithm": "Ed25519",
       "signer_id": "uatp-demo-fixture-key"
     },
@@ -157,7 +176,7 @@
         "trust_level": "local"
       },
       "event_hash": "sha256:1991ef85f903da17f8748bda526955d39bd1fdec21a15ab918788d01df722a14",
-      "public_key": "d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+      "public_key": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
       "signature": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
       "signature_algorithm": "Ed25519",
       "signer_id": "uatp-demo-fixture-key"
