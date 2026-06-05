@@ -2,7 +2,7 @@
 # Production-ready containerization with security best practices
 
 # Stage 1: Build dependencies
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -28,7 +28,7 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Runtime image
-FROM python:3.11-slim as runtime
+FROM python:3.11-slim AS runtime
 
 # Set labels for image metadata
 LABEL maintainer="UATP Team" \
