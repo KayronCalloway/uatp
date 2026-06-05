@@ -1,7 +1,7 @@
 #!/bin/bash
 # Show the last session walkthrough to avoid token waste on recaps
 
-UATP_DIR="/Users/kay/uatp-capsule-engine"
+UATP_DIR="$(git rev-parse --show-toplevel 2>/dev/null || cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 echo " Last Session Walkthrough"
 echo "=" | head -c 60 && echo ""

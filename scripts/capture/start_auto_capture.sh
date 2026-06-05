@@ -7,4 +7,6 @@ echo "Press Ctrl+C to stop, or close this terminal window"
 echo ""
 
 # Run the auto-capture service
-python3 /Users/kay/uatp-capsule-engine/claude_code_auto_capture.py
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+python3 "$REPO_ROOT/claude_code_auto_capture.py"

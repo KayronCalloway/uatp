@@ -469,7 +469,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)
-    tracker = OutcomeTracker(db_path="/Users/kay/uatp-capsule-engine/uatp_dev.db")
+    tracker = OutcomeTracker(db_path=str(Path.cwd() / "uatp_dev.db"))
 
     if args.stats:
         stats = tracker.get_outcome_stats()

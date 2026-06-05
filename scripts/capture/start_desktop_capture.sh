@@ -7,4 +7,6 @@ echo "Press Ctrl+C to stop"
 echo ""
 
 # Run the desktop apps auto-capture service
-python3 /Users/kay/uatp-capsule-engine/claude_desktop_windsurf_capture.py
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+python3 "$REPO_ROOT/claude_desktop_windsurf_capture.py"

@@ -320,8 +320,9 @@ metadata:
   name: grafana-secret
   namespace: uatp-prod
 type: Opaque
-data:
-  admin-password: YWRtaW4xMjM0NTY=  # admin123456 base64 encoded
+stringData:
+  # Set this via your deployment secret manager. Do not commit real passwords.
+  admin-password: CHANGE_ME_STRONG_GRAFANA_PASSWORD
 
 ---
 apiVersion: v1

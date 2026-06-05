@@ -354,7 +354,7 @@ async def main():
         - Automatic capsule creation
         - Artifact correlation (task.md, walkthrough.md)""",
         interaction_type="agentic_coding",
-        workspace_context="/Users/kay/uatp-capsule-engine",
+        workspace_context=str(Path.cwd()),
         open_files=["src/live_capture/antigravity_hook.py"],
         task_mode="EXECUTION",
         task_status="Creating antigravity_hook.py",

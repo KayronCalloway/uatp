@@ -21,7 +21,7 @@ Do not invent a Hermes-only schema. Build an agent-receipt event layer that maps
 ## Source Files Inspected
 
 - `src/capsule_schema.py`
-- SQLite dev DB: `/Users/kay/uatp-capsule-engine/uatp_dev.db`
+- SQLite dev DB: `./uatp_dev.db`
 
 Important code locations:
 

@@ -70,7 +70,7 @@ DEMO_FILES = [
 def analyze_codebase():
     """Analyze the current state of the codebase."""
 
-    root_dir = Path("/Users/kay/uatp-capsule-engine")
+    root_dir = Path(__file__).resolve().parents[1]
 
     analysis = {
         "legacy_files": [],
@@ -132,6 +132,7 @@ def create_cleanup_plan(analysis: Dict) -> Dict:
 def execute_cleanup(plan: Dict, dry_run: bool = True):
     """Execute the cleanup plan."""
 
+    root_dir = Path(__file__).resolve().parents[1]
     print(f" Executing cleanup plan (dry_run={dry_run})")
     print("=" * 60)
 
@@ -144,7 +145,7 @@ def execute_cleanup(plan: Dict, dry_run: bool = True):
 
     # Move demo files
     print(f"\n Moving {len(plan['move_to_examples'])} demo files to examples/:")
-    examples_dir = Path("/Users/kay/uatp-capsule-engine/examples")
+    examples_dir = root_dir / "examples"
     examples_dir.mkdir(exist_ok=True)
 
     for file_path in plan["move_to_examples"]:
@@ -155,7 +156,7 @@ def execute_cleanup(plan: Dict, dry_run: bool = True):
 
     # Move test files
     print(f"\n Moving {len(plan['move_to_tests'])} test files to tests/:")
-    tests_dir = Path("/Users/kay/uatp-capsule-engine/tests")
+    tests_dir = root_dir / "tests"
     tests_dir.mkdir(exist_ok=True)
 
     for file_path in plan["move_to_tests"]:

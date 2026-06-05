@@ -58,6 +58,7 @@ docs/COMPLETE_USER_*.md
 docs/COMPREHENSIVE_*.md
 docs/ENTERPRISE_*.md
 docs/CAPTURE_SYSTEM_*.md
+!docs/CAPTURE_SYSTEM_ARCHITECTURE.md
 docs/PDF_CONVERSION_*.md
 docs/PREMIUM_*.md
 docs/PRIORITY_*.md

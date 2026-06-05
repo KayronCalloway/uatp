@@ -1,7 +1,6 @@
 #!/bin/bash
 # Start ChatGPT Auto-Capture Proxy
 
-export PATH="/Users/kay/Library/Python/3.12/bin:$PATH"
 
 echo " Starting ChatGPT Auto-Capture Proxy..."
 echo ""
@@ -14,5 +13,5 @@ if ! psql -U uatp_user -d uatp_capsule_engine -c "SELECT 1;" > /dev/null 2>&1; t
 fi
 
 # Start mitmdump with our addon
-cd /Users/kay/uatp-capsule-engine
+cd "$(git rev-parse --show-toplevel 2>/dev/null || dirname "$0"/../..)"
 mitmdump -s chatgpt_proxy_addon.py -p 8888 --set block_global=false

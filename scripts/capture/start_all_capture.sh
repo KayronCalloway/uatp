@@ -4,6 +4,9 @@
 echo " Starting Complete UATP Auto-Capture System"
 echo "=============================================="
 echo ""
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export UATP_API_KEY="${UATP_API_KEY:-dev-key-001}"
 
 # Check if backend is running
 echo " Checking backend status..."
@@ -24,12 +27,13 @@ echo ""
 
 # Initialize all capture services
 python3 -c "
+import os
 import requests
 import time
 from datetime import datetime
 
 api_base = 'http://localhost:9090'
-headers = {'X-API-Key': 'dev-key-001', 'Content-Type': 'application/json'}
+headers = {'X-API-Key': os.environ.get('UATP_API_KEY', 'dev-key-001'), 'Content-Type': 'application/json'}
 
 platforms = [
     ('claude_code', 'Claude Code environment capture'),
@@ -76,7 +80,7 @@ echo "   • Claude Desktop: Copy conversations to capture via clipboard"
 echo "   • Windsurf: AI interactions auto-detected"
 echo "   • Web: Use bookmarklet at chat.openai.com or claude.ai"
 echo ""
-echo " Bookmarklet setup: file:///Users/kay/uatp-capsule-engine/uatp_bookmarklet.html"
+echo " Bookmarklet setup: file://$REPO_ROOT/uatp_bookmarklet.html"
 echo ""
 echo "All conversations will be captured with:"
 echo "[OK] Cryptographic seals & signatures"

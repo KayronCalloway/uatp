@@ -1,7 +1,7 @@
 #!/bin/bash
 # End Claude Code Session and Create Final RICH Capsule + Walkthrough
 
-UATP_DIR="/Users/kay/uatp-capsule-engine"
+UATP_DIR="$(git rev-parse --show-toplevel 2>/dev/null || cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 echo " Ending Claude Code session and creating final RICH capsule..."
 cd "$UATP_DIR" && python3 rich_hook_capture.py --end-session
