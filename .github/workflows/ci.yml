@@ -68,7 +68,7 @@ jobs:
     - name: Run informational type checking with mypy
       run: |
         mypy src/ --ignore-missing-imports || {
-          echo "::notice::mypy is currently informational; existing annotation debt is tracked outside the release gate."
+          echo "mypy is currently informational; existing annotation debt is tracked outside the release gate."
           true
         }
 
