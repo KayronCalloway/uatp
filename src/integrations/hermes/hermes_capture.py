@@ -185,6 +185,39 @@ _FILE_PATCH_TOOLS = {"patch", "Edit", "MultiEdit"}
 _FILE_READ_TOOLS = {"read_file", "Read"}
 _COMMAND_TOOLS = {"terminal", "Bash"}
 _ARTIFACT_PREVIEW_CHARS = 2000
+_LEARNING_RECEIPT_V2_SCHEMA = "2026-06-04.artifact-verification.v1"
+_QUALITY_TRIGGER_TERMS = (
+    "gold standard",
+    "no ai slop",
+    "no regression",
+    "my standard",
+    "standard",
+)
+_ACTION_DIRECTIVE_TERMS = (
+    "fix",
+    "apply",
+    "continue",
+    "do it",
+    "commit",
+    "push",
+    "run",
+    "test",
+    "verify",
+)
+_PROJECT_MARKER_TERMS = ("uatp", "portfolio", "resume", "residuals", "hermes")
+_VISUAL_TERMS = (
+    "look at page",
+    "screenshot",
+    "visual",
+    "higher",
+    "lower",
+    "left",
+    "right",
+    "border",
+    "spacing",
+    "from scratch",
+)
+_LOCAL_STATE_TERMS = ("local", "file", "repo", "can you see", "where is", "path")
 
 
 def _sha256_hex(text: str) -> str:
@@ -442,6 +475,109 @@ def _summarize_command_verifications(
         "verification_commands_failed": by_status.get("failed", 0),
         "verification_commands_by_type": dict(by_type.most_common()),
         "verification_commands_by_status": dict(by_status.most_common()),
+    }
+
+
+def _user_text_from_messages(messages: List[Dict[str, Any]] | None) -> str:
+    """Join user text from Hermes messages for deterministic task-intent labels."""
+    if not messages:
+        return ""
+    return "\n".join(
+        str(message.get("content") or "")
+        for message in messages
+        if message.get("role") == "user"
+    ).lower()
+
+
+def _matched_terms(text: str, terms: tuple[str, ...]) -> List[str]:
+    """Return deterministic phrase matches without guessing intent."""
+    return [term for term in terms if term in text]
+
+
+def _build_learning_receipt_v2(
+    tool_invocations: List[Dict[str, Any]] | None,
+    messages: List[Dict[str, Any]] | None = None,
+) -> Dict[str, Any]:
+    """Build an additive learning receipt from tools, artifacts, and verification.
+
+    The receipt is intentionally conservative: it records what tools prove and
+    only derives lightweight intent labels from user text. It does not infer
+    completion, satisfaction, or outcomes.
+    """
+    invocations = tool_invocations or []
+    file_artifacts = _extract_file_artifacts(invocations)
+    command_artifacts = _extract_command_artifacts(invocations)
+    verification_summary = _summarize_command_verifications(command_artifacts)
+
+    last_write_index = None
+    last_verification_index = None
+    for index, invocation in enumerate(invocations):
+        tool = invocation.get("tool")
+        if tool in _FILE_WRITE_TOOLS | _FILE_PATCH_TOOLS:
+            last_write_index = index
+        if tool in _COMMAND_TOOLS:
+            args = _parse_args(invocation.get("arguments")) or {}
+            parsed_result = _parse_tool_result(invocation.get("result_preview"))
+            command = args.get("command") or ""
+            output = parsed_result.get("output") or parsed_result.get("stdout") or ""
+            verification = _classify_verification_command(
+                command,
+                parsed_result.get("exit_code"),
+                output if isinstance(output, str) else str(output),
+            )
+            if verification.get("is_verification") is True:
+                last_verification_index = index
+
+    ran_after_last_write = last_verification_index is not None and (
+        last_write_index is None or last_verification_index > last_write_index
+    )
+
+    user_text = _user_text_from_messages(messages)
+    task_intent = {
+        "quality_triggers": _matched_terms(user_text, _QUALITY_TRIGGER_TERMS),
+        "action_directives": _matched_terms(user_text, _ACTION_DIRECTIVE_TERMS),
+        "project_markers": _matched_terms(user_text, _PROJECT_MARKER_TERMS),
+        "requires_visual_qa": bool(_matched_terms(user_text, _VISUAL_TERMS)),
+        "requires_local_state": bool(_matched_terms(user_text, _LOCAL_STATE_TERMS)),
+    }
+
+    modified_artifacts = any(
+        artifact.get("operation") in {"write", "patch"} for artifact in file_artifacts
+    )
+    verified_changes = verification_summary["verification_commands_total"] > 0
+
+    return {
+        "schema_version": _LEARNING_RECEIPT_V2_SCHEMA,
+        "artifact_manifest": {
+            "files": file_artifacts,
+            "commands": command_artifacts,
+            "tool_frequency": dict(
+                Counter(
+                    invocation.get("tool")
+                    for invocation in invocations
+                    if invocation.get("tool")
+                ).most_common()
+            ),
+            "tool_call_count": len(invocations),
+        },
+        "verification_evidence": {
+            **verification_summary,
+            "ran_after_last_write": ran_after_last_write,
+            "last_write_index": last_write_index,
+            "last_verification_index": last_verification_index,
+        },
+        "task_intent": task_intent,
+        "learning_flags": {
+            "acted_with_tools": bool(invocations),
+            "modified_artifacts": modified_artifacts,
+            "verified_changes": verified_changes,
+            "verification_after_change": bool(
+                modified_artifacts and ran_after_last_write
+            ),
+            "possible_explanation_bias": bool(
+                task_intent["action_directives"] and not invocations
+            ),
+        },
     }
 
 
@@ -1647,6 +1783,11 @@ def build_capsule(
             artifacts["commands"] = command_artifacts
             artifacts["commands_total"] = len(command_artifacts)
             artifacts.update(_summarize_command_verifications(command_artifacts))
+
+        capsule["payload"]["learning_receipt_v2"] = _build_learning_receipt_v2(
+            tool_invocations,
+            messages,
+        )
 
     # --- Cost economics ---
     # Real compute cost data: token usage, caching efficiency, billing.

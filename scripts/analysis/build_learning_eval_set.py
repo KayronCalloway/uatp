@@ -130,6 +130,26 @@ def _build_record(
 ) -> EvalRecord:
     prompt_idx, rejected_idx, correction_idx, chosen_idx = indices
     correction_step = steps[correction_idx]
+    receipt_v2 = payload.get("learning_receipt_v2") or {}
+    verification_evidence = receipt_v2.get("verification_evidence") or {}
+    learning_flags = receipt_v2.get("learning_flags") or {}
+    evidence: dict[str, Any] = {
+        "text_field_priority": "reasoning,content",
+        "signal_path": signal_path(correction_step),
+    }
+    if receipt_v2:
+        evidence.update(
+            {
+                "learning_receipt_v2_schema": receipt_v2.get("schema_version"),
+                "verification_commands_total": verification_evidence.get(
+                    "verification_commands_total", 0
+                ),
+                "verification_after_change": learning_flags.get(
+                    "verification_after_change", False
+                ),
+            }
+        )
+
     return {
         "record_id": f"{capsule_id}:{prompt_idx}-{rejected_idx}-{correction_idx}-{chosen_idx}",
         "source_capsule_id": capsule_id,
@@ -146,10 +166,7 @@ def _build_record(
             "correction": correction_idx,
             "chosen_response": chosen_idx,
         },
-        "evidence": {
-            "text_field_priority": "reasoning,content",
-            "signal_path": signal_path(correction_step),
-        },
+        "evidence": evidence,
     }
 
 

@@ -6,7 +6,71 @@ from pathlib import Path
 from scripts.analysis.hermes_capsule_learning_report import (
     build_report_payload,
     render_markdown,
+    summarize_learning_receipt_v2,
 )
+
+
+def test_summarize_learning_receipt_v2_counts_coverage():
+    summary = summarize_learning_receipt_v2(
+        [
+            {
+                "evidence": {
+                    "learning_receipt_v2_schema": "2026-06-04.artifact-verification.v1",
+                    "verification_commands_total": 1,
+                    "verification_after_change": True,
+                }
+            },
+            {"evidence": {}},
+        ]
+    )
+
+    assert summary["records_total"] == 2
+    assert summary["records_with_learning_receipt_v2"] == 1
+    assert summary["records_with_verification"] == 1
+    assert summary["records_with_post_change_verification"] == 1
+
+
+def test_render_markdown_includes_learning_receipt_v2_coverage():
+    markdown = render_markdown(
+        {
+            "summary": {
+                "safe_to_promote_live": False,
+                "eval_records": 9,
+                "meta_contamination_count": 0,
+            },
+            "audit": {
+                "capsules_total": 10,
+                "hermes": {"capsules": 2, "user_signal_counts": {}},
+            },
+            "eval": {"records": 9, "signals": {}},
+            "benchmark": {
+                "promotion_gate": {"safe_to_promote_live": False},
+                "ranking": [],
+            },
+            "failure_modes": {},
+            "token_waste": {
+                "long_answer_short_correction": 0,
+                "estimated_wasted_tokens": 0,
+                "phrases": {},
+            },
+            "tool_misses": {},
+            "proposals": [],
+            "signal_health": {
+                "meta_contamination_count": 0,
+                "clean_correction_chains": 9,
+            },
+            "learning_receipt_v2": {
+                "records_total": 9,
+                "records_with_learning_receipt_v2": 3,
+                "records_with_verification": 2,
+                "records_with_post_change_verification": 1,
+            },
+        }
+    )
+
+    assert "## Learning Receipt v2 Coverage" in markdown
+    assert "records_with_learning_receipt_v2: 3" in markdown
+    assert "records_with_post_change_verification: 1" in markdown
 
 
 def test_render_markdown_marks_insufficient_data_and_signal_cleanup_required():

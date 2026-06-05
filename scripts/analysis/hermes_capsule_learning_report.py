@@ -127,6 +127,7 @@ def build_report_payload(
         "failure_modes": summarize_failure_modes(chains),
         "token_waste": summarize_token_waste(chains),
         "tool_misses": summarize_tool_decisions(chains),
+        "learning_receipt_v2": summarize_learning_receipt_v2(records),
         "proposals": generate_learning_proposals(chains),
     }
     return payload
@@ -134,6 +135,27 @@ def build_report_payload(
 
 def _bool_text(value: bool) -> str:
     return "true" if value else "false"
+
+
+def summarize_learning_receipt_v2(records: list[dict[str, Any]]) -> dict[str, Any]:
+    """Summarize v2 receipt coverage in clean eval records."""
+    with_receipt = 0
+    with_verification = 0
+    with_post_change_verification = 0
+    for record in records:
+        evidence = record.get("evidence") or {}
+        if evidence.get("learning_receipt_v2_schema"):
+            with_receipt += 1
+        if int(evidence.get("verification_commands_total") or 0) > 0:
+            with_verification += 1
+        if evidence.get("verification_after_change") is True:
+            with_post_change_verification += 1
+    return {
+        "records_total": len(records),
+        "records_with_learning_receipt_v2": with_receipt,
+        "records_with_verification": with_verification,
+        "records_with_post_change_verification": with_post_change_verification,
+    }
 
 
 def _section_failure_modes(failure_modes: dict[str, Any]) -> list[str]:
@@ -201,6 +223,7 @@ def render_markdown(payload: dict[str, Any]) -> str:
     eval_summary = payload.get("eval", {})
     benchmark = payload.get("benchmark", {})
     token_waste = payload.get("token_waste", {})
+    receipt_v2 = payload.get("learning_receipt_v2", {})
 
     lines = [
         "# Hermes Capsule Learning Report",
@@ -238,6 +261,13 @@ def render_markdown(payload: dict[str, Any]) -> str:
             f"Records: {eval_summary.get('records', 0)}",
             f"Signals: `{json.dumps(eval_summary.get('signals', {}), sort_keys=True)}`",
             f"safe_to_finetune_raw: {_bool_text(bool(eval_summary.get('safe_to_finetune_raw')))}",
+            "",
+            "## Learning Receipt v2 Coverage",
+            "",
+            f"records_total: {receipt_v2.get('records_total', 0)}",
+            f"records_with_learning_receipt_v2: {receipt_v2.get('records_with_learning_receipt_v2', 0)}",
+            f"records_with_verification: {receipt_v2.get('records_with_verification', 0)}",
+            f"records_with_post_change_verification: {receipt_v2.get('records_with_post_change_verification', 0)}",
             "",
         ]
     )
