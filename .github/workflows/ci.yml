@@ -65,10 +65,12 @@ jobs:
       run: |
         pre-commit run --all-files --show-diff-on-failure --verbose
 
-    - name: Run type checking with mypy
+    - name: Run informational type checking with mypy
       run: |
-        mypy src/ --ignore-missing-imports
-      continue-on-error: true
+        mypy src/ --ignore-missing-imports || {
+          echo "::notice::mypy is currently informational; existing annotation debt is tracked outside the release gate."
+          true
+        }
 
     - name: Run linting with ruff
       run: |
@@ -207,14 +209,14 @@ jobs:
     - uses: actions/checkout@v5
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
 
     - name: Validate Dockerfile syntax
       run: |
         docker run --rm -i hadolint/hadolint < Dockerfile || echo "Hadolint found issues (non-blocking)"
 
     - name: Build Docker image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v7
       with:
         context: .
         push: false
