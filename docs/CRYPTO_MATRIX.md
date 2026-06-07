@@ -146,7 +146,7 @@ argon2-cffi>=23.1.0  # Password hashing for auth
 ## Known Limitations
 
 1. **No hardware key support**: Keys are software-only (no HSM/TPM integration shipped)
-2. **RFC 3161 verification**: Timestamp presence checked, not cryptographically verified
+2. **RFC 3161 verification**: Standalone capsule verification still treats timestamps as presence-only; agent receipt verification can cryptographically verify RFC 3161 tokens when explicit TSA trust anchors are supplied
 3. **No key escrow**: User loses passphrase = key unrecoverable
 4. **Library drift**: SDK uses PyNaCl, server uses cryptography (same algorithms, different bindings)
 
@@ -161,9 +161,9 @@ The `verify_capsule_standalone()` function returns an `assurance_level`:
 | `none` | Nothing | Verification failed |
 | `signature_only` | Ed25519 signature valid | Content may have changed |
 | `signature_and_hash` | Signature + content integrity | Strong (timestamp not verified) |
-| `full` | All above + RFC 3161 timestamp | Strongest (time-bound proof) |
+| `full` | All above + cryptographically verified RFC 3161 timestamp | Strongest (time-bound proof) |
 
-**Note:** `full` assurance requires the `rfc3161ng` library for TSA certificate chain validation.
+**Note:** Trusted-time assurance requires explicit verifier-supplied TSA certificate material and OpenSSL RFC 3161 verification. Timestamp presence alone does not upgrade assurance.
 
 ---
 

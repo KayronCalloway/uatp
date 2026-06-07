@@ -153,7 +153,10 @@ def _verify_bundle_manifest(
     return errors
 
 
-def _verify_trusted_timestamp(manifest: dict[str, Any]) -> tuple[str, bool, list[str]]:
+def _verify_trusted_timestamp(
+    manifest: dict[str, Any],
+    trusted_tsa_certificates: tuple[bytes, ...] = (),
+) -> tuple[str, bool, list[str]]:
     """Verify the RFC3161 proof over the signed bundle manifest hash.
 
     Missing timestamp proof is not itself a bundle-integrity failure; it means
@@ -185,6 +188,7 @@ def _verify_trusted_timestamp(manifest: dict[str, Any]) -> tuple[str, bool, list
         verified, reason = timestamper.verify_timestamp(
             token,
             manifest_hash.encode("utf-8"),
+            trusted_tsa_certificates=trusted_tsa_certificates,
         )
     except (KeyError, TypeError, ValueError) as exc:
         return "invalid", False, [f"trusted timestamp verification failed: {exc}"]
@@ -229,6 +233,7 @@ def verify_agent_receipt_bundle(
     strict: bool = True,
     trust_policy: ReceiptTrustPolicy | None = None,
     require_trusted_timestamp: bool = False,
+    trusted_tsa_certificates: tuple[bytes, ...] = (),
 ) -> AgentReceiptBundleVerificationReport:
     """Verify a public signed agent receipt bundle without Hermes or database state.
 
@@ -297,7 +302,10 @@ def verify_agent_receipt_bundle(
             trusted_timestamp_status,
             timestamp_verified,
             timestamp_errors,
-        ) = _verify_trusted_timestamp(manifest)
+        ) = _verify_trusted_timestamp(
+            manifest,
+            trusted_tsa_certificates=trusted_tsa_certificates,
+        )
         errors.extend(timestamp_errors)
     if require_trusted_timestamp and not timestamp_verified:
         if trusted_timestamp_status == "missing":

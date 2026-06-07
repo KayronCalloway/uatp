@@ -19,6 +19,8 @@ Security Properties:
 import base64
 import hashlib
 import logging
+import subprocess
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -312,6 +314,9 @@ class RFC3161Timestamper:
         Args:
             token: Timestamp token to verify
             original_data: Original data that was timestamped
+            trusted_tsa_certificates: PEM/DER certificates supplied by the verifier
+                as TSA trust anchors/intermediates. Without these anchors, UATP
+                deliberately refuses to promote timestamp evidence to trusted time.
 
         Returns:
             Tuple of (is_valid, reason)
@@ -330,20 +335,77 @@ class RFC3161Timestamper:
         if computed_hash != token.message_imprint:
             return False, "Message imprint mismatch - data has been modified"
 
-        # Full verification is required. A matching message imprint proves only
-        # that this token-like object repeats the expected hash; it does not
-        # prove an independent TSA signed that hash at the stated time.
+        # Full trusted-time verification requires explicit verifier-owned TSA
+        # certificate material. A matching message imprint proves only that this
+        # token-like object repeats the expected hash; it does not prove an
+        # independent TSA signed that hash at the stated time.
+        if trusted_tsa_certificates:
+            return self._verify_timestamp_with_openssl(
+                token=token,
+                original_data=original_data,
+                trusted_tsa_certificates=trusted_tsa_certificates,
+            )
+
         if not RFC3161_AVAILABLE:
             return False, "full RFC 3161 verification unavailable"
+        return False, "TSA trust anchor verification not configured"
 
-        # Without a verifier-owned TSA trust anchor, do not promote the token to
-        # trusted time even if an ASN.1 library can parse and verify internal
-        # structure. The current implementation deliberately fails closed for
-        # non-empty anchors too because the anchors are not yet wired into the
-        # rfc3161ng verification call.
+    def _verify_timestamp_with_openssl(
+        self,
+        *,
+        token: TimestampToken,
+        original_data: bytes,
+        trusted_tsa_certificates: Tuple[bytes, ...],
+    ) -> Tuple[bool, str]:
+        """Verify RFC 3161 timestamp response with explicit TSA anchors.
+
+        OpenSSL is used here because the existing Python dependency stack does
+        not expose a maintained trust-anchor validation path. Certificate and
+        token bytes are written only to a temporary directory and are never
+        echoed in the returned reason.
+        """
         if not trusted_tsa_certificates:
             return False, "TSA trust anchor verification not configured"
-        return False, "TSA trust-anchor validation is not implemented"
+
+        try:
+            with tempfile.TemporaryDirectory(prefix="uatp-tsa-verify-") as tmp_dir:
+                tmp_path = Path(tmp_dir)
+                data_path = tmp_path / "timestamped-data.bin"
+                token_path = tmp_path / "timestamp-response.tsr"
+                ca_path = tmp_path / "trusted-tsa-certificates.pem"
+                data_path.write_bytes(original_data)
+                token_path.write_bytes(token.token_bytes)
+                ca_path.write_bytes(b"\n".join(trusted_tsa_certificates) + b"\n")
+
+                result = subprocess.run(
+                    [
+                        "openssl",
+                        "ts",
+                        "-verify",
+                        "-data",
+                        str(data_path),
+                        "-in",
+                        str(token_path),
+                        "-CAfile",
+                        str(ca_path),
+                        "-untrusted",
+                        str(ca_path),
+                    ],
+                    capture_output=True,
+                    check=False,
+                    text=True,
+                )
+        except FileNotFoundError:
+            return False, "OpenSSL RFC 3161 verification unavailable"
+        except OSError as exc:
+            return (
+                False,
+                f"OpenSSL RFC 3161 verification failed: {exc.__class__.__name__}",
+            )
+
+        if result.returncode == 0:
+            return True, "RFC 3161 timestamp verified against TSA trust anchor"
+        return False, "OpenSSL RFC 3161 verification failed: verification rejected"
 
     def _cache_token(self, token: TimestampToken) -> None:
         """Cache a timestamp token to disk."""

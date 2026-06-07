@@ -57,6 +57,26 @@ def _build_trust_policy(
     )
 
 
+def _load_trusted_tsa_certificates(
+    certificate_paths: tuple[str, ...],
+) -> tuple[bytes, ...]:
+    certificates: list[bytes] = []
+    for value in certificate_paths:
+        path = Path(value).expanduser()
+        if not path.exists() or not path.is_file():
+            raise click.ClickException(f"trusted TSA certificate not found: {value}")
+        try:
+            certificate = path.read_bytes()
+        except OSError as exc:
+            raise click.ClickException(
+                f"could not read trusted TSA certificate: {value}"
+            ) from exc
+        if not certificate.strip():
+            raise click.ClickException(f"trusted TSA certificate is empty: {value}")
+        certificates.append(certificate)
+    return tuple(certificates)
+
+
 def _format_receipt_report(
     report: AgentReceiptBundleVerificationReport,
     *,
@@ -144,6 +164,13 @@ def _exit_code_for_report(report: AgentReceiptBundleVerificationReport) -> ExitC
     multiple=True,
     help="Trusted signer binding as signer_id=ed25519_public_key_hex; repeat for rotations",
 )
+@click.option(
+    "--trusted-tsa-certificate",
+    "trusted_tsa_certificate_paths",
+    multiple=True,
+    type=click.Path(exists=False, dir_okay=False),
+    help="PEM/DER TSA certificate bundle or trust anchor for RFC 3161 verification; repeatable",
+)
 def verify_receipts_cmd(
     bundle: str,
     artifact_root: str | None,
@@ -152,15 +179,20 @@ def verify_receipts_cmd(
     no_color: bool,
     require_trusted_timestamp: bool,
     trusted_signers: tuple[str, ...],
+    trusted_tsa_certificate_paths: tuple[str, ...],
 ) -> None:
     """Verify a signed agent receipt bundle offline."""
     trust_policy = _build_trust_policy(trusted_signers)
+    trusted_tsa_certificates = _load_trusted_tsa_certificates(
+        trusted_tsa_certificate_paths
+    )
     report = verify_agent_receipt_bundle(
         Path(bundle),
         artifact_root=Path(artifact_root) if artifact_root else None,
         strict=strict,
         trust_policy=trust_policy,
         require_trusted_timestamp=require_trusted_timestamp,
+        trusted_tsa_certificates=trusted_tsa_certificates,
     )
 
     if output_format == "json":

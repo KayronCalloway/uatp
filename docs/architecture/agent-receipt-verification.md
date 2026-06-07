@@ -51,6 +51,7 @@ uatp verify-receipts docs/examples/agent-receipts/valid_bundle.json \
 - Artifact digest and size when `--artifact-root` is provided
 - Optional signer identity binding when `--trusted-signer signer_id=public_key_hex` is provided
 - Optional trusted timestamp requirement when `--require-trusted-timestamp` is provided
+- Optional RFC 3161 TSA trust-anchor validation when `--trusted-tsa-certificate PATH` is provided
 
 ## Trust policy and timestamp boundaries
 
@@ -76,7 +77,7 @@ uatp verify-receipts docs/examples/agent-receipts/valid_bundle.json \
   --no-color
 ```
 
-Current public fixtures intentionally report `Trusted timestamp: missing`. UATP treats missing, malformed, hash-only, or trust-anchor-unverified timestamp material as not trusted time. Do not claim full RFC3161 trusted timestamp verification until TSA trust-anchor validation is implemented.
+Current public fixtures intentionally report `Trusted timestamp: missing`. UATP treats missing, malformed, hash-only, or trust-anchor-unverified timestamp material as not trusted time. When a verifier supplies one or more `--trusted-tsa-certificate` files, the agent receipt verifier checks the RFC 3161 token with OpenSSL against those explicit TSA anchors before reporting `Trusted timestamp: verified`.
 
 ## Tamper demo
 

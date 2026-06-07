@@ -12,6 +12,7 @@ from src.agent_receipts.artifacts import ArtifactStore
 from src.agent_receipts.events import ActionTraceEvent
 from src.agent_receipts.signing import Ed25519ReceiptSigner
 from src.agent_receipts.sink import build_signed_receipt_bundle
+from src.agent_receipts.verifier import AgentReceiptBundleVerificationReport
 from src.cli.main import cli
 from src.cli.verify import ExitCode
 
@@ -251,3 +252,74 @@ def test_verify_receipts_require_trusted_timestamp_fails_missing_timestamp(
     assert result.exit_code == ExitCode.FAILED
     assert "trusted timestamp proof missing" in result.output
     assert "Trusted timestamp: missing" in result.output
+
+
+def test_verify_receipts_loads_trusted_tsa_certificate_paths(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    bundle_path = tmp_path / "bundle.json"
+    bundle_path.write_text("{}")
+    tsa_cert_path = tmp_path / "tsa.pem"
+    tsa_cert = b"-----BEGIN CERTIFICATE-----\ntrusted-tsa\n-----END CERTIFICATE-----\n"
+    tsa_cert_path.write_bytes(tsa_cert)
+    captured = {}
+
+    def fake_verify_agent_receipt_bundle(bundle, **kwargs):
+        captured["bundle"] = bundle
+        captured.update(kwargs)
+        return AgentReceiptBundleVerificationReport(
+            valid=True,
+            errors=(),
+            warnings=(),
+            schema_version="agent_receipts.v1",
+            receipt_count=1,
+            capsule_draft_count=1,
+            artifacts_checked=0,
+            chain_root_hash="root",
+            chain_tip_hash="tip",
+            timestamp_verified=True,
+            trusted_timestamp_status="verified",
+        )
+
+    monkeypatch.setattr(
+        "src.cli.verify_receipts.verify_agent_receipt_bundle",
+        fake_verify_agent_receipt_bundle,
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli,
+        [
+            "verify-receipts",
+            str(bundle_path),
+            "--trusted-tsa-certificate",
+            str(tsa_cert_path),
+            "--require-trusted-timestamp",
+            "--no-color",
+        ],
+    )
+
+    assert result.exit_code == ExitCode.SUCCESS
+    assert captured["trusted_tsa_certificates"] == (tsa_cert,)
+    assert captured["require_trusted_timestamp"] is True
+    assert "Trusted timestamp: verified" in result.output
+
+
+def test_verify_receipts_rejects_missing_trusted_tsa_certificate_path(tmp_path) -> None:
+    bundle_path, _artifact_root, _bundle = _write_receipt_bundle(tmp_path)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli,
+        [
+            "verify-receipts",
+            str(bundle_path),
+            "--trusted-tsa-certificate",
+            str(tmp_path / "missing.pem"),
+            "--no-color",
+        ],
+    )
+
+    assert result.exit_code != ExitCode.SUCCESS
+    assert "trusted TSA certificate not found" in result.output

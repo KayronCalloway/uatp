@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from copy import deepcopy
 from datetime import datetime, timezone
 
@@ -14,6 +15,7 @@ from src.agent_receipts.signing import (
 )
 from src.agent_receipts.sink import build_bundle_manifest, build_signed_receipt_bundle
 from src.agent_receipts.verifier import verify_agent_receipt_bundle
+from src.security.rfc3161_timestamps import TimestampToken
 
 
 def _valid_bundle(tmp_path, signer: Ed25519ReceiptSigner | None = None):
@@ -102,6 +104,51 @@ def test_verify_agent_receipt_bundle_rejects_malformed_trusted_timestamp(
     assert any(
         "trusted timestamp verification failed" in error for error in report.errors
     )
+
+
+def test_verify_agent_receipt_bundle_verifies_timestamp_with_tsa_anchor(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    captured = {}
+
+    def fake_verify_timestamp(
+        self, token, original_data, trusted_tsa_certificates=None
+    ):
+        captured["token"] = token
+        captured["original_data"] = original_data
+        captured["trusted_tsa_certificates"] = trusted_tsa_certificates
+        return True, "RFC 3161 timestamp verified against TSA trust anchor"
+
+    monkeypatch.setattr(
+        "src.agent_receipts.verifier.RFC3161Timestamper.verify_timestamp",
+        fake_verify_timestamp,
+    )
+    bundle = _valid_bundle(tmp_path)
+    manifest_hash = bundle["bundle_manifest"]["manifest_hash"]
+    token = TimestampToken(
+        token_bytes=b"trusted timestamp response der",
+        timestamp=datetime(2026, 5, 21, 12, 0, tzinfo=timezone.utc),
+        tsa_name="test-tsa",
+        hash_algorithm="sha256",
+        message_imprint=hashlib.sha256(manifest_hash.encode("utf-8")).hexdigest(),
+    )
+    bundle["bundle_manifest"]["trusted_timestamp"] = {"rfc3161": token.to_dict()}
+    anchor = b"-----BEGIN CERTIFICATE-----\ntrusted\n"
+
+    report = verify_agent_receipt_bundle(
+        bundle,
+        artifact_root=tmp_path,
+        strict=True,
+        require_trusted_timestamp=True,
+        trusted_tsa_certificates=(anchor,),
+    )
+
+    assert report.valid is True
+    assert report.timestamp_verified is True
+    assert report.trusted_timestamp_status == "verified"
+    assert captured["original_data"] == manifest_hash.encode("utf-8")
+    assert captured["trusted_tsa_certificates"] == (anchor,)
 
 
 def test_verify_agent_receipt_bundle_applies_trust_policy(tmp_path) -> None:

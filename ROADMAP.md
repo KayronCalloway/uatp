@@ -33,8 +33,8 @@
 
 ## In Progress (Q2-Q3 2026)
 
-- **Verifier policy hardening** — Expose trusted signer policy and trusted timestamp requirements through the CLI
-- **TSA trust-anchor validation** — Keep timestamp evidence fail-closed until trust-anchor verification is implemented
+- **Verifier policy hardening** — Trusted signer policy, trusted timestamp requirement, and explicit TSA certificate loading are exposed through the CLI
+- **TSA trust-anchor validation** — Agent receipt verifier validates RFC 3161 tokens against explicit TSA trust anchors via OpenSSL; missing anchors/tooling remain fail-closed
 - **MCP certifying gateway hardening** — Use MCP as the first external boundary after verifier UX and trust-policy demo polish are complete
 - **External security audit** — Cryptographic review by third party
 - **Frontend polish** — Production-ready dashboard
