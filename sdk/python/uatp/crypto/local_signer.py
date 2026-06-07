@@ -18,12 +18,16 @@ UATP only sees:
 - Returns: RFC 3161 timestamp from external TSA
 """
 
+import base64
 import hashlib
 import json
 import logging
 import secrets
+import subprocess
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from .user_key_manager import UserKeyManager, get_user_key_manager
@@ -264,7 +268,81 @@ class LocalSigner:
         return capsule
 
 
-def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
+def _verify_rfc3161_timestamp_with_openssl(
+    rfc3161: Dict[str, Any],
+    original_data: bytes,
+    trusted_tsa_certificates: tuple[bytes, ...],
+) -> tuple[bool, str]:
+    """Verify an RFC 3161 timestamp response with explicit TSA anchors.
+
+    Certificate/token bytes are written only to a temporary directory and never
+    echoed in returned failure reasons.
+    """
+    if not trusted_tsa_certificates:
+        return False, "TSA trust anchor verification not configured"
+
+    try:
+        token_bytes = base64.b64decode(rfc3161["token"])
+        hash_algorithm = rfc3161.get("hash_algorithm", "sha256")
+        message_imprint = rfc3161["message_imprint"]
+    except (KeyError, TypeError, ValueError):
+        return False, "malformed RFC 3161 timestamp evidence"
+
+    if hash_algorithm == "sha256":
+        computed_hash = hashlib.sha256(original_data).hexdigest()
+    elif hash_algorithm == "sha384":
+        computed_hash = hashlib.sha384(original_data).hexdigest()
+    elif hash_algorithm == "sha512":
+        computed_hash = hashlib.sha512(original_data).hexdigest()
+    else:
+        return False, f"Unknown hash algorithm: {hash_algorithm}"
+
+    if computed_hash != message_imprint:
+        return False, "Message imprint mismatch - data has been modified"
+
+    try:
+        with tempfile.TemporaryDirectory(prefix="uatp-sdk-tsa-verify-") as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            data_path = tmp_path / "timestamped-data.bin"
+            token_path = tmp_path / "timestamp-response.tsr"
+            ca_path = tmp_path / "trusted-tsa-certificates.pem"
+            data_path.write_bytes(original_data)
+            token_path.write_bytes(token_bytes)
+            ca_path.write_bytes(b"\n".join(trusted_tsa_certificates) + b"\n")
+
+            result = subprocess.run(
+                [
+                    "openssl",
+                    "ts",
+                    "-verify",
+                    "-data",
+                    str(data_path),
+                    "-in",
+                    str(token_path),
+                    "-CAfile",
+                    str(ca_path),
+                    "-untrusted",
+                    str(ca_path),
+                ],
+                capture_output=True,
+                check=False,
+                text=True,
+            )
+    except FileNotFoundError:
+        return False, "OpenSSL RFC 3161 verification unavailable"
+    except OSError as exc:
+        return False, f"OpenSSL RFC 3161 verification failed: {exc.__class__.__name__}"
+
+    if result.returncode == 0:
+        return True, "RFC 3161 timestamp verified against TSA trust anchor"
+    return False, "OpenSSL RFC 3161 verification failed: verification rejected"
+
+
+def verify_capsule_standalone(
+    capsule_data: Dict[str, Any],
+    *,
+    trusted_tsa_certificates: tuple[bytes, ...] = (),
+) -> Dict[str, Any]:
     """
     Verify a capsule without any UATP infrastructure.
 
@@ -382,25 +460,46 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
         )
 
     # 3. Check RFC 3161 timestamp (if present)
-    # SECURITY WARNING: This is NOT cryptographic verification - just presence checking.
-    # Full RFC 3161 verification requires the rfc3161ng library and TSA certificate chain.
-    # A present-but-unverified timestamp provides NO time assurance whatsoever.
+    # SECURITY: Timestamp presence alone provides no time assurance. Only promote
+    # to cryptographically_verified when the caller supplies explicit TSA trust
+    # anchors and OpenSSL accepts the RFC 3161 token over the signed hash.
     rfc3161 = verification.get("rfc3161")
     if rfc3161:
         try:
             if "token" in rfc3161 and "tsa" in rfc3161:
-                # SECURITY: Explicitly mark as present but NOT cryptographically verified
-                # This timestamp data is UNTRUSTWORTHY without cryptographic verification
-                result["timestamp_status"] = "present_unverified"
                 result["timestamp_present"] = True
-                result["timestamp_verified"] = False  # NOT cryptographically verified!
                 result["timestamp_tsa"] = rfc3161.get("tsa")
                 result["timestamp_time"] = rfc3161.get("timestamp")
-                result["warnings"].append(
-                    "SECURITY: RFC 3161 timestamp data is PRESENT but NOT CRYPTOGRAPHICALLY VERIFIED. "
-                    "This provides NO time assurance. The timestamp could be forged or swapped. "
-                    "For actual time proof, use rfc3161ng library with TSA certificate chain verification."
-                )
+
+                if trusted_tsa_certificates:
+                    verified, reason = _verify_rfc3161_timestamp_with_openssl(
+                        rfc3161,
+                        stored_hash.encode("utf-8"),
+                        trusted_tsa_certificates,
+                    )
+                    result["timestamp_verification_reason"] = reason
+                    if verified:
+                        result["timestamp_status"] = "cryptographically_verified"
+                        result["timestamp_verified"] = True
+                    else:
+                        result["timestamp_status"] = "present_unverified"
+                        result["timestamp_verified"] = False
+                        result["warnings"].append(
+                            "SECURITY: RFC 3161 timestamp verification failed; "
+                            f"treated as untrusted time: {reason}"
+                        )
+                else:
+                    # SECURITY: Explicitly mark as present but NOT cryptographically verified
+                    # This timestamp data is UNTRUSTWORTHY without cryptographic verification
+                    result["timestamp_status"] = "present_unverified"
+                    result["timestamp_verified"] = (
+                        False  # NOT cryptographically verified!
+                    )
+                    result["warnings"].append(
+                        "SECURITY: RFC 3161 timestamp data is PRESENT but NOT CRYPTOGRAPHICALLY VERIFIED. "
+                        "This provides NO time assurance. The timestamp could be forged or swapped. "
+                        "For actual time proof, supply explicit TSA trust-anchor certificates."
+                    )
             else:
                 result["timestamp_status"] = "absent"
                 result["warnings"].append(
@@ -408,9 +507,11 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
                 )
 
         except Exception as e:
-            result["timestamp_status"] = "absent"
+            result["timestamp_status"] = "present_unverified"
+            result["timestamp_verified"] = False
             result["warnings"].append(
-                f"Could not check timestamp (treated as absent): {e}"
+                "Unexpected timestamp verification error (treated as untrusted time): "
+                f"{type(e).__name__}"
             )
 
     # Compute assurance level based on what ACTUALLY verified cryptographically

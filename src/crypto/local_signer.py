@@ -26,6 +26,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
+from src.security.rfc3161_timestamps import RFC3161Timestamper, TimestampToken
+
 from .user_key_manager import UserKeyManager, get_user_key_manager
 
 logger = logging.getLogger(__name__)
@@ -252,7 +254,11 @@ class LocalSigner:
         return capsule
 
 
-def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
+def verify_capsule_standalone(
+    capsule_data: Dict[str, Any],
+    *,
+    trusted_tsa_certificates: tuple[bytes, ...] = (),
+) -> Dict[str, Any]:
     """
     Verify a capsule without any UATP infrastructure.
 
@@ -369,35 +375,67 @@ def verify_capsule_standalone(capsule_data: Dict[str, Any]) -> Dict[str, Any]:
         )
 
     # 3. Check RFC 3161 timestamp (if present)
-    # SECURITY WARNING: This is NOT cryptographic verification - just presence checking.
-    # Full RFC 3161 verification requires the rfc3161ng library and TSA certificate chain.
-    # A present-but-unverified timestamp provides NO time assurance whatsoever.
+    # SECURITY: Timestamp presence alone provides no time assurance. Only promote
+    # to cryptographically_verified when the caller supplies explicit TSA trust
+    # anchors and the RFC 3161 verifier accepts the token over the signed hash.
     rfc3161 = verification.get("rfc3161")
     if rfc3161:
         try:
             if "token" in rfc3161 and "tsa" in rfc3161:
-                # SECURITY: Explicitly mark as present but NOT cryptographically verified
-                # This timestamp data is UNTRUSTWORTHY without cryptographic verification
-                result["timestamp_status"] = "present_unverified"
                 result["timestamp_present"] = True
-                result["timestamp_verified"] = False  # NOT cryptographically verified!
                 result["timestamp_tsa"] = rfc3161.get("tsa")
                 result["timestamp_time"] = rfc3161.get("timestamp")
-                result["warnings"].append(
-                    "SECURITY: RFC 3161 timestamp data is PRESENT but NOT CRYPTOGRAPHICALLY VERIFIED. "
-                    "This provides NO time assurance. The timestamp could be forged or swapped. "
-                    "For actual time proof, use rfc3161ng library with TSA certificate chain verification."
-                )
+
+                if trusted_tsa_certificates:
+                    token = TimestampToken.from_dict(rfc3161)
+                    timestamper = RFC3161Timestamper.__new__(RFC3161Timestamper)
+                    verified, reason = timestamper.verify_timestamp(
+                        token,
+                        stored_hash.encode("utf-8"),
+                        trusted_tsa_certificates=trusted_tsa_certificates,
+                    )
+                    result["timestamp_verification_reason"] = reason
+                    if verified:
+                        result["timestamp_status"] = "cryptographically_verified"
+                        result["timestamp_verified"] = True
+                    else:
+                        result["timestamp_status"] = "present_unverified"
+                        result["timestamp_verified"] = False
+                        result["warnings"].append(
+                            "SECURITY: RFC 3161 timestamp verification failed; "
+                            f"treated as untrusted time: {reason}"
+                        )
+                else:
+                    # SECURITY: Explicitly mark as present but NOT cryptographically verified
+                    # This timestamp data is UNTRUSTWORTHY without cryptographic verification
+                    result["timestamp_status"] = "present_unverified"
+                    result["timestamp_verified"] = (
+                        False  # NOT cryptographically verified!
+                    )
+                    result["warnings"].append(
+                        "SECURITY: RFC 3161 timestamp data is PRESENT but NOT CRYPTOGRAPHICALLY VERIFIED. "
+                        "This provides NO time assurance. The timestamp could be forged or swapped. "
+                        "For actual time proof, supply explicit TSA trust-anchor certificates."
+                    )
             else:
                 result["timestamp_status"] = "absent"
                 result["warnings"].append(
                     "Incomplete RFC 3161 timestamp data - treated as absent"
                 )
 
-        except Exception as e:
-            result["timestamp_status"] = "absent"
+        except (KeyError, TypeError, ValueError) as e:
+            result["timestamp_status"] = "present_unverified"
+            result["timestamp_verified"] = False
             result["warnings"].append(
-                f"Could not check timestamp (treated as absent): {e}"
+                "Could not verify timestamp (treated as untrusted time): "
+                f"{e.__class__.__name__}"
+            )
+        except Exception as e:
+            result["timestamp_status"] = "present_unverified"
+            result["timestamp_verified"] = False
+            result["warnings"].append(
+                "Unexpected timestamp verification error (treated as untrusted time): "
+                f"{type(e).__name__}"
             )
 
     # Compute assurance level based on what ACTUALLY verified cryptographically

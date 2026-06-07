@@ -70,27 +70,38 @@ class CapsuleProof:
     payload: Dict[str, Any]
     _raw_data: Dict[str, Any]  # Full capsule data for verification
 
-    def verify(self) -> bool:
+    def verify(self, trusted_tsa_certificates: tuple[bytes, ...] = ()) -> bool:
         """
         Verify cryptographic signature by recomputing.
 
         This actually checks the signature - not just a cached value.
         If anyone tampers with the capsule, this will return False.
+        Supplying trusted_tsa_certificates also verifies RFC 3161 timestamp
+        evidence against explicit TSA trust anchors.
 
         Returns:
             True if signature is valid, False otherwise.
         """
-        result = verify_capsule_standalone(self._raw_data)
+        result = verify_capsule_standalone(
+            self._raw_data,
+            trusted_tsa_certificates=trusted_tsa_certificates,
+        )
         return bool(result.get("valid", False))
 
-    def verify_detailed(self) -> Dict[str, Any]:
+    def verify_detailed(
+        self,
+        trusted_tsa_certificates: tuple[bytes, ...] = (),
+    ) -> Dict[str, Any]:
         """
         Verify with detailed results.
 
         Returns:
             Dict with 'valid', 'signature_valid', 'hash_valid', 'errors', etc.
         """
-        return verify_capsule_standalone(self._raw_data)
+        return verify_capsule_standalone(
+            self._raw_data,
+            trusted_tsa_certificates=trusted_tsa_certificates,
+        )
 
 
 class UATP:
@@ -558,7 +569,11 @@ class UATP:
             store_on_server=store_on_server,
         )
 
-    def verify_local(self, capsule_data: Dict[str, Any]) -> Dict[str, Any]:
+    def verify_local(
+        self,
+        capsule_data: Dict[str, Any],
+        trusted_tsa_certificates: tuple[bytes, ...] = (),
+    ) -> Dict[str, Any]:
         """
         Verify a locally-signed capsule.
 
@@ -567,6 +582,8 @@ class UATP:
 
         Args:
             capsule_data: The capsule to verify (dict format)
+            trusted_tsa_certificates: Optional PEM/DER TSA trust anchors for
+                RFC 3161 timestamp verification
 
         Returns:
             Verification result with:
@@ -580,7 +597,10 @@ class UATP:
             >>> if result["valid"]:
             ...     print("Capsule is authentic!")
         """
-        return verify_capsule_standalone(capsule_data)
+        return verify_capsule_standalone(
+            capsule_data,
+            trusted_tsa_certificates=trusted_tsa_certificates,
+        )
 
     def record_outcome(self, capsule_id: str, outcome: Dict[str, Any]) -> bool:
         """

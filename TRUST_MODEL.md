@@ -133,10 +133,10 @@ The system is designed so that even if UATP (the company/operator) wanted to act
 │     ├─ Check hash in token matches capsule hash                          │
 │     └─ Result: Proves capsule existed at claimed time                    │
 │                                                                          │
-│     ⚠️  NOTE: verify_capsule_standalone() currently checks               │
-│         timestamp PRESENCE only. Agent receipt verification can validate │
-│         RFC 3161 tokens with explicit TSA certificate material. Without  │
-│         trust-anchor validation, assurance caps at signature_and_hash.   │
+│     ⚠️  NOTE: verify_capsule_standalone() and agent receipt verification │
+│         validate RFC 3161 tokens only when explicit TSA certificate      │
+│         material is supplied. Without trust-anchor validation, assurance │
+│         caps at signature_and_hash.                                      │
 │                                                                          │
 │  3. INTEGRITY CHECK                                                      │
 │     ├─ Recompute hash of current content                                 │
@@ -268,7 +268,7 @@ This architecture supports:
 - [x] Tokens are stored in capsule verification block
 - [x] `verify_capsule_standalone()` checks timestamp presence
 - [x] Agent receipt verifier validates RFC 3161 tokens against explicit TSA trust anchors via OpenSSL
-- [ ] Standalone capsule verifier TSA signature and certificate-chain validation
+- [x] Standalone capsule verifier validates RFC 3161 tokens against explicit TSA trust anchors via OpenSSL
 
 **Current assurance levels from verify_capsule_standalone():**
 - `"none"` - Signature verification failed

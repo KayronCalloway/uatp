@@ -146,7 +146,7 @@ argon2-cffi>=23.1.0  # Password hashing for auth
 ## Known Limitations
 
 1. **No hardware key support**: Keys are software-only (no HSM/TPM integration shipped)
-2. **RFC 3161 verification**: Standalone capsule verification still treats timestamps as presence-only; agent receipt verification can cryptographically verify RFC 3161 tokens when explicit TSA trust anchors are supplied
+2. **RFC 3161 verification**: Agent receipt and standalone capsule verification can cryptographically verify RFC 3161 tokens when explicit TSA trust anchors are supplied
 3. **No key escrow**: User loses passphrase = key unrecoverable
 4. **Library drift**: SDK uses PyNaCl, server uses cryptography (same algorithms, different bindings)
 

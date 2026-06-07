@@ -172,26 +172,54 @@ def test_verify_timestamp_with_real_openssl_generated_tsr(tmp_path) -> None:
     if shutil.which("openssl") is None:
         pytest.skip("openssl not installed")
 
-    config_path = tmp_path / "openssl.cnf"
+    root_config_path = tmp_path / "root.cnf"
+    tsa_request_config_path = tmp_path / "tsa_req.cnf"
+    tsa_extension_config_path = tmp_path / "tsa_ext.cnf"
+    timestamp_config_path = tmp_path / "timestamp.cnf"
     serial_path = tmp_path / "serial.txt"
+    root_key_path = tmp_path / "root.key"
+    root_cert_path = tmp_path / "root.crt"
     key_path = tmp_path / "tsa.key"
+    csr_path = tmp_path / "tsa.csr"
     cert_path = tmp_path / "tsa.crt"
     data_path = tmp_path / "data.txt"
     query_path = tmp_path / "data.tsq"
     response_path = tmp_path / "data.tsr"
-    config_path.write_text(
+    root_config_path.write_text(
         """
 [ req ]
 distinguished_name = dn
 prompt = no
-x509_extensions = tsa_ext
+x509_extensions = ca_ext
+[ dn ]
+CN = UATP Test Root CA
+[ ca_ext ]
+basicConstraints = critical,CA:TRUE
+keyUsage = critical,keyCertSign,cRLSign
+subjectKeyIdentifier = hash
+""".strip()
+    )
+    tsa_request_config_path.write_text(
+        """
+[ req ]
+distinguished_name = dn
+prompt = no
 [ dn ]
 CN = UATP Test TSA
+""".strip()
+    )
+    tsa_extension_config_path.write_text(
+        """
 [ tsa_ext ]
 basicConstraints = critical,CA:FALSE
 keyUsage = critical,digitalSignature,nonRepudiation
 extendedKeyUsage = critical,timeStamping
 subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+""".strip()
+    )
+    timestamp_config_path.write_text(
+        """
 [ tsa ]
 default_tsa = tsa_config
 [ tsa_config ]
@@ -222,15 +250,48 @@ ess_cert_id_alg = sha256
             "-newkey",
             "rsa:2048",
             "-nodes",
+            "-x509",
+            "-days",
+            "1",
+            "-keyout",
+            str(root_key_path),
+            "-out",
+            str(root_cert_path),
+            "-config",
+            str(root_config_path),
+        ],
+        [
+            "openssl",
+            "req",
+            "-newkey",
+            "rsa:2048",
+            "-nodes",
             "-keyout",
             str(key_path),
-            "-x509",
+            "-out",
+            str(csr_path),
+            "-config",
+            str(tsa_request_config_path),
+        ],
+        [
+            "openssl",
+            "x509",
+            "-req",
+            "-in",
+            str(csr_path),
+            "-CA",
+            str(root_cert_path),
+            "-CAkey",
+            str(root_key_path),
+            "-CAcreateserial",
             "-days",
             "1",
             "-out",
             str(cert_path),
-            "-config",
-            str(config_path),
+            "-extfile",
+            str(tsa_extension_config_path),
+            "-extensions",
+            "tsa_ext",
         ],
         [
             "openssl",
@@ -250,7 +311,7 @@ ess_cert_id_alg = sha256
             "-queryfile",
             str(query_path),
             "-config",
-            str(config_path),
+            str(timestamp_config_path),
             "-out",
             str(response_path),
         ],
@@ -277,7 +338,7 @@ ess_cert_id_alg = sha256
     valid, reason = timestamper.verify_timestamp(
         token,
         data,
-        trusted_tsa_certificates=(cert_path.read_bytes(),),
+        trusted_tsa_certificates=(root_cert_path.read_bytes(), cert_path.read_bytes()),
     )
 
     assert valid is True
