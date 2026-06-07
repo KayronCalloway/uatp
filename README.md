@@ -77,7 +77,7 @@ Next.js Frontend (localhost:3000)  ↔  FastAPI Backend (localhost:9000)  ↔  S
 
 ## MCP Certifying Gateway
 
-The gateway intercepts every MCP tool call, applies policy checks, signs the parameters, and forwards or blocks. Every call produces a lineage graph: **DECISION_POINT** → **TOOL_CALL/REFUSAL** → **proof block**.
+The gateway intercepts every MCP tool call, applies policy checks, signs the parameters, and forwards or blocks. Every call produces a lineage graph: **DECISION_POINT** → **TOOL_CALL/REFUSAL** → **proof block**. Exported receipt bundles verify offline and refuse empty or payload-hash-mismatched store rows.
 
 Evidence classes separate fact from inference: `observed` (proxy-verified), `asserted` (model claim), `derived` (computed), `policy` (governance decision).
 

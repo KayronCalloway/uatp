@@ -27,7 +27,7 @@
 **Agent Receipt Verification (Local/Dev, June 2026)**
 - Offline agent receipt bundle verifier for signed agent action receipts
 - Deterministic tamper-failure fixtures for event, chain, signature, and artifact edits
-- MCP gateway session export to detached receipt bundles that verify outside the gateway/runtime
+- MCP gateway session export to detached receipt bundles that verify outside the gateway/runtime and reject empty or payload-hash-mismatched store rows
 
 ---
 

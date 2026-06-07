@@ -39,7 +39,7 @@
 | TypeScript SDK | **Beta** | Source version 1.1.0; npm currently publishes 1.0.1 |
 | ML-DSA-65 Post-Quantum | **Beta** | FIPS 204 algorithm, not audited |
 | RFC 3161 Timestamps | **Beta** | Agent receipt and standalone capsule verifiers can validate RFC 3161 tokens against explicit TSA trust anchors via OpenSSL; absent anchors remain fail-closed |
-| MCP Certifying Gateway | **Alpha** | Stdio/single-server certifying proxy; exported receipt bundles verify offline; needs concurrency, multi-server, remote anchoring, and trust-policy demo hardening |
+| MCP Certifying Gateway | **Alpha** | Stdio/single-server certifying proxy; exported receipt bundles verify offline and reject empty/tampered store rows; needs concurrency, multi-server, remote anchoring, and trust-policy demo hardening |
 
 ## Planned
 

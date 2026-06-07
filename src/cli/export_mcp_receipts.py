@@ -65,12 +65,15 @@ def export_mcp_receipts_cmd(
 ) -> None:
     """Export stored MCP gateway capsules as signed agent receipts."""
     signer = _build_export_signer(signer_id, signing_key_env)
-    bundle = export_mcp_receipt_bundle(
-        CapsuleStore(store_path),
-        session_id,
-        signer,
-        output_path=output_path,
-    )
+    try:
+        bundle = export_mcp_receipt_bundle(
+            CapsuleStore(store_path),
+            session_id,
+            signer,
+            output_path=output_path,
+        )
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
     receipt_count = len(bundle.get("signed_receipts", []))
     click.echo(
         f"Exported MCP receipt bundle: {output_path} "

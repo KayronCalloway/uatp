@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
@@ -17,6 +18,18 @@ from src.agent_receipts.sink import build_signed_receipt_bundle
 from src.integrations.mcp.store import CapsuleStore
 
 
+def _payload_hash(payload: dict[str, Any]) -> str:
+    payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(payload_json.encode()).hexdigest()
+
+
+def _validated_capsule_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    for row in rows:
+        if row.get("payload_hash") != _payload_hash(row.get("payload", {})):
+            raise ValueError("stored MCP capsule integrity check failed")
+    return rows
+
+
 def export_mcp_receipt_bundle(
     store: CapsuleStore,
     session_id: str,
@@ -25,7 +38,9 @@ def export_mcp_receipt_bundle(
     output_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Export one stored MCP session as a public signed receipt bundle."""
-    capsule_rows = store.get_session_graph(session_id)
+    capsule_rows = _validated_capsule_rows(store.get_session_graph(session_id))
+    if not capsule_rows:
+        raise ValueError("no MCP capsules found for session")
     events = [
         event
         for row in capsule_rows

@@ -4,6 +4,7 @@ Integration tests for MCP Certifying Gateway.
 
 import json
 import os
+import sqlite3
 import sys
 
 import pytest
@@ -348,6 +349,98 @@ async def test_cli_exports_and_verifies_refused_mcp_receipt_bundle(
     assert "tool_not_in_allowlist" in refusal_draft["refusal"]["violations"]
 
     await gateway.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_cli_export_mcp_receipts_rejects_tampered_store_payload(
+    upstream_command, temp_store_path, temp_key_dir, tmp_path, monkeypatch
+):
+    """MCP export must not re-sign mutated SQLite rows as fresh public proof."""
+    gateway = UATPMCPGateway(
+        upstream_command=upstream_command,
+        store_path=temp_store_path,
+        key_dir=temp_key_dir,
+    )
+    await gateway.initialize()
+
+    try:
+        await gateway._handle_tool_call("read_file", {"path": "/dev/null"})
+        assert gateway._session_id is not None
+
+        with sqlite3.connect(temp_store_path) as conn:
+            row = conn.execute(
+                """
+                SELECT capsule_id, payload_json
+                FROM capsules
+                WHERE session_id = ? AND capsule_type = 'TOOL_CALL'
+                LIMIT 1
+                """,
+                (gateway._session_id,),
+            ).fetchone()
+            assert row is not None
+            capsule_id, payload_json = row
+            payload = json.loads(payload_json)
+            payload["tool"]["name"]["value"] = "tampered_after_capture"
+            conn.execute(
+                "UPDATE capsules SET payload_json = ? WHERE capsule_id = ?",
+                (
+                    json.dumps(payload, sort_keys=True, separators=(",", ":")),
+                    capsule_id,
+                ),
+            )
+            conn.commit()
+
+        signer = Ed25519ReceiptSigner.generate(signer_id="uatp-mcp-gateway")
+        monkeypatch.setenv("UATP_MCP_RECEIPT_SIGNING_KEY", signer.signing_key_hex)
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "export-mcp-receipts",
+                temp_store_path,
+                "--session-id",
+                gateway._session_id,
+                "--output",
+                str(tmp_path / "tampered_mcp_receipts.json"),
+                "--signing-key-env",
+                "UATP_MCP_RECEIPT_SIGNING_KEY",
+            ],
+        )
+
+        assert result.exit_code != 0
+        assert "stored MCP capsule integrity check failed" in result.output
+        assert "tampered_after_capture" not in result.output
+        assert signer.signing_key_hex not in result.output
+    finally:
+        await gateway.shutdown()
+
+
+def test_cli_export_mcp_receipts_rejects_empty_session(tmp_path, monkeypatch):
+    """Export should not sign an empty bundle for a missing MCP session."""
+    store_path = tmp_path / "empty_store.db"
+    CapsuleStore(store_path)
+    signer = Ed25519ReceiptSigner.generate(signer_id="uatp-mcp-gateway")
+    monkeypatch.setenv("UATP_MCP_RECEIPT_SIGNING_KEY", signer.signing_key_hex)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli,
+        [
+            "export-mcp-receipts",
+            str(store_path),
+            "--session-id",
+            "sess_missing",
+            "--output",
+            str(tmp_path / "empty_bundle.json"),
+            "--signing-key-env",
+            "UATP_MCP_RECEIPT_SIGNING_KEY",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "no MCP capsules found for session" in result.output
+    assert signer.signing_key_hex not in result.output
+    assert not (tmp_path / "empty_bundle.json").exists()
 
 
 def test_cli_export_mcp_receipts_rejects_invalid_signing_key_without_leaking_value(
