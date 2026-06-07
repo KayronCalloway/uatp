@@ -66,6 +66,7 @@ def test_verify_receipts_text_output_passes_valid_bundle(tmp_path) -> None:
     assert "Agent receipt verification PASSED" in result.output
     assert "Receipts: 1" in result.output
     assert "Artifacts checked: 1" in result.output
+    assert "Trusted timestamp: missing" in result.output
 
 
 def test_verify_receipts_json_output_is_machine_readable(tmp_path) -> None:
@@ -91,6 +92,104 @@ def test_verify_receipts_json_output_is_machine_readable(tmp_path) -> None:
     assert payload["receipt_count"] == 1
     assert payload["artifacts_checked"] == 1
     assert payload["errors"] == []
+
+
+def test_verify_receipts_trusted_signer_policy_accepts_matching_public_key(
+    tmp_path,
+) -> None:
+    bundle_path, artifact_root, bundle = _write_receipt_bundle(tmp_path)
+    signed_receipt = bundle["signed_receipts"][0]
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli,
+        [
+            "verify-receipts",
+            str(bundle_path),
+            "--artifact-root",
+            str(artifact_root),
+            "--strict",
+            "--trusted-signer",
+            f"{signed_receipt['signer_id']}={signed_receipt['public_key']}",
+            "--no-color",
+        ],
+    )
+
+    assert result.exit_code == ExitCode.SUCCESS
+    assert "Agent receipt verification PASSED" in result.output
+
+
+def test_verify_receipts_trusted_signer_policy_rejects_wrong_public_key(
+    tmp_path,
+) -> None:
+    bundle_path, artifact_root, bundle = _write_receipt_bundle(tmp_path)
+    signed_receipt = bundle["signed_receipts"][0]
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli,
+        [
+            "verify-receipts",
+            str(bundle_path),
+            "--artifact-root",
+            str(artifact_root),
+            "--strict",
+            "--trusted-signer",
+            f"{signed_receipt['signer_id']}={'a' * 64}",
+            "--no-color",
+        ],
+    )
+
+    assert result.exit_code == ExitCode.FAILED
+    assert "public key is not trusted" in result.output
+
+
+def test_verify_receipts_trusted_signer_policy_rejects_unknown_signer(
+    tmp_path,
+) -> None:
+    bundle_path, artifact_root, _bundle = _write_receipt_bundle(tmp_path)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli,
+        [
+            "verify-receipts",
+            str(bundle_path),
+            "--artifact-root",
+            str(artifact_root),
+            "--strict",
+            "--trusted-signer",
+            f"other_signer={'a' * 64}",
+            "--no-color",
+        ],
+    )
+
+    assert result.exit_code == ExitCode.FAILED
+    assert "signer cli_receipts_test is not trusted" in result.output
+
+
+def test_verify_receipts_trusted_signer_policy_rejects_malformed_value(
+    tmp_path,
+) -> None:
+    bundle_path, artifact_root, _bundle = _write_receipt_bundle(tmp_path)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli,
+        [
+            "verify-receipts",
+            str(bundle_path),
+            "--artifact-root",
+            str(artifact_root),
+            "--strict",
+            "--trusted-signer",
+            "not-a-policy",
+            "--no-color",
+        ],
+    )
+
+    assert result.exit_code != ExitCode.SUCCESS
+    assert "trusted signer must use signer_id=public_key_hex format" in result.output
 
 
 def test_verify_receipts_returns_failed_exit_for_tampered_bundle(tmp_path) -> None:
@@ -128,3 +227,27 @@ def test_verify_receipts_returns_warnings_exit_for_non_strict_missing_artifact_r
     assert result.exit_code == ExitCode.WARNINGS
     assert "Agent receipt verification PASSED" in result.output
     assert "artifact_root not provided" in result.output
+
+
+def test_verify_receipts_require_trusted_timestamp_fails_missing_timestamp(
+    tmp_path,
+) -> None:
+    bundle_path, artifact_root, _bundle = _write_receipt_bundle(tmp_path)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli,
+        [
+            "verify-receipts",
+            str(bundle_path),
+            "--artifact-root",
+            str(artifact_root),
+            "--strict",
+            "--require-trusted-timestamp",
+            "--no-color",
+        ],
+    )
+
+    assert result.exit_code == ExitCode.FAILED
+    assert "trusted timestamp proof missing" in result.output
+    assert "Trusted timestamp: missing" in result.output

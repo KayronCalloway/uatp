@@ -35,7 +35,6 @@ def export_mcp_receipt_bundle(
     bundle["source"] = {
         "boundary": "mcp_gateway",
         "session_id": session_id,
-        "store_path": str(store.db_path),
     }
 
     if output_path is not None:

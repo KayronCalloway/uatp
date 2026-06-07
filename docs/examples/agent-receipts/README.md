@@ -11,7 +11,7 @@ Files:
 - `artifacts/` — valid content-addressed artifact root.
 - `artifacts_tampered/` — same artifact path with modified bytes.
 
-Run:
+Run the single valid fixture:
 
 ```bash
 uatp verify-receipts docs/examples/agent-receipts/valid_bundle.json \
@@ -19,5 +19,13 @@ uatp verify-receipts docs/examples/agent-receipts/valid_bundle.json \
   --strict \
   --no-color
 ```
+
+Run the full pass/fail demo:
+
+```bash
+./.venv/bin/python scripts/demo/verify_agent_receipt_tamper_demo.py
+```
+
+A passing fixture result proves integrity/self-consistency. Add `--trusted-signer signer_id=public_key_hex` when the verifier must enforce signer identity. Current fixtures report `Trusted timestamp: missing`; do not treat them as trusted-time evidence.
 
 See `docs/architecture/agent-receipt-verification.md` for the full tamper demo.

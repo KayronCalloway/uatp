@@ -24,7 +24,10 @@ Expected result:
   Artifacts checked: 1
   Chain root: sha256:...
   Chain tip: sha256:...
+  Trusted timestamp: missing
 ```
+
+A green result without `--trusted-signer` proves bundle integrity and cryptographic self-consistency. It does not prove the signer identity is trusted by the verifier. A green result with `Trusted timestamp: missing` does not claim trusted time.
 
 For machine-readable output:
 
@@ -46,10 +49,46 @@ uatp verify-receipts docs/examples/agent-receipts/valid_bundle.json \
 - Capsule draft list structure
 - Nested artifact refs
 - Artifact digest and size when `--artifact-root` is provided
+- Optional signer identity binding when `--trusted-signer signer_id=public_key_hex` is provided
+- Optional trusted timestamp requirement when `--require-trusted-timestamp` is provided
+
+## Trust policy and timestamp boundaries
+
+Use a trust policy when the question is not just "do these bytes verify?" but "did a key I trust sign these bytes?"
+
+```bash
+uatp verify-receipts docs/examples/agent-receipts/valid_bundle.json \
+  --artifact-root docs/examples/agent-receipts/artifacts \
+  --trusted-signer demo_agent=<ed25519_public_key_hex> \
+  --strict \
+  --no-color
+```
+
+If the embedded signer/key does not match the trusted binding, verification fails. Without `--trusted-signer`, the verifier checks cryptographic self-consistency only.
+
+Use `--require-trusted-timestamp` when CI or a demo must fail unless trusted timestamp evidence verifies:
+
+```bash
+uatp verify-receipts docs/examples/agent-receipts/valid_bundle.json \
+  --artifact-root docs/examples/agent-receipts/artifacts \
+  --require-trusted-timestamp \
+  --strict \
+  --no-color
+```
+
+Current public fixtures intentionally report `Trusted timestamp: missing`. UATP treats missing, malformed, hash-only, or trust-anchor-unverified timestamp material as not trusted time. Do not claim full RFC3161 trusted timestamp verification until TSA trust-anchor validation is implemented.
 
 ## Tamper demo
 
 These fixtures are intentionally small and deterministic so the failure modes are easy to inspect.
+
+Run the full fixture demo:
+
+```bash
+./.venv/bin/python scripts/demo/verify_agent_receipt_tamper_demo.py
+```
+
+Expected: five `PASS` lines and exit code `0`.
 
 ### 1. Valid bundle passes
 
@@ -154,6 +193,7 @@ uatp export-mcp-receipts uatp_mcp_store.db \
   --output /tmp/mcp_receipts.json
 
 uatp verify-receipts /tmp/mcp_receipts.json \
+  --trusted-signer uatp-mcp-gateway=<exported_public_key_hex> \
   --strict \
   --no-color
 ```
@@ -172,3 +212,4 @@ Notes:
 - The export covers the proxy-observed MCP boundary facts: policy decision, selected/refused tool, argument hash/preview, output hash/preview for executed calls, timing, status, and parent linkage.
 - It intentionally exports detached public receipts, not raw upstream outputs or private database handles.
 - The receipt bundle is newly signed at export time and remains independently verifiable via Ed25519 signatures and parent-hash chain checks.
+- For identity assurance, export with a stable signing key and verify with `--trusted-signer`; otherwise the bundle proves self-consistency only.

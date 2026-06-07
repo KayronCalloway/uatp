@@ -10,6 +10,7 @@ import pytest
 from click.testing import CliRunner
 from mcp import ClientSession
 
+from src.agent_receipts.signing import Ed25519ReceiptSigner
 from src.agent_receipts.verifier import verify_agent_receipt_bundle
 from src.cli.main import cli
 from src.integrations.mcp.gateway import UATPMCPGateway
@@ -187,7 +188,7 @@ async def test_gateway_exports_offline_verifiable_receipt_bundle(
 
 @pytest.mark.asyncio
 async def test_cli_exports_and_verifies_mcp_receipt_bundle(
-    upstream_command, temp_store_path, temp_key_dir, tmp_path
+    upstream_command, temp_store_path, temp_key_dir, tmp_path, monkeypatch
 ):
     """The MCP demo path should produce a bundle accepted by verify-receipts."""
     gateway = UATPMCPGateway(
@@ -201,6 +202,8 @@ async def test_cli_exports_and_verifies_mcp_receipt_bundle(
     assert gateway._session_id is not None
 
     bundle_path = tmp_path / "mcp_receipts.json"
+    signer = Ed25519ReceiptSigner.generate(signer_id="uatp-mcp-gateway")
+    monkeypatch.setenv("UATP_MCP_RECEIPT_SIGNING_KEY", signer.signing_key_hex)
     runner = CliRunner()
     export_result = runner.invoke(
         cli,
@@ -211,24 +214,77 @@ async def test_cli_exports_and_verifies_mcp_receipt_bundle(
             gateway._session_id,
             "--output",
             str(bundle_path),
+            "--signing-key-env",
+            "UATP_MCP_RECEIPT_SIGNING_KEY",
         ],
     )
     verify_result = runner.invoke(
         cli,
-        ["verify-receipts", str(bundle_path), "--strict", "--no-color"],
+        [
+            "verify-receipts",
+            str(bundle_path),
+            "--strict",
+            "--trusted-signer",
+            f"uatp-mcp-gateway={signer.public_key_hex}",
+            "--no-color",
+        ],
     )
 
     assert export_result.exit_code == 0, export_result.output
     assert "Exported MCP receipt bundle" in export_result.output
+    assert "Signer: uatp-mcp-gateway" in export_result.output
+    assert f"Public key: {signer.public_key_hex}" in export_result.output
+    assert signer.signing_key_hex not in export_result.output
     assert verify_result.exit_code == 0, verify_result.output
     assert "Agent receipt verification PASSED" in verify_result.output
+
+    wrong_trust_result = runner.invoke(
+        cli,
+        [
+            "verify-receipts",
+            str(bundle_path),
+            "--strict",
+            "--trusted-signer",
+            f"uatp-mcp-gateway={'b' * 64}",
+            "--no-color",
+        ],
+    )
+    assert wrong_trust_result.exit_code == 1, wrong_trust_result.output
+    assert "public key is not trusted" in wrong_trust_result.output
+
+    bundle = json.loads(bundle_path.read_text())
+    assert bundle["source"] == {
+        "boundary": "mcp_gateway",
+        "session_id": gateway._session_id,
+    }
+    assert "store_path" not in bundle["source"]
+
+    tampered_path = tmp_path / "mcp_receipts_tampered.json"
+    tampered_bundle = json.loads(bundle_path.read_text())
+    tampered_bundle["signed_receipts"][0]["event"]["payload"]["selected_action"] = (
+        "changed_after_export"
+    )
+    tampered_path.write_text(json.dumps(tampered_bundle))
+    tampered_result = runner.invoke(
+        cli,
+        [
+            "verify-receipts",
+            str(tampered_path),
+            "--strict",
+            "--trusted-signer",
+            f"uatp-mcp-gateway={signer.public_key_hex}",
+            "--no-color",
+        ],
+    )
+    assert tampered_result.exit_code == 1, tampered_result.output
+    assert "event_hash does not match signed event payload" in tampered_result.output
 
     await gateway.shutdown()
 
 
 @pytest.mark.asyncio
 async def test_cli_exports_and_verifies_refused_mcp_receipt_bundle(
-    upstream_command, temp_store_path, temp_key_dir, tmp_path
+    upstream_command, temp_store_path, temp_key_dir, tmp_path, monkeypatch
 ):
     """Denied MCP calls should export as verifiable decision -> refusal receipts."""
     gateway = UATPMCPGateway(
@@ -242,6 +298,8 @@ async def test_cli_exports_and_verifies_refused_mcp_receipt_bundle(
     assert gateway._session_id is not None
 
     bundle_path = tmp_path / "mcp_refusal_receipts.json"
+    signer = Ed25519ReceiptSigner.generate(signer_id="uatp-mcp-gateway")
+    monkeypatch.setenv("UATP_MCP_RECEIPT_SIGNING_KEY", signer.signing_key_hex)
     runner = CliRunner()
     export_result = runner.invoke(
         cli,
@@ -252,14 +310,26 @@ async def test_cli_exports_and_verifies_refused_mcp_receipt_bundle(
             gateway._session_id,
             "--output",
             str(bundle_path),
+            "--signing-key-env",
+            "UATP_MCP_RECEIPT_SIGNING_KEY",
         ],
     )
     verify_result = runner.invoke(
         cli,
-        ["verify-receipts", str(bundle_path), "--strict", "--no-color"],
+        [
+            "verify-receipts",
+            str(bundle_path),
+            "--strict",
+            "--trusted-signer",
+            f"uatp-mcp-gateway={signer.public_key_hex}",
+            "--no-color",
+        ],
     )
 
     assert export_result.exit_code == 0, export_result.output
+    assert "Signer: uatp-mcp-gateway" in export_result.output
+    assert f"Public key: {signer.public_key_hex}" in export_result.output
+    assert signer.signing_key_hex not in export_result.output
     assert verify_result.exit_code == 0, verify_result.output
 
     bundle = json.loads(bundle_path.read_text())
@@ -278,6 +348,35 @@ async def test_cli_exports_and_verifies_refused_mcp_receipt_bundle(
     assert "tool_not_in_allowlist" in refusal_draft["refusal"]["violations"]
 
     await gateway.shutdown()
+
+
+def test_cli_export_mcp_receipts_rejects_invalid_signing_key_without_leaking_value(
+    monkeypatch, tmp_path
+):
+    """Invalid export signing keys should fail cleanly without printing secrets."""
+    secret_value = "not-a-valid-private-key"
+    monkeypatch.setenv("UATP_BAD_MCP_SIGNING_KEY", secret_value)
+    store_path = tmp_path / "empty.db"
+    store_path.write_bytes(b"")
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli,
+        [
+            "export-mcp-receipts",
+            str(store_path),
+            "--session-id",
+            "sess_missing",
+            "--output",
+            str(tmp_path / "bundle.json"),
+            "--signing-key-env",
+            "UATP_BAD_MCP_SIGNING_KEY",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "invalid signing key" in result.output
+    assert secret_value not in result.output
 
 
 # ---------------------------------------------------------------------------

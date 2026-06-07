@@ -11,7 +11,7 @@
 
 > **AI decisions can be MORE trustworthy than human decisions - IF we can provide cryptographic proof of the entire thought chain.**
 
-This isn't just about transparency or auditability. It's about **court-admissible evidence** that unlocks automation in high-stakes domains currently blocked by liability uncertainty.
+This isn't just about transparency or auditability. It's about **evidence-grade, audit-ready records** that can support legal, insurance, and compliance workflows when paired with proper review and process.
 
 ### Why "Evidence" Not Just "Audit Trails"
 
@@ -24,7 +24,7 @@ This isn't just about transparency or auditability. It's about **court-admissibl
 **The Gap:** Audit trails are nice-to-have. **Cryptographic evidence is mandatory for insurance and regulation.**
 
 UATP provides:
-- **Ed25519 signatures** (NIST-approved, Daubert-compliant)
+- **Ed25519 signatures** (FIPS 186-5 algorithm; not FIPS-certified)
 - **Dilithium3 post-quantum signatures** (future-proof for 20+ years)
 - **Complete chain of custody** (immutable capsule chains)
 - **Independent verification** (open-source validation tools)
@@ -571,8 +571,8 @@ Siri makes a decision to transfer $10K to pay your medical bill:
 ├─ Decision is cryptographically signed
 │  └─ Immutable proof: AI followed its own reasoning
 │
-├─ Insurance covers any mistakes
-│  └─ AI liability policy #12345 (UATP-certified)
+├─ Insurance/compliance review has signed evidence
+│  └─ AI liability workflow references UATP receipt bundle #12345
 │
 ├─ Attribution capsule created
 │  ├─ AI used medical knowledge from Mayo Clinic (40%)
@@ -662,7 +662,7 @@ For detailed market intelligence and implementation plans:
 ### **[UATP_2025_MARKET_ANALYSIS.md](./UATP_2025_MARKET_ANALYSIS.md)**
 Comprehensive analysis of current market conditions:
 - AI insurance crisis (traditional insurers excluding AI)
-- Cryptographic evidence legal standards (Daubert compliance)
+- Cryptographic evidence legal standards (authentication, integrity, chain of custody)
 - Training data marketplace economics ($2.68B → $11.16B)
 - Regulatory landscape (EU AI Act, US state laws)
 - Recent liability cases (Anthropic $1.5B, chatbot lawsuits)

@@ -32,7 +32,7 @@ As of late 2025, the AI industry faces three converging crises that create a per
 **What They Need But Don't Have:**
 - Cryptographic audit trails to assess risk
 - Actuarial data on AI decision quality
-- Court-admissible evidence for claims
+- Evidence-grade records for claims review
 - Real-time monitoring infrastructure
 
 **UATP Solution:**
@@ -48,7 +48,7 @@ UATP provides the measurement infrastructure.
 
 ---
 
-### 2. Cryptographic Evidence - Court Admissibility Standards
+### 2. Cryptographic Evidence - Legal Review Standards
 
 **Current Legal Standards (2025):**
 
@@ -65,24 +65,24 @@ UATP provides the measurement infrastructure.
 - Proper collection methods
 
 **Recent Developments:**
-- **Open-source forensic tools validated** (PLOS One, 2025): Framework for Daubert compliance
+- **Open-source forensic tools validated** (PLOS One, 2025): Framework for expert review of forensic tooling
 - **Federal Rules of Evidence amendments proposed**: Specifically for AI/deepfake challenges
 - **Anthropic $1.5B settlement** (September 2025): Established need for provable training data sources
 
 **UATP's Cryptographic Evidence Stack:**
 
 ```python
-# What UATP Provides for Court Admissibility
+# What UATP Provides for Evidence-Grade Review
 
 1. Ed25519 Signatures
-   - NIST-approved cryptographic standard
+   - FIPS 186-5 algorithm (not FIPS-certified)
    - Mathematically provable non-repudiation
    - Tamper-evident (any modification breaks signature)
 
 2. Post-Quantum Resistant (Dilithium3)
    - Future-proof against quantum attacks
    - NIST PQC finalist (approved 2024)
-   - Court-admissible for 20+ years
+   - Designed for long-term verification review
 
 3. Complete Chain of Custody
    - Timestamp of each reasoning step
@@ -160,7 +160,7 @@ What's in a UATP capsule that's more valuable than internet text:
 
 5. Cryptographic Provenance
    - Legally licensable (clear ownership)
-   - Court-admissible source documentation
+   - Reviewable source documentation
    - No copyright uncertainty
 ```
 
@@ -293,7 +293,7 @@ With audit trails → Negligence standard (defendable)
 ```
 
 **Insurance Implication:**
-Insurers can't underwrite strict liability. They need audit trails to assess negligence claims. UATP provides the infrastructure to shift from uninsurable strict liability to insurable negligence.
+Insurers need audit trails to assess negligence claims. UATP provides infrastructure for evidence-grade records that can make AI risk more auditable and support insurance workflows when paired with proper review.
 
 **Sources:**
 - Ropes & Gray: "Anthropic's landmark copyright settlement" (2025)
@@ -321,7 +321,7 @@ Insurers can't underwrite strict liability. They need audit trails to assess neg
 
 ### Layer 4: Liability Defense
 **Problem**: $1.5B settlements, suicide lawsuits, defamation cases.
-**Solution**: UATP provides court-admissible evidence.
+**Solution**: UATP creates evidence-grade, audit-ready records that can support legal review.
 **Market**: Risk mitigation for every AI deployment.
 
 ### Layer 5 (Future): Attribution Economics
@@ -352,15 +352,15 @@ Insurers can't underwrite strict liability. They need audit trails to assess neg
 
 **4. AI Observability (Weights & Biases, etc.)**
 - **What**: ML experiment tracking
-- **Gap**: Not designed for legal admissibility
-- **Difference**: UATP is court-ready
+- **Gap**: Not designed for legal/compliance evidence review
+- **Difference**: UATP produces signed, independently reviewable evidence records
 
 ### UATP's Unique Position:
 
 ```
 The ONLY infrastructure layer providing:
 [OK] Cryptographic non-repudiation
-[OK] Court-admissible evidence standards
+[OK] Evidence-grade authentication, integrity, and chain-of-custody records
 [OK] Licensable training data
 [OK] EU AI Act compliance out-of-box
 [OK] Attribution tracking for future economics
@@ -402,19 +402,19 @@ UATP's governance system addresses the central challenge of 2025: **How do we tr
 ## Proof/Evidence Capabilities (2025 Legal Standards)
 
 ### Ed25519 Signatures
-**Standard**: NIST FIPS 186-4 (approved digital signature algorithm)
-**Admissibility**: Meets Daubert standard (peer-reviewed, testable, accepted)
+**Standard**: Ed25519 / FIPS 186-5 algorithm; implementation is not FIPS-certified
+**Legal review posture**: Supports authentication and integrity review; admissibility depends on process, experts, and venue
 **Use Case**: Prove AI decision hasn't been altered post-hoc
 
 ### Dilithium3 (Post-Quantum)
 **Standard**: NIST PQC finalist (approved 2024)
 **Future-Proof**: Resistant to quantum computing attacks
-**Use Case**: Evidence admissible even 20 years from now
+**Use Case**: Evidence remains independently verifiable as post-quantum migration matures
 
 ### Complete Chain of Custody
 **Legal Requirement**: Unbroken tracking from creation to presentation
 **UATP Implementation**: Immutable capsule chain with timestamps
-**Use Case**: Court can verify decision lineage from prompt → output
+**Use Case**: Legal/compliance review can verify decision lineage from prompt → output
 
 ### Independent Verification
 **Legal Requirement**: Third-party validation possible
@@ -494,7 +494,7 @@ UATP's governance system addresses the central challenge of 2025: **How do we tr
   - Dead simple SDK (3 lines of code)
   - Free tier (1000 capsules/month)
   - Integration with Anthropic, OpenAI SDKs
-- **Messaging**: "Make your AI insurable in 5 minutes"
+- **Messaging**: "Make AI risk auditable with signed agent-action receipts"
 
 **Q2 2026 (Months 4-6): Data Generation**
 - **Goal**: 100,000+ capsules created
@@ -677,7 +677,7 @@ async function makeDecision(task, reasoningSteps) {
 ### Risk 4: Legal Challenges to Cryptographic Evidence
 **Likelihood**: Low (standards well-established)
 **Impact**: Critical (undermines core value prop)
-**Mitigation**: Use only NIST-approved algorithms, work with legal experts
+**Mitigation**: Use standard, reviewable algorithms; work with legal and security experts; avoid certification/admissibility claims until validated
 
 ### Risk 5: Data Marketplace Legal Uncertainty
 **Likelihood**: Medium (Thomson Reuters precedent unclear)
@@ -699,7 +699,7 @@ async function makeDecision(task, reasoningSteps) {
 **Messaging**: "We don't sell insurance. We make insurance possible."
 
 ### Recommendation 3: Emphasize Evidence Over Auditability
-**Rationale**: "Auditable" is weak, "court-admissible evidence" is strong.
+**Rationale**: Generic "auditable" language is weak; concrete, evidence-grade signed records are stronger and more defensible.
 **Action**: Rebrand all marketing materials.
 **Messaging**: "UATP: Cryptographically sealed evidence for AI decisions"
 
@@ -750,9 +750,9 @@ async function makeDecision(task, reasoningSteps) {
 | Armilla Insurance | AI liability insurance | Need infrastructure for risk assessment |
 | Testudo | Model certification | Decision-level audit trails |
 | Datadog | General logging | Cryptographic non-repudiation |
-| Weights & Biases | ML experiment tracking | Legal admissibility |
+| Weights & Biases | ML experiment tracking | Evidence-grade decision review |
 | OpenAI Evals | Model testing | Real-world outcome tracking |
-| LangSmith | LLM tracing | Court-admissible evidence |
+| LangSmith | LLM tracing | Signed evidence records with offline verification |
 
 **UATP's Unique Position**: Only solution providing cryptographic evidence + training data marketplace + compliance infrastructure in one platform.
 

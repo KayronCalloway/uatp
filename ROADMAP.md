@@ -24,13 +24,18 @@
 - DPO pair extraction
 - Cross-model comparison
 
+**Agent Receipt Verification (Local/Dev, June 2026)**
+- Offline agent receipt bundle verifier for signed agent action receipts
+- Deterministic tamper-failure fixtures for event, chain, signature, and artifact edits
+- MCP gateway session export to detached receipt bundles that verify outside the gateway/runtime
+
 ---
 
 ## In Progress (Q2-Q3 2026)
 
-- **Offline agent receipt bundle verifier** — Verify receipt hashes, signatures, parent chains, artifact refs, and capsule drafts outside Hermes/runtime
-- **Tamper-failure demo** — Deterministic proof that event, chain, signature, and artifact modification fails verification
-- **MCP certifying gateway hardening** — Use MCP as the first external boundary after receipt bundle verification is complete
+- **Verifier policy hardening** — Expose trusted signer policy and trusted timestamp requirements through the CLI
+- **TSA trust-anchor validation** — Keep timestamp evidence fail-closed until trust-anchor verification is implemented
+- **MCP certifying gateway hardening** — Use MCP as the first external boundary after verifier UX and trust-policy demo polish are complete
 - **External security audit** — Cryptographic review by third party
 - **Frontend polish** — Production-ready dashboard
 - **TypeScript SDK stabilization** — Browser and Node.js support

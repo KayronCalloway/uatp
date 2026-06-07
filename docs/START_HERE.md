@@ -68,7 +68,7 @@ Read: `UATP_COMPLETE_VISION.md` → "Phase 2: High-Stakes Automation"
 Then: `UATP_2025_MARKET_ANALYSIS.md` → "EU AI Act Audit Requirements"
 - AI auditability solves governance
 - Real-time compliance checking
-- Cryptographic proof standards (NIST-approved Ed25519, Daubert-compliant)
+- Cryptographic proof standards (Ed25519 / FIPS 186-5 algorithm; not FIPS-certified)
 - EU AI Act ready: Conformity assessments, audit trails, transparency
 - US state compliance: Colorado impact assessments, NYC bias audits
 
@@ -88,7 +88,7 @@ Read all documents in order:
 ### **The Core Idea:**
 AI decisions can be MORE trustworthy than human decisions - IF we can provide cryptographic proof of the entire thought chain.
 
-**2025 Update:** Not just "auditable" - UATP provides **court-admissible evidence** using NIST-approved Ed25519 signatures. This enables AI insurance and regulatory compliance (EU AI Act August 2026).
+**2025 Update:** Not just "auditable" — UATP creates **evidence-grade, audit-ready records** using Ed25519 signatures (FIPS 186-5 algorithm, not FIPS-certified). These records can support legal, insurance, and regulatory workflows when paired with proper review and process.
 
 ### **The Chronological Path:**
 ```

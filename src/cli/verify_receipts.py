@@ -10,6 +10,7 @@ from typing import Any
 
 import click
 
+from src.agent_receipts.signing import ReceiptTrustPolicy
 from src.agent_receipts.verifier import (
     AgentReceiptBundleVerificationReport,
     verify_agent_receipt_bundle,
@@ -22,6 +23,38 @@ def _report_to_dict(report: AgentReceiptBundleVerificationReport) -> dict[str, A
     payload["errors"] = list(report.errors)
     payload["warnings"] = list(report.warnings)
     return payload
+
+
+def _build_trust_policy(
+    trusted_signers: tuple[str, ...],
+) -> ReceiptTrustPolicy | None:
+    if not trusted_signers:
+        return None
+
+    trusted: dict[str, list[str]] = {}
+    for value in trusted_signers:
+        if "=" not in value:
+            raise click.ClickException(
+                "trusted signer must use signer_id=public_key_hex format"
+            )
+        signer_id, public_key = value.split("=", 1)
+        if not signer_id or not public_key:
+            raise click.ClickException(
+                "trusted signer must use signer_id=public_key_hex format"
+            )
+        try:
+            bytes.fromhex(public_key)
+        except ValueError as exc:
+            raise click.ClickException("trusted signer public key must be hex") from exc
+        if len(public_key) != 64:
+            raise click.ClickException(
+                "trusted signer public key must be a 32-byte Ed25519 hex key"
+            )
+        trusted.setdefault(signer_id, []).append(public_key)
+
+    return ReceiptTrustPolicy.from_signers(
+        {signer_id: tuple(keys) for signer_id, keys in trusted.items()}
+    )
 
 
 def _format_receipt_report(
@@ -51,6 +84,7 @@ def _format_receipt_report(
             f"  Artifacts checked: {report.artifacts_checked}",
             f"  Chain root: {report.chain_root_hash or 'unverified'}",
             f"  Chain tip: {report.chain_tip_hash or 'unverified'}",
+            f"  Trusted timestamp: {report.trusted_timestamp_status}",
         ]
     )
 
@@ -99,18 +133,34 @@ def _exit_code_for_report(report: AgentReceiptBundleVerificationReport) -> ExitC
     help="Output format",
 )
 @click.option("--no-color", is_flag=True, help="Disable colored output")
+@click.option(
+    "--require-trusted-timestamp",
+    is_flag=True,
+    help="Fail unless the bundle has independently verified trusted timestamp evidence",
+)
+@click.option(
+    "--trusted-signer",
+    "trusted_signers",
+    multiple=True,
+    help="Trusted signer binding as signer_id=ed25519_public_key_hex; repeat for rotations",
+)
 def verify_receipts_cmd(
     bundle: str,
     artifact_root: str | None,
     strict: bool,
     output_format: str,
     no_color: bool,
+    require_trusted_timestamp: bool,
+    trusted_signers: tuple[str, ...],
 ) -> None:
     """Verify a signed agent receipt bundle offline."""
+    trust_policy = _build_trust_policy(trusted_signers)
     report = verify_agent_receipt_bundle(
         Path(bundle),
         artifact_root=Path(artifact_root) if artifact_root else None,
         strict=strict,
+        trust_policy=trust_policy,
+        require_trusted_timestamp=require_trusted_timestamp,
     )
 
     if output_format == "json":
