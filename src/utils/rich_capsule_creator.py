@@ -347,7 +347,7 @@ if __name__ == "__main__":
         capsule_id="caps_2025_12_05_example",
         prompt="Implement monitoring system for UATP",
         reasoning_steps=steps,
-        final_answer="Production-ready monitoring system with zero compromise on performance",
+        final_answer="Production-oriented monitoring system with zero compromise on performance",
         overall_confidence=0.96,
         session_metadata={
             "user": "Kay",

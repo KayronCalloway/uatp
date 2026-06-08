@@ -1,6 +1,6 @@
 # UATP Capsule Engine - Production Kubernetes Deployment
 
-This directory contains production-ready Kubernetes manifests for deploying the UATP Capsule Engine to a production cluster.
+This directory contains production-oriented Kubernetes manifests for deploying the UATP Capsule Engine. Treat them as a baseline: review secrets, ingress, resource limits, storage, backups, and environment-specific policy before production use.
 
 ##  Prerequisites
 

@@ -22,7 +22,7 @@ This works in multiple directions at once.
 
 **Forward:** It makes AI decisions evidence-grade and audit-ready. Enterprises can deploy in medicine, finance, and transportation with stronger records for legal, insurance, and compliance workflows because the runtime leaves cryptographic proof.
 
-**Backward:** It captures structured records of how AI actually thinks under real conditions — reasoning chains, confidence scores, error cases, corrections, and outcomes. This is more valuable than scraped text because it contains process, not just product. Model trainers will pay for it because it teaches models to reason, not just to pattern-match.
+**Backward:** It captures structured records of how AI behaves under real conditions — reasoning traces where available, confidence scores, error cases, corrections, and outcomes. This is more valuable than scraped text because it contains process, not just product. If licensed with consent, that process data can become higher-signal training material.
 
 Point the same provenance layer backward again, and it traces which human contributions shaped the model. One primitive. Three directions. Trust, training data, and attribution from the same root.
 

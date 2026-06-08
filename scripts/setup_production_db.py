@@ -10,6 +10,7 @@ import os
 import sys
 
 import psycopg2
+from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -60,7 +61,10 @@ async def setup_production_database(
             print(f" Creating database user '{db_user}'...")
             try:
                 cursor.execute(
-                    f"CREATE USER {db_user} WITH PASSWORD %s;", (db_password,)
+                    sql.SQL("CREATE USER {} WITH PASSWORD %s;").format(
+                        sql.Identifier(db_user)
+                    ),
+                    (db_password,),
                 )
                 print(f"[OK] User '{db_user}' created successfully")
             except psycopg2.Error as e:
@@ -68,7 +72,10 @@ async def setup_production_database(
                     print(f"ℹ️ User '{db_user}' already exists")
                     # Update password
                     cursor.execute(
-                        f"ALTER USER {db_user} WITH PASSWORD %s;", (db_password,)
+                        sql.SQL("ALTER USER {} WITH PASSWORD %s;").format(
+                            sql.Identifier(db_user)
+                        ),
+                        (db_password,),
                     )
                     print(f"[OK] Password updated for user '{db_user}'")
                 else:
@@ -78,7 +85,11 @@ async def setup_production_database(
         if create_database:
             print(f"️ Creating database '{db_name}'...")
             try:
-                cursor.execute(f"CREATE DATABASE {db_name} OWNER {db_user};")
+                cursor.execute(
+                    sql.SQL("CREATE DATABASE {} OWNER {};").format(
+                        sql.Identifier(db_name), sql.Identifier(db_user)
+                    )
+                )
                 print(f"[OK] Database '{db_name}' created successfully")
             except psycopg2.Error as e:
                 if "already exists" in str(e):
@@ -88,7 +99,11 @@ async def setup_production_database(
 
         # Grant permissions
         print(f" Granting permissions to user '{db_user}'...")
-        cursor.execute(f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO {db_user};")
+        cursor.execute(
+            sql.SQL("GRANT ALL PRIVILEGES ON DATABASE {} TO {};").format(
+                sql.Identifier(db_name), sql.Identifier(db_user)
+            )
+        )
         print("[OK] Permissions granted")
 
         # Close admin connection

@@ -172,7 +172,7 @@ export function SelfInspectionCard({ selfInspection }: SelfInspectionCardProps) 
           The system checks its own output for contradictions: semantic drift (summary doesn&apos;t
           address the question), quality mismatches (perfect scores with failing grades),
           confidence-evidence gaps (high confidence without evidence), and unearned labels
-          (claiming court-admissible without proper verification).
+          (claiming audit-ready without proper verification).
         </div>
       </CardContent>
     </Card>

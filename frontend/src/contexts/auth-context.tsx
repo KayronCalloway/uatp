@@ -115,9 +115,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           debugLog('No active cookie session');
         }
 
-        // DEV AUTO-LOGIN: If no session, auto-login with dev credentials
-        if (!hasSession && isDevelopment) {
-          debugLog('Auto-login: attempting dev credentials...');
+        // DEV AUTO-LOGIN: disabled by default; only use explicit local env values.
+        const devAutoLoginEmail = process.env.NEXT_PUBLIC_UATP_DEV_LOGIN_EMAIL;
+        const devAutoLoginPassword = process.env.NEXT_PUBLIC_UATP_DEV_LOGIN_PASSWORD;
+        if (!hasSession && isDevelopment && devAutoLoginEmail && devAutoLoginPassword) {
+          debugLog('Auto-login: attempting explicitly configured dev credentials...');
           try {
             const loginResponse = await fetch(
               `${getApiBaseUrl()}/api/v1/auth/login`,
@@ -126,8 +128,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
-                  email: 'kayron@houseofcalloway.com',
-                  password: 'uatp2026',
+                  email: devAutoLoginEmail,
+                  password: devAutoLoginPassword,
                 }),
               }
             );
@@ -142,6 +144,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } catch {
             debugLog('Auto-login request failed');
           }
+        } else if (!hasSession && isDevelopment) {
+          debugLog('Dev auto-login disabled; set NEXT_PUBLIC_UATP_DEV_LOGIN_EMAIL and NEXT_PUBLIC_UATP_DEV_LOGIN_PASSWORD locally to enable it.');
         }
 
       } catch (error) {

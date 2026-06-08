@@ -234,8 +234,8 @@ export function ComplianceStatusCard({
         {/* Explanation */}
         <div className="text-xs text-gray-500 bg-gray-50 rounded p-3">
           <span className="font-semibold">Honest compliance:</span>{' '}
-          Labels are only claimed when verification gates actually pass. Court-admissible
-          requires cryptographic signature + trusted RFC 3161 timestamp. Insurance-ready
+          Labels are only claimed when verification gates actually pass. Audit-ready
+          requires cryptographic signature + trusted RFC 3161 timestamp. Insurance-review-ready
           requires historical accuracy data. This prevents &quot;theater&quot; compliance claims.
         </div>
       </CardContent>

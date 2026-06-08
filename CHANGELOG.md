@@ -54,7 +54,7 @@
 - Claude Code hook capture (basic)
 - Layered capsule structure (Events/Evidence/Interpretation/Judgment)
 - Self-inspection (semantic drift, confidence-evidence alignment)
-- Court-admissible enrichment framework
+- Audit-ready enrichment framework
 
 ## [0.2.1] - 2026-03-01
 

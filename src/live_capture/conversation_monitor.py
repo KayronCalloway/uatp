@@ -222,7 +222,7 @@ class LiveConversationMonitor:
     ):
         """Create a RICH capsule for any conversation (UNIVERSAL CAPTURE).
 
-        Uses RichCaptureEnhancer for full court-admissible, insurance-ready data.
+        Uses RichCaptureEnhancer for full audit-ready, insurance-review-ready data.
         Significance is stored as economic weight, not used as filter.
         """
         try:

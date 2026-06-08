@@ -1289,7 +1289,7 @@ export function CapsuleDetail({ capsuleId, onBack }: CapsuleDetailProps) {
         </Card>
       )}
 
-      {/* Rich Data Components - Court-Admissible Format */}
+      {/* Rich Data Components - Audit-Ready Format */}
 
       {/* Data Sources - Provenance Tracking */}
       {capsule.payload?.reasoning_chain?.some((step: any) => step.data_sources?.length > 0) && (

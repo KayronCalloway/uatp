@@ -33,7 +33,7 @@ def tokenize(text: str) -> List[str]:
 
 
 def hash_token(token: str, dim: int = EMBEDDING_DIM) -> int:
-    h = hashlib.md5(token.encode()).hexdigest()
+    h = hashlib.sha256(token.encode()).hexdigest()
     return int(h, 16) % dim
 
 
@@ -57,7 +57,7 @@ def compute_tfidf_vector(text: str, idf_cache: Dict[str, float]) -> List[float]:
         idx = hash_token(token)
         sign = (
             1
-            if int(hashlib.md5((token + "_sign").encode()).hexdigest(), 16) % 2 == 0
+            if int(hashlib.sha256((token + "_sign").encode()).hexdigest(), 16) % 2 == 0
             else -1
         )
         vector[idx] += sign * tfidf

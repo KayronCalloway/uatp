@@ -1,6 +1,6 @@
 """
 JWT Authentication Manager
-Production-ready JWT token generation, validation, and management
+Production-oriented JWT token generation, validation, and management
 """
 
 import logging

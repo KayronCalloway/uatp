@@ -4,7 +4,7 @@ RFC 3161 Timestamp Backfill Script
 ==================================
 
 Upgrades existing capsules with local_clock timestamps to RFC 3161 trusted timestamps.
-This makes historical capsules court-admissible by adding independently verifiable timestamps.
+This makes historical capsules audit-ready by adding independently verifiable timestamps.
 
 The script:
 1. Finds all capsules with local_clock or local_clock_fallback timestamps

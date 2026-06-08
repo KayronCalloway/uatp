@@ -305,7 +305,7 @@ def compare_v1_vs_v2():
             "Insurance Ready",
             "EU AI Act Compliant",
         ],
-        "v1.0 (Court-Admissible)": [
+        "v1.0 (Audit-Ready)": [
             "[OK] API endpoints tracked",
             "[ERROR] No cryptographic proof",
             "[ERROR] Raw model output",
@@ -333,10 +333,10 @@ def compare_v1_vs_v2():
         ],
     }
 
-    print("\n| Feature | v1.0 (Court-Admissible) | v2.0 (Expert Panel Approved) |")
+    print("\n| Feature | v1.0 (Audit-Ready) | v2.0 (Expert Panel Approved) |")
     print("|---------|-------------------------|------------------------------|")
     for i, feature in enumerate(comparison["Feature"]):
-        v1 = comparison["v1.0 (Court-Admissible)"][i]
+        v1 = comparison["v1.0 (Audit-Ready)"][i]
         v2 = comparison["v2.0 (Expert Panel Approved)"][i]
         print(f"| {feature} | {v1} | {v2} |")
 
@@ -359,7 +359,7 @@ def compare_v1_vs_v2():
     print("   • Scalability: 5/10 → 8.5/10 (indexed + cached)")
 
     print("\n[OK] Market Readiness:")
-    print("   • v1.0: 'Impressive prototype, not production-ready'")
+    print("   • v1.0: 'Impressive prototype, not production-oriented'")
     print("   • v2.0: 'READY FOR 30-DAY PILOT PROGRAM'")
 
 

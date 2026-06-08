@@ -1,6 +1,6 @@
 """
 Database Migration System
-Production-ready database migrations for UATP
+Production-oriented database migrations for UATP
 """
 
 import logging

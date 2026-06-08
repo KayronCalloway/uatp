@@ -449,7 +449,7 @@ class BaseHook(ABC):
         - Confidence explanations with factor breakdown
         - Uncertainty quantification (epistemic + aleatoric + Bayesian)
         - Critical path analysis
-        - Court-admissible enrichment
+        - Audit-ready enrichment
         - Improvement recommendations
         - FULL CONTEXT PRESERVATION (system prompts, conversation history)
 

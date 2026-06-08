@@ -6,7 +6,10 @@ echo "=============================================="
 echo ""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export UATP_API_KEY="${UATP_API_KEY:-dev-key-001}"
+if [ -z "${UATP_API_KEY:-}" ]; then
+    echo "[ERROR] UATP_API_KEY must be set before starting capture services"
+    exit 1
+fi
 
 # Check if backend is running
 echo " Checking backend status..."
@@ -33,7 +36,8 @@ import time
 from datetime import datetime
 
 api_base = 'http://localhost:9090'
-headers = {'X-API-Key': os.environ.get('UATP_API_KEY', 'dev-key-001'), 'Content-Type': 'application/json'}
+api_key = os.environ['UATP_API_KEY']
+headers = {'X-API-Key': api_key, 'Content-Type': 'application/json'}
 
 platforms = [
     ('claude_code', 'Claude Code environment capture'),

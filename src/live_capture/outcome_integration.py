@@ -13,7 +13,9 @@ Capture -> Infer Outcome -> Update Capsule -> Historical Accuracy Uses Outcome
 
 import json
 import logging
+import os
 import sqlite3
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -65,7 +67,12 @@ class OutcomeTracker:
     AUTO_UPDATE_THRESHOLD = 0.75
 
     # State file for tracking pending capsules
-    STATE_FILE = Path("/tmp/uatp_pending_outcomes.json")
+    STATE_FILE = Path(
+        os.getenv(
+            "UATP_OUTCOME_STATE_FILE",
+            str(Path(tempfile.gettempdir()) / "uatp_pending_outcomes.json"),
+        )
+    )
 
     def __init__(self, db_path: str = None, use_embeddings: bool = False):
         """

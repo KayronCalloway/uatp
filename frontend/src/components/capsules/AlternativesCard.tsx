@@ -133,7 +133,7 @@ export function AlternativesCard({ alternatives }: AlternativesCardProps) {
           <div className="flex items-start gap-2">
             <TrendingUp className="w-4 h-4 text-indigo-600 mt-0.5" />
             <div className="text-sm text-indigo-800">
-              <span className="font-semibold">Court-Admissible Methodology:</span> This
+              <span className="font-semibold">Audit-Ready Methodology:</span> This
               decision shows {alternatives.length} alternatives evaluated with scoring,
               demonstrating a systematic decision-making process required for Daubert admissibility.
             </div>

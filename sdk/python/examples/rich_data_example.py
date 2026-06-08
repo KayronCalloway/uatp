@@ -1,5 +1,5 @@
 """
-UATP SDK - Rich Data Example (Court-Admissible Format)
+UATP SDK - Rich Data Example (Audit-Ready Format)
 
 This example demonstrates the EXPERT-LEVEL data richness required for:
 - Court admissibility (Daubert standard)
@@ -18,7 +18,7 @@ from uatp import (
 )
 
 print("\n" + "=" * 70)
-print("  UATP Rich Data Example - Court-Admissible AI Evidence")
+print("  UATP Rich Data Example - Audit-Ready AI Evidence")
 print("=" * 70)
 
 # Initialize client
@@ -28,7 +28,7 @@ client = UATP()
 # Example 1: Loan Approval (Financial Services)
 # ============================================================================
 
-print("\n Example 1: Loan Approval (Court-Admissible Format)")
+print("\n Example 1: Loan Approval (Audit-Ready Format)")
 print("-" * 70)
 
 result = client.certify_rich(
@@ -204,10 +204,10 @@ result = client.certify_rich(
     },
 )
 
-print("[OK] Loan decision certified (COURT-ADMISSIBLE)")
+print("[OK] Loan decision certified (AUDIT-READY)")
 print(f"   Capsule ID: {result.capsule_id}")
 print(f"   Proof URL: {result.proof_url}")
-print("   Data Richness: Court-admissible, Insurance-ready")
+print("   Data Richness: Audit-ready, Insurance-review-ready")
 
 
 # ============================================================================
@@ -308,7 +308,7 @@ print("\n" + "=" * 70)
 print(" Rich Data Implementation Complete!")
 print("=" * 70)
 
-print("\n What Makes This Data 'Court-Admissible':")
+print("\n What Makes This Data 'Audit-Ready':")
 print("   [OK] Data provenance (where every fact came from)")
 print("   [OK] Decision methodology (how AI reached conclusion)")
 print("   [OK] Alternatives evaluated (not just final answer)")

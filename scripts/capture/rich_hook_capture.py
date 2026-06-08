@@ -8,6 +8,7 @@ import asyncio
 import json
 import os
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -20,6 +21,9 @@ load_dotenv()
 sys.path.insert(0, os.path.dirname(__file__))
 
 from src.live_capture.claude_code_capture import ClaudeCodeCapture
+
+SESSION_STATE_DIR = Path(os.getenv("UATP_SESSION_STATE_DIR", tempfile.gettempdir()))
+SESSION_STATE_FILE = SESSION_STATE_DIR / "claude_code_active_session.json"
 
 # Optional outcome integration (archived)
 try:
@@ -45,7 +49,7 @@ async def capture_rich_session():
             pass
 
     # Get or create persistent session
-    session_file = Path("/tmp/claude_code_active_session.json")
+    session_file = SESSION_STATE_FILE
     session_id = None
 
     try:
@@ -417,7 +421,7 @@ def _inject_enrichments_into_latest_capsule(session_data: dict):
 async def end_session_and_create_capsule():
     """Manually end session and create final capsule."""
 
-    session_file = Path("/tmp/claude_code_active_session.json")
+    session_file = SESSION_STATE_FILE
 
     if not session_file.exists():
         print("[WARN]  No active session found")

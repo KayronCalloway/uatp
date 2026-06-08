@@ -1,5 +1,5 @@
 """
-Production-Ready Health Check System
+Production-Oriented Health Check System
 
 Provides comprehensive health checks for all system components including
 databases, external services, circuit breakers, and application health.

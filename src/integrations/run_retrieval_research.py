@@ -13,6 +13,7 @@ Usage:
 """
 
 import argparse
+import ast
 import json
 import re
 import shutil
@@ -156,7 +157,7 @@ def parse_current_config() -> dict:
     match = re.search(r"QUERY_EXPANSIONS.*?=\s*(\{[^}]+\})", content, re.DOTALL)
     if match:
         try:
-            config["query_expansions"] = eval(match.group(1))
+            config["query_expansions"] = ast.literal_eval(match.group(1))
         except Exception:
             config["query_expansions"] = {}
 
@@ -164,7 +165,7 @@ def parse_current_config() -> dict:
     match = re.search(r"FAILURE_PATTERNS.*?=\s*(\[[^\]]+\])", content, re.DOTALL)
     if match:
         try:
-            config["failure_patterns"] = eval(match.group(1))
+            config["failure_patterns"] = ast.literal_eval(match.group(1))
         except Exception:
             config["failure_patterns"] = []
 
@@ -172,7 +173,7 @@ def parse_current_config() -> dict:
     match = re.search(r"BOOST_PATTERNS.*?=\s*(\[[^\]]+\])", content, re.DOTALL)
     if match:
         try:
-            config["boost_patterns"] = eval(match.group(1))
+            config["boost_patterns"] = ast.literal_eval(match.group(1))
         except Exception:
             config["boost_patterns"] = []
 
@@ -180,7 +181,7 @@ def parse_current_config() -> dict:
     match = re.search(r"DEMOTION_PATTERNS.*?=\s*(\[[^\]]+\])", content, re.DOTALL)
     if match:
         try:
-            config["demotion_patterns"] = eval(match.group(1))
+            config["demotion_patterns"] = ast.literal_eval(match.group(1))
         except Exception:
             config["demotion_patterns"] = []
 

@@ -6,6 +6,8 @@
 **Owner:** UATP Product Team
 **Date:** December 2025
 
+> Historical note: this document describes a future marketplace concept, not the current public product. The current open-core repo is focused on signed agent receipts, offline verification, and tamper-evident proof. Marketplace, licensing, compensation, and hosted product layers require separate policy, product, and commercial decisions.
+
 ---
 
 ## Executive Summary

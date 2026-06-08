@@ -5,6 +5,8 @@
 **Date:** December 2025
 **Version:** 1.0
 
+> Historical note: this document preserves market research and strategic hypotheses from an earlier planning cycle. Treat market sizes, legal interpretations, adoption metrics, revenue targets, and competitive claims as historical notes unless restated in `../README.md`, `../STATUS.md`, `../ROADMAP.md`, or `vision.md`.
+
 ---
 
 ## Executive Summary

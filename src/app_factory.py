@@ -1018,8 +1018,8 @@ def create_app() -> FastAPI:
             "email": "Kayron@houseofcalloway.com",
         },
         license_info={
-            "name": "MIT License",
-            "url": "https://opensource.org/licenses/MIT",
+            "name": "Apache License 2.0",
+            "url": "https://opensource.org/licenses/Apache-2.0",
         },
     )
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Court-Admissible Data Enrichment for Live Capture
+Audit-Ready Data Enrichment for Live Capture
 ===================================================
 
-Adds court-admissible rich data format to captured capsules:
+Adds audit-ready rich data format to captured capsules:
 - Data provenance (DataSource objects with API endpoints, timestamps, verification)
 - Risk assessment (quantitative probabilities, financial impacts, safeguards)
 - Alternatives considered (scored options with "why_not_chosen")
@@ -302,7 +302,7 @@ except Exception as e:
 
 
 class CourtAdmissibleEnricher:
-    """Enriches captured capsules with court-admissible data."""
+    """Enriches captured capsules with audit-ready data."""
 
     @staticmethod
     def get_historical_accuracy(
@@ -998,7 +998,7 @@ class CourtAdmissibleEnricher:
         cls, capsule: Dict[str, Any], session: Any, messages: List[Any]
     ) -> Dict[str, Any]:
         """
-        Enrich an existing capsule with court-admissible data.
+        Enrich an existing capsule with audit-ready data.
 
         Args:
             capsule: Existing capsule dictionary
@@ -1006,7 +1006,7 @@ class CourtAdmissibleEnricher:
             messages: List of conversation messages
 
         Returns:
-            Enriched capsule with court-admissible data
+            Enriched capsule with audit-ready data
         """
         # Get existing confidence
         overall_confidence = capsule.get("confidence", 0.8)
@@ -1120,7 +1120,7 @@ class CourtAdmissibleEnricher:
             messages: List of conversation messages
 
         Returns:
-            Enriched capsule with court-admissible data and LLM-powered summary
+            Enriched capsule with audit-ready data and LLM-powered summary
         """
         # Get existing confidence
         overall_confidence = capsule.get("confidence", 0.8)
@@ -1221,10 +1221,10 @@ class CourtAdmissibleEnricher:
 
 # Example usage and testing
 if __name__ == "__main__":
-    print("[OK] Court-Admissible Enrichment Ready")
+    print("[OK] Audit-Ready Enrichment Ready")
     print("\nCapabilities:")
     print("   Data provenance tracking (Daubert compliance)")
-    print("   Quantitative risk assessment (insurance-ready)")
+    print("   Quantitative risk assessment (insurance-review-ready)")
     print("   Decision methodology (alternatives with scores)")
     print("   Plain language summaries (EU AI Act Article 13)")
     print("   Ground truth tracking (outcome recording)")

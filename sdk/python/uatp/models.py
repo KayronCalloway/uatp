@@ -239,7 +239,7 @@ def create_rich_reasoning_step(
     """
     Helper to create rich reasoning step (recommended).
 
-    This is the court-admissible, insurance-ready format.
+    This is the audit-ready, insurance-review-ready format.
     """
     return ReasoningStep(
         step=step,

@@ -306,7 +306,7 @@ export interface VerifySealResponse {
 }
 
 // Capsule types - will need to be expanded based on actual capsule schemas
-// Rich Data Types (Court-Admissible Format)
+// Rich Data Types (Audit-Ready Format)
 export interface DataSource {
   source: string;
   value: unknown;

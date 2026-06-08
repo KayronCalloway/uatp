@@ -1,7 +1,7 @@
 """
 JWT Authentication System with Role-Based Access Control (RBAC)
 
-Provides production-ready authentication and authorization using JWT tokens
+Provides production-oriented authentication and authorization using JWT tokens
 with comprehensive RBAC support, token refresh mechanisms, and security features.
 
 Key Features:

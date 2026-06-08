@@ -64,7 +64,7 @@ ASGI application factory.
 from .app_factory import create_app
 
 def create_asgi_app():
-    """Create production-ready ASGI application"""
+    """Create the configured ASGI application."""
     app = create_app()
     return app
 

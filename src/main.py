@@ -1,6 +1,6 @@
 """
 UATP Canonical ASGI Application Entry Point
-Production-ready FastAPI application with unified architecture
+Production-oriented FastAPI application with unified architecture
 """
 
 import structlog
@@ -12,7 +12,7 @@ logger = structlog.get_logger(__name__)
 
 
 def create_asgi_app():
-    """Create production-ready ASGI application"""
+    """Create production-oriented ASGI application"""
     logger.info(" Initializing UATP ASGI application")
 
     # Use the canonical FastAPI factory

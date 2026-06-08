@@ -49,6 +49,10 @@ docs(scope): description
 
 **TypeScript:** Prettier + ESLint. No `any` without justification.
 
+## Contribution License
+
+By contributing, you agree that your contribution is licensed under Apache-2.0.
+
 ## Security
 
 **Do not open public issues for security vulnerabilities.**

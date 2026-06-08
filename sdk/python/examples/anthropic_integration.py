@@ -118,9 +118,9 @@ if os.getenv("ANTHROPIC_API_KEY"):
 
     print(f"\n Proof available at: {proof}")
     print("   This proof provides:")
-    print("   - Court-admissible evidence of AI reasoning")
+    print("   - Audit-ready evidence of AI reasoning")
     print("   - Audit trail for medical compliance")
-    print("   - Insurance readiness for liability coverage")
+    print("   - Evidence useful for insurance review")
 else:
     print("\n[WARN]  ANTHROPIC_API_KEY not set. Skipping live example.")
 
@@ -138,9 +138,9 @@ if os.getenv("ANTHROPIC_API_KEY"):
 
     print(f"\n Proof available at: {proof}")
     print("   This proof is:")
-    print("   - Daubert-compliant (admissible in court)")
+    print("   - Designed to support legal review when paired with process and counsel")
     print("   - EU AI Act ready (conformity assessment)")
-    print("   - Insurance-backed (actuarial data available)")
+    print("   - Insurance-review-ready when backed by accuracy data")
 else:
     print("\n[WARN]  ANTHROPIC_API_KEY not set. Skipping live example.")
 
@@ -151,6 +151,6 @@ print("=" * 60)
 print("\nEvery Claude decision is now:")
 print("  [OK] Cryptographically signed (Ed25519)")
 print("  [OK] Immutably stored")
-print("  [OK] Court-admissible")
+print("  [OK] Audit-ready")
 print("  [OK] Auditable")
 print("\nShip auditable AI with confidence! ")

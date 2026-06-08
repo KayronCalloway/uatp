@@ -3,7 +3,9 @@
 
 **Author:** Kay (UATP Creator)
 **Date:** 2025-12-14
-**Status:** Canonical Reference
+**Status:** Historical planning reference
+
+> Historical note: this document preserves an earlier long-form framing. It is not the current source of truth for product status, release readiness, legal claims, market timing, or revenue projections. For current public positioning, use `../README.md`, `../STATUS.md`, `../ROADMAP.md`, and `vision.md`.
 
 ---
 

@@ -83,7 +83,7 @@ GitHub latest release: **v1.1.0**
 | Backend Engine | 1.1.0 |
 | Capsule Schema | 7.2 legacy capsules; 7.4 agent execution traces |
 
-Last Updated: 2026-05-21
+Last Updated: 2026-06-08
 
 ## What These Labels Mean
 

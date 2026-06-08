@@ -21,7 +21,7 @@ export function DataSourcesCard({ dataSources }: DataSourcesCardProps) {
           <Database className="w-5 h-5 text-blue-600" />
           Data Sources ({dataSources.length})
           <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-auto">
-            Court-Admissible Provenance
+            Audit-Ready Provenance
           </span>
         </CardTitle>
       </CardHeader>

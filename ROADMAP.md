@@ -37,7 +37,7 @@
 - **TSA trust-anchor validation** — Agent receipt and standalone capsule verifiers validate RFC 3161 tokens against explicit TSA trust anchors via OpenSSL; missing anchors/tooling remain fail-closed
 - **MCP certifying gateway hardening** — Use MCP as the first external boundary after verifier UX and trust-policy demo polish are complete
 - **External security audit** — Cryptographic review by third party
-- **Frontend polish** — Production-ready dashboard
+- **Frontend polish** — Dashboard usability, claim hygiene, and beta hardening
 - **TypeScript SDK stabilization** — Browser and Node.js support
 - **Registry release sync** — Publish source 1.1.0 to PyPI/npm or label older packages as historical
 - **Hosted API** — Optional managed service
@@ -52,4 +52,4 @@
 
 ---
 
-*Last updated: May 2026*
+*Last updated: 2026-06-08*

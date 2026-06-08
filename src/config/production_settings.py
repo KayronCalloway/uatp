@@ -1,7 +1,7 @@
 """
 Enhanced Configuration Management for UATP Capsule Engine
 
-Provides production-ready configuration management with validation, secrets handling,
+Provides production-oriented configuration management with validation, secrets handling,
 environment-specific settings, and integration with dependency injection.
 
 Features:

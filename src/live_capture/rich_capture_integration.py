@@ -593,7 +593,7 @@ class RichCaptureEnhancer:
                 "risk_score": round(overall_uncertainty.risk_score, 3),
             }
 
-        # NEW: Enrich with court-admissible data (Daubert, Insurance, EU AI Act)
+        # NEW: Enrich with audit-ready data (Daubert, Insurance, EU AI Act)
         capsule = CourtAdmissibleEnricher.enrich_capsule_with_court_admissible_data(
             capsule=capsule, session=session, messages=session.messages
         )
