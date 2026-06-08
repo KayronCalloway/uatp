@@ -3,7 +3,7 @@
 Cryptographic audit trails for AI decisions.
 
 [![npm](https://img.shields.io/npm/v/uatp)](https://www.npmjs.com/package/uatp)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Installation
 
@@ -233,4 +233,4 @@ async function makeDecision(userQuery: string) {
 
 ## License
 
-MIT
+Apache-2.0. Earlier public versions were released under MIT; prior MIT grants remain valid for those earlier releases.

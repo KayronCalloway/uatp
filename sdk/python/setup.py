@@ -13,6 +13,7 @@ setup(
     author="Kayron Calloway",
     author_email="Kayron@houseofcalloway.com",
     description="Cryptographic proof that AI made a decision, with this reasoning, at this time",
+    license="Apache-2.0",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/KayronCalloway/uatp",
@@ -20,7 +21,7 @@ setup(
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",

@@ -237,4 +237,4 @@ See [STATUS.md](../../STATUS.md) for what's shipped vs beta vs experimental.
 
 ## License
 
-MIT
+Apache-2.0. Earlier public versions were released under MIT; prior MIT grants remain valid for those earlier releases.

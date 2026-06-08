@@ -31,7 +31,7 @@ Build a browser extension that automatically tracks AI interactions across web p
 
 **Deliverables:**
 - Published browser extension
-- Source code (MIT license)
+- Source code (Apache-2.0 license)
 - Documentation and tutorial
 - User guide video
 
@@ -527,7 +527,7 @@ Selected projects receive:
 - Video walkthroughs for complex features
 
 **Open Source Expectations:**
-- MIT or Apache 2.0 license preferred
+- Apache-2.0 license preferred
 - Clean git history with meaningful commits
 - Issue templates and contribution guidelines
 - Community-friendly README

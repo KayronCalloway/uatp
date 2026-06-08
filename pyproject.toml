@@ -4,13 +4,13 @@ version = "1.1.0"
 description = "UATP Capsule Engine: FastAPI backend for cryptographically sealed AI decision capsules. For the client SDK, see sdk/python/ or pip install uatp."
 authors = [{name = "Kayron Calloway", email = "kayron@houseofcalloway.com"}]
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 requires-python = ">=3.10"
 keywords = ["uatp", "agent", "trust", "protocol", "capsule", "ai", "cryptography"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

@@ -6,7 +6,7 @@
 [![Security](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml)
 [![PyPI](https://img.shields.io/pypi/v/uatp)](https://pypi.org/project/uatp/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ---
 
@@ -170,4 +170,6 @@ See [STATUS.md](STATUS.md) for component status and [ROADMAP.md](ROADMAP.md) for
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Apache License 2.0. See [LICENSE](LICENSE).
+
+Earlier public versions of UATP were released under the MIT License. Beginning with the next release after 1.1.0, UATP Core is licensed under Apache-2.0; prior MIT grants remain valid for those earlier releases.
