@@ -203,3 +203,5 @@ src/integrations/retrieval_backups/
 src/integrations/retrieval_tests.json
 scripts/analysis/*.json
 scripts/analysis/*.jsonl
+.hermes/
+docs/reports/kay_agent_capsule_learning_*.md
