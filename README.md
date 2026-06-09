@@ -1,8 +1,10 @@
 # UATP Capsule Engine
 
-**Signed receipts for AI agent actions, verifiable outside the agent runtime.**
+**If an agent acted, there should be a receipt.**
 
-UATP turns tool calls, decisions, artifacts, corrections, and session traces into tamper-evident records. The near-term product is narrow: prove what an agent did, under whose key, with which artifacts, and whether the record was changed afterward. The long-term thesis is bigger: systems that shape the world should leave verifiable memory behind.
+UATP is a public core for signed AI-agent receipts: tool calls, decisions, artifacts, corrections, and session traces that can be checked outside the agent runtime. The claim is intentionally narrow. Prove what happened, under which key, with which artifacts, and whether the record changed afterward.
+
+The bigger thesis is still the reason this exists: systems that shape the world should leave verifiable memory behind. But the repo earns that thesis one receipt at a time.
 
 [![CI](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/ci.yml)
 [![Security](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml/badge.svg)](https://github.com/KayronCalloway/uatp/actions/workflows/security.yml)
@@ -14,11 +16,11 @@ UATP turns tool calls, decisions, artifacts, corrections, and session traces int
 
 ## Why this exists
 
-AI systems are becoming acting systems. They call tools, touch files, make recommendations, trigger workflows, and increasingly operate across personal or enterprise context. A log inside the agent runtime is not enough. If the runtime, database, or dashboard has to be trusted, the proof is weak.
+AI agents do not just answer questions anymore. They call tools, touch files, route work, make recommendations, and trigger workflows across personal and enterprise context. A dashboard log is not enough. If the proof only works while trusting the same runtime that produced it, it is not strong proof.
 
-UATP starts with a smaller claim: an agent action should leave a signed receipt that can be checked elsewhere.
+UATP starts smaller: an agent action should leave a signed receipt that survives outside the system that made it.
 
-That receipt can later become more than audit evidence. It can become training signal, attribution evidence, consent metadata, and the basis for compensated reuse. The public code here focuses on the proof layer first.
+Once that exists, the receipt can carry more weight: audit evidence, training signal, attribution evidence, consent metadata, and eventually compensated reuse. The public repo stays focused on the proof layer first.
 
 Full thesis: [docs/vision.md](docs/vision.md)
 
@@ -26,15 +28,15 @@ Full thesis: [docs/vision.md](docs/vision.md)
 
 ## The thesis
 
-UATP is infrastructure, not an end application. It does not try to be the model, the dashboard, the insurer, the marketplace, or the regulator. It provides the memory layer those systems need if their outputs are going to be trusted, attributed, licensed, or compensated.
+UATP is infrastructure. It is not trying to be the model, the dashboard, the insurer, the marketplace, or the regulator. It is the memory layer those systems need if their outputs are going to be trusted, attributed, licensed, or compensated.
 
-The horizons are one tree at different depths:
+The horizons are the same tree at different depths:
 
 - **H1 — Trust:** prove what happened.
 - **H2 — Attribution:** prove what contributed.
 - **H3 — Post-labor economics:** route value back to the people and processes that improved the system.
 
-The public repo builds H1 first because every later claim depends on it. Without independently verifiable receipts, attribution and compensation are just promises.
+This repo builds H1 first. Without independently verifiable receipts, attribution and compensation are just promises with better branding.
 
 ---
 
@@ -50,7 +52,7 @@ UATP can:
 - show deterministic tamper failures for event, chain, signature, and artifact edits
 - export MCP gateway activity as signed receipt bundles
 
-The current wedge is **signed receipts for AI agent actions**. Broader attribution, marketplace, and compensation features are future layers, not current product claims.
+The wedge is signed receipts for AI agent actions. Attribution, licensing, and compensation are the downstream arc, not the current product claim.
 
 ---
 
@@ -169,13 +171,13 @@ It checks five cases:
 - signature edit fails
 - artifact edit fails
 
-This is the public proof path: do not trust the agent runtime; verify the receipt bundle outside it.
+This is the public proof path: do not trust the agent runtime. Check the receipt somewhere else.
 
 ---
 
 ## MCP certifying gateway
 
-The MCP gateway is the flagship external boundary. It intercepts MCP tool calls, applies policy checks, forwards or blocks the call, and records the boundary as signed evidence.
+MCP is the clean external boundary. The gateway intercepts tool calls, applies policy, forwards or blocks the call, and records that boundary as signed evidence.
 
 Current export path:
 
@@ -203,7 +205,7 @@ uatp verify-receipts /tmp/mcp_receipts.json \
   --no-color
 ```
 
-Status: alpha. The gateway proves the boundary pattern, but still needs concurrency, multi-server handling, remote anchoring, and demo hardening before it should be presented as production infrastructure.
+Status: alpha. The gateway proves the boundary pattern. It still needs concurrency, multi-server handling, remote anchoring, and demo hardening before anyone should present it as production infrastructure.
 
 ---
 
@@ -222,7 +224,7 @@ See [STATUS.md](STATUS.md) for exact component labels. “Stable local/dev” me
 
 ## Trust boundaries
 
-UATP is designed around independent verification:
+UATP is built around one rule: verification should not require trust in the thing being verified.
 
 - private keys stay local to the signer
 - content can be represented by hashes and artifact refs
@@ -239,9 +241,9 @@ See [TRUST_MODEL.md](TRUST_MODEL.md) for the broader model.
 
 UATP is not externally audited.
 
-The public verifier can prove bundle integrity, signatures, chain linkage, artifact integrity, and optional trusted-signer/timestamp checks. It does not by itself prove legal admissibility, insurance eligibility, full attribution, or marketplace compensation.
+The public verifier can prove bundle integrity, signatures, chain linkage, artifact integrity, and optional trusted-signer/timestamp checks. It does not, by itself, prove legal admissibility, insurance eligibility, full attribution, or marketplace compensation.
 
-Those are downstream uses that require policy, identity, legal review, adoption, and product layers beyond the current core.
+Those are downstream uses. They need policy, identity, legal review, adoption, and product layers beyond this public core.
 
 ---
 
@@ -325,13 +327,13 @@ See [STATUS.md](STATUS.md) for the source of truth.
 
 Near-term priorities:
 
-1. keep the verifier path small and trustworthy
-2. harden trusted signer and timestamp policy UX
+1. keep the verifier path small and hard to fake
+2. make trusted signer and timestamp policy easier to use
 3. make MCP receipt export the clearest external-boundary demo
-4. map agent receipts cleanly to OpenTelemetry-style traces where useful
-5. add user-owned memory and consent features only after the receipt layer remains independently verifiable
+4. map agent receipts to OpenTelemetry-style traces where that helps adoption
+5. add user-owned memory and consent features only after the receipt layer stays independently verifiable
 
-The long-term aim remains post-labor economics: if human judgment, corrections, and workflows improve AI systems, there should be infrastructure to prove, control, license, and compensate that contribution. The current repo builds the receipt layer first.
+The long-term aim remains post-labor economics. If human judgment, corrections, and workflows improve AI systems, there should be infrastructure to prove that contribution, control it, license it, and route value back. The current repo builds the receipt layer first.
 
 ---
 

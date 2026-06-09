@@ -1,14 +1,14 @@
-# UATP Documentation — Start Here
+# UATP docs: start here
 
-This page is the public map. It points to current, claim-clean documents first and labels older planning docs as historical.
+This is the public map. Current docs first. Older planning notes are labeled as history, not product claims.
 
 ## Read first
 
-1. [README](../README.md) — current product wedge and verifier path
-2. [STATUS](../STATUS.md) — source of truth for what is stable, beta, alpha, planned, or experimental
-3. [Trust Model](../TRUST_MODEL.md) — security assumptions and verification boundaries
-4. [Roadmap](../ROADMAP.md) — near-term work and known registry drift
-5. [Vision](vision.md) — full thesis: verifiable memory, attribution, and post-labor economics
+1. [README](../README.md) — the public wedge: signed receipts for AI-agent actions
+2. [STATUS](../STATUS.md) — what is stable, beta, alpha, planned, or experimental
+3. [Trust Model](../TRUST_MODEL.md) — what the verifier proves and what it does not
+4. [Roadmap](../ROADMAP.md) — near-term work and registry drift
+5. [Vision](vision.md) — the full thesis: verifiable memory, attribution, and post-labor economics
 
 ## If you are verifying the core claim
 
@@ -28,7 +28,7 @@ Then run the tamper fixture demo:
 ./.venv/bin/python scripts/demo/verify_agent_receipt_tamper_demo.py
 ```
 
-A valid bundle proves cryptographic self-consistency. Trusted signer identity, trusted time, legal admissibility, insurance use, and compensation require additional policy and review layers.
+A valid bundle proves cryptographic self-consistency. It does not magically prove trusted identity, trusted time, legal admissibility, insurance use, or compensation. Those need policy and review layers on top.
 
 ## If you are evaluating adoption
 
@@ -39,7 +39,7 @@ Use these boundaries:
 - Dashboard/backend: beta/local-dev, not production infrastructure
 - Python and TypeScript registries: behind the source tree; check [STATUS](../STATUS.md)
 
-Do not rely on older market-sizing or launch-planning docs for current product status.
+Do not use older market-sizing or launch-planning docs as current product status.
 
 ## If you are reading the vision
 
@@ -49,11 +49,11 @@ The vision is still the reason this exists:
 - H2: prove what contributed
 - H3: route value back to contributors
 
-The public repo builds H1 first because H2 and H3 need independent proof underneath them.
+The public repo builds H1 first because H2 and H3 need independent proof underneath them. Otherwise they are just promises.
 
 ## Historical planning docs
 
-The files below preserve earlier thinking, but they are not the current source of truth:
+These files preserve earlier thinking. They are not the current source of truth:
 
 - [UATP_COMPLETE_VISION.md](UATP_COMPLETE_VISION.md)
 - [UATP_2025_MARKET_ANALYSIS.md](UATP_2025_MARKET_ANALYSIS.md)
