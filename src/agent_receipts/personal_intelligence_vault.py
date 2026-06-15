@@ -206,7 +206,7 @@ def _event_fields(
         "parent_event_hash": None,
         "actor": actor,
         "payload": payload,
-        "redaction_summary": {"raw_memory_included": False, "secrets_removed": 0},
+        "redaction_summary": {"memory_content_included": False, "secrets_removed": 0},
         "trust_level": trust_level,
     }
 
