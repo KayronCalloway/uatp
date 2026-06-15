@@ -11,10 +11,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from src.agent_receipts.personal_intelligence_vault import (
     LocalPersonalMemoryVault,
@@ -26,7 +31,6 @@ from src.agent_receipts.signing import Ed25519ReceiptSigner
 from src.agent_receipts.sink import build_signed_receipt_bundle
 from src.agent_receipts.verifier import verify_agent_receipt_bundle
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "docs" / "examples" / "personal-intelligence-vault"
 
 
