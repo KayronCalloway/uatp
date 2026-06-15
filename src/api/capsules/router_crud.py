@@ -43,6 +43,16 @@ from ._shared import (
 router = APIRouter()
 
 
+def _exclude_test_fixtures(query):
+    """Hide local/test fixture capsules from default browse responses."""
+    return (
+        query.where(CapsuleModel.capsule_type != "test")
+        .where(~CapsuleModel.capsule_id.like("test-%"))
+        .where(~CapsuleModel.capsule_id.like("test_%"))
+        .where(~CapsuleModel.capsule_id.like("minimal_test_%"))
+    )
+
+
 @router.get("/")
 async def list_capsules(
     request: Request,
@@ -97,6 +107,11 @@ async def list_capsules(
         if not demo_mode:
             query = query.where(~CapsuleModel.capsule_id.like("demo-%"))
 
+        # Apply test/demo fixture filtering. The SQLite dev database is the normal
+        # local dashboard path, so this cannot rely on PostgreSQL JSONB only.
+        if not include_test:
+            query = _exclude_test_fixtures(query)
+
         # Apply environment filtering (skip JSONB on SQLite)
         # If environment is explicitly specified, use that. Otherwise apply include_test logic.
         if environment and not IS_SQLITE:
@@ -136,6 +151,9 @@ async def list_capsules(
         # Apply demo_mode filter to count query
         if not demo_mode:
             count_query = count_query.where(~CapsuleModel.capsule_id.like("demo-%"))
+
+        if not include_test:
+            count_query = _exclude_test_fixtures(count_query)
 
         # Apply same environment filters to count query (skip JSONB on SQLite)
         if environment and not IS_SQLITE:

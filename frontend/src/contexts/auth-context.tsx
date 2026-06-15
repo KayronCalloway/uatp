@@ -83,14 +83,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           sessionStorage.removeItem('uatp-auth-token');
         }
 
-        // DEV ONLY: Check for stored API key
-        // In production, API keys should not be stored in browser
+        // DEV ONLY: Restore local device/API-key access.
+        // This keeps the local dashboard device-centered instead of forcing
+        // the email/password screen every time cookies expire.
         if (isDevelopment) {
-          const storedApiKey = sessionStorage.getItem('uatp-api-key');
-          if (storedApiKey) {
-            debugLog('Found stored API key (dev mode) - restoring');
-            apiClient.setApiKey(storedApiKey);
-            setApiKey(storedApiKey);
+          const localDeviceApiKey =
+            sessionStorage.getItem('uatp-api-key') ||
+            process.env.NEXT_PUBLIC_UATP_API_KEY ||
+            null;
+
+          if (localDeviceApiKey) {
+            debugLog('Found local device API key (dev mode) - restoring');
+            apiClient.setApiKey(localDeviceApiKey);
+            setApiKey(localDeviceApiKey);
           }
         }
 

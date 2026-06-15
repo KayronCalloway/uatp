@@ -86,6 +86,11 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
   });
 
   const capsules: AnyCapsule[] = (data && 'capsules' in data ? data.capsules : Array.isArray(data) ? data : []) as AnyCapsule[] || [];
+  const serverTotal = data && !Array.isArray(data) && 'total' in data ? data.total : capsules.length;
+  const totalCapsules = typeof serverTotal === 'number' ? serverTotal : capsules.length;
+  const totalPages = data && !Array.isArray(data) && 'total_pages' in data && typeof data.total_pages === 'number'
+    ? data.total_pages
+    : Math.max(1, Math.ceil(totalCapsules / pageSize));
 
   // Comprehensive filtering using CapsuleSearchParams
   const filteredCapsules = useMemo(() => {
@@ -363,7 +368,7 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
         <CardContent className="p-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="text-sm text-gray-600">
-              Showing <strong>{filteredCapsules.length}</strong> of <strong>{capsules.length}</strong> capsules
+              Showing <strong>{filteredCapsules.length}</strong> on this page of <strong>{totalCapsules}</strong> capsules
               {filteredCapsules.length !== capsules.length && (
                 <span className="text-blue-600 ml-1">(filtered)</span>
               )}
@@ -611,7 +616,7 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-500">
-              Showing {filteredCapsules.length} of {capsules.length} capsules
+              Showing {filteredCapsules.length} on this page of {totalCapsules} capsules
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -623,13 +628,13 @@ export function CapsuleList({ onCapsuleSelect, onBack }: CapsuleListProps) {
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="text-sm">
-                Page {currentPage}
+                Page {currentPage} of {totalPages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(prev => prev + 1)}
-                disabled={filteredCapsules.length < pageSize}
+                disabled={currentPage >= totalPages}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

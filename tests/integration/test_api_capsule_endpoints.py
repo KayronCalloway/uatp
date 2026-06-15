@@ -188,6 +188,18 @@ class TestCapsuleList:
         for capsule in data["capsules"]:
             assert capsule["type"] == "reasoning_trace"
 
+    @pytest.mark.asyncio
+    async def test_list_excludes_test_capsules_by_default(self, client, auth_headers):
+        """Default capsule browsing should hide test fixture capsules."""
+        response = await client.get(
+            "/capsules?type=test&include_test=false", headers=auth_headers
+        )
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["total"] == 0
+        assert data["capsules"] == []
+
 
 class TestCapsuleCreate:
     """Test POST /capsules endpoint."""

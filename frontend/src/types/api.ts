@@ -6,10 +6,18 @@ export interface ErrorResponse {
 
 export interface CapsuleListResponse {
   capsules: AnyCapsule[];
+  total?: number;
+  page?: number;
+  per_page?: number;
+  total_pages?: number;
 }
 
 export interface CompressedCapsuleListResponse {
   capsules: Record<string, any>[];
+  total?: number;
+  page?: number;
+  per_page?: number;
+  total_pages?: number;
 }
 
 export interface ListCapsulesQuery {
