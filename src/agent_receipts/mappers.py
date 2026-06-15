@@ -12,19 +12,28 @@ from src.agent_receipts.events import (
     AgentReceiptEvent,
     DecisionPointEvent,
     EnvironmentSnapshotEvent,
+    LLMCallCompleted,
+    MemoryWriteEvent,
     RefusalEvent,
     SessionEnded,
     SessionStarted,
     ToolCallCompleted,
+    UserFeedbackEvent,
 )
 from src.agent_receipts.hashing import canonical_json, sha256_digest
+from src.agent_receipts.personal_intelligence_vault import ContextGrantEvent
 from src.agent_receipts.redaction import redact_error_message, redact_value
 from src.capsule_schema import (
     ActionTracePayload,
     AgentSessionPayload,
+    AuditPayload,
     CapsuleType,
+    ConsentPayload,
     DecisionPointPayload,
     EnvironmentSnapshotPayload,
+    FeedbackAssimilationPayload,
+    ReasoningStep,
+    ReasoningTracePayload,
     RefusalPayload,
     ToolCallPayload,
 )
@@ -182,6 +191,176 @@ def _verification_classification(command: str | None) -> str | None:
     if "git diff --check" in command:
         return "git_diff_check"
     return None
+
+
+def map_context_grant_event_to_consent_capsule(
+    event: ContextGrantEvent,
+) -> dict[str, Any]:
+    """Convert a scoped context grant into a CONSENT capsule draft."""
+    payload_data = event.payload
+    consent = ConsentPayload(
+        consent_scope=payload_data.get("consent_scope", []),
+        grantor=payload_data["grantor"],
+        granted_to=payload_data["granted_to"],
+        expiry_timestamp=payload_data.get("retention_expires_at"),
+        revocable=payload_data.get("revocable", True),
+    )
+    return {
+        "capsule_type": CapsuleType.CONSENT.value,
+        "payload_key": "consent",
+        "consent": consent.model_dump(mode="json"),
+        "receipt_metadata": {
+            "adapter_name": event.adapter_name,
+            "agent_name": event.agent_name,
+            "event_id": event.event_id,
+            "event_hash": event_hash(event),
+            "parent_event_hash": event.parent_event_hash,
+            "request_id": payload_data.get("request_id"),
+            "purpose": payload_data.get("purpose"),
+            "allowed_app": payload_data.get("allowed_app"),
+            "allowed_model": payload_data.get("allowed_model"),
+            "locality_requirement": payload_data.get("locality_requirement"),
+            "training_allowed": payload_data.get("training_allowed"),
+            "licensing_terms": payload_data.get("licensing_terms"),
+            "granted_refs": payload_data.get("granted_refs", []),
+            "policy_hash": sha256_digest(payload_data.get("policy", {})),
+            "redaction_summary": event.redaction_summary,
+            "trust_level": event.trust_level,
+        },
+    }
+
+
+def map_llm_call_completed_event_to_reasoning_trace_capsule(
+    event: LLMCallCompleted,
+) -> dict[str, Any]:
+    """Convert a completed model action into a compact REASONING_TRACE draft."""
+    payload_data = event.payload
+    action_summary = payload_data.get("action_summary")
+    if not action_summary:
+        raise ValueError("llm completed event payload must include action_summary")
+    step = ReasoningStep(
+        step_id=1,
+        step_type="llm_call.completed",
+        content=action_summary,
+        confidence=payload_data.get("confidence", 1.0),
+        uncertainty_sources=None,
+        confidence_basis=None,
+        measurements=None,
+        alternatives_considered=None,
+        depends_on_steps=None,
+        metadata={
+            "request_id": payload_data.get("request_id"),
+            "model": payload_data.get("model"),
+            "purpose": payload_data.get("purpose"),
+            "used_memory_ref_count": len(payload_data.get("used_memory_refs", [])),
+            "training_allowed": payload_data.get("training_allowed"),
+        },
+        timestamp=event.timestamp,
+    )
+    trace = ReasoningTracePayload(
+        steps=[step],
+        total_confidence=payload_data.get("confidence", 1.0),
+        confidence_methodology=None,
+    ).model_dump(mode="json")
+    return {
+        "capsule_type": CapsuleType.REASONING_TRACE.value,
+        "payload_key": "reasoning_trace",
+        "reasoning_trace": trace,
+        "receipt_metadata": {
+            "adapter_name": event.adapter_name,
+            "agent_name": event.agent_name,
+            "event_id": event.event_id,
+            "event_hash": event_hash(event),
+            "parent_event_hash": event.parent_event_hash,
+            "model": payload_data.get("model"),
+            "purpose": payload_data.get("purpose"),
+            "used_memory_refs_hash": sha256_digest(
+                payload_data.get("used_memory_refs", [])
+            ),
+            "redaction_summary": event.redaction_summary,
+            "trust_level": event.trust_level,
+        },
+    }
+
+
+def map_user_feedback_event_to_feedback_assimilation_capsule(
+    event: UserFeedbackEvent,
+) -> dict[str, Any]:
+    """Convert user correction into a FEEDBACK_ASSIMILATION capsule draft."""
+    payload_data = event.payload
+    correction = payload_data.get("correction")
+    if not correction:
+        raise ValueError("user feedback event payload must include correction")
+    feedback = FeedbackAssimilationPayload(
+        original_output=payload_data.get(
+            "original_output", "referenced by prior receipt"
+        ),
+        correction_received=correction,
+        update_applied=payload_data.get("update_applied", True),
+        propagation_scope=payload_data.get(
+            "propagation_scope", "scoped_personal_memory"
+        ),
+    )
+    return {
+        "capsule_type": CapsuleType.FEEDBACK_ASSIMILATION.value,
+        "payload_key": "feedback_assimilation",
+        "feedback_assimilation": feedback.model_dump(mode="json"),
+        "receipt_metadata": {
+            "adapter_name": event.adapter_name,
+            "agent_name": event.agent_name,
+            "event_id": event.event_id,
+            "event_hash": event_hash(event),
+            "parent_event_hash": event.parent_event_hash,
+            "request_id": payload_data.get("request_id"),
+            "feedback_type": payload_data.get("feedback_type"),
+            "license_status": payload_data.get("license_status"),
+            "training_allowed": payload_data.get("training_allowed"),
+            "correction_hash": sha256_digest(correction),
+            "redaction_summary": event.redaction_summary,
+            "trust_level": event.trust_level,
+        },
+    }
+
+
+def map_memory_write_event_to_audit_capsule(event: MemoryWriteEvent) -> dict[str, Any]:
+    """Convert a memory write digest into an AUDIT capsule draft.
+
+    The existing public schema has no first-class memory-write capsule type. Use
+    AUDIT as the current compatible draft and keep the memory-specific proof in
+    metadata rather than inventing a new schema branch.
+    """
+    payload_data = event.payload
+    memory_write_id = payload_data.get("memory_write_id")
+    if not memory_write_id:
+        raise ValueError("memory write event payload must include memory_write_id")
+    digest = _validate_sha256_digest(
+        payload_data.get("memory_write_digest", ""), "memory_write_digest"
+    )
+    audit = AuditPayload(
+        audited_capsule_id=memory_write_id,
+        audit_score=1.0,
+        violations=[],
+    )
+    return {
+        "capsule_type": CapsuleType.AUDIT.value,
+        "payload_key": "audit",
+        "audit": audit.model_dump(mode="json"),
+        "receipt_metadata": {
+            "adapter_name": event.adapter_name,
+            "agent_name": event.agent_name,
+            "event_id": event.event_id,
+            "event_hash": event_hash(event),
+            "parent_event_hash": event.parent_event_hash,
+            "source_feedback_event_id": payload_data.get("source_feedback_event_id"),
+            "memory_write_digest": digest,
+            "purpose": payload_data.get("purpose"),
+            "policy_hash": sha256_digest(payload_data.get("policy", {})),
+            "training_allowed": payload_data.get("training_allowed"),
+            "licensing_terms": payload_data.get("licensing_terms"),
+            "redaction_summary": event.redaction_summary,
+            "trust_level": event.trust_level,
+        },
+    }
 
 
 def map_tool_call_event_to_tool_call_capsule(

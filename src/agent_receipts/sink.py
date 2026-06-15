@@ -10,20 +10,28 @@ from src.agent_receipts.events import (
     AgentReceiptEvent,
     DecisionPointEvent,
     EnvironmentSnapshotEvent,
+    LLMCallCompleted,
+    MemoryWriteEvent,
     RefusalEvent,
     SessionEnded,
     SessionStarted,
     ToolCallCompleted,
+    UserFeedbackEvent,
 )
 from src.agent_receipts.hashing import sha256_digest
 from src.agent_receipts.mappers import (
     map_action_trace_event_to_action_trace_capsule,
+    map_context_grant_event_to_consent_capsule,
     map_decision_point_event_to_decision_point_capsule,
     map_environment_snapshot_event_to_environment_snapshot_capsule,
+    map_llm_call_completed_event_to_reasoning_trace_capsule,
+    map_memory_write_event_to_audit_capsule,
     map_refusal_event_to_refusal_capsule,
     map_session_events_to_agent_session_capsule,
     map_tool_call_event_to_tool_call_capsule,
+    map_user_feedback_event_to_feedback_assimilation_capsule,
 )
+from src.agent_receipts.personal_intelligence_vault import ContextGrantEvent
 from src.agent_receipts.signing import Ed25519ReceiptSigner, SignedReceipt
 
 SCHEMA_VERSION = "agent_receipts.v1"
@@ -82,6 +90,18 @@ def map_events_to_capsule_drafts(
             drafts.append(
                 map_environment_snapshot_event_to_environment_snapshot_capsule(event)
             )
+        elif isinstance(event, ContextGrantEvent):
+            drafts.append(map_context_grant_event_to_consent_capsule(event))
+        elif isinstance(event, LLMCallCompleted):
+            drafts.append(
+                map_llm_call_completed_event_to_reasoning_trace_capsule(event)
+            )
+        elif isinstance(event, UserFeedbackEvent):
+            drafts.append(
+                map_user_feedback_event_to_feedback_assimilation_capsule(event)
+            )
+        elif isinstance(event, MemoryWriteEvent):
+            drafts.append(map_memory_write_event_to_audit_capsule(event))
 
     return drafts
 
