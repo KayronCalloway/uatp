@@ -1,10 +1,11 @@
 """Personal Intelligence Vault receipt helpers.
 
 This module intentionally stays at the receipt layer. It does not implement an
-Apple adapter, a marketplace, or raw-memory storage. The point is narrower:
-build a signed, offline-verifiable chain showing scoped memory access, policy,
-model action, user correction, and the resulting memory write without exposing
-raw user memory.
+Apple adapter or a marketplace. The point is narrower: model a local vault that
+returns scoped references instead of raw memory, then build a signed,
+offline-verifiable chain showing scoped memory access, policy, model action,
+user correction, and the resulting memory write without exposing raw user
+memory.
 """
 
 from __future__ import annotations
@@ -19,10 +20,12 @@ from src.agent_receipts.events import (
     DecisionPointEvent,
     LLMCallCompleted,
     MemoryWriteEvent,
+    RefusalEvent,
     SessionEnded,
     SessionStarted,
     UserFeedbackEvent,
 )
+from src.agent_receipts.hashing import sha256_digest
 
 SHA256_PATTERN = re.compile(r"^sha256:[a-f0-9]{64}$")
 
@@ -69,6 +72,108 @@ class ScopedMemoryRef:
 
 
 @dataclass(frozen=True)
+class LocalMemoryGrant:
+    """Policy decision returned by the local vault."""
+
+    granted: bool
+    refs: list[ScopedMemoryRef]
+    policy: PurposePolicy
+    denial_reason: str | None = None
+
+    def to_receipt_payload(self) -> dict[str, Any]:
+        return {
+            "granted": self.granted,
+            "granted_refs": [ref.to_dict() for ref in self.refs],
+            "policy": self.policy.to_dict(),
+            "purpose": self.policy.purpose,
+            "allowed_app": self.policy.allowed_app,
+            "allowed_model": self.policy.allowed_model,
+            "locality_requirement": self.policy.locality_requirement,
+            "training_allowed": self.policy.training_allowed,
+            "licensing_terms": self.policy.licensing_terms,
+            "denial_reason": self.denial_reason,
+        }
+
+
+@dataclass(frozen=True)
+class _VaultMemoryRecord:
+    memory_id: str
+    raw_memory: Any
+    scope: tuple[str, ...]
+    capsule_ref: str
+
+    def scoped_ref(self, requested_scopes: set[str]) -> ScopedMemoryRef | None:
+        granted_scope = sorted(set(self.scope) & requested_scopes)
+        if not granted_scope:
+            return None
+        return ScopedMemoryRef(
+            memory_id=self.memory_id,
+            capsule_ref=self.capsule_ref,
+            digest=sha256_digest(self.raw_memory),
+            scope=granted_scope,
+        )
+
+
+class LocalPersonalMemoryVault:
+    """In-memory vault that exposes scoped references, not raw memory.
+
+    This is deliberately small and local. It is a standards slice for the receipt
+    path, not a hosted product store.
+    """
+
+    def __init__(self) -> None:
+        self._records: dict[str, _VaultMemoryRecord] = {}
+
+    def put_memory(
+        self,
+        *,
+        memory_id: str,
+        raw_memory: Any,
+        scope: Sequence[str],
+        capsule_ref: str,
+    ) -> ScopedMemoryRef:
+        record = _VaultMemoryRecord(
+            memory_id=memory_id,
+            raw_memory=raw_memory,
+            scope=tuple(scope),
+            capsule_ref=capsule_ref,
+        )
+        self._records[memory_id] = record
+        return ScopedMemoryRef(
+            memory_id=memory_id,
+            capsule_ref=capsule_ref,
+            digest=sha256_digest(raw_memory),
+            scope=list(scope),
+        )
+
+    def request_context(
+        self,
+        *,
+        requested_scopes: Sequence[str],
+        policy: PurposePolicy,
+        app: str,
+        model: str,
+        locality: str = "local_only",
+    ) -> LocalMemoryGrant:
+        if app != policy.allowed_app:
+            return LocalMemoryGrant(False, [], policy, "app_not_allowed")
+        if model != policy.allowed_model:
+            return LocalMemoryGrant(False, [], policy, "model_not_allowed")
+        if policy.locality_requirement == "local_only" and locality != "local_only":
+            return LocalMemoryGrant(False, [], policy, "locality_not_allowed")
+
+        requested = set(requested_scopes)
+        refs = [
+            ref
+            for record in self._records.values()
+            if (ref := record.scoped_ref(requested)) is not None
+        ]
+        if not refs:
+            return LocalMemoryGrant(False, [], policy, "scope_not_available")
+        return LocalMemoryGrant(True, refs, policy)
+
+
+@dataclass(frozen=True)
 class ContextGrantEvent(AgentReceiptEvent):
     """Receipt event for a user/policy-scoped context grant."""
 
@@ -104,6 +209,111 @@ def _event_fields(
         "redaction_summary": {"raw_memory_included": False, "secrets_removed": 0},
         "trust_level": trust_level,
     }
+
+
+def build_personal_memory_denial_receipt_events(
+    *,
+    session_id: str,
+    adapter_name: str,
+    agent_name: str,
+    user_id_hash: str,
+    request_id: str,
+    requested_scopes: Sequence[str],
+    policy: PurposePolicy,
+    denial_reason: str,
+    started_at: datetime,
+    actor: str = "assistant",
+    trust_level: str = "local",
+) -> list[AgentReceiptEvent]:
+    """Build a signed-receipt-ready chain for a denied context request."""
+    _validate_sha256(user_id_hash, "user_id_hash")
+    policy_dict = policy.to_dict()
+    requested_scope_list = list(requested_scopes)
+
+    start = SessionStarted(
+        **_event_fields(
+            event_id=f"{request_id}:session_started",
+            session_id=session_id,
+            adapter_name=adapter_name,
+            agent_name=agent_name,
+            timestamp=started_at,
+            actor=actor,
+            trust_level=trust_level,
+            payload={
+                "platform": "personal-intelligence-vault",
+                "goals": ["request scoped personal memory under policy"],
+                "user_id_hash": user_id_hash,
+            },
+        )
+    )
+    context_request = DecisionPointEvent(
+        **_event_fields(
+            event_id=f"{request_id}:context_request",
+            session_id=session_id,
+            adapter_name=adapter_name,
+            agent_name=agent_name,
+            timestamp=started_at + timedelta(seconds=1),
+            actor=actor,
+            trust_level=trust_level,
+            payload={
+                "decision_id": request_id,
+                "step_index": 1,
+                "decision_summary": "Request scoped personal memory references for this user task.",
+                "selected_action": "request_scoped_memory_context",
+                "alternatives_considered": ["answer without memory"],
+                "constraints_applied": [
+                    "return capsule references, not raw memory",
+                    "deny context when purpose policy does not allow it",
+                ],
+                "confidence": 0.95,
+                "context_summary": "Personal memory access must be denied when policy fails.",
+                "requested_scopes": requested_scope_list,
+                "policy": policy_dict,
+            },
+        )
+    )
+    refusal = RefusalEvent(
+        **_event_fields(
+            event_id=f"{request_id}:context_denied",
+            session_id=session_id,
+            adapter_name=adapter_name,
+            agent_name=agent_name,
+            timestamp=started_at + timedelta(seconds=2),
+            actor="user",
+            trust_level=trust_level,
+            payload={
+                "refusal_id": f"{request_id}:context_denied",
+                "reason": denial_reason,
+                "violations": [denial_reason],
+                "request_id": request_id,
+                "requested_scopes": requested_scope_list,
+                "granted_refs": [],
+                "policy": policy_dict,
+                "purpose": policy.purpose,
+                "training_allowed": policy.training_allowed,
+                "licensing_terms": policy.licensing_terms,
+            },
+        )
+    )
+    end = SessionEnded(
+        **_event_fields(
+            event_id=f"{request_id}:session_ended",
+            session_id=session_id,
+            adapter_name=adapter_name,
+            agent_name=agent_name,
+            timestamp=started_at + timedelta(seconds=3),
+            actor=actor,
+            trust_level=trust_level,
+            payload={
+                "status": "refused",
+                "tool_call_count": 0,
+                "action_count": 0,
+                "decision_count": 1,
+                "outcome_summary": "Scoped personal memory request denied by purpose policy.",
+            },
+        )
+    )
+    return [start, context_request, refusal, end]
 
 
 def build_personal_memory_receipt_events(
