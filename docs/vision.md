@@ -16,11 +16,11 @@ Both failures trace to the same absence: verifiable memory.
 
 The infrastructure that makes AI decisions auditable is the same infrastructure that makes AI influences attributable.
 
-Cryptographically signed records — capsules — capture what an AI decided, what inputs it used, and how it reasoned. Ed25519 signatures make them tamper-evident. RFC 3161 timestamps prove when they existed. Anyone can verify without trusting UATP.
+Cryptographically signed records — capsules and agent receipts — capture what an AI decided, what inputs it used, and how it reasoned where that reasoning is available. Ed25519 signatures make changed records fail verification. RFC 3161 timestamps can add trusted-time evidence when they validate against explicit TSA trust anchors. The goal is verification outside the producing runtime, not trust in UATP itself.
 
 This works in multiple directions at once.
 
-**Forward:** It makes AI decisions evidence-grade and audit-ready. Enterprises can deploy in medicine, finance, and transportation with stronger records for legal, insurance, and compliance workflows because the runtime leaves cryptographic proof.
+**Forward:** It gives high-stakes AI systems stronger decision records. In medicine, finance, transportation, and similar domains, those records can support audit, legal, insurance, and compliance review when paired with trusted identity, timestamping, operational controls, and external process. The receipt is evidence; it is not the whole review system.
 
 **Backward:** It captures structured records of how AI behaves under real conditions — reasoning traces where available, confidence scores, error cases, corrections, and outcomes. This is more valuable than scraped text because it contains process, not just product. If licensed with consent, that process data can become higher-signal training material.
 
@@ -94,10 +94,10 @@ Think of UATP like TCP/IP — invisible infrastructure that makes everything els
 
 | Document | Content |
 |----------|---------|
-| [UATP_COMPLETE_VISION.md](UATP_COMPLETE_VISION.md) | Full technical and business vision with examples |
-| [DATA_MARKETPLACE_IMPLEMENTATION.md](DATA_MARKETPLACE_IMPLEMENTATION.md) | Data marketplace architecture and economics |
-| [UATP_2025_MARKET_ANALYSIS.md](UATP_2025_MARKET_ANALYSIS.md) | Market context, legal precedents, competitive positioning |
-| [TRUST_MODEL.md](../TRUST_MODEL.md) | Security assumptions and threat model |
+| [UATP_COMPLETE_VISION.md](UATP_COMPLETE_VISION.md) | Historical long-form technical and business vision; not current product status |
+| [DATA_MARKETPLACE_IMPLEMENTATION.md](DATA_MARKETPLACE_IMPLEMENTATION.md) | Historical marketplace architecture and economics; not current public-core scope |
+| [UATP_2025_MARKET_ANALYSIS.md](UATP_2025_MARKET_ANALYSIS.md) | Historical market context and competitive notes; not current claims |
+| [TRUST_MODEL.md](../TRUST_MODEL.md) | Current security assumptions and proof boundaries |
 
 ---
 

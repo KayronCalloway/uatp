@@ -1,292 +1,171 @@
 # UATP Trust Model
 
-> This document defines what UATP can and cannot do, cryptographically enforced.
+This document defines the current public trust boundary for UATP Core.
 
-**Implementation Status:** Core architecture shipped. See [checklist at bottom](#implementation-checklist) for details.
+The short version: a valid receipt or capsule can prove that a specific key signed specific bytes, that the signed bytes still hash to the same value, and, when configured, that a trusted policy accepts the signer or timestamp evidence. It does not automatically prove legal admissibility, production readiness, trusted identity, trusted time, compensation, or regulatory compliance.
 
-| Guarantee | Status |
-|-----------|--------|
-| Local signing (keys never leave device) | **Shipped** |
-| Hash-only transmission to server | **Shipped** |
-| External RFC 3161 timestamps | **Shipped** (Beta) - see note below |
-| Standalone verification | **Shipped** |
-| Transparency log | Planned |
-
-## Core Principle
-
-**UATP operates on a zero-trust, user-sovereign architecture.**
-
-The system is designed so that even if UATP (the company/operator) wanted to act maliciously, the cryptography prevents it.
+See [STATUS.md](STATUS.md) for component status and audit state.
 
 ---
 
-## Trust Guarantees
+## Current Guarantees
 
-### What UATP CANNOT Do
-
-| Action | Why It's Impossible |
-|--------|---------------------|
-| Forge a user's signature | User's private key never leaves their device |
-| Backdate a capsule | Timestamps come from external TSA (DigiCert), not UATP |
-| Read user's private capsules | Content stays local; only hash is transmitted for timestamping |
-| Modify a sealed capsule | Any change invalidates the cryptographic signature |
-| Deny a capsule existed | Timestamps are independently verifiable via TSA |
-| Impersonate a user | Each user has unique key pair they control |
-
-### What UATP CAN Do
-
-| Action | Why It's Allowed |
-|--------|------------------|
-| Provide timestamp service | Relays hash to external TSA, returns signed timestamp |
-| Host verification portal | Reads public data, performs signature verification |
-| Operate marketplace | Handles commerce for capsules users choose to publish |
-| Revoke API access | Can deny service, but cannot forge or tamper |
-| Maintain protocol | Publishes updates, but changes are public and auditable |
+| Guarantee | Current status | Boundary |
+|-----------|----------------|----------|
+| Ed25519 signature verification | Shipped | Proves key possession for the signed preimage, not real-world identity by itself |
+| Content / event hash verification | Shipped | Detects changes to signed payloads and receipt chains |
+| Standalone legacy capsule verification | Shipped | Works for legacy capsule bundles; assurance depends on available signature/hash/timestamp evidence |
+| Offline agent receipt bundle verification | Beta | Verifies signed receipt chains outside the agent runtime |
+| Trusted signer policy | Shipped for receipt CLI | Only enforced when the verifier is given trusted signer bindings |
+| RFC 3161 timestamp validation | Beta | Requires explicit TSA certificate/trust-anchor material; missing anchors do not create trusted-time proof |
+| Transparency log | Planned | Not implemented |
+| External security audit | Planned | Not completed |
 
 ---
 
-## Cryptographic Architecture
+## What a Valid Receipt Proves
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           USER'S DEVICE                                  │
-│                                                                          │
-│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐   │
-│  │  Private Key     │    │  Capsule Content │    │  Local Storage   │   │
-│  │  (NEVER LEAVES)  │    │  (NEVER LEAVES)  │    │  (Encrypted)     │   │
-│  └────────┬─────────┘    └────────┬─────────┘    └──────────────────┘   │
-│           │                       │                                      │
-│           ▼                       ▼                                      │
-│  ┌──────────────────────────────────────────┐                           │
-│  │  LOCAL SIGNING                            │                           │
-│  │  1. Hash capsule content (SHA-256)        │                           │
-│  │  2. Sign hash with user's Ed25519 key     │                           │
-│  │  3. Capsule now has user's signature      │                           │
-│  └────────────────────┬─────────────────────┘                           │
-│                       │                                                  │
-│                       │ Only the HASH is sent                           │
-│                       ▼                                                  │
-└───────────────────────┼──────────────────────────────────────────────────┘
-                        │
-                        │  SHA-256 hash (32 bytes)
-                        │  No content, no private key
-                        ▼
-┌───────────────────────────────────────────────────────────────────────────┐
-│                         UATP TIMESTAMP SERVICE                            │
-│                                                                           │
-│  ┌─────────────────────────────────────────────────────────────────────┐ │
-│  │  Receives: Hash only                                                 │ │
-│  │  Cannot: See content, forge signature, backdate                      │ │
-│  │  Does: Forward hash to external TSA                                  │ │
-│  └─────────────────────────────────────────────────────────────────────┘ │
-│                                    │                                      │
-│                                    ▼                                      │
-│  ┌─────────────────────────────────────────────────────────────────────┐ │
-│  │  EXTERNAL TSA (DigiCert/FreeTSA)                                     │ │
-│  │  - Independent third party                                           │ │
-│  │  - RFC 3161 compliant                                                │ │
-│  │  - Signs timestamp with THEIR key (not UATP's)                       │ │
-│  │  - Independently verifiable                                          │ │
-│  └─────────────────────────────────────────────────────────────────────┘ │
-│                                    │                                      │
-│                                    ▼                                      │
-│  Returns: RFC 3161 timestamp token (signed by TSA, not UATP)             │
-└───────────────────────────────────────────────────────────────────────────┘
-                        │
-                        ▼
-┌───────────────────────────────────────────────────────────────────────────┐
-│                           USER'S DEVICE                                   │
-│                                                                           │
-│  Capsule now contains:                                                    │
-│  ┌─────────────────────────────────────────────────────────────────────┐ │
-│  │  • Content (local only)                                              │ │
-│  │  • User's Ed25519 signature (proves authorship)                      │ │
-│  │  • RFC 3161 timestamp (proves time, from external TSA)               │ │
-│  │  • User's public key (for verification)                              │ │
-│  └─────────────────────────────────────────────────────────────────────┘ │
-│                                                                           │
-│  UATP has seen: Only the hash                                            │
-│  UATP can prove: Nothing (they don't have the content or signature)      │
-└───────────────────────────────────────────────────────────────────────────┘
+A successful agent receipt verification can prove:
+
+1. the receipt payload matches its recorded event hash;
+2. the receipt signature verifies against the public key in the bundle;
+3. the parent-hash chain is internally consistent;
+4. referenced artifacts match expected digests when artifact checking is enabled;
+5. capsule drafts and bundle metadata are internally consistent where the verifier checks them.
+
+If `--trusted-signer signer_id=public_key_hex` is supplied, verification can also prove that the signer matched a verifier-provided trust policy.
+
+If trusted timestamp verification is required and explicit TSA trust anchors are supplied, verification can also prove the timestamp token validated against that trust material.
+
+---
+
+## What a Valid Receipt Does Not Prove
+
+A passing verification result does not automatically prove:
+
+- that the signer is a specific person, company, device, or app;
+- that the signer was authorized unless a trust policy was supplied and passed;
+- that the event happened at a trusted time unless RFC 3161 validation passed against explicit trust anchors;
+- that the event is legally admissible;
+- that an insurance, regulator, or court will accept the record;
+- that the system was unbiased or policy-compliant beyond what the signed payload and external review can establish;
+- that attribution, licensing, or compensation has been solved.
+
+The public core is a proof layer, not a legal or commercial conclusion engine.
+
+---
+
+## Trust Modes
+
+### 1. Cryptographic self-consistency
+
+Default receipt verification without a trust policy checks whether the bundle is internally valid.
+
+This is useful for tamper detection and debugging, but the verifier is still trusting the bundle's embedded public key as evidence of only key possession.
+
+### 2. Trusted signer policy
+
+When a verifier supplies trusted signer bindings, verification checks that the receipt was signed by an accepted signer key.
+
+Example:
+
+```bash
+uatp verify-receipts receipt_bundle.json \
+  --trusted-signer uatp-mcp-gateway=<ed25519_public_key_hex> \
+  --strict \
+  --no-color
 ```
 
----
+This is the minimum boundary for saying: “this known signer signed these bytes.”
 
-## Verification (Anyone Can Do This)
+### 3. Trusted timestamp policy
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        VERIFICATION PROCESS                              │
-│                                                                          │
-│  Given a capsule, ANYONE can verify without trusting UATP:               │
-│                                                                          │
-│  1. SIGNATURE CHECK                                                      │
-│     ├─ Extract public key from capsule                                   │
-│     ├─ Extract signature from capsule                                    │
-│     ├─ Recompute hash of content                                         │
-│     └─ Verify: Ed25519.verify(public_key, signature, hash)               │
-│        Result: Proves content was signed by key holder                   │
-│                                                                          │
-│  2. TIMESTAMP CHECK (requires explicit TSA trust anchors)                │
-│     ├─ Extract RFC 3161 token                                            │
-│     ├─ Verify TSA signature (DigiCert's public key is public)            │
-│     ├─ Check hash in token matches capsule hash                          │
-│     └─ Result: Proves capsule existed at claimed time                    │
-│                                                                          │
-│     ⚠️  NOTE: verify_capsule_standalone() and agent receipt verification │
-│         validate RFC 3161 tokens only when explicit TSA certificate      │
-│         material is supplied. Without trust-anchor validation, assurance │
-│         caps at signature_and_hash.                                      │
-│                                                                          │
-│  3. INTEGRITY CHECK                                                      │
-│     ├─ Recompute hash of current content                                 │
-│     ├─ Compare to signed hash                                            │
-│     └─ Result: Proves content hasn't been modified                       │
-│                                                                          │
-│  UATP's role in verification: NONE                                       │
-│  Verification is purely cryptographic, no trust required                 │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+Trusted time requires explicit TSA certificate or trust-anchor material.
+
+A bundle that reports `Trusted timestamp: missing` or has no verified TSA chain should not be described as trusted-time evidence.
 
 ---
 
-## Key Management
+## Legacy Capsules vs Agent Receipts
 
-### User Keys
+UATP currently has two relevant surfaces:
 
-| Property | Implementation |
-|----------|----------------|
-| Generation | On user's device, using OS secure random |
-| Storage | Encrypted with user's passphrase, local only |
-| Backup | User's responsibility (encrypted export available) |
-| Recovery | From backup only; UATP cannot recover |
-| Rotation | User-initiated; old capsules remain valid |
+- **Legacy capsules:** broader UATP records, including schema 7.2-era bundles.
+- **Agent receipt bundles:** verifier-first signed event chains for agent actions, tool calls, decisions, artifacts, corrections, and session traces.
 
-### UATP Keys (If Any)
-
-UATP may have operational keys for:
-- Signing software releases
-- TLS certificates for services
-- API authentication tokens
-
-**These keys are NEVER used for user capsules.**
-
-Any UATP signature is clearly labeled as "UATP Attestation" (e.g., "we received this hash at this time") and is separate from user signatures.
+The agent receipt path is the current public wedge because it can be exported and verified offline without trusting Hermes, SQLite, the MCP gateway, or the producing runtime.
 
 ---
 
-## Transparency Log (Planned)
+## Key Management Boundary
 
-**Status: Not yet implemented** - see implementation checklist below.
+UATP supports local signing paths where private keys stay on the user's machine. That is the preferred pattern for new integrations.
 
-When implemented, UATP operations will be logged to a public, append-only transparency log:
+Some legacy/server paths still support server-side signing or attestation for compatibility and deployments that intentionally choose that boundary. Those records should not be described as user-sovereign signatures unless the signing key was actually controlled by the user.
 
-```
-Entry format (planned):
-{
-  "timestamp": "2026-03-08T12:00:00Z",
-  "operation": "timestamp_request",
-  "hash": "abc123...",  // The hash we received (not content)
-  "tsa_response": "...", // What DigiCert returned
-  "log_signature": "..." // Signed by UATP transparency key
-}
-```
-
-Planned capabilities:
-- Monitor the log for anomalies
-- Verify log integrity (Merkle tree)
-- Audit UATP's behavior
+Operational keys, API tokens, TLS certificates, and server attestation keys are separate from user signing keys.
 
 ---
 
-## Threat Model
+## Threats UATP Helps With
 
-### Threats We Protect Against
-
-| Threat | Protection |
-|--------|------------|
-| UATP goes rogue | Can't forge (don't have keys), can't backdate (external TSA) |
-| UATP gets hacked | Attacker can't forge user signatures (keys not on server) |
-| UATP subpoenaed | Can only provide hashes, not content (content is local) |
-| UATP shuts down | Capsules remain verifiable (self-contained proofs) |
-| Man-in-the-middle | TLS + signature verification catches tampering |
-| Replay attacks | Timestamps prevent replaying old signatures |
-
-### Threats We Don't Protect Against
-
-| Threat | Why | Mitigation |
-|--------|-----|------------|
-| User loses private key | User-sovereign = user-responsible | Backup guidance |
-| User's device compromised | Keys on device | Security best practices |
-| User shares private key | Social/operational issue | Education |
-| TSA compromise | External dependency | Multiple TSA support |
+| Threat | What UATP can help prove |
+|--------|--------------------------|
+| Payload tampering | Signed hash no longer matches |
+| Chain tampering | Parent hash or chain tip no longer matches |
+| Artifact tampering | Artifact digest check fails |
+| Runtime trust gap | Receipt can be verified outside the runtime |
+| Signer confusion | Trusted signer policy can reject unknown keys |
+| Timestamp overclaim | Verifier can fail closed when trusted timestamp evidence is required but missing |
 
 ---
 
-## Compliance
+## Threats Outside the Current Public Core
 
-This architecture supports:
-
-| Requirement | How |
-|-------------|-----|
-| GDPR Right to Erasure | Content is local; user can delete |
-| GDPR Data Minimization | UATP only sees hashes, not content |
-| EU AI Act Transparency | Full audit trail of AI decisions |
-| Evidentiary Integrity | RFC 3161 timestamps, Ed25519 signatures (FIPS 186-5 algorithm) |
-| SOC 2 | Separation of concerns, audit logging |
-
----
-
-## Summary
-
-**Core Guarantees:**
-
-1. **User-sovereign keys**: Generated and stored locally, never transmitted
-2. **External timestamps**: DigiCert/FreeTSA, not UATP
-3. **Hash-only transmission**: UATP never sees content
-4. **Independent verification**: No trust in UATP required
-5. **Transparency logging**: Planned (not yet implemented)
-
-**The bottom line:**
-
-> "We cannot forge a capsule or backdate a timestamp. Users hold their own signing keys which never leave their devices. Timestamps come from DigiCert, not us. The math doesn't allow tampering."
+| Threat | Boundary |
+|--------|----------|
+| Compromised signer key | Needs key rotation, revocation, and operational controls |
+| False but signed event | A signature proves the signer committed to the payload; it does not prove the payload is true without external evidence |
+| Biased model decision | Receipts can preserve evidence for audit; bias analysis is a separate review layer |
+| Legal admissibility | Requires legal process, chain-of-custody controls, and jurisdiction-specific review |
+| Insurance acceptance | Requires insurer workflows and review; UATP can supply evidence artifacts |
+| Marketplace compensation | Future product/commercial layer, not a current public-core guarantee |
 
 ---
 
-## Implementation Checklist
+## Compliance Boundary
 
-**SDK (Local Signing Path) - SHIPPED:**
-- [x] Implement `UserKeyManager` for local key generation (`sdk/python/uatp/crypto/user_key_manager.py`)
-- [x] Implement `LocalSigner` for user-side signing (`sdk/python/uatp/crypto/local_signer.py`)
-- [x] Implement hash-only timestamp flow
-- [x] Document key backup/recovery process
-- [x] Create standalone verification function (`verify_capsule_standalone`)
-- [x] SDK `certify()` uses local signing by default
+UATP can support compliance workflows by preserving signed, inspectable records. It is not itself a certification for GDPR, SOC 2, EU AI Act compliance, or evidentiary admissibility.
 
-**RFC 3161 Timestamp Verification - PARTIAL:**
-- [x] Timestamp tokens are obtained from DigiCert TSA
-- [x] Tokens are stored in capsule verification block
-- [x] `verify_capsule_standalone()` checks timestamp presence
-- [x] Agent receipt verifier validates RFC 3161 tokens against explicit TSA trust anchors via OpenSSL
-- [x] Standalone capsule verifier validates RFC 3161 tokens against explicit TSA trust anchors via OpenSSL
+Those claims require deployment controls, organizational process, legal review, audits, and regulator- or customer-specific acceptance.
 
-**Current assurance levels from verify_capsule_standalone():**
-- `"none"` - Signature verification failed
-- `"signature_only"` - Signature valid but content hash mismatch
-- `"signature_and_hash"` - Ed25519 signature + content integrity verified (timestamp present but NOT cryptographically verified)
-- `"full"` - All above + RFC 3161 timestamp cryptographically verified against explicit TSA trust anchors
+---
 
-**Server Engine - LEGACY PATH (being deprecated):**
-- [ ] Remove server-side `UATP_SIGNING_KEY` from engine (currently still present in `src/engine/capsule_engine.py`)
-- [ ] Migrate all server-created capsules to user-signed or attestation-only mode
+## Implementation Notes
 
-**Note on Dual Architecture:**
-The SDK (`pip install uatp`) implements full zero-trust local signing. The server engine (`src/engine/`) still supports server-side signing for:
-- Live capture hooks (Claude Code integration)
-- Legacy API compatibility
-- Enterprise deployments where server-side attestation is acceptable
+Current shipped and planned pieces:
 
-Server-signed capsules are clearly marked with `"signer": "server"` vs `"signer": "user"`. The SDK path is the recommended approach for new integrations.
-- [ ] Create transparency log infrastructure
-- [ ] Security audit of new architecture
-- [x] Update Claude Code capture to use local signing (`UATP_SIGNING_MODE=local`)
+- [x] Local signing support in SDK paths
+- [x] Standalone legacy capsule verification
+- [x] Offline agent receipt bundle verification
+- [x] Trusted signer policy support for `verify-receipts`
+- [x] RFC 3161 token validation when explicit TSA trust anchors are supplied
+- [ ] Transparency log
+- [ ] External security audit
+- [ ] Full key rotation / revocation workflow
+- [ ] Production trust registry
+
+Current assurance labels used by standalone capsule verification:
+
+- `none`: signature verification failed
+- `signature_only`: signature valid but content hash mismatch
+- `signature_and_hash`: signature and content integrity verified; timestamp not cryptographically validated
+- `full`: signature, hash, and RFC 3161 timestamp validated against explicit TSA trust anchors
+
+---
+
+## Bottom Line
+
+Do not trust the agent runtime. Check the receipt somewhere else.
+
+But do not overread the receipt either. UATP proves signed records and tamper evidence first. Trusted identity, trusted time, legal use, compliance, attribution, and compensation require additional layers on top of that proof.
