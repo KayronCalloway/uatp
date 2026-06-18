@@ -55,6 +55,22 @@ class MockConversationSession:
     topics: List[str]
 
 
+def _receipt_event(bundle: dict[str, Any], event_type: str) -> dict[str, Any]:
+    return next(
+        receipt["event"]
+        for receipt in bundle["signed_receipts"]
+        if receipt["event"]["event_type"] == event_type
+    )
+
+
+def _capsule_draft(bundle: dict[str, Any], capsule_type: str) -> dict[str, Any]:
+    return next(
+        draft
+        for draft in bundle["capsule_drafts"]
+        if draft["capsule_type"] == capsule_type
+    )
+
+
 def patch_capture_dependencies(monkeypatch):
     monkeypatch.setattr(
         hermes_capture,
@@ -147,14 +163,165 @@ def test_event_native_receipt_bundle_maps_hermes_session_and_tool_invocations() 
 
     assert bundle["schema_version"] == "agent_receipts.v1"
     assert bundle["chain_report"]["valid"] is True
-    assert bundle["chain_report"]["event_count"] == 4
-    assert len(bundle["signed_receipts"]) == 4
+    assert bundle["chain_report"]["event_count"] == 6
+    assert len(bundle["signed_receipts"]) == 6
     assert [draft["capsule_type"] for draft in bundle["capsule_drafts"]] == [
         "agent_session",
+        "environment_snapshot",
+        "decision_point",
         "tool_call",
         "action_trace",
     ]
+    agent_session = bundle["capsule_drafts"][0]["agent_session"]
+    decision_point = _capsule_draft(bundle, "decision_point")["decision_point"]
+    environment_snapshot = _capsule_draft(bundle, "environment_snapshot")[
+        "environment_snapshot"
+    ]
+    assert agent_session["goals"]
+    assert agent_session["decision_count"] == 1
+    assert decision_point["selected_action"] == "tool_call:terminal"
+    assert decision_point["reasoning"].startswith("Selected tool `terminal`")
+    assert environment_snapshot["env_vars_hash"].startswith("sha256:")
+    assert _capsule_draft(bundle, "environment_snapshot")["receipt_metadata"][
+        "enabled_tools"
+    ] == ["terminal"]
+    event_types = [
+        receipt["event"]["event_type"] for receipt in bundle["signed_receipts"]
+    ]
+    assert event_types == [
+        "session.started",
+        "environment.snapshot",
+        "decision.point",
+        "tool_call.completed",
+        "action.trace",
+        "session.ended",
+    ]
     assert verify_signed_receipt_chain(bundle["_signed_receipt_objects"]).valid is True
+
+
+def test_event_native_receipts_environment_snapshot_is_public_safe(tmp_path) -> None:
+    signer = Ed25519ReceiptSigner.generate(signer_id="hermes_test")
+    artifact_store = ArtifactStore(tmp_path)
+
+    bundle = hermes_capture._build_event_native_receipt_bundle(
+        "sess_env_safe",
+        {
+            "started_at": 1,
+            "model": "claude-sonnet-4",
+            "working_directory": "/Users/kay/private-client/secret-project",
+            "open_files": ["/Users/kay/private-client/secret-project/token_plan.md"],
+            "loaded_skills": [
+                "uatp-secret-workflow",
+                {"name": "unsafe-skill", "content_hash": "raw/private/skill/path"},
+            ],
+            "terminal_backend": "local-private-backend",
+            "gateway_source": "kay-private-cli",
+        },
+        [{"role": "user", "content": "inspect", "timestamp": 1}],
+        [],
+        signer=signer,
+        artifact_store=artifact_store,
+    )
+
+    public_json = json.dumps(bundle["public"])
+    for raw_value in (
+        "/Users/kay",
+        "private-client",
+        "secret-project",
+        "token_plan.md",
+        "uatp-secret-workflow",
+        "local-private-backend",
+        "kay-private-cli",
+        "raw/private/skill/path",
+        "unsafe-skill",
+    ):
+        assert raw_value not in public_json
+
+    env_draft = _capsule_draft(bundle, "environment_snapshot")
+    env_payload = env_draft["environment_snapshot"]
+    assert env_payload["working_directory"].startswith("[omitted:sha256:")
+    assert env_payload["open_files"][0].startswith("[omitted:sha256:")
+    assert env_draft["receipt_metadata"]["loaded_skills"][0]["content_hash"].startswith(
+        "sha256:"
+    )
+
+
+def test_event_native_receipts_normalize_tool_status_and_counts(tmp_path) -> None:
+    signer = Ed25519ReceiptSigner.generate(signer_id="hermes_test")
+    artifact_store = ArtifactStore(tmp_path)
+
+    bundle = hermes_capture._build_event_native_receipt_bundle(
+        "sess_failed_tool",
+        {"started_at": 1, "model": "claude-sonnet-4"},
+        [{"role": "user", "content": "run failing command", "timestamp": 1}],
+        [
+            {
+                "tool": "terminal",
+                "call_id": "call_failed",
+                "status": "completed",
+                "arguments": {"command": "pytest -q"},
+                "timestamp": "1970-01-01T00:00:02+00:00",
+                "completed_timestamp": "1970-01-01T00:00:05+00:00",
+                "result_preview": {
+                    "exit_code": "1",
+                    "stdout": "",
+                    "stderr": "1 failed",
+                },
+            }
+        ],
+        signer=signer,
+        artifact_store=artifact_store,
+    )
+
+    tool_call = _capsule_draft(bundle, "tool_call")["tool_call"]
+    session = _capsule_draft(bundle, "agent_session")["agent_session"]
+    assert tool_call["status"] == "error"
+    assert tool_call["duration_ms"] == 3000
+    assert session["tool_call_count"] == 1
+    assert session["action_count"] == 1
+    assert session["decision_count"] == 1
+
+
+def test_build_capsule_orphan_tool_result_preserves_tool_timestamp(monkeypatch) -> None:
+    patch_capture_dependencies(monkeypatch)
+    signer = Ed25519ReceiptSigner.generate(signer_id="hermes_test")
+    monkeypatch.setattr(hermes_capture, "_get_agent_receipt_signer", lambda: signer)
+
+    class MockEnhancer:
+        @staticmethod
+        def create_capsule_from_session_with_rich_metadata(_session, user_id):
+            return {
+                "capsule_id": "cap_orphan",
+                "type": "conversation",
+                "version": "7.4",
+                "timestamp": "1970-01-01T00:00:09+00:00",
+                "status": "active",
+                "payload": {"reasoning_steps": [], "session_metadata": {}},
+            }
+
+    monkeypatch.setattr(hermes_capture, "_get_rich_enhancer", lambda: MockEnhancer)
+
+    capsule = hermes_capture.build_capsule(
+        "sess_orphan_tool",
+        {"started_at": 1, "model": "claude-sonnet-4", "source": "hermes-cli"},
+        [
+            {"role": "user", "content": "inspect", "timestamp": 1},
+            {
+                "role": "tool",
+                "tool_name": "terminal",
+                "tool_call_id": "orphan_call",
+                "content": "late output",
+                "timestamp": 9,
+            },
+        ],
+        model="claude-sonnet-4",
+        platform="hermes-cli",
+    )
+
+    tool_event = _receipt_event(
+        capsule["payload"]["agent_receipts"], "tool_call.completed"
+    )
+    assert tool_event["timestamp"] == "1970-01-01T00:00:09+00:00"
 
 
 def test_event_native_receipt_bundle_public_payload_has_no_private_objects() -> None:
@@ -228,7 +395,14 @@ def test_build_capsule_attaches_public_event_native_receipts(monkeypatch) -> Non
     receipts = capsule["payload"]["agent_receipts"]
     assert receipts["schema_version"] == "agent_receipts.v1"
     assert receipts["chain_report"]["valid"] is True
-    assert receipts["chain_report"]["event_count"] == 4
+    assert receipts["chain_report"]["event_count"] == 6
+    assert [draft["capsule_type"] for draft in receipts["capsule_drafts"]] == [
+        "agent_session",
+        "environment_snapshot",
+        "decision_point",
+        "tool_call",
+        "action_trace",
+    ]
     assert "_signed_receipt_objects" not in receipts
 
 
@@ -256,7 +430,7 @@ def test_event_native_receipts_store_command_output_as_content_addressed_artifac
         artifact_store=artifact_store,
     )
 
-    tool_event = bundle["signed_receipts"][1]["event"]
+    tool_event = _receipt_event(bundle, "tool_call.completed")
     stdout_ref = tool_event["payload"]["artifact_refs"]["stdout"]
     ref = ArtifactRef(**stdout_ref)
 
@@ -288,7 +462,7 @@ def test_event_native_receipts_store_write_file_content_as_artifact(tmp_path) ->
         artifact_store=artifact_store,
     )
 
-    tool_event = bundle["signed_receipts"][1]["event"]
+    tool_event = _receipt_event(bundle, "tool_call.completed")
     content_ref = tool_event["payload"]["artifact_refs"]["content_after"]
     ref = ArtifactRef(**content_ref)
 
@@ -321,7 +495,7 @@ def test_event_native_receipts_store_patch_strings_as_artifacts(tmp_path) -> Non
         artifact_store=artifact_store,
     )
 
-    tool_event = bundle["signed_receipts"][1]["event"]
+    tool_event = _receipt_event(bundle, "tool_call.completed")
     refs = tool_event["payload"]["artifact_refs"]
     old_ref = ArtifactRef(**refs["old_string"])
     new_ref = ArtifactRef(**refs["new_string"])
@@ -357,7 +531,7 @@ def test_event_native_receipts_store_read_file_output_as_artifact(tmp_path) -> N
         artifact_store=artifact_store,
     )
 
-    tool_event = bundle["signed_receipts"][1]["event"]
+    tool_event = _receipt_event(bundle, "tool_call.completed")
     content_ref = tool_event["payload"]["artifact_refs"]["content_read"]
     ref = ArtifactRef(**content_ref)
 
@@ -772,8 +946,14 @@ def test_event_native_receipts_emit_terminal_action_trace_from_tool_invocation(
     )
 
     draft_types = [draft["capsule_type"] for draft in bundle["capsule_drafts"]]
-    assert draft_types == ["agent_session", "tool_call", "action_trace"]
-    action_trace = bundle["capsule_drafts"][2]["action_trace"]
+    assert draft_types == [
+        "agent_session",
+        "environment_snapshot",
+        "decision_point",
+        "tool_call",
+        "action_trace",
+    ]
+    action_trace = _capsule_draft(bundle, "action_trace")["action_trace"]
     assert action_trace["session_id"] == "sess_action_emit"
     assert action_trace["tool_call_id"] == "call_terminal_1"
     assert action_trace["action_type"] == "terminal.command"
@@ -783,7 +963,9 @@ def test_event_native_receipts_emit_terminal_action_trace_from_tool_invocation(
     assert action_trace["exit_code"] == 0
     assert action_trace["executed_at"] == "1970-01-01T00:00:02+00:00"
     assert (
-        bundle["capsule_drafts"][2]["receipt_metadata"]["verification_classification"]
+        _capsule_draft(bundle, "action_trace")["receipt_metadata"][
+            "verification_classification"
+        ]
         == "pytest"
     )
 
@@ -811,8 +993,14 @@ def test_event_native_receipts_emit_write_file_action_trace_from_tool_invocation
     )
 
     draft_types = [draft["capsule_type"] for draft in bundle["capsule_drafts"]]
-    assert draft_types == ["agent_session", "tool_call", "action_trace"]
-    action_trace = bundle["capsule_drafts"][2]["action_trace"]
+    assert draft_types == [
+        "agent_session",
+        "environment_snapshot",
+        "decision_point",
+        "tool_call",
+        "action_trace",
+    ]
+    action_trace = _capsule_draft(bundle, "action_trace")["action_trace"]
     assert action_trace["tool_call_id"] == "call_write_1"
     assert action_trace["action_type"] == "file.write"
     assert action_trace["file_path"] == "src/a.py"
@@ -847,8 +1035,8 @@ def test_event_native_receipts_emit_patch_action_trace_from_tool_invocation(
         artifact_store=artifact_store,
     )
 
-    action_trace = bundle["capsule_drafts"][2]["action_trace"]
-    metadata = bundle["capsule_drafts"][2]["receipt_metadata"]
+    action_trace = _capsule_draft(bundle, "action_trace")["action_trace"]
+    metadata = _capsule_draft(bundle, "action_trace")["receipt_metadata"]
     assert action_trace["tool_call_id"] == "call_patch_1"
     assert action_trace["action_type"] == "file.edit"
     assert action_trace["file_path"] == "src/a.py"
@@ -882,7 +1070,7 @@ def test_event_native_receipts_emit_read_file_action_trace_from_tool_invocation(
         artifact_store=artifact_store,
     )
 
-    action_trace = bundle["capsule_drafts"][2]["action_trace"]
+    action_trace = _capsule_draft(bundle, "action_trace")["action_trace"]
     assert action_trace["tool_call_id"] == "call_read_1"
     assert action_trace["action_type"] == "file.read"
     assert action_trace["file_path"] == "src/a.py"
@@ -1084,7 +1272,7 @@ def test_event_native_receipts_public_bundle_keeps_verification_command_classifi
         artifact_store=artifact_store,
     )
 
-    action_draft = bundle["capsule_drafts"][2]
+    action_draft = _capsule_draft(bundle, "action_trace")
     assert action_draft["action_trace"]["command"] == "pytest tests/agent_receipts -q"
     assert action_draft["receipt_metadata"]["verification_classification"] == "pytest"
 
@@ -1122,8 +1310,8 @@ def test_event_native_receipts_fallback_call_id_is_session_scoped(tmp_path) -> N
         artifact_store=artifact_store,
     )
 
-    call_a = bundle_a["capsule_drafts"][1]["tool_call"]["call_id"]
-    call_b = bundle_b["capsule_drafts"][1]["tool_call"]["call_id"]
+    call_a = _capsule_draft(bundle_a, "tool_call")["tool_call"]["call_id"]
+    call_b = _capsule_draft(bundle_b, "tool_call")["tool_call"]["call_id"]
     assert call_a != call_b
     assert call_a.startswith("sess_missing_call_a:")
     assert call_b.startswith("sess_missing_call_b:")
@@ -1259,7 +1447,7 @@ def test_event_native_receipts_store_multiedit_strings_as_artifacts(tmp_path) ->
         artifact_store=artifact_store,
     )
 
-    tool_event = bundle["signed_receipts"][1]["event"]
+    tool_event = _receipt_event(bundle, "tool_call.completed")
     edit_refs = tool_event["payload"]["artifact_refs"]["edits"]
 
     assert len(edit_refs) == 2
@@ -1310,7 +1498,7 @@ def test_event_native_receipts_store_v4a_patch_content_as_artifact(tmp_path) -> 
         artifact_store=artifact_store,
     )
 
-    tool_event = bundle["signed_receipts"][1]["event"]
+    tool_event = _receipt_event(bundle, "tool_call.completed")
     patch_ref = tool_event["payload"]["artifact_refs"]["patch"]
 
     assert patch_ref["media_type"] == "text/plain"

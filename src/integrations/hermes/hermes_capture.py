@@ -34,6 +34,9 @@ from typing import Any, Dict, List, Optional
 from src.agent_receipts.artifacts import ArtifactStore
 from src.agent_receipts.events import (
     ActionTraceEvent,
+    AgentReceiptEvent,
+    DecisionPointEvent,
+    EnvironmentSnapshotEvent,
     SessionEnded,
     SessionStarted,
     ToolCallCompleted,
@@ -920,6 +923,182 @@ def _public_tool_result_summary(result_preview: Any) -> Dict[str, Any]:
     }
 
 
+def _sha256_prefixed(value: Any) -> str:
+    """Return a UATP-style sha256:<hex> digest for redacted structured state."""
+    rendered = json.dumps(redact_value(value), sort_keys=True, default=str)
+    return f"sha256:{_sha256_hex(rendered)}"
+
+
+def _session_goals(session: Dict, messages: List[Dict]) -> List[str]:
+    """Build audit-safe goals without embedding raw user text in public receipts."""
+    goals: List[str] = []
+    title_summary = _omitted_text_summary(session.get("title"))
+    if title_summary:
+        goals.append(f"session_title:{title_summary}")
+
+    first_user_message = next(
+        ((msg.get("content") or "") for msg in messages if msg.get("role") == "user"),
+        None,
+    )
+    trigger_summary = _omitted_text_summary(first_user_message)
+    if trigger_summary and trigger_summary not in goals:
+        goals.append(f"trigger:{trigger_summary}")
+    return goals
+
+
+def _safe_list(value: Any) -> List[Any]:
+    return value if isinstance(value, list) else []
+
+
+def _safe_digest(value: Any) -> str:
+    if isinstance(value, str):
+        if re.fullmatch(r"sha256:[a-f0-9]{64}", value):
+            return value
+        if re.fullmatch(r"[a-f0-9]{64}", value):
+            return f"sha256:{value}"
+    return _sha256_prefixed(value)
+
+
+def _safe_loaded_skills(value: Any) -> List[Dict[str, Any]]:
+    """Normalize Hermes skill state to schema-safe, non-content skill refs."""
+    safe: List[Dict[str, Any]] = []
+    for index, item in enumerate(_safe_list(value)):
+        if isinstance(item, dict):
+            content_hash = item.get("content_hash")
+            name = item.get("name") or item.get("skill") or f"skill_{index}"
+        else:
+            content_hash = None
+            name = str(item)
+        safe.append(
+            {
+                "name_hash": _sha256_prefixed(name),
+                "content_hash": _safe_digest(content_hash or name),
+            }
+        )
+    return safe
+
+
+def _safe_path_summaries(value: Any) -> List[str]:
+    """Represent local paths as opaque digests so public receipts do not leak them."""
+    summaries: List[str] = []
+    for item in _safe_list(value):
+        summaries.append(_omitted_text_summary(item) or "[omitted:empty]")
+    return summaries
+
+
+def _environment_snapshot_payload(
+    session_id: str,
+    session: Dict,
+    tool_invocations: List[Dict[str, Any]],
+    *,
+    model: Optional[str],
+    platform: str,
+    timestamp: datetime,
+) -> Dict[str, Any]:
+    """Capture runtime context as hashes and bounded metadata, not raw env/config."""
+    enabled_tools = sorted(
+        invocation["tool"]
+        for invocation in tool_invocations
+        if isinstance(invocation.get("tool"), str)
+    )
+    cwd = session.get("working_directory") or session.get("cwd") or os.getcwd()
+    env_fingerprint = {
+        "hermes_home": str(HERMES_HOME),
+        "uatp_root": str(UATP_ROOT),
+        "platform": session.get("source", platform),
+        "model": model or session.get("model"),
+        "model_provider": session.get("model_provider"),
+    }
+    return {
+        "snapshot_id": f"{session_id}:environment:0",
+        "working_directory": _omitted_text_summary(cwd) or "[omitted:empty]",
+        "env_vars_hash": _sha256_prefixed(env_fingerprint),
+        "git_branch": session.get("git_branch"),
+        "git_commit_hash": session.get("git_commit_hash"),
+        "git_dirty": session.get("git_dirty"),
+        "open_files": _safe_path_summaries(session.get("open_files")),
+        "system_load": session.get("system_load"),
+        "memory_available_gb": session.get("memory_available_gb"),
+        "timestamp": timestamp,
+        "agent_framework": "hermes",
+        "adapter": "hermes_capture",
+        "model_provider": session.get("model_provider"),
+        "model": model or session.get("model"),
+        "enabled_tools": enabled_tools,
+        "enabled_toolsets": _safe_list(session.get("enabled_toolsets")),
+        "loaded_skills": _safe_loaded_skills(session.get("loaded_skills")),
+        "platform": session.get("source", platform),
+        "gateway_source": _omitted_text_summary(session.get("gateway_source")),
+        "terminal_backend": _omitted_text_summary(session.get("terminal_backend")),
+    }
+
+
+def _decision_payload_for_tool_invocation(
+    session_id: str,
+    invocation: Dict[str, Any],
+    index: int,
+    *,
+    session: Dict,
+    timestamp: datetime,
+) -> Dict[str, Any]:
+    """Build an audit-safe decision point for a tool choice.
+
+    Do not inline raw private chain-of-thought. If Hermes captured reasoning,
+    bind it as a digest while keeping the public reasoning to the externally
+    auditable choice: which tool was selected at this step.
+    """
+    tool_name = invocation.get("tool") or "unknown"
+    reasoning_before = invocation.get("reasoning_before") or ""
+    call_id = invocation.get("call_id") or _fallback_call_id(session_id, index)
+    payload = {
+        "decision_id": f"{session_id}:decision:{index}",
+        "step_index": index,
+        "decision_summary": f"Selected tool `{tool_name}` for the next verifiable agent action.",
+        "alternatives_considered": [],
+        "selected_action": f"tool_call:{tool_name}",
+        "confidence": None,
+        "context_summary": _omitted_text_summary(session.get("title")),
+        "constraints_applied": [
+            "public receipts omit raw user/tool content by default",
+            "artifact bodies are content-addressed and redacted where needed",
+        ],
+        "timestamp": timestamp,
+        "evidence_refs": [call_id],
+        "uncertainty_factors": [],
+    }
+    if reasoning_before:
+        payload["reasoning_digest"] = _sha256_prefixed(reasoning_before)
+    return payload
+
+
+def _tool_status(invocation: Dict[str, Any], parsed_result: Dict[str, Any]) -> str:
+    exit_code = parsed_result.get("exit_code")
+    if isinstance(exit_code, str) and exit_code.strip().lstrip("-").isdigit():
+        exit_code = int(exit_code.strip())
+    if isinstance(exit_code, int) and exit_code != 0:
+        return "error"
+    if parsed_result.get("error") or invocation.get("error_message"):
+        return "error"
+    raw_status = str(invocation.get("status") or "").lower()
+    status_map = {
+        "success": "success",
+        "succeeded": "success",
+        "completed": "success",
+        "complete": "success",
+        "ok": "success",
+        "pending": "pending",
+        "running": "pending",
+        "timeout": "timeout",
+        "timed_out": "timeout",
+        "error": "error",
+        "failed": "error",
+        "failure": "error",
+    }
+    if raw_status in status_map:
+        return status_map[raw_status]
+    return "success"
+
+
 def _typed_hash_value(value: Any) -> Any:
     """Normalize `sha256:<hex>` digests for legacy typed columns sized to 64 chars."""
     if isinstance(value, str) and re.fullmatch(r"sha256:[a-f0-9]{64}", value):
@@ -956,7 +1135,7 @@ def _build_event_native_receipt_bundle(
     )
     safe_title = _omitted_text_summary(session.get("title"))
 
-    events = [
+    events: List[AgentReceiptEvent] = [
         SessionStarted(
             event_id=f"{session_id}:session_started",
             session_id=session_id,
@@ -972,7 +1151,7 @@ def _build_event_native_receipt_bundle(
                 "model": model or session.get("model"),
                 "trigger_message": _omitted_text_summary(first_user_message),
                 "trigger_source": "hermes_state_db",
-                "goals": [],
+                "goals": _session_goals(session, messages),
                 "metadata": {
                     "title": safe_title,
                     "message_count": len(messages),
@@ -984,6 +1163,31 @@ def _build_event_native_receipt_bundle(
     ]
 
     receipt_artifact_store = artifact_store or _get_agent_receipt_artifact_store()
+
+    events.append(
+        EnvironmentSnapshotEvent(
+            event_id=f"{session_id}:environment_snapshot:0",
+            session_id=session_id,
+            adapter_name="hermes",
+            agent_name="Hermes",
+            timestamp=started_at,
+            parent_event_hash=None,
+            actor="system",
+            payload=_environment_snapshot_payload(
+                session_id,
+                session,
+                tool_invocations,
+                model=model,
+                platform=platform,
+                timestamp=started_at,
+            ),
+            redaction_summary={"secrets_removed": 0, "content_omitted": True},
+            trust_level="local",
+        )
+    )
+
+    action_event_count = 0
+    decision_event_count = 0
 
     for index, invocation in enumerate(tool_invocations):
         arguments = _parse_args(invocation.get("arguments"))
@@ -1050,7 +1254,10 @@ def _build_event_native_receipt_bundle(
                     content,
                 )
 
-        timestamp = _ts_from_iso(invocation.get("timestamp")) or started_at
+        started_timestamp = _ts_from_iso(invocation.get("timestamp")) or started_at
+        completed_timestamp = (
+            _ts_from_iso(invocation.get("completed_timestamp")) or started_timestamp
+        )
         parsed_result_for_public = _parse_tool_result(invocation.get("result_preview"))
         result_output = (
             parsed_result_for_public.get("output")
@@ -1066,6 +1273,9 @@ def _build_event_native_receipt_bundle(
             output=combined_output,
         )
         public_result = _public_tool_result_summary(invocation.get("result_preview"))
+        duration_ms = int(
+            (completed_timestamp - started_timestamp).total_seconds() * 1000
+        )
         payload = {
             "call_id": invocation.get("call_id")
             or _fallback_call_id(session_id, index),
@@ -1073,12 +1283,38 @@ def _build_event_native_receipt_bundle(
             "tool_category": _tool_category(tool_name),
             "arguments": public_arguments,
             "result": public_result,
-            "completed_at": timestamp,
-            "status": "success",
+            "started_at": started_timestamp,
+            "completed_at": completed_timestamp,
+            "duration_ms": max(0, duration_ms),
+            "status": _tool_status(invocation, parsed_result_for_public),
+            "error_message": invocation.get("error_message")
+            or parsed_result_for_public.get("error"),
             "step_index": index,
         }
         if artifact_refs:
             payload["artifact_refs"] = artifact_refs
+
+        events.append(
+            DecisionPointEvent(
+                event_id=f"{session_id}:decision_point:{index}",
+                session_id=session_id,
+                adapter_name="hermes",
+                agent_name="Hermes",
+                timestamp=started_timestamp,
+                parent_event_hash=None,
+                actor="assistant",
+                payload=_decision_payload_for_tool_invocation(
+                    session_id,
+                    invocation,
+                    index,
+                    session=session,
+                    timestamp=started_timestamp,
+                ),
+                redaction_summary={"secrets_removed": 0, "content_omitted": True},
+                trust_level="local",
+            )
+        )
+        decision_event_count += 1
 
         events.append(
             ToolCallCompleted(
@@ -1086,7 +1322,7 @@ def _build_event_native_receipt_bundle(
                 session_id=session_id,
                 adapter_name="hermes",
                 agent_name="Hermes",
-                timestamp=timestamp,
+                timestamp=completed_timestamp,
                 parent_event_hash=None,
                 actor="assistant",
                 payload=payload,
@@ -1102,19 +1338,20 @@ def _build_event_native_receipt_bundle(
         )
 
         if action_payload is not None:
+            action_event_count += 1
             events.append(
                 ActionTraceEvent(
                     event_id=f"{session_id}:action_trace:{index}",
                     session_id=session_id,
                     adapter_name="hermes",
                     agent_name="Hermes",
-                    timestamp=timestamp,
+                    timestamp=completed_timestamp,
                     parent_event_hash=None,
                     actor="assistant",
                     payload={
                         "action_id": f"{session_id}:action:{index}",
                         "tool_call_id": payload["call_id"],
-                        "executed_at": timestamp,
+                        "executed_at": completed_timestamp,
                         "duration_ms": payload.get("duration_ms") or 0,
                         **action_payload,
                     },
@@ -1135,8 +1372,8 @@ def _build_event_native_receipt_bundle(
             payload={
                 "status": "completed",
                 "tool_call_count": len(tool_invocations),
-                "action_count": len(tool_invocations),
-                "decision_count": 0,
+                "action_count": action_event_count,
+                "decision_count": decision_event_count,
                 "total_duration_ms": int(
                     (ended_at - started_at).total_seconds() * 1000
                 ),
@@ -1745,14 +1982,23 @@ def build_capsule(
             if call_id and call_id in pending_calls:
                 pending_calls[call_id]["result_length"] = len(content)
                 pending_calls[call_id]["result_preview"] = result_summary
+                completed_ts = _ts_from_epoch(msg.get("timestamp"))
+                pending_calls[call_id]["completed_timestamp"] = (
+                    completed_ts.isoformat() if completed_ts else None
+                )
             else:
                 # Orphaned tool result
+                completed_ts = _ts_from_epoch(msg.get("timestamp"))
                 tool_invocations.append(
                     {
                         "tool": msg.get("tool_name"),
                         "call_id": call_id,
                         "result_length": len(content),
                         "result_preview": result_summary,
+                        "timestamp": completed_ts.isoformat() if completed_ts else None,
+                        "completed_timestamp": completed_ts.isoformat()
+                        if completed_ts
+                        else None,
                     }
                 )
 
