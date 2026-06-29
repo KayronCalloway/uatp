@@ -28,7 +28,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Cache pip packages
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.in', 'pyproject.toml') }}
@@ -37,7 +37,7 @@ jobs:
           ${{ runner.os }}-pip-
 
     - name: Cache mypy cache
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: .mypy_cache
         key: ${{ runner.os }}-mypy-${{ matrix.python-version }}-${{ hashFiles('src/**/*.py') }}
@@ -46,7 +46,7 @@ jobs:
           ${{ runner.os }}-mypy-
 
     - name: Cache pre-commit
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pre-commit
         key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -112,7 +112,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Cache pip packages
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.in', 'pyproject.toml') }}
@@ -163,7 +163,7 @@ jobs:
         python-version: "3.11"
 
     - name: Cache pip packages
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-3.11-security-${{ hashFiles('requirements*.txt', 'requirements*.in', 'pyproject.toml') }}
@@ -172,7 +172,7 @@ jobs:
           ${{ runner.os }}-pip-
 
     - name: Cache safety DB
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ~/.cache/safety-db
         key: ${{ runner.os }}-safety-db-${{ github.run_id }}
@@ -314,7 +314,7 @@ jobs:
         python-version: "3.11"
 
     - name: Cache pip packages
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-3.11-build-${{ hashFiles('requirements*.txt', 'requirements*.in', 'pyproject.toml') }}
